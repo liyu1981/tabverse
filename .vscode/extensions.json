@@ -1,0 +1,16 @@
+{
+  "recommendations": [
+    "jdforsythe.add-new-line-to-files",
+    "streetsidesoftware.code-spell-checker",
+    "dbaeumer.vscode-eslint",
+    "samverschueren.final-newline",
+    "mhutchie.git-graph",
+    "orta.vscode-jest",
+    "esbenp.prettier-vscode",
+    "stkb.rewrap",
+    "mrmlnc.vscode-scss",
+    "tyriar.sort-lines",
+    "amatiasq.sort-imports",
+    "shardulm94.trailing-spaces"
+  ]
+}

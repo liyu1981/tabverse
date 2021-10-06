@@ -1,0 +1,23 @@
+@use '@blueprintjs/colors/src/colors.scss';
+
+body {
+  background-color: colors.$light-gray5;
+}
+
+.bp3-editable-text-fullwidth {
+  min-width: 100%;
+}
+
+.bp3-intent-danger {
+  background-color: desaturate(#db3737, 35%) !important;
+}
+
+.bp3-tab-panel-dialog {
+  width: 100%;
+  margin-top: -16px !important;
+  margin-left: 8px;
+}
+
+.saved-tabspace-tree-node {
+  min-height: 56px;
+}

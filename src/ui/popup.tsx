@@ -1,21 +1,20 @@
-import * as React from "react"
-import * as ReactDOM from "react-dom"
+import { TabSpaceOp, isTabSpaceManagerPage } from '../global';
 
-import "../styles/popup.css"
+import { find } from 'lodash';
 
-class Hello extends React.Component {
-    render() {
-        return (
-            <div className="popup-padded">
-                <h1>{ chrome.i18n.getMessage("l10nHello") }</h1>
-            </div>
-        )
+// chrome.tabs.create({ url: 'devdata.html' });
+
+function openManager() {
+  chrome.tabs.query({ currentWindow: true }, (tabs) => {
+    const t = find(tabs, (tab) => isTabSpaceManagerPage(tab));
+    if (t) {
+      chrome.tabs.update(t.id, { active: true });
+      window.close();
+    } else {
+      chrome.tabs.create({ url: `manager.html?op=${TabSpaceOp.New}` });
     }
+  });
 }
 
-// --------------
-
-ReactDOM.render(
-    <Hello />,
-    document.getElementById('root')
-)
+console.info('Tabverse!');
+openManager();

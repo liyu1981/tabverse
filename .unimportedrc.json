@@ -1,0 +1,15 @@
+{
+  "entry": [
+    "src/background.ts",
+    "src/content.ts",
+    "src/ui/manager.tsx",
+    "src/ui/popup.tsx",
+    "src/dev/*.tsx",
+    "src/dev/*.ts"
+  ],
+  "extensions": [".ts", ".js", ".tsx"],
+  "ignorePatterns": ["**/node_modules/**", "private/**"],
+  "ignoreUnresolved": [],
+  "ignoreUnimported": [],
+  "ignoreUnused": []
+}

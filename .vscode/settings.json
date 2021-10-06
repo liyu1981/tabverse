@@ -1,0 +1,31 @@
+{
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  "editor.tabSize": 2,
+  "workbench.editor.limit.enabled": true,
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "cSpell.words": [
+    "ACCESSTOKEN",
+    "blueprintjs",
+    "clsx",
+    "datenow",
+    "dexie",
+    "fullwidth",
+    "gdrive",
+    "Impls",
+    "loadsaved",
+    "loglevel",
+    "Objs",
+    "reactdev",
+    "Sider",
+    "stsid",
+    "tabspace",
+    "tabverse",
+    "Tabverses",
+    "todos"
+  ],
+  "files.autoSave": "onFocusChange",
+  "jest.showCoverageOnLoad": true
+}

@@ -1,11 +1,13 @@
 {
-    "compilerOptions": {
-        "sourceMap": true,
-        "target": "es6",
-        "module": "commonjs",
-        "jsx": "react"
-    },
-    "exclude": [
-        "node_modules",
-    ]
+  "compilerOptions": {
+    "sourceMap": true,
+    "target": "es6",
+    "module": "commonjs",
+    "jsx": "react",
+    "skipLibCheck": true,
+    "useDefineForClassFields": true
+  },
+  "exclude": [
+    "node_modules"
+  ],
 }
