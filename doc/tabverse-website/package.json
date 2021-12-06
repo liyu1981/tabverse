@@ -1,11 +1,11 @@
 {
   "name": "my-website",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
     "docusaurus": "docusaurus",
     "start": "docusaurus start",
-    "build": "PRODUCTION=true docusaurus build --out-dir ../../docs/",
+    "build": "docusaurus build --out-dir ../../docs/",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus deploy",
     "clear": "docusaurus clear",

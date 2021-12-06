@@ -2,17 +2,18 @@
 
 const lightCodeTheme = require('prism-react-renderer/themes/github');
 const darkCodeTheme = require('prism-react-renderer/themes/dracula');
-const { GITHUB_URL_PREFIX } = require('./src/tabverse');
+
+const isProd = process && process.env && process.env.NODE_ENV === 'production';
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'Tabverse',
   tagline: 'An Opinionated Way of Managing Tabs',
-  url: 'https://liyu1981.github.io/tabverse/',
+  url: 'https://liyu1981.github.io/',
   baseUrl: '/tabverse/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
-  favicon: `${GITHUB_URL_PREFIX}img/icon19.png`,
+  favicon: isProd ? '/tabverse/img/icon19' : '../img/icon19.png',
   organizationName: 'liyu1981',
   projectName: 'tabverse',
 
@@ -48,16 +49,13 @@ const config = {
         title: 'Tabverse',
         logo: {
           alt: 'Tabverse Logo',
-          src: `${GITHUB_URL_PREFIX}img/icon48.png`,
+          src: isProd ? '/tabverse/img/icon48.png' : '../img/icon48.png',
         },
         items: [
-          // {
-          //   type: 'doc',
-          //   docId: 'intro',
-          //   position: 'left',
-          //   label: 'Tutorial',
-          // },
-          // { to: '/blog', label: 'Blog', position: 'left' },
+          {
+            label: 'User Manual',
+            to: '/docs/intro',
+          },
           {
             href: 'https://github.com/liyu1981/tabverse',
             label: 'GitHub',
@@ -69,45 +67,41 @@ const config = {
       footer: {
         style: 'light',
         links: [
-          // {
-          //   title: 'Docs',
-          //   items: [
-          //     {
-          //       label: 'Tutorial',
-          //       to: '/docs/intro',
-          //     },
-          //   ],
-          // },
-          // {
-          //   title: 'Community',
-          //   items: [
-          //     {
-          //       label: 'Stack Overflow',
-          //       href: 'https://stackoverflow.com/questions/tagged/docusaurus',
-          //     },
-          //     {
-          //       label: 'Discord',
-          //       href: 'https://discordapp.com/invite/docusaurus',
-          //     },
-          //     {
-          //       label: 'Twitter',
-          //       href: 'https://twitter.com/docusaurus',
-          //     },
-          //   ],
-          // },
-          // {
-          //   title: 'More',
-          //   items: [
-          //     {
-          //       label: 'Blog',
-          //       to: '/blog',
-          //     },
-          //     {
-          //       label: 'GitHub',
-          //       href: 'https://github.com/facebook/docusaurus',
-          //     },
-          //   ],
-          // },
+          {
+            title: 'Tabverse',
+            items: [
+              {
+                label: 'Open Source',
+                href: 'https://github.com/liyu1981/tabverse',
+              },
+              {
+                label: 'Feedback & Issue',
+                href: 'https://github.com/liyu1981/tabverse/discussions',
+              },
+            ],
+          },
+          {
+            title: 'Community',
+            items: [
+              {
+                label: 'Privacy Policy',
+                to: '/privacy',
+              },
+            ],
+          },
+          {
+            title: 'More',
+            items: [
+              {
+                label: 'User Manual',
+                to: '/docs/intro',
+              },
+              {
+                label: 'Dropbox Backup Guide',
+                to: '/docs/dropbox',
+              },
+            ],
+          },
         ],
         copyright: `Copyright © ${new Date().getFullYear()} Tabverse Project. This website is built with Docusaurus.`,
       },
