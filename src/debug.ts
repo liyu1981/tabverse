@@ -49,7 +49,9 @@ export function setDebugLogLevelOn(isOn: boolean) {
 }
 
 export const loglevel =
-  getSettingItem<TabSpaceLogLevel>('loglevel', (v) => parseInt(v)) ??
-  (process && process.env['JEST_WORKER_ID'])
+  process && process.env['JEST_WORKER_ID']
     ? getDebugLogLevel()
-    : TabSpaceLogLevel.INFO;
+    : getSettingItem<TabSpaceLogLevel>('loglevel', (v) => parseInt(v)) ||
+      TabSpaceLogLevel.INFO;
+
+console.log('loglevel is:', loglevel);

@@ -6,6 +6,7 @@ import {
   isTabSpaceManagerPage,
   logger,
 } from '../global';
+import { TabSpaceRegistryMsg, sendChromeMessage } from '../message';
 import {
   bootstrap as dataBootstrap,
   bootstrapFromTabSpaceId as dataBootstrapFromTabSpaceId,
@@ -72,6 +73,11 @@ async function bootstrap() {
     }
 
     await getTabSpaceData().savedTabSpaceStore.querySavedTabSpaceCount();
+
+    sendChromeMessage({
+      type: TabSpaceRegistryMsg.AddTabSpace,
+      payload: getTabSpaceData().tabSpace.toTabSpaceStub(),
+    });
 
     renderPage({
       pageComponent: (
