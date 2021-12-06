@@ -89,6 +89,7 @@ function createStyles(): { [k: string]: React.CSSProperties } {
       padding: '18px',
       backgroundColor: Colors.LIGHT_GRAY3,
       boxShadow: 'inset 0px -3px 1px 0px #333',
+      overflowY: 'auto',
     },
     sessionBrowserLeftContainer: {
       padding: '20px 8px',
@@ -104,11 +105,12 @@ function createStyles(): { [k: string]: React.CSSProperties } {
     },
     chromeTabTitle: {
       paddingLeft: '4px',
-      wordBreak: 'break-any',
+      wordBreak: 'break-all',
       cursor: 'pointer',
+      width: '640px',
     },
     chromeTabUrl: {
-      wordBreak: 'break-any',
+      wordBreak: 'break-all',
     },
     sessionLabelActive: {
       borderLeft: `solid ${Colors.GRAY1}`,
@@ -342,7 +344,9 @@ export const SessionHistoryMenu = () => {
       savedSessionMenus.length <= 0 ? (
         ''
       ) : (
-        <Menu>{flatten(savedSessionMenus)}</Menu>
+        <Menu style={{ marginBottom: '40px' }}>
+          {flatten(savedSessionMenus)}
+        </Menu>
       );
     return sessionSelector;
   };
