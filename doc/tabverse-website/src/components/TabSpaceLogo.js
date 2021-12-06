@@ -2,6 +2,7 @@ import './TabSpaceLogo.module.css';
 
 import * as React from 'react';
 
+import { GITHUB_URL_PREFIX } from '../tabverse';
 import styles from './TabSpaceLogo.module.css';
 
 export const TabSpaceLogo = () => {
@@ -22,7 +23,7 @@ export const TabSpaceLogo = () => {
             top: '-86px',
             right: '-74px',
           }}
-          src="img/tabverse_logo_universe.svg"
+          src={`${GITHUB_URL_PREFIX}img/tabverse_logo_universe.svg`}
         />
       </div>
       <div

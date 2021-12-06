@@ -6,6 +6,7 @@
     "test": "jest --coverage",
     "prebuild": "./tools/copycss.sh",
     "build": "./tools/build.sh",
+    "build-doc": "./tools/builddoc.sh",
     "prestart": "./tools/copycss.sh",
     "start": "./tools/start.sh",
     "react-devtools": "react-devtools",

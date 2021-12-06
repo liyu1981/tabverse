@@ -2,16 +2,17 @@
 
 const lightCodeTheme = require('prism-react-renderer/themes/github');
 const darkCodeTheme = require('prism-react-renderer/themes/dracula');
+const { GITHUB_URL_PREFIX } = require('./src/tabverse');
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'Tabverse',
   tagline: 'An Opinionated Way of Managing Tabs',
-  url: 'https://your-docusaurus-test-site.com',
-  baseUrl: '/',
+  url: 'https://liyu1981.github.io/tabverse/',
+  baseUrl: '/tabverse/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
-  favicon: 'img/icon19.png',
+  favicon: `${GITHUB_URL_PREFIX}img/icon19.png`,
   organizationName: 'liyu1981',
   projectName: 'tabverse',
 
@@ -23,13 +24,14 @@ const config = {
         docs: {
           sidebarPath: require.resolve('./sidebars.js'),
           // Please change this to your repo.
-          editUrl: 'https://github.com/facebook/docusaurus/edit/main/website/',
+          editUrl:
+            'https://github.com/liyu1981/tabverse/edit/main/doc/tabverse-website/',
         },
         blog: {
           showReadingTime: true,
           // Please change this to your repo.
           editUrl:
-            'https://github.com/facebook/docusaurus/edit/main/website/blog/',
+            'https://github.com/liyu1981/tabverse/edit/main/doc/tabverse-website/',
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
@@ -46,7 +48,7 @@ const config = {
         title: 'Tabverse',
         logo: {
           alt: 'Tabverse Logo',
-          src: 'img/icon48.png',
+          src: `${GITHUB_URL_PREFIX}img/icon48.png`,
         },
         items: [
           // {
