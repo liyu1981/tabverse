@@ -7,3 +7,4 @@ node_modules/
 .cache/
 .parcel-cache/
 coverage/
+dist_crx/

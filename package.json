@@ -7,6 +7,7 @@
     "prebuild": "./tools/copycss.sh",
     "build": "./tools/build.sh",
     "build-doc": "./tools/builddoc.sh",
+    "build-crx": "./tools/buildcrx.sh",
     "prestart": "./tools/copycss.sh",
     "start": "./tools/start.sh",
     "react-devtools": "react-devtools",

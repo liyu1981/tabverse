@@ -2,7 +2,7 @@
   "name": "Tabverse",
   "version": "0.1.0",
   "manifest_version": 3,
-  "description": "Tabverse is an opinioned way of managing tabs.",
+  "description": "Tabverse is an opinionated way of managing tabs.",
   "homepage_url": "https://tabverse.github.io",
   "icons": {
     "16": "icons/icon16.png",
