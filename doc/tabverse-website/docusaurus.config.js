@@ -13,7 +13,7 @@ const config = {
   baseUrl: '/tabverse/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
-  favicon: isProd ? '/tabverse/img/icon19' : '../img/icon19.png',
+  favicon: isProd ? '/tabverse/img/icon19.png' : '../img/icon19.png',
   organizationName: 'liyu1981',
   projectName: 'tabverse',
 
