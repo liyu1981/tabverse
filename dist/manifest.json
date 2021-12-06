@@ -23,14 +23,7 @@
     "storage",
     "unlimitedStorage",
     "activeTab",
-    "idle",
-    "alarms"
-  ],
-  "content_scripts": [
-    {
-      "matches": ["*://*/*"],
-      "js": ["assets/content.js"]
-    }
+    "idle"
   ],
   "host_permissions": ["*://*/*", "<all_urls>"],
   "content_security_policy": {
