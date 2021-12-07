@@ -77,7 +77,19 @@ const DropboxSetup = ({ accessToken, setAccessToken }: any) => {
     <div style={styles.dialogCard}>
       <h3>Dropbox Authentication</h3>
       <FormGroup
-        helperText="The access token for read/write your dropbox folder. Follow instructions here to get one."
+        helperText={
+          <p>
+            The access token for read/write your dropbox folder. Follow{' '}
+            <a
+              href="https://liyu1981.github.io/tabverse/docs/dropbox"
+              target="_blank"
+              rel="noreferrer"
+            >
+              instructions
+            </a>{' '}
+            here to get one.
+          </p>
+        }
         label="Dropbox Access Token"
         labelFor="access-token-input"
         inline={true}

@@ -42,9 +42,9 @@ function HomepageHeader() {
                 'button button--secondary button--lg',
                 styles.tabverseButton,
               )}
-              to="https://tabverse.github.io"
+              href="https://github.com/liyu1981/tabverse/releases"
             >
-              Download beta now!
+              Download Beta(.crx)
             </Link>
           </div>
         </div>
