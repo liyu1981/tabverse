@@ -4,9 +4,9 @@ import {
   NotTabSpaceTabId,
   isChromeSessionChanged,
 } from './session';
+import { debounce, logger } from '../../global';
 
 import { db } from '../../store/db';
-import { debounce } from '../../global';
 import { getLogger } from '../../store/store';
 import { getNewId } from '../common';
 import { isJestTest } from '../../debug';
@@ -57,7 +57,7 @@ export async function saveSession(
     // chrome), skip saving
     return;
   }
-  console.log('try to save session:', session);
+  logger.log('try to save session:', session);
   const lastSavedSessions = await db
     .table<IChromeSessionSavePayload>(ChromeSession.DB_TABLE_NAME)
     .orderBy('updatedAt')
@@ -67,7 +67,7 @@ export async function saveSession(
   let sessionSavePayload: IChromeSessionSavePayload = null;
   if (lastSavedSessions.length <= 0) {
     sessionSavePayload = session.getSavePayload();
-    console.log('save session as lastSavedSessions.length <= 0');
+    logger.log('save session as lastSavedSessions.length <= 0');
     await db.table(ChromeSession.DB_TABLE_NAME).add(sessionSavePayload);
   } else {
     const lastSavedSession = lastSavedSessions[0];
@@ -85,7 +85,7 @@ export async function saveSession(
             ),
           );
       }
-      console.log(
+      logger.log(
         'save session as changed from lastSavedSession',
         JSON.stringify(lastSavedSession),
         JSON.stringify(sessionSavePayload),

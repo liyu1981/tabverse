@@ -1,6 +1,6 @@
 #!/bin/bash
 
-npm run build
+npm run build || exit 1
 
 mkdir dist_crx
 cd dist_crx

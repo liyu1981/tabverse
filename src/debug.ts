@@ -53,5 +53,3 @@ export const loglevel =
     ? getDebugLogLevel()
     : getSettingItem<TabSpaceLogLevel>('loglevel', (v) => parseInt(v)) ||
       TabSpaceLogLevel.INFO;
-
-console.log('loglevel is:', loglevel);

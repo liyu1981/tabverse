@@ -54,7 +54,6 @@ export const NoteView = (props: INoteViewProps) => {
   };
 
   const confirmName = () => {
-    console.log('name confirmed:', name);
     updateCurrentNote();
   };
   const [editorOpen, setEditorOpen] = useState(true);
