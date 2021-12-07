@@ -18,6 +18,7 @@
     "service_worker": "backgroundWrapper.js"
   },
   "permissions": ["tabs", "storage", "unlimitedStorage", "activeTab", "idle"],
+  "host_permissions": ["*://*/*", "<all_urls>"],
   "content_security_policy": {
     "extension_pages": "default-src 'self'; connect-src 'self' ws: https:; img-src * blob: data: file:;"
   }
