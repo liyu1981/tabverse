@@ -41,6 +41,9 @@ jobs:
         run: zip -r coverage.zip ./coverage/
 
       - name: build
+        run: npm run build
+
+      - name: build crx
         run: npm run build-crx
       
       - name: chrome-crx-action
