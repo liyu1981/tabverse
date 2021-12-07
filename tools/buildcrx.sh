@@ -23,8 +23,11 @@ rm -v tabverse.crx
 
 zip -r tabverse.zip tabverse/*
 
-TABVERSE_DIST="$(pwd)/tabverse"
-TABVERSE_DIST_KEY="$(pwd)/tabverse.pem"
-"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --pack-extension="${TABVERSE_DIST}" --pack-extension-key="${TABVERSE_DIST_KEY}"
+MACOS_CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+if [ -f "$MACOS_CHROME" ]; then
+  TABVERSE_DIST="$(pwd)/tabverse"
+  TABVERSE_DIST_KEY="$(pwd)/tabverse.pem"
+  "$MACOS_CHROME" --pack-extension="${TABVERSE_DIST}" --pack-extension-key="${TABVERSE_DIST_KEY}"
+fi
 
 cd -
