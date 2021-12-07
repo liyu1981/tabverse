@@ -1,5 +1,7 @@
 #!/bin/bash
 
+npm run build
+
 mkdir dist_crx
 cd dist_crx
 
