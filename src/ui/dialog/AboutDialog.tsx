@@ -43,6 +43,10 @@ function createdStyles(): { [k: string]: React.CSSProperties } {
       color: 'white',
       textShadow: '0 1px 0 black',
     },
+    aboutTextLink: {
+      color: 'white',
+      textDecoration: 'underline',
+    },
   };
 }
 
@@ -65,6 +69,21 @@ export const AboutDialog = (props) => {
       <div style={styles.otherContainer}>
         <p style={styles.aboutText1}>Opinionated Way of Managing Tabs</p>
         <p style={styles.aboutText2}>Created in Sydney</p>
+        <p style={styles.aboutText2}>
+          <a
+            style={styles.aboutTextLink}
+            href="https://liyu1981.github.io/tabverse/"
+          >
+            Website
+          </a>{' '}
+          |{' '}
+          <a
+            style={styles.aboutTextLink}
+            href="https://github.com/liyu1981/tabverse"
+          >
+            Github
+          </a>
+        </p>
       </div>
     </Dialog>
   );
