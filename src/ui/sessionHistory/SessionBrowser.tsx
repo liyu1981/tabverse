@@ -25,10 +25,12 @@ function createStyles(): { [k: string]: React.CSSProperties } {
       backgroundColor: Colors.LIGHT_GRAY3,
       boxShadow: 'inset 0px -3px 1px 0px #333',
       overflowY: 'auto',
+      right: '0px',
+      position: 'absolute',
     },
     sessionBrowserLeftContainer: {
       padding: '20px 8px',
-      width: '100%',
+      width: 'calc(100% - 350px)',
       height: '100vh',
     },
     chromeTabContainer: {
