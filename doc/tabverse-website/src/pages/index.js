@@ -30,12 +30,12 @@ function HomepageHeader() {
           <div className={styles.buttons}>
             <Link
               className={clsx(
-                'button button--secondary button--lg disabled',
+                'button button--secondary button--lg',
                 styles.tabverseButton,
               )}
-              to="/docs/intro"
+              to="https://chrome.google.com/webstore/detail/tabverse/eingdgbkonkpnnjgmpgoemeoocjoalcm?hl=en"
             >
-              Install (Coming Soon)
+              Install from Chrome Web Store
             </Link>
             <Link
               className={clsx(
@@ -44,7 +44,7 @@ function HomepageHeader() {
               )}
               href="https://github.com/liyu1981/tabverse/releases"
             >
-              Download Beta(.crx)
+              Download from Github(.crx)
             </Link>
           </div>
         </div>
