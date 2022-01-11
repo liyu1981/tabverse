@@ -5,6 +5,7 @@ import {
   Tab as BPTab,
   Tabs as BPTabs,
   Button,
+  Checkbox,
   ControlGroup,
   Dialog,
   FormGroup,
@@ -15,17 +16,20 @@ import {
 import {
   IDropboxBackupFileRecord,
   VerifyStatus,
-  backupToDropbox,
+  exportToDropbox,
+  generateNewDropboxBackupFileName,
   importFromDropbox,
   reloadBackupFiles,
-  validateDropboxAccessToken,
-} from '../../dropbox/dropbox';
-import { getSettingItem, putSettingItem } from '../../store/localSetting';
+  verifyDropboxAccessToken,
+} from '../../dropbox/index';
 import { useEffect, useState } from 'react';
 
-const SETTING_KEY_DROPBOX_ACCESSTOKEN = 'dropboxAccessToken';
+import { useSettingItem } from '../../store/localSetting';
 
-function createdStyles(): { [k: string]: React.CSSProperties } {
+export const SETTING_KEY_DROPBOX_ACCESSTOKEN = 'tabverse_dropboxAccessToken';
+export const SETTING_KEY_DROPBOX_AUTOBACKUP = 'tabverse_dropboxAutobackup';
+
+function createStyles(): { [k: string]: React.CSSProperties } {
   return {
     container: {
       minWidth: '900px',
@@ -48,9 +52,17 @@ function createdStyles(): { [k: string]: React.CSSProperties } {
 }
 
 const DropboxSetup = ({ accessToken, setAccessToken }: any) => {
-  const styles = createdStyles();
+  const styles = createStyles();
   const [accessTokenVerifyStatus, setAccessTokenVerifyStatus] =
     useState<VerifyStatus>(VerifyStatus.NotYetPerformed);
+
+  const [autoBackupFlag, setAutoBackupFlag] = useSettingItem<boolean>(
+    SETTING_KEY_DROPBOX_AUTOBACKUP,
+    (v) => {
+      return v && v.toLowerCase() === 'true' ? true : false;
+    },
+    (v) => (v ? 'true' : 'false'),
+  );
 
   const renderVerifyIndicator = () => {
     switch (accessTokenVerifyStatus) {
@@ -66,9 +78,9 @@ const DropboxSetup = ({ accessToken, setAccessToken }: any) => {
   };
 
   useEffect(() => {
-    validateDropboxAccessToken(
+    verifyDropboxAccessToken(
       accessToken,
-      setAccessTokenVerifyStatus,
+      (status) => setAccessTokenVerifyStatus(status),
       () => {},
     );
   }, [accessToken]);
@@ -102,18 +114,27 @@ const DropboxSetup = ({ accessToken, setAccessToken }: any) => {
             setAccessToken(event.target.value);
           }}
           onBlur={() => {
-            validateDropboxAccessToken(
+            verifyDropboxAccessToken(
               accessToken,
-              setAccessTokenVerifyStatus,
-              (accessToken: string) => {
-                putSettingItem(SETTING_KEY_DROPBOX_ACCESSTOKEN, accessToken);
-              },
+              (status) => setAccessTokenVerifyStatus(status),
+              (accessToken: string) => setAccessToken(accessToken),
             );
           }}
           rightElement={renderVerifyIndicator()}
           fill={true}
         />
       </FormGroup>
+      {/* <FormGroup
+        helperText="If checked, we will backup your data every 5mins to dropbox if there is change."
+        label="Automatically backup data to Dropbox?"
+        labelFor="auto-backup-checker"
+        inline={true}
+      >
+        <Checkbox
+          checked={autoBackupFlag}
+          onChange={() => setAutoBackupFlag(!autoBackupFlag)}
+        />
+      </FormGroup> */}
     </div>
   );
 };
@@ -128,16 +149,16 @@ interface ITargetFileRecord {
 }
 
 const DropboxExport = ({ accessToken }: IDropboxExportProps) => {
-  const styles = createdStyles();
+  const styles = createStyles();
   const [targetFileRecord, setTargetFileRecord] =
     useState<ITargetFileRecord>(null);
   const [inBackup, setInBackup] = useState(false);
 
   const backupAction = async () => {
-    const targetFilePath = `/tabverse-backup-${Date.now()}.json`;
+    const targetFilePath = generateNewDropboxBackupFileName();
     setTargetFileRecord({ targetFilePath, done: false });
     setInBackup(true);
-    await backupToDropbox(accessToken, targetFilePath);
+    await exportToDropbox(accessToken, targetFilePath);
     setTargetFileRecord({ targetFilePath, done: true });
     setInBackup(false);
   };
@@ -172,7 +193,7 @@ interface IDropboxImportProps {
 }
 
 const DropboxImport = ({ accessToken }: IDropboxImportProps) => {
-  const styles = createdStyles();
+  const styles = createStyles();
   const [selectedPath, setSelectedPath] =
     useState<IDropboxBackupFileRecord>(null);
   const [allPaths, setAllPaths] = useState<IDropboxBackupFileRecord[]>([]);
@@ -244,13 +265,17 @@ interface IDropboxDialogProps {
 }
 
 export const DropboxDialog = (props: IDropboxDialogProps) => {
-  const styles = createdStyles();
+  const styles = createStyles();
 
-  const [accessToken, setAccessToken] = useState(
-    getSettingItem<string>(SETTING_KEY_DROPBOX_ACCESSTOKEN, (v) => {
+  const [accessToken, setAccessToken] = useSettingItem<string>(
+    SETTING_KEY_DROPBOX_ACCESSTOKEN,
+    (v) => {
       return v ? v : '';
-    }),
+    },
+    (v) => v,
   );
+
+  const isAccessTokenValid = () => accessToken && accessToken.length > 0;
 
   return (
     <Dialog
@@ -264,6 +289,26 @@ export const DropboxDialog = (props: IDropboxDialogProps) => {
     >
       <div style={styles.dialogInnerContainer}>
         <BPTabs renderActiveTabPanelOnly={false} vertical={true}>
+          {isAccessTokenValid() ? (
+            <BPTab
+              id="export"
+              title="Export"
+              panel={<DropboxExport accessToken={accessToken} />}
+              panelClassName="bp3-tab-panel-dialog"
+            />
+          ) : (
+            ''
+          )}
+          {isAccessTokenValid() ? (
+            <BPTab
+              id="import"
+              title="Import"
+              panel={<DropboxImport accessToken={accessToken} />}
+              panelClassName="bp3-tab-panel-dialog"
+            />
+          ) : (
+            ''
+          )}
           <BPTab
             id="setup"
             title="Setup"
@@ -273,18 +318,6 @@ export const DropboxDialog = (props: IDropboxDialogProps) => {
                 setAccessToken={setAccessToken}
               />
             }
-            panelClassName="bp3-tab-panel-dialog"
-          />
-          <BPTab
-            id="export"
-            title="Export"
-            panel={<DropboxExport accessToken={accessToken} />}
-            panelClassName="bp3-tab-panel-dialog"
-          />
-          <BPTab
-            id="import"
-            title="Import"
-            panel={<DropboxImport accessToken={accessToken} />}
             panelClassName="bp3-tab-panel-dialog"
           />
         </BPTabs>

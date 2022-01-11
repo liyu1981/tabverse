@@ -9,7 +9,7 @@ import {
   Tree,
   TreeNodeInfo,
 } from '@blueprintjs/core';
-import { useAsyncEffect } from '../common/useAsyncEffect';
+import { LoadStatus, TabSpaceOp } from '../../global';
 import {
   SavedTabSpaceStore,
   querySavedTabSpace,
@@ -17,16 +17,16 @@ import {
 import { TabSpaceRegistryMsg, sendChromeMessage } from '../../message';
 import { addPagingToQueryParams, queryPageLimit } from '../../store/store';
 import { map, merge } from 'lodash';
+import { useEffect, useState } from 'react';
 
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { List } from 'immutable';
 import { SavedTabSpacePreviewDialog } from './SavedTabSpacePreviewDialog';
 import { TabSpace } from '../../data/tabSpace/tabSpace';
-import { TabSpaceOp, LoadStatus } from '../../global';
 import { TabSpaceRegistry } from '../../data/tabSpace/tabSpaceRegistry';
 import { createTreeBaseStyles } from './OpenedTabSpaceTree';
 import { observer } from 'mobx-react-lite';
-import { useState, useEffect } from 'react';
+import { useAsyncEffect } from '../common/useAsyncEffect';
 
 interface ISavedTabSpaceTreeProps {
   tabSpace: TabSpace;
@@ -83,6 +83,7 @@ export const SavedTabSpaceTree = observer((props: ISavedTabSpaceTreeProps) => {
   const [loadStatus, setLoadStatus] = useState(LoadStatus.Loading);
 
   useAsyncEffect(async () => {
+    setLoadStatus(LoadStatus.Loading);
     const openedTabSpaceParams = {
       anyOf: List(tabSpaceRegistry.registry.keys()).toArray(),
     };

@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 export function getWindow() {
   return typeof window === 'undefined' ? null : window;
 }
@@ -23,9 +25,25 @@ export function getSettingItem<T>(
   }
 }
 
-export function putSettingItem(name: string, value: string) {
+function putSettingItem(name: string, value: string) {
   const window = getWindow();
   if (window) {
     window.localStorage.setItem(name, value);
   }
+}
+
+export function useSettingItem<T>(
+  name: string,
+  convertFn: (value: string) => T,
+  serializeFn: (value: T) => string,
+): [T, (newValue: T) => void] {
+  const [settingValue, setSettingValue] = useState<T>(
+    getSettingItem<T>(name, convertFn),
+  );
+  const setSettingValueWrapped = (newValue: T) => {
+    const serializedValue = serializeFn(newValue);
+    putSettingItem(name, serializedValue);
+    setSettingValue(newValue);
+  };
+  return [settingValue, setSettingValueWrapped];
 }
