@@ -6,6 +6,7 @@ import {
   queryAllTodo,
 } from './todoStore';
 
+import { NotTabSpaceId } from '../chromeSession/session';
 import { addPagingToQueryParams } from '../../store/store';
 import { strict as assert } from 'assert';
 import { exposeDebugData } from '../../debug';
@@ -23,21 +24,31 @@ export function getAllTodoData(): AllTodoData {
   return allTodoData;
 }
 
-export async function bootstrap(tabSpaceId: string) {
-  const allTodo = await queryAllTodo(tabSpaceId, addPagingToQueryParams({}));
-  const savedTodoStore = new SavedTodoStore();
+export function bootstrap() {
+  allTodoData = {
+    allTodo: new AllTodo(NotTabSpaceId),
+    savedTodoStore: new SavedTodoStore(),
+  };
+
+  getSavedStoreManager().addSavedStore('todo', allTodoData.savedTodoStore);
+
+  exposeDebugData('todo', { getAllTodoData });
+}
+
+export async function loadByTabSpaceId(tabSpaceId: string) {
+  const { allTodo, savedTodoStore } = getAllTodoData();
+  const loadedAllTodo = await queryAllTodo(
+    tabSpaceId,
+    addPagingToQueryParams({}),
+  );
+  allTodo.copy(loadedAllTodo);
+
   const latestSavedTime =
     allTodo.todos.max((ta: Todo, tb: Todo) =>
       ta.updatedAt > tb.updatedAt ? 1 : ta.updatedAt === tb.updatedAt ? 0 : -1,
     )?.updatedAt ?? 0;
   savedTodoStore.updateLastSavedTime(latestSavedTime);
-  getSavedStoreManager().addSavedStore('todo', savedTodoStore);
-  allTodoData = {
-    allTodo,
-    savedTodoStore,
-  };
 
   monitorTabSpaceChanges(allTodo);
   monitorAllTodoChange(allTodo, savedTodoStore);
-  exposeDebugData('todo', { getAllTodoData });
 }

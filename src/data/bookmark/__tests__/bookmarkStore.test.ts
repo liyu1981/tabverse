@@ -1,4 +1,4 @@
-import { bootstrap, getAllBookmarkData } from '../bootstrap';
+import { bootstrap, getAllBookmarkData, loadByTabSpaceId } from '../bootstrap';
 import {
   getTabSpaceData,
   bootstrap as tabSpaceBootstrap,
@@ -12,7 +12,8 @@ async function bootstrapAllBookmark() {
   const { tst1 } = await initTabSpaceData();
   await tabSpaceBootstrap(tst1.id, tst1.windowId);
   const tabSpaceId = getTabSpaceData().tabSpace.id;
-  await bootstrap(tabSpaceId);
+  bootstrap();
+  await loadByTabSpaceId(tabSpaceId);
   return { tabSpaceId };
 }
 

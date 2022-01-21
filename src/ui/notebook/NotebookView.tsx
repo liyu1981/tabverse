@@ -5,7 +5,6 @@ import { INote, Note } from '../../data/note/note';
 import { AllNoteData } from '../../data/note/bootstrap';
 import { Button } from '@blueprintjs/core';
 import { ErrorBoundary } from '../common/ErrorBoundary';
-import { List } from 'immutable';
 import { NoteView } from './Note';
 import { observer } from 'mobx-react-lite';
 import { usePageControl } from '../common/usePageControl';
@@ -32,6 +31,14 @@ function createStyles(): { [k: string]: React.CSSProperties } {
       minWidth: '50px',
       direction: 'rtl',
       textAlign: 'start',
+    },
+    noticeContainer: {
+      background: '#fff',
+      border: '1px solid #ddd',
+      color: '#999',
+      padding: '8px 18px',
+      fontStyle: 'italic',
+      fontWeight: 500,
     },
   };
 }
@@ -85,6 +92,13 @@ export const NotebookView = observer((props: NotebookViewProps) => {
   return (
     <ErrorBoundary>
       <div style={styles.container}>
+        {getCurrentPageNotes().length <= 0 ? (
+          <div style={styles.noticeContainer}>
+            No notes found! You can create new note with New Note button.
+          </div>
+        ) : (
+          ''
+        )}
         <div style={styles.noteToolContainer}>
           <div>
             <Button

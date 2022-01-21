@@ -1,5 +1,6 @@
 import * as React from 'react';
 
+import { AllBookmark } from '../../data/bookmark/bookmark';
 import { ResizableSplitView } from '../common/ResizableSplitView';
 import { SavedTabSpaceStore } from '../../data/tabSpace/tabSpaceStore';
 import { TabPreview } from '../../data/tabSpace/tabPreview';
@@ -7,6 +8,7 @@ import { TabSpace } from '../../data/tabSpace/tabSpace';
 import { TabSpaceListView } from './TabSpaceListView';
 import { TabSpaceRegistry } from '../../data/tabSpace/tabSpaceRegistry';
 import { TabSpaceRightSideView } from './TabSpaceRightSideView';
+import { getAllBookmarkData } from '../../data/bookmark/bootstrap';
 import { observer } from 'mobx-react-lite';
 
 function createStyles(): {
@@ -34,24 +36,27 @@ interface ITabSpaceViewProps {
   tabSpaceRegistry: TabSpaceRegistry;
   tabPreview: TabPreview;
   savedTabSpaceStore: SavedTabSpaceStore;
+  allBookmark: AllBookmark;
 }
 
 export const TabSpaceView = observer(
-  ({ tabSpace, tabPreview }: ITabSpaceViewProps) => {
+  ({ tabSpace, tabPreview, allBookmark }: ITabSpaceViewProps) => {
     const styles = createStyles();
-
-    const rightSideView = (
-      <div style={styles.container}>
-        <TabSpaceRightSideView tabSpace={tabSpace} />
-      </div>
-    );
 
     return (
       <ResizableSplitView
         firstView={
-          <TabSpaceListView tabSpace={tabSpace} tabPreview={tabPreview} />
+          <TabSpaceListView
+            tabSpace={tabSpace}
+            tabPreview={tabPreview}
+            allBookmark={allBookmark}
+          />
         }
-        secondView={rightSideView}
+        secondView={
+          <div style={styles.container}>
+            <TabSpaceRightSideView tabSpace={tabSpace} />
+          </div>
+        }
         firstViewStyles={styles.leftSideContainer}
         secondViewStyles={styles.rightSideContainer}
       />

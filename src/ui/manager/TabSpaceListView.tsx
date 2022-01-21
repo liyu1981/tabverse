@@ -2,8 +2,10 @@ import * as React from 'react';
 
 import { Button, EditableText, Intent } from '@blueprintjs/core';
 
+import { AllBookmark } from '../../data/bookmark/bookmark';
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { SaveIndicator } from './SaveIndicator';
+import { Tab } from '../../data/tabSpace/tab';
 import { TabCard } from './TabCard';
 import { TabPreview } from '../../data/tabSpace/tabPreview';
 import { TabSpace } from '../../data/tabSpace/tabSpace';
@@ -64,10 +66,17 @@ function createStyles(): {
 interface TabSpaceListViewProps {
   tabSpace: TabSpace;
   tabPreview: TabPreview;
+  allBookmark: AllBookmark;
+}
+
+function inBookmark(tab: Tab, allBookmark: AllBookmark): boolean {
+  return (
+    allBookmark.bookmarks.findIndex((bookmark) => bookmark.url === tab.url) >= 0
+  );
 }
 
 export const TabSpaceListView = observer(
-  ({ tabSpace, tabPreview }: TabSpaceListViewProps) => {
+  ({ tabSpace, tabPreview, allBookmark }: TabSpaceListViewProps) => {
     const styles = createStyles();
     const [title, setTitle] = useState(tabSpace.name);
 
@@ -78,8 +87,9 @@ export const TabSpaceListView = observer(
           <ErrorBoundary>
             <TabCard
               tab={tab}
-              tabPreview={tabPreview.getPreview(tab.chromeTabId)}
               needPreview={true}
+              tabPreview={tabPreview.getPreview(tab.chromeTabId)}
+              inBookmark={inBookmark(tab, allBookmark)}
             />
           </ErrorBoundary>
         </div>

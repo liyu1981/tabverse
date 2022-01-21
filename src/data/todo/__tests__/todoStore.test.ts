@@ -1,4 +1,4 @@
-import { bootstrap, getAllTodoData } from '../bootstrap';
+import { bootstrap, getAllTodoData, loadByTabSpaceId } from '../bootstrap';
 import {
   getTabSpaceData,
   bootstrap as tabSpaceBootstrap,
@@ -13,7 +13,8 @@ async function bootstrapAllTodo() {
   const { tst1 } = await initTabSpaceData();
   await tabSpaceBootstrap(tst1.id, tst1.windowId);
   const tabSpaceId = getTabSpaceData().tabSpace.id;
-  await bootstrap(tabSpaceId);
+  bootstrap();
+  await loadByTabSpaceId(tabSpaceId);
   return { tabSpaceId };
 }
 

@@ -13,6 +13,7 @@ import { SessionHistoryMenu } from './SessionHistoryMenu';
 import { SidebarContainer } from '../common/sidebar';
 import { TabSpaceLogo } from '../common/TabSpaceLogo';
 import { TabSpaceView } from './TabSpaceView';
+import { getAllBookmarkData } from '../../data/bookmark/bootstrap';
 
 export interface ISiderProps {
   collapsed: boolean;
@@ -43,6 +44,8 @@ interface IManagerContainerProps {
 }
 
 export const ManagerView = (props: IManagerContainerProps) => {
+  const allBookmarkData = getAllBookmarkData();
+
   return (
     <ErrorBoundary>
       <SidebarContainer>
@@ -65,6 +68,7 @@ export const ManagerView = (props: IManagerContainerProps) => {
           tabSpaceRegistry={props.tabSpaceData.tabSpaceRegistry}
           tabPreview={props.tabSpaceData.tabPreview}
           savedTabSpaceStore={props.tabSpaceData.savedTabSpaceStore}
+          allBookmark={allBookmarkData.allBookmark}
         />
       </SidebarContainer>
     </ErrorBoundary>

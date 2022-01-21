@@ -9,8 +9,8 @@ import { Button, ButtonGroup, EditableText } from '@blueprintjs/core';
 import { Bookmark } from '../../data/bookmark/bookmark';
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { observer } from 'mobx-react-lite';
-import { useState } from 'react';
 import { usePageControl } from '../common/usePageControl';
+import { useState } from 'react';
 
 function createStyles(): { [k: string]: React.CSSProperties } {
   return {
@@ -38,17 +38,13 @@ function createStyles(): { [k: string]: React.CSSProperties } {
       width: '98%',
       wordBreak: 'break-all',
     },
-    addBookmarkNotice: {
-      fontSize: '26px',
+    noticeContainer: {
+      background: '#fff',
+      border: '1px solid #ddd',
       color: '#999',
-      minHeight: '174px',
-      display: 'flex',
-      alignItems: 'center',
-    },
-    addBookmarkNoticeText: {
-      margin: '0 auto',
-      maxWidth: '68%',
+      padding: '8px 18px',
       fontStyle: 'italic',
+      fontWeight: 500,
     },
     pageControlContainer: {
       textAlign: 'center',
@@ -147,20 +143,18 @@ export const BookmarkView = observer((props: IBookmarkViewProps) => {
 
   return (
     <ErrorBoundary>
-      <div style={styles.container}>
-        {getCurrentPageItems().length <= 0 ? (
-          <div style={styles.addBookmarkNotice}>
-            <div style={styles.addBookmarkNoticeText}>
-              You can add bookmark from left side tab entries.
-            </div>
-          </div>
-        ) : (
+      {getCurrentPageItems().length <= 0 ? (
+        <div style={styles.noticeContainer}>
+          No bookmark saved. You can save bookmark from left side tab entries.
+        </div>
+      ) : (
+        <div style={styles.container}>
           <div>
             {renderCurrentBookmarkItems()}
             <div style={styles.pageControlContainer}>{renderPageControl()}</div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </ErrorBoundary>
   );
 });

@@ -101,6 +101,13 @@ export class AllTodo extends Base {
     return newAllTodo;
   }
 
+  copy(otherAllTodo: AllTodo) {
+    this.cloneAttributes(otherAllTodo);
+    this.todos = List(otherAllTodo.todos);
+    this.tabSpaceId = otherAllTodo.tabSpaceId;
+    return this;
+  }
+
   addTodo(t: Todo) {
     t.tabSpaceId = this.tabSpaceId;
     this.todos = this.todos.push(t.clone().makeImmutable());

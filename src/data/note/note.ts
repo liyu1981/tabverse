@@ -118,6 +118,13 @@ export class AllNote extends Base {
     return newAllNote;
   }
 
+  copy(otherAllNote: AllNote) {
+    this.cloneAttributes(otherAllNote);
+    this.notes = List(otherAllNote.notes);
+    this.tabSpaceId = otherAllNote.tabSpaceId;
+    return this;
+  }
+
   findNoteIndex(id: string) {
     return this.notes.findIndex((note) => note.id === id);
   }

@@ -1,7 +1,6 @@
 import * as React from 'react';
 
 import { Button, ButtonGroup, Card, Elevation, Icon } from '@blueprintjs/core';
-import { useEffect, useState } from 'react';
 
 import { Bookmark } from '../../data/bookmark/bookmark';
 import { CollapsibleLabel } from '../common/CollapsibleLabel';
@@ -127,10 +126,34 @@ const TabDetailPreviewPanel = (props) => {
   );
 };
 
+interface TabBookmarkBtnProps {
+  tab: Tab;
+  inBookmark: boolean;
+}
+
+const TabBookmarkBtn = observer(({ tab, inBookmark }: TabBookmarkBtnProps) => {
+  return inBookmark ? (
+    <div></div>
+  ) : (
+    <Button
+      icon="bookmark"
+      minimal={true}
+      onClick={() => {
+        const b = new Bookmark();
+        b.name = tab.title;
+        b.url = tab.url;
+        b.favIconUrl = tab.favIconUrl;
+        getAllBookmarkData().allBookmark.addBookmark(b);
+      }}
+    />
+  );
+});
+
 interface ITabCardProps {
   tab: Tab;
   needPreview?: boolean;
   tabPreview?: string;
+  inBookmark?: boolean;
   onMouseOver?: any;
   onMouseOut?: any;
 }
@@ -138,16 +161,6 @@ interface ITabCardProps {
 export const TabCard = observer((props: ITabCardProps) => {
   const styles = createStyles();
   const needPreview = props.needPreview ?? false;
-
-  const [inBookmark, setInBookmark] = useState(false);
-
-  useEffect(() => {
-    setInBookmark(
-      getAllBookmarkData().allBookmark.bookmarks.findIndex(
-        (bookmark) => bookmark.url === props.tab.url,
-      ) >= 0,
-    );
-  }, [props.tab]);
 
   const switchToTab = (t: Tab) => {
     chrome.tabs.update(t.chromeTabId, { active: true });
@@ -175,21 +188,10 @@ export const TabCard = observer((props: ITabCardProps) => {
       <div style={styles.rightSide}>
         {props.tab.chromeTabId ? (
           <ButtonGroup>
-            {inBookmark ? (
-              <></>
+            {props.inBookmark === undefined ? (
+              ''
             ) : (
-              <Button
-                icon="bookmark"
-                minimal={true}
-                onClick={() => {
-                  const b = new Bookmark();
-                  b.name = props.tab.title;
-                  b.url = props.tab.url;
-                  b.favIconUrl = props.tab.favIconUrl;
-                  getAllBookmarkData().allBookmark.addBookmark(b);
-                  setInBookmark(true);
-                }}
-              />
+              <TabBookmarkBtn tab={props.tab} inBookmark={props.inBookmark} />
             )}
             <Button
               icon="cross"

@@ -6,6 +6,7 @@ import {
   queryAllBookmark,
 } from './bookmarkStore';
 
+import { NotTabSpaceId } from '../chromeSession/session';
 import { addPagingToQueryParams } from '../../store/store';
 import { strict as assert } from 'assert';
 import { exposeDebugData } from '../../debug';
@@ -23,24 +24,33 @@ export function getAllBookmarkData(): AllBookmarkData {
   return allBookmarkData;
 }
 
-export async function bootstrap(tabSpaceId: string) {
-  const allBookmark = await queryAllBookmark(
+export function bootstrap() {
+  allBookmarkData = {
+    allBookmark: new AllBookmark(NotTabSpaceId),
+    savedBookmarkStore: new SavedBookmarkStore(),
+  };
+  getSavedStoreManager().addSavedStore(
+    'bookmark',
+    allBookmarkData.savedBookmarkStore,
+  );
+
+  exposeDebugData('bookmark', { getAllBookmarkData });
+}
+
+export async function loadByTabSpaceId(tabSpaceId: string) {
+  const { allBookmark, savedBookmarkStore } = getAllBookmarkData();
+  const loadedAllBookmark = await queryAllBookmark(
     tabSpaceId,
     addPagingToQueryParams({}),
   );
-  const savedBookmarkStore = new SavedBookmarkStore();
+  allBookmark.copy(loadedAllBookmark);
+
   const latestSavedTime =
     allBookmark.bookmarks.max((ba: Bookmark, bb: Bookmark) =>
       ba.updatedAt > bb.updatedAt ? 1 : ba.updatedAt === bb.updatedAt ? 0 : -1,
     )?.updatedAt ?? 0;
   savedBookmarkStore.updateLastSavedTime(latestSavedTime);
-  getSavedStoreManager().addSavedStore('bookmark', savedBookmarkStore);
-  allBookmarkData = {
-    allBookmark,
-    savedBookmarkStore,
-  };
 
   monitorTabSpaceChanges(allBookmark);
   monitorAllBookmarkChange(allBookmark, savedBookmarkStore);
-  exposeDebugData('bookmark', { getAllBookmarkData });
 }

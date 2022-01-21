@@ -106,6 +106,13 @@ export class AllBookmark extends Base {
     return newAllBookmark;
   }
 
+  copy(otherAllBookmark: AllBookmark) {
+    this.cloneAttributes(otherAllBookmark);
+    this.bookmarks = List(otherAllBookmark.bookmarks);
+    this.tabSpaceId = otherAllBookmark.tabSpaceId;
+    return this;
+  }
+
   addBookmark(b: Bookmark) {
     b.tabSpaceId = this.tabSpaceId;
     this.bookmarks = this.bookmarks.push(b.clone().makeImmutable());
