@@ -1,7 +1,7 @@
 {
   "name": "tabverse",
   "version": "0.1.0",
-  "description": "Tabverse is an opinioned tab manager for Chrome browser.",
+  "description": "Tabverse is an opinionated tab manager for Chrome browser.",
   "scripts": {
     "test": "jest --coverage",
     "prebuild": "./tools/copycss.sh",
@@ -9,7 +9,7 @@
     "build-doc": "./tools/builddoc.sh",
     "build-crx": "./tools/buildcrx.sh",
     "prestart": "./tools/copycss.sh",
-    "start": "./tools/start.sh",
+    "develop": "./tools/develop.sh",
     "react-devtools": "react-devtools",
     "format:check": "prettier --check .",
     "format:write": "prettier --write .",
