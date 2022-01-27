@@ -1,9 +1,9 @@
 import {
   AllBookmark,
   Bookmark,
-  IBookmarkJSON,
   IAllBookmarkSavePayload,
-} from './bookmark';
+  IBookmarkJSON,
+} from './Bookmark';
 import {
   DEFAULT_SAVE_DEBOUNCE,
   InSavingStatus,
@@ -15,10 +15,10 @@ import {
   subscribePubSubMessage,
 } from '../../message';
 import { debounce, logger } from '../../global';
-import { getAllBookmarkData } from './bootstrap';
 
 import { IDatabaseChange } from 'dexie-observable/api';
 import { db } from '../../store/db';
+import { getAllBookmarkData } from './bootstrap';
 import { getTabSpaceData } from '../tabSpace/bootstrap';
 import { observe } from 'mobx';
 

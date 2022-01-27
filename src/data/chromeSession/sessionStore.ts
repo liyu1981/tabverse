@@ -1,5 +1,5 @@
-import { ChromeSession, IChromeSessionSavePayload } from './session';
-import { ISavedTabSpace, TabSpace } from '../tabSpace/tabSpace';
+import { ChromeSession, IChromeSessionSavePayload } from './ChromeSession';
+import { ISavedTabSpace, TabSpace } from '../tabSpace/TabSpace';
 
 import { db } from '../../store/db';
 import { filter } from 'lodash';

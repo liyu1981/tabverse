@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { INote, Note } from '../../data/note/note';
+import { INote, Note } from '../../data/note/Noote';
 
 import { AllNoteData } from '../../data/note/bootstrap';
 import { Button } from '@blueprintjs/core';

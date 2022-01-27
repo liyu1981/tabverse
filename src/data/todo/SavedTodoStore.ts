@@ -1,4 +1,4 @@
-import { AllTodo, IAllTodoSavePayload, Todo, ITodoJSON } from './todo';
+import { AllTodo, IAllTodoSavePayload, ITodoJSON, Todo } from './Todo';
 import {
   DEFAULT_SAVE_DEBOUNCE,
   InSavingStatus,
@@ -10,10 +10,10 @@ import {
   subscribePubSubMessage,
 } from '../../message';
 import { debounce, logger } from '../../global';
-import { getAllTodoData } from './bootstrap';
 
 import { IDatabaseChange } from 'dexie-observable/api';
 import { db } from '../../store/db';
+import { getAllTodoData } from './bootstrap';
 import { getTabSpaceData } from '../tabSpace/bootstrap';
 import { observe } from 'mobx';
 

@@ -1,4 +1,4 @@
-import { ChromeSession, IChromeSessionSavePayload } from '../session';
+import { ChromeSession, IChromeSessionSavePayload } from '../ChromeSession';
 import {
   tabData1,
   tabData2,

@@ -4,7 +4,7 @@ import * as React from 'react';
 
 import { AllTodoData } from '../../data/todo/bootstrap';
 import { List } from 'immutable';
-import { Todo } from '../../data/todo/todo';
+import { Todo } from '../../data/todo/Todo';
 import { observer } from 'mobx-react-lite';
 import { useState } from 'react';
 

@@ -1,4 +1,4 @@
-import { ChromeSession } from '../../data/chromeSession/session';
+import { ChromeSession } from '../../../data/chromeSession/ChromeSession';
 import { concat } from 'lodash';
 
 export async function createNewChromeWindowWithTab(

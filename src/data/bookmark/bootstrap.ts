@@ -1,12 +1,12 @@
-import { AllBookmark, Bookmark, IBookmarkJSON } from './bookmark';
+import { AllBookmark, Bookmark, IBookmarkJSON } from './Bookmark';
 import {
   SavedBookmarkStore,
   monitorAllBookmarkChange,
   monitorTabSpaceChanges,
   queryAllBookmark,
-} from './bookmarkStore';
+} from './SavedBookmarkStore';
 
-import { NotTabSpaceId } from '../chromeSession/session';
+import { NotTabSpaceId } from '../chromeSession/ChromeSession';
 import { addPagingToQueryParams } from '../../store/store';
 import { strict as assert } from 'assert';
 import { exposeDebugData } from '../../debug';

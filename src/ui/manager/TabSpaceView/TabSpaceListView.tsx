@@ -2,18 +2,18 @@ import * as React from 'react';
 
 import { Button, EditableText, Intent } from '@blueprintjs/core';
 
-import { AllBookmark } from '../../data/bookmark/bookmark';
-import { ErrorBoundary } from '../common/ErrorBoundary';
+import { AllBookmark } from '../../../data/bookmark/Bookmark';
+import { ErrorBoundary } from '../../common/ErrorBoundary';
 import { SaveIndicator } from './SaveIndicator';
-import { Tab } from '../../data/tabSpace/tab';
+import { Tab } from '../../../data/tabSpace/Tab';
 import { TabCard } from './TabCard';
-import { TabPreview } from '../../data/tabSpace/tabPreview';
-import { TabSpace } from '../../data/tabSpace/tabSpace';
-import { getSavedStoreManager } from '../../store/bootstrap';
-import { isIdNotSaved } from '../../data/common';
+import { TabPreview } from '../../../data/tabSpace/TabPreview';
+import { TabSpace } from '../../../data/tabSpace/TabSpace';
+import { getSavedStoreManager } from '../../../store/bootstrap';
+import { isIdNotSaved } from '../../../data/common';
 import { observer } from 'mobx-react-lite';
-import { saveCurrentTabSpace } from '../../data/tabSpace/tabSpaceStore';
-import { updateTabSpaceName } from '../../data/tabSpace/chromeTab';
+import { saveCurrentTabSpace } from '../../../data/tabSpace/SavedTabSpaceStore';
+import { updateTabSpaceName } from '../../../data/tabSpace/chromeTab';
 import { useState } from 'react';
 
 function createStyles(): {

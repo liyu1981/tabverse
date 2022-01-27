@@ -2,18 +2,18 @@ import * as React from 'react';
 
 import { Tab as BPTab, Tabs as BPTabs, Icon } from '@blueprintjs/core';
 
-import { BookmarkView } from '../bookmark/BookmarkView';
-import { ErrorBoundary } from '../common/ErrorBoundary';
-import { NotebookView } from '../notebook/NotebookView';
-import { TabSpace } from '../../data/tabSpace/tabSpace';
-import { TodoView } from '../todo/TodoView';
-import { loadByTabSpaceId as bookmarkLoadByTabSpaceId } from '../../data/bookmark/bootstrap';
-import { getAllBookmarkData } from '../../data/bookmark/bootstrap';
-import { getAllNoteData } from '../../data/note/bootstrap';
-import { getAllTodoData } from '../../data/todo/bootstrap';
-import { getLoadingComponent } from '../common/LoadingComponent';
-import { loadByTabSpaceId as noteLoadByTabSpaceId } from '../../data/note/bootstrap';
-import { loadByTabSpaceId as todoLoadByTabSpaceId } from '../../data/todo/bootstrap';
+import { BookmarkView } from '../../bookmark/BookmarkView';
+import { ErrorBoundary } from '../../common/ErrorBoundary';
+import { NotebookView } from '../../notebook/NotebookView';
+import { TabSpace } from '../../../data/tabSpace/TabSpace';
+import { TodoView } from '../../todo/TodoView';
+import { loadByTabSpaceId as bookmarkLoadByTabSpaceId } from '../../../data/bookmark/bootstrap';
+import { getAllBookmarkData } from '../../../data/bookmark/bootstrap';
+import { getAllNoteData } from '../../../data/note/bootstrap';
+import { getAllTodoData } from '../../../data/todo/bootstrap';
+import { getLoadingComponent } from '../../common/LoadingComponent';
+import { loadByTabSpaceId as noteLoadByTabSpaceId } from '../../../data/note/bootstrap';
+import { loadByTabSpaceId as todoLoadByTabSpaceId } from '../../../data/todo/bootstrap';
 import { useMemo } from 'react';
 
 export interface ITabSpaceRightSideViewProps {

@@ -1,11 +1,11 @@
 import * as React from 'react';
 
-import { TabSpaceMsg, sendChromeMessage } from '../../message';
+import { TabSpaceMsg, sendChromeMessage } from '../../../message';
 import { Tree, TreeNodeInfo } from '@blueprintjs/core';
 
-import { ErrorBoundary } from '../common/ErrorBoundary';
-import { TabSpace } from '../../data/tabSpace/tabSpace';
-import { TabSpaceRegistry } from '../../data/tabSpace/tabSpaceRegistry';
+import { ISidebarComponentProps } from './Sidebar';
+import { TabSpace } from '../../../data/tabSpace/TabSpace';
+import { TabSpaceRegistry } from '../../../data/tabSpace/TabSpaceRegistry';
 import { concat } from 'lodash';
 import { observer } from 'mobx-react-lite';
 
@@ -17,39 +17,24 @@ function switchToTab(ts: TabSpace) {
   chrome.windows.update(ts.chromeWindowId, { focused: true });
 }
 
-export function createTreeBaseStyles(): {
+export function createLiveTabSpaceStyles(): {
   [k: string]: React.CSSProperties;
 } {
   return {
-    container: {
-      backgroundColor: 'white',
-      borderRadius: '3px',
-      marginBottom: '18px',
-    },
     clickable: {
       cursor: 'pointer',
-    },
-    sectionHeadContainer: {
-      lineHeight: '42px',
-      paddingLeft: '10px',
-      fontSize: '1.2em',
-      backgroundColor: '#fafafa',
-      borderRadius: '3px 3px 0 0',
-      boxShadow: '0px 0px 5px -1px #333',
-      marginBottom: '8px',
-      fontWeight: 'bold',
     },
   };
 }
 
-interface IOpenedTabSpaceTreeProps {
+export type ILiveTabSpaceProps = ISidebarComponentProps & {
   tabSpace: TabSpace;
   tabSpaceRegistry: TabSpaceRegistry;
-}
+};
 
-export const OpenedTabSpaceTree = observer(
-  ({ tabSpace, tabSpaceRegistry }: IOpenedTabSpaceTreeProps) => {
-    const styles = createTreeBaseStyles();
+export const LiveTabSpace = observer(
+  ({ tabSpace, tabSpaceRegistry }: ILiveTabSpaceProps) => {
+    const styles = createLiveTabSpaceStyles();
 
     const onNodeClick = (node, nodePath, e) => {
       if (node.tabSpace) {
@@ -101,13 +86,6 @@ export const OpenedTabSpaceTree = observer(
 
     const nodes = concat(thisWindowNodes, otherWindowNodes);
 
-    return (
-      <ErrorBoundary>
-        <div style={styles.container}>
-          <div style={styles.sectionHeadContainer}>Live Tabverses</div>
-          <Tree contents={nodes} onNodeClick={onNodeClick} />
-        </div>
-      </ErrorBoundary>
-    );
+    return <Tree contents={nodes} onNodeClick={onNodeClick} />;
   },
 );

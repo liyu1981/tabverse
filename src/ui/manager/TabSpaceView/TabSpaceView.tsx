@@ -1,14 +1,13 @@
 import * as React from 'react';
 
-import { AllBookmark } from '../../data/bookmark/bookmark';
-import { ResizableSplitView } from '../common/ResizableSplitView';
-import { SavedTabSpaceStore } from '../../data/tabSpace/tabSpaceStore';
-import { TabPreview } from '../../data/tabSpace/tabPreview';
-import { TabSpace } from '../../data/tabSpace/tabSpace';
+import { AllBookmark } from '../../../data/bookmark/Bookmark';
+import { ResizableSplitView } from '../../common/ResizableSplitView';
+import { SavedTabSpaceStore } from '../../../data/tabSpace/SavedTabSpaceStore';
+import { TabPreview } from '../../../data/tabSpace/TabPreview';
+import { TabSpace } from '../../../data/tabSpace/TabSpace';
 import { TabSpaceListView } from './TabSpaceListView';
-import { TabSpaceRegistry } from '../../data/tabSpace/tabSpaceRegistry';
+import { TabSpaceRegistry } from '../../../data/tabSpace/TabSpaceRegistry';
 import { TabSpaceRightSideView } from './TabSpaceRightSideView';
-import { getAllBookmarkData } from '../../data/bookmark/bootstrap';
 import { observer } from 'mobx-react-lite';
 
 function createStyles(): {

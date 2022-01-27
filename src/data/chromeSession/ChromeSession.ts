@@ -2,10 +2,10 @@ import { Base, IBase } from '../common';
 import { isEqual, merge } from 'lodash';
 
 import { List } from 'immutable';
-import { sequenceExpression } from '@babel/types';
 
 export const NotTabSpaceTabId = -1;
 export const NotTabSpaceId = '';
+export const NotSessionId = '';
 
 export interface IChromeTab {
   tabId: number;

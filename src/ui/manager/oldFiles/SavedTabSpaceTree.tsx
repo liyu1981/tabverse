@@ -9,30 +9,25 @@ import {
   Tree,
   TreeNodeInfo,
 } from '@blueprintjs/core';
-import { LoadStatus, TabSpaceOp } from '../../global';
+import { LoadStatus, TabSpaceOp } from '../../../global';
 import {
   SavedTabSpaceStore,
   querySavedTabSpace,
-} from '../../data/tabSpace/tabSpaceStore';
-import { TabSpaceRegistryMsg, sendChromeMessage } from '../../message';
-import { addPagingToQueryParams, queryPageLimit } from '../../store/store';
+} from '../../../data/tabSpace/SavedTabSpaceStore';
+import { TabSpaceRegistryMsg, sendChromeMessage } from '../../../message';
+import { addPagingToQueryParams, queryPageLimit } from '../../../store/store';
 import { map, merge } from 'lodash';
-import { useEffect, useState } from 'react';
 
-import { ErrorBoundary } from '../common/ErrorBoundary';
+import { ErrorBoundary } from '../../common/ErrorBoundary';
+import { ISidebarComponentProps } from '../Sidebar/Sidebar';
 import { List } from 'immutable';
 import { SavedTabSpacePreviewDialog } from './SavedTabSpacePreviewDialog';
-import { TabSpace } from '../../data/tabSpace/tabSpace';
-import { TabSpaceRegistry } from '../../data/tabSpace/tabSpaceRegistry';
+import { TabSpace } from '../../../data/tabSpace/TabSpace';
+import { TabSpaceRegistry } from '../../../data/tabSpace/TabSpaceRegistry';
 import { createTreeBaseStyles } from './OpenedTabSpaceTree';
 import { observer } from 'mobx-react-lite';
-import { useAsyncEffect } from '../common/useAsyncEffect';
-
-interface ISavedTabSpaceTreeProps {
-  tabSpace: TabSpace;
-  tabSpaceRegistry: TabSpaceRegistry;
-  savedTabSpaceStore: SavedTabSpaceStore;
-}
+import { useAsyncEffect } from '../../common/useAsyncEffect';
+import { useState } from 'react';
 
 enum SortMethods {
   CREATED = 0,
@@ -68,6 +63,12 @@ function createStyles(): { [k: string]: React.CSSProperties } {
     },
   });
 }
+
+export type ISavedTabSpaceTreeProps = ISidebarComponentProps & {
+  tabSpace: TabSpace;
+  tabSpaceRegistry: TabSpaceRegistry;
+  savedTabSpaceStore: SavedTabSpaceStore;
+};
 
 export const SavedTabSpaceTree = observer((props: ISavedTabSpaceTreeProps) => {
   const styles = createStyles();
@@ -258,7 +259,7 @@ export const SavedTabSpaceTree = observer((props: ISavedTabSpaceTreeProps) => {
     <div>loading...</div>
   ) : (
     <div
-      style={styles.container}
+      style={merge(styles.container)}
       data-saved-data-version={savedTabSpaceStore.savedDataVersion}
     >
       <ErrorBoundary>

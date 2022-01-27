@@ -26,8 +26,7 @@ function createStyles(props): { [k: string]: React.CSSProperties } {
       overflowX: 'hidden',
       transition:
         props?.customStyle?.transition ?? defaultCustomStyle.transition,
-      boxShadow: '0px 0px 2px #aaa',
-      borderLeft: '1px solid #efefef',
+      // borderLeft: '1px solid #efefef',
       paddingLeft: '12px',
       paddingRight: '12px',
       paddingTop: '12px',

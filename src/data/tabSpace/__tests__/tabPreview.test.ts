@@ -1,4 +1,4 @@
-import { TabPreview } from '../tabPreview';
+import { TabPreview } from '../TabPreview';
 
 test('all', () => {
   const tp = new TabPreview();

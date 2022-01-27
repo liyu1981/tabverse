@@ -2,6 +2,8 @@ import * as React from 'react';
 
 import { Menu, MenuItem } from '@blueprintjs/core';
 
+import { ISidebarComponentProps } from '../Sidebar/Sidebar';
+
 export function createStyles(): { [k: string]: React.CSSProperties } {
   return {
     singleMenuContainer: {
@@ -10,7 +12,9 @@ export function createStyles(): { [k: string]: React.CSSProperties } {
   };
 }
 
-export const CreateNewTabverseMenu = () => {
+export type CreateNewTabverseMenuProps = ISidebarComponentProps;
+
+export const CreateNewTabverseMenu = (props: CreateNewTabverseMenuProps) => {
   const styles = createStyles();
   return (
     <div style={styles.singleMenuContainer}>

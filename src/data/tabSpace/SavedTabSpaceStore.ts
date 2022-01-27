@@ -4,7 +4,8 @@ import {
   SavedStore,
   queryPageLimit,
 } from '../../store/store';
-import { ISavedTabSpace, TabSpace } from './tabSpace';
+import { ISavedTab, Tab } from './Tab';
+import { ISavedTabSpace, TabSpace } from './TabSpace';
 import { ITabSpaceData, getTabSpaceData } from './bootstrap';
 import {
   TabSpaceDBMsg,
@@ -15,11 +16,10 @@ import {
   subscribePubSubMessage,
 } from '../../message';
 import { debounce, logger } from '../../global';
-import { db } from '../../store/db';
 
 import { IDatabaseChange } from 'dexie-observable/api';
-import { ISavedTab, Tab } from './tab';
 import { strict as assert } from 'assert';
+import { db } from '../../store/db';
 import { map } from 'lodash';
 import { observe } from 'mobx';
 

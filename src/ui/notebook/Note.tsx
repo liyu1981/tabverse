@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { Button, Collapse, EditableText, Icon } from '@blueprintjs/core';
 import { EditorState, convertFromRaw, convertToRaw } from 'draft-js';
-import { INote, Note } from '../../data/note/note';
+import { INote, Note } from '../../data/note/Noote';
 
 import { DraftRichEditor } from './DraftRichEditor';
 import { useState } from 'react';

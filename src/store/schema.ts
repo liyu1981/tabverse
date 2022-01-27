@@ -1,10 +1,10 @@
-import { AllBookmark, Bookmark } from '../data/bookmark/bookmark';
-import { AllNote, Note } from '../data/note/note';
-import { AllTodo, Todo } from '../data/todo/todo';
+import { AllBookmark, Bookmark } from '../data/bookmark/Bookmark';
+import { AllNote, Note } from '../data/note/Noote';
+import { AllTodo, Todo } from '../data/todo/Todo';
 
-import { ChromeSession } from '../data/chromeSession/session';
-import { Tab } from '../data/tabSpace/tab';
-import { TabSpace } from '../data/tabSpace/tabSpace';
+import { ChromeSession } from '../data/chromeSession/ChromeSession';
+import { Tab } from '../data/tabSpace/Tab';
+import { TabSpace } from '../data/tabSpace/TabSpace';
 
 export const schemas = {};
 

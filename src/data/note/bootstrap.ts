@@ -1,12 +1,12 @@
-import { AllNote, Note } from './note';
+import { AllNote, Note } from './Noote';
 import {
   SavedNoteStore,
   monitorAllNoteChange,
   monitorTabSpaceChanges,
   queryAllNote,
-} from './noteStore';
+} from './SavedNoteStore';
 
-import { NotTabSpaceId } from '../chromeSession/session';
+import { NotTabSpaceId } from '../chromeSession/ChromeSession';
 import { addPagingToQueryParams } from '../../store/store';
 import { strict as assert } from 'assert';
 import { exposeDebugData } from '../../debug';

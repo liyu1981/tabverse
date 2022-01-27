@@ -1,25 +1,40 @@
 import * as React from 'react';
 
-import { Button, Tree, TreeNodeInfo } from '@blueprintjs/core';
+import { Button, Icon, Tree, TreeNodeInfo } from '@blueprintjs/core';
 import {
   ChromeSession,
   IChromeSessionSavePayload,
   IChromeWindow,
   NotTabSpaceTabId,
-} from '../../data/chromeSession/session';
+} from '../../../data/chromeSession/ChromeSession';
 import { clone, reduce } from 'lodash';
 import { restoreTab, restoreWindow } from './util';
 import { useEffect, useState } from 'react';
 
-import { ITabSpaceMap } from '../../data/chromeSession/sessionStore';
+import { ITabSpaceMap } from '../../../data/chromeSession/sessionStore';
 
 function createStyles(): { [k: string]: React.CSSProperties } {
   return {
+    sessionTitle: {
+      fontSize: '1.2em',
+      minHeight: '48px',
+      lineHeight: '48px',
+      marginLeft: '8px',
+      fontWeight: 'bold',
+    },
     chromeTabTitle: {
+      fontSize: '1.2em',
       paddingLeft: '4px',
       wordBreak: 'break-all',
       cursor: 'pointer',
-      width: '640px',
+    },
+    domainLabel: {
+      color: '#999',
+    },
+    tabFavIcon: {
+      width: '32px',
+      height: '32px',
+      marginRight: '8px',
     },
   };
 }
@@ -27,6 +42,15 @@ function createStyles(): { [k: string]: React.CSSProperties } {
 interface SessionDetailProps {
   session: IChromeSessionSavePayload;
   tabSpaceMap: ITabSpaceMap;
+}
+
+function getDomainFromUrl(urlString: string) {
+  try {
+    const u = new URL(urlString);
+    return `${u.protocol}://${u.host}...`;
+  } catch (e) {
+    return '';
+  }
 }
 
 export const SessionDetail = ({ session, tabSpaceMap }: SessionDetailProps) => {
@@ -61,7 +85,7 @@ export const SessionDetail = ({ session, tabSpaceMap }: SessionDetailProps) => {
         const chromeTab = chromeSession.tabs.find((t) => t.tabId === tabId);
         return {
           id: chromeTab.tabId,
-          icon: <img src={chromeTab.favIconUrl} width="19" height="19" />,
+          icon: <img style={styles.tabFavIcon} src={chromeTab.favIconUrl} />,
           label: (
             <div
               style={styles.chromeTabTitle}
@@ -71,6 +95,12 @@ export const SessionDetail = ({ session, tabSpaceMap }: SessionDetailProps) => {
               {chromeTab.title}
             </div>
           ),
+          secondaryLabel: (
+            <span style={styles.domainLabel}>
+              {getDomainFromUrl(chromeTab.url)}
+            </span>
+          ),
+          className: 'tabverse-session-tree-node',
         };
       })
       .toArray();
@@ -87,11 +117,17 @@ export const SessionDetail = ({ session, tabSpaceMap }: SessionDetailProps) => {
             : `Tabverse(${tabSpaceName}) managed window(${window.windowId})`;
         return {
           id: window.windowId,
-          icon:
-            window.tabSpaceTabId === NotTabSpaceTabId
-              ? 'application'
-              : 'full-stacked-chart',
-          label: <b>{label}</b>,
+          icon: (
+            <Icon
+              icon={
+                window.tabSpaceTabId === NotTabSpaceTabId
+                  ? 'application'
+                  : 'full-stacked-chart'
+              }
+              size={24}
+            />
+          ),
+          label: <div style={styles.sessionTitle}>{label}</div>,
           secondaryLabel: (
             <span>
               <Button
@@ -105,6 +141,7 @@ export const SessionDetail = ({ session, tabSpaceMap }: SessionDetailProps) => {
           isExpanded: expandedMap[window.windowId],
           childNodes: getWindowChildNodes(window),
           windowId: window.windowId,
+          className: 'tabverse-session-tree-node',
         };
       })
       .toArray();

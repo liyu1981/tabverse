@@ -21,6 +21,7 @@ import { find } from 'lodash';
 import { getQueryParameters } from './common/queryAndHashParameter';
 import { bootstrap as noteBootstrap } from '../data/note/bootstrap';
 import { renderPage } from './common/base';
+import { bootstrap as savedChromeSessionBootstrap } from '../data/chromeSession/bootstrap';
 import { bootstrap as storeBootstrap } from '../store/bootstrap';
 import { bootstrap as todoBootstrap } from '../data/todo/bootstrap';
 
@@ -47,6 +48,7 @@ async function bootstrap() {
     bookmarkBootstrap();
     noteBootstrap();
     todoBootstrap();
+    savedChromeSessionBootstrap();
 
     switch (queryParams.op) {
       case TabSpaceOp.LoadSaved:

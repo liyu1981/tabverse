@@ -1,12 +1,12 @@
-import { AllTodo, Todo } from './todo';
+import { AllTodo, Todo } from './Todo';
 import {
   SavedTodoStore,
   monitorAllTodoChange,
   monitorTabSpaceChanges,
   queryAllTodo,
-} from './todoStore';
+} from './SavedTodoStore';
 
-import { NotTabSpaceId } from '../chromeSession/session';
+import { NotTabSpaceId } from '../chromeSession/ChromeSession';
 import { addPagingToQueryParams } from '../../store/store';
 import { strict as assert } from 'assert';
 import { exposeDebugData } from '../../debug';

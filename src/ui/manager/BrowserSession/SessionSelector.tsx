@@ -12,10 +12,11 @@ import {
 import {
   ChromeSession,
   IChromeSessionSavePayload,
-} from '../../data/chromeSession/session';
+  NotSessionId,
+} from '../../../data/chromeSession/ChromeSession';
 import { flatten, merge, uniq } from 'lodash';
 
-import { IDisplaySavedSessionGroup } from '../../data/chromeSession/sessionStore';
+import { IDisplaySavedSessionGroup } from '../../../data/chromeSession/sessionStore';
 import { useState } from 'react';
 
 function createStyles(): { [k: string]: React.CSSProperties } {
@@ -174,7 +175,7 @@ export const SessionSelector = ({
           text={
             <SessionLabel
               session={session}
-              selected={session.id === selectedSession.id}
+              selected={session.id === (selectedSession?.id ?? NotSessionId)}
               onDelete={onDeleteSession}
             />
           }

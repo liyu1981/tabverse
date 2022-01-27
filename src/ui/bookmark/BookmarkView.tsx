@@ -6,7 +6,7 @@ import {
 } from '../../data/bookmark/bootstrap';
 import { Button, ButtonGroup, EditableText } from '@blueprintjs/core';
 
-import { Bookmark } from '../../data/bookmark/bookmark';
+import { Bookmark } from '../../data/bookmark/Bookmark';
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { observer } from 'mobx-react-lite';
 import { usePageControl } from '../common/usePageControl';

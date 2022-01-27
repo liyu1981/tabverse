@@ -2,12 +2,12 @@ import * as React from 'react';
 
 import { Button, ButtonGroup, Card, Elevation, Icon } from '@blueprintjs/core';
 
-import { Bookmark } from '../../data/bookmark/bookmark';
-import { CollapsibleLabel } from '../common/CollapsibleLabel';
-import { FavIcon } from '../common/FavIcon';
+import { Bookmark } from '../../../data/bookmark/Bookmark';
+import { CollapsibleLabel } from '../../common/CollapsibleLabel';
+import { FavIcon } from '../../common/FavIcon';
 import { Popover2 } from '@blueprintjs/popover2';
-import { Tab } from '../../data/tabSpace/tab';
-import { getAllBookmarkData } from '../../data/bookmark/bootstrap';
+import { Tab } from '../../../data/tabSpace/Tab';
+import { getAllBookmarkData } from '../../../data/bookmark/bootstrap';
 import { merge } from 'lodash';
 import { observer } from 'mobx-react-lite';
 

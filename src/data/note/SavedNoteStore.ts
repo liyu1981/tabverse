@@ -1,4 +1,4 @@
-import { AllNote, IAllNoteSavePayload, Note, INoteJSON } from './note';
+import { AllNote, IAllNoteSavePayload, INoteJSON, Note } from './Noote';
 import {
   DEFAULT_SAVE_DEBOUNCE,
   InSavingStatus,
@@ -10,10 +10,10 @@ import {
   subscribePubSubMessage,
 } from '../../message';
 import { debounce, logger } from '../../global';
-import { getAllNoteData } from './bootstrap';
 
 import { IDatabaseChange } from 'dexie-observable/api';
 import { db } from '../../store/db';
+import { getAllNoteData } from './bootstrap';
 import { getTabSpaceData } from '../tabSpace/bootstrap';
 import { observe } from 'mobx';
 
