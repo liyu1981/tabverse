@@ -18,7 +18,6 @@ export function getLoadingComponent(
     useAsyncEffect(async () => {
       setLoadStatus(LoadStatus.Loading);
       const result = await loader();
-      console.log('loaded:', result);
       const props = {};
       props[destProp] = result;
       setPropsData(props);
