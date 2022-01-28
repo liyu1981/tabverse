@@ -1,0 +1,34 @@
+.container {
+  display: flex;
+  width: 100%;
+  overflow-y: hidden;
+}
+
+.entryContainer {
+  padding: 8px;
+  min-height: 600px;
+  overflow-y: hidden;
+}
+
+.buttonGroupContainer {
+  margin: 0px 20px 20px 3px;
+  min-width: 200px;
+  max-width: 200px;
+  position: sticky;
+  min-height: 300px;
+}
+
+.savedTabsContainer {
+  margin-top: 20px;
+  width: 100%;
+  padding-right: 20px;
+  overflow-y: auto;
+  padding-bottom: 50px;
+  padding-left: 1px;
+}
+
+.infoContainer {
+  margin-left: 18px;
+  word-break: break-all;
+  margin-bottom: 48px;
+}

@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Button, EditableText, Intent } from '@blueprintjs/core';
+import { Button, EditableText, Icon, Intent } from '@blueprintjs/core';
 
 import { AllBookmark } from '../../../data/bookmark/Bookmark';
 import { ErrorBoundary } from '../../common/ErrorBoundary';
@@ -15,52 +15,13 @@ import { observer } from 'mobx-react-lite';
 import { saveCurrentTabSpace } from '../../../data/tabSpace/SavedTabSpaceStore';
 import { updateTabSpaceName } from '../../../data/tabSpace/chromeTab';
 import { useState } from 'react';
+import classes from './TabSpaceListView.module.scss';
+import { StickyContainer } from '../../common/StickyContainer';
 
-function createStyles(): {
-  [k: string]: React.CSSProperties;
-} {
-  return {
-    container: {
-      width: '98%',
-      marginLeft: '2px',
-      marginTop: '20px',
-    },
-    bottomPlaceholder: {
-      minHeight: '80px',
-    },
-    titleContainer: {
-      display: 'flex',
-    },
-    titleMain: {
-      display: 'flex',
-      width: '100%',
-    },
-    titleH1: {
-      width: '98%',
-      marginLeft: '4px',
-    },
-    titleButtons: {
-      display: 'flex',
-      alignItems: 'center',
-    },
-    toolbarContainer: {
-      width: '100%',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      minHeight: '40px',
-    },
-    toolbarLeftContainer: {
-      display: 'flex',
-      width: '100%',
-    },
-    toolbarRightContainer: {
-      display: 'flex',
-      minWidth: '200px',
-      textAlign: 'start',
-      direction: 'rtl',
-    },
-  };
+function inBookmark(tab: Tab, allBookmark: AllBookmark): boolean {
+  return (
+    allBookmark.bookmarks.findIndex((bookmark) => bookmark.url === tab.url) >= 0
+  );
 }
 
 interface TabSpaceListViewProps {
@@ -69,15 +30,8 @@ interface TabSpaceListViewProps {
   allBookmark: AllBookmark;
 }
 
-function inBookmark(tab: Tab, allBookmark: AllBookmark): boolean {
-  return (
-    allBookmark.bookmarks.findIndex((bookmark) => bookmark.url === tab.url) >= 0
-  );
-}
-
 export const TabSpaceListView = observer(
   ({ tabSpace, tabPreview, allBookmark }: TabSpaceListViewProps) => {
-    const styles = createStyles();
     const [title, setTitle] = useState(tabSpace.name);
 
     const tabEntries = tabSpace.tabIds.map((tabId) => {
@@ -99,11 +53,11 @@ export const TabSpaceListView = observer(
     });
 
     const tabSpaceTitleView = (
-      <div style={styles.titleContainer}>
-        <div style={styles.titleMain}>
-          <h1 style={styles.titleH1}>
+      <div className={classes.titleContainer}>
+        <div className={classes.titleMain}>
+          <h1 className={classes.titleH1}>
             <EditableText
-              className="bp3-editable-text-fullwidth"
+              className={classes.editableTextFullwidth}
               alwaysRenderInput={true}
               maxLength={256}
               value={title}
@@ -113,7 +67,7 @@ export const TabSpaceListView = observer(
             />
           </h1>
         </div>
-        <div style={styles.titleButtons}>
+        <div className={classes.titleButtons}>
           <Button
             text={isIdNotSaved(tabSpace.id) ? 'Save' : 'Auto'}
             title={
@@ -131,10 +85,11 @@ export const TabSpaceListView = observer(
     );
 
     const tabSpaceToolbarView = (
-      <div style={styles.toolbarContainer}>
-        <div style={styles.toolbarLeftContainer}></div>
-        <div></div>
-        <div style={styles.toolbarRightContainer}>
+      <div className={classes.toolbarContainer}>
+        <div className={classes.toolbarLeftContainer}>
+          <div>{`Working on ${tabSpace.tabs.size} tabs`}</div>
+        </div>
+        <div className={classes.toolbarRightContainer}>
           {tabSpace.needAutoSave() ? (
             <SaveIndicator {...getSavedStoreManager().savedStores} />
           ) : (
@@ -144,12 +99,20 @@ export const TabSpaceListView = observer(
       </div>
     );
 
+    const tabSpaceHeaderView = (
+      <StickyContainer thresh={0} stickyOnClassName={classes.stickyOn}>
+        <div className={classes.header}>
+          {tabSpaceTitleView}
+          {tabSpaceToolbarView}
+        </div>
+      </StickyContainer>
+    );
+
     return (
-      <div style={styles.container}>
-        {tabSpaceTitleView}
-        {tabSpaceToolbarView}
+      <div className={classes.container}>
+        {tabSpaceHeaderView}
         <div>{tabEntries}</div>
-        <div style={styles.bottomPlaceholder}></div>
+        <div className={classes.bottomPlaceholder}></div>
       </div>
     );
   },

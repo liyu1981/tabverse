@@ -1,0 +1,34 @@
+@use '../../global.scss';
+
+.indicatorLine {
+  display: flex;
+  font-size: 1.2em;
+  align-items: center;
+  margin: 38px auto;
+  color: #333;
+  text-shadow: 0px 1px 0px rgb(255 255 255 / 90%);
+}
+
+.indicatorLine::before {
+  content: '';
+  flex: 1;
+  border: 1px solid #333;
+  border-bottom: 0px;
+  box-shadow: 0px 1px 0px 0px white;
+}
+
+.indicatorLine::after {
+  content: '';
+  flex: 1;
+  border: 1px solid #333;
+  border-bottom: 0px;
+  box-shadow: 0px 1px 0px 0px white;
+}
+
+.indicatorLine:not(:empty)::before {
+  margin-right: 1em;
+}
+
+.indicatorLine:not(:empty)::after {
+  margin-left: 1em;
+}

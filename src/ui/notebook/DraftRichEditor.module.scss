@@ -1,4 +1,4 @@
-.RichEditor-root {
+.root {
   background: #fff;
   border: 1px solid #ddd;
   font-family: 'Georgia', serif;
@@ -6,29 +6,29 @@
   padding: 15px;
 }
 
-.RichEditor-editor {
+.editor {
   border-top: 1px solid #ddd;
   cursor: text;
   font-size: 16px;
   margin-top: 10px;
 }
 
-.RichEditor-editor .public-DraftEditorPlaceholder-root,
-.RichEditor-editor .public-DraftEditor-content {
+.editor :global(.public-DraftEditorPlaceholder-root),
+.editor :global(.public-DraftEditor-content) {
   margin: 0 -15px -15px;
   padding: 15px;
 }
 
-.RichEditor-editor .public-DraftEditor-content {
+.editor :global(.public-DraftEditor-content) {
   min-height: 100px;
   height: 300px;
 }
 
-.RichEditor-hidePlaceholder .public-DraftEditorPlaceholder-root {
+.hidePlaceholder :global(.public-DraftEditorPlaceholder-root) {
   display: none;
 }
 
-.RichEditor-editor .RichEditor-blockquote {
+.editor .blockquote {
   border-left: 5px solid #eee;
   color: #666;
   font-family: 'Hoefler Text', 'Georgia', serif;
@@ -37,14 +37,14 @@
   padding: 10px 20px;
 }
 
-.RichEditor-editor .public-DraftStyleDefault-pre {
+.editor :global(.public-DraftStyleDefault-pre) {
   background-color: rgba(0, 0, 0, 0.05);
   font-family: 'Inconsolata', 'Menlo', 'Consolas', monospace;
   font-size: 16px;
   padding: 20px;
 }
 
-.RichEditor-controls {
+.controls {
   font-family: 'Helvetica', sans-serif;
   font-size: 14px;
   margin-bottom: 5px;
@@ -54,12 +54,12 @@
   padding-left: 12px;
 }
 
-.RichEditor-controls:first-of-type {
+.controls:first-of-type {
   border-left: 0px;
   padding-left: 0px;
 }
 
-.RichEditor-styleButton {
+.styleButton {
   color: #999;
   cursor: pointer;
   margin-right: 16px;
@@ -67,15 +67,15 @@
   display: inline-block;
 }
 
-.RichEditor-styleButton:hover {
+.styleButton:hover {
   color: #333;
 }
 
-.RichEditor-activeButton {
+.activeButton {
   color: #5890ff;
 }
 
-.RichEditor-toolbar {
+.toolbar {
   display: flex;
   align-items: center;
 }

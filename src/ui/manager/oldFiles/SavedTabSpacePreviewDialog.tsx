@@ -11,11 +11,11 @@ import {
 import {
   SavedTabSpaceStore,
   deleteSavedTabSpace,
-} from '../../data/tabSpace/SavedTabSpaceStore';
+} from '../../../data/tabSpace/SavedTabSpaceStore';
 
-import { TabCard } from './TabSpaceView/TabCard';
-import { TabSpace } from '../../data/tabSpace/TabSpace';
-import { logger } from '../../global';
+import { TabCard } from '../TabSpaceView/TabCard';
+import { TabSpace } from '../../../data/tabSpace/TabSpace';
+import { logger } from '../../../global';
 import { observer } from 'mobx-react-lite';
 
 function createStyles(): { [k: string]: React.CSSProperties } {

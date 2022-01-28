@@ -5,74 +5,14 @@ import {
   deleteSavedSession,
 } from '../../../data/chromeSession/sessionStore';
 
-import { Colors } from '@blueprintjs/core';
 import { IChromeSessionSavePayload } from '../../../data/chromeSession/ChromeSession';
-import { LoadStatus } from '../../../global';
 import { SavedChromeSessionCollection } from '../../../data/chromeSession/SavedChromeSessionCollection';
 import { SessionDetail } from './SessionDetail';
 import { SessionSelector } from './SessionSelector';
 import { observer } from 'mobx-react-lite';
 import { useAsyncEffect } from '../../common/useAsyncEffect';
 import { useState } from 'react';
-
-function createStyles(): { [k: string]: React.CSSProperties } {
-  return {
-    sessionBrowserContainer: {
-      display: 'flex',
-    },
-    sessionBrowserRightContainer: {
-      minWidth: '350px',
-      height: '100vh',
-      padding: '18px',
-      backgroundColor: Colors.LIGHT_GRAY3,
-      boxShadow: 'inset 0px 0px 1px 0px #333',
-      overflowY: 'auto',
-      right: '0px',
-      position: 'fixed',
-    },
-    sessionBrowserLeftContainer: {
-      padding: '20px 8px',
-      width: 'calc(100% - 350px)',
-      height: '100vh',
-    },
-    chromeTabContainer: {
-      display: 'flex',
-      minHeight: '36px',
-    },
-    chromeTabInfoContainer: {
-      width: '100%',
-    },
-    chromeTabTitle: {
-      paddingLeft: '4px',
-      wordBreak: 'break-all',
-      cursor: 'pointer',
-      width: '640px',
-    },
-    chromeTabUrl: {
-      wordBreak: 'break-all',
-    },
-    sessionLabelActive: {
-      borderLeft: `solid ${Colors.GRAY1}`,
-    },
-    sessionLabelContainer: {
-      paddingLeft: '8px',
-    },
-    sessionLabelSub: {
-      marginTop: '-10px',
-      color: Colors.GRAY3,
-    },
-    sessionLabelContentContainer: {
-      display: 'flex',
-      alignItems: 'center',
-    },
-    sessionLabelContent: {
-      width: '100%',
-    },
-    sessionLabelTools: {
-      minWidth: '20px',
-    },
-  };
-}
+import classes from './SessionBrowser.module.scss';
 
 function selectFirstSession(savedSessionGroups: IDisplaySavedSessionGroup[]) {
   if (
@@ -91,8 +31,6 @@ export interface SessionBrowserProps {
 
 export const SessionBrowser = observer(
   ({ savedChromeSessionCollection }: SessionBrowserProps) => {
-    const styles = createStyles();
-
     const [selectedSession, setSelectedSession] =
       useState<IChromeSessionSavePayload | null>(() =>
         selectFirstSession(savedChromeSessionCollection.savedSessionGroups),
@@ -128,16 +66,16 @@ export const SessionBrowser = observer(
     };
 
     return (
-      <div style={styles.sessionBrowserContainer}>
+      <div className={classes.sessionBrowserContainer}>
         {savedChromeSessionCollection.savedSessionGroups.length >= 1 ? (
           <>
-            <div style={styles.sessionBrowserLeftContainer}>
+            <div className={classes.sessionBrowserLeftContainer}>
               <SessionDetail
                 session={selectedSession}
                 tabSpaceMap={getTabSpaceMap()}
               />
             </div>
-            <div style={styles.sessionBrowserRightContainer}>
+            <div className={classes.sessionBrowserRightContainer}>
               <SessionSelector
                 sessions={savedChromeSessionCollection.savedSessionGroups}
                 selectedSession={selectedSession}

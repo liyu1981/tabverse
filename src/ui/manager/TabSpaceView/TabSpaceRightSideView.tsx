@@ -15,34 +15,15 @@ import { getLoadingComponent } from '../../common/LoadingComponent';
 import { loadByTabSpaceId as noteLoadByTabSpaceId } from '../../../data/note/bootstrap';
 import { loadByTabSpaceId as todoLoadByTabSpaceId } from '../../../data/todo/bootstrap';
 import { useMemo } from 'react';
+import classes from './TabSpaceRightSideView.module.scss';
 
 export interface ITabSpaceRightSideViewProps {
   tabSpace: TabSpace;
 }
 
-function createStyles(): { [k: string]: React.CSSProperties } {
-  return {
-    container: {
-      marginTop: '72px',
-    },
-    tabsContainer: {
-      marginBottom: '50px',
-    },
-    card: {
-      padding: '8px 12px',
-      width: '100%',
-    },
-    wrapText: {
-      overflowWrap: 'anywhere',
-    },
-  };
-}
-
 export const TabSpaceRightSideView = ({
   tabSpace,
 }: ITabSpaceRightSideViewProps) => {
-  const styles = createStyles();
-
   const [TodoWithLoading, BookmarkWithLoading, NotebookWithLoading] =
     useMemo(() => {
       const todoLoader = async () => {
@@ -80,8 +61,8 @@ export const TabSpaceRightSideView = ({
 
   return (
     <ErrorBoundary>
-      <div style={styles.container}>
-        <div style={styles.tabsContainer}>
+      <div className={classes.container}>
+        <div className={classes.tabsContainer}>
           <BPTabs animate={true} renderActiveTabPanelOnly={false}>
             <BPTab
               id="todo"
@@ -94,7 +75,7 @@ export const TabSpaceRightSideView = ({
             />
           </BPTabs>
         </div>
-        <div style={styles.tabsContainer}>
+        <div className={classes.tabsContainer}>
           <BPTabs animate={true} renderActiveTabPanelOnly={false}>
             <BPTab
               id="note"

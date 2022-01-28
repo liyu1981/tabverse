@@ -11,44 +11,7 @@ import { TabCard } from '../TabSpaceView/TabCard';
 import { TabSpace } from '../../../data/tabSpace/TabSpace';
 import { logger } from '../../../global';
 import { observer } from 'mobx-react-lite';
-
-function createStyles(): { [k: string]: React.CSSProperties } {
-  return {
-    container: {
-      display: 'flex',
-      width: '100%',
-      overflowY: 'hidden',
-    },
-    entryContainer: {
-      padding: '8px',
-      minHeight: '600px',
-      overflowY: 'hidden',
-    },
-    buttonGroupContainer: {
-      marginTop: '0px',
-      marginBottom: '20px',
-      marginRight: '20px',
-      marginLeft: '3px',
-      minWidth: '200px',
-      maxWidth: '200px',
-      position: 'sticky',
-      height: '400px',
-    },
-    savedTabsContainer: {
-      marginTop: '20px',
-      width: '100%',
-      paddingRight: '20px',
-      overflowY: 'auto',
-      paddingBottom: '50px',
-      paddingLeft: '1px',
-    },
-    infoContainer: {
-      marginLeft: '18px',
-      wordBreak: 'break-all',
-      marginBottom: '48px',
-    },
-  };
-}
+import classes from './SavedTabSpaceDetail.module.scss';
 
 interface ISavedTabSpaceDetailProps {
   tabSpace: TabSpace;
@@ -59,8 +22,6 @@ interface ISavedTabSpaceDetailProps {
 
 export const SavedTabSpaceDetail = observer(
   (props: ISavedTabSpaceDetailProps) => {
-    const styles = createStyles();
-
     const entries: React.ReactElement[] = [];
     props.tabSpace.tabs.forEach((savedTab) => {
       entries.push(
@@ -79,9 +40,9 @@ export const SavedTabSpaceDetail = observer(
     };
 
     return (
-      <div style={styles.container}>
-        <div style={styles.buttonGroupContainer}>
-          <div style={styles.infoContainer}>
+      <div className={classes.container}>
+        <div className={classes.buttonGroupContainer}>
+          <div className={classes.infoContainer}>
             <h2>{props.tabSpace.name}</h2>
             <div>
               <sub style={{ color: Colors.GRAY3 }}>
@@ -117,7 +78,6 @@ export const SavedTabSpaceDetail = observer(
             >
               Load to Current
             </Button>
-            {/* <Button icon="archive">Archive</Button> */}
             <Button
               icon="trash"
               onClick={() => deleteTabSpace(props.tabSpace.id)}
@@ -126,7 +86,7 @@ export const SavedTabSpaceDetail = observer(
             </Button>
           </ButtonGroup>
         </div>
-        <div style={styles.savedTabsContainer}>
+        <div className={classes.savedTabsContainer}>
           <p>Saved Tabs({entries.length})</p>
           {entries}
         </div>

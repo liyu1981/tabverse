@@ -1,28 +1,36 @@
 const path = require('path');
 const { merge } = require('webpack-merge');
-const baseConfig = require('./webpack.base.config.js');
+const { baseConfig, getCustomRules } = require('./webpack.base.config.js');
 const webpack = require('webpack');
 
 module.exports = merge(baseConfig, {
-  // devServer: {
-  //   port: 4000,
-  //   devMiddleware: {
-  //     writeToDisk: true
-  //   }
-  // },
   output: {
     path: path.resolve(__dirname, 'dist/generated/dev'),
     filename: '[name].js',
     publicPath: '',
   },
+
   module: {
-    rules: [
-      {
-        test: /\.(j|t)s$/,
-        exclude: /node_modules/,
-        use: ['eslint-loader'],
+    rules: getCustomRules({
+      'css-loader-options': {
+        modules: {
+          localIdentName: '[path][name]__[local]--[hash:base64:5]',
+        },
       },
-    ],
+      'sass-loader-options': {
+        sassOptions: {
+          includePaths: [path.resolve(__dirname, 'node_modules')],
+        },
+      },
+      'extra-rules': [
+        {
+          test: /\.(j|t)s$/,
+          exclude: /node_modules/,
+          use: ['eslint-loader'],
+        },
+      ],
+    }),
   },
+
   plugins: [new webpack.HotModuleReplacementPlugin()],
 });

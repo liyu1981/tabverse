@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { INote, Note } from '../../data/note/Noote';
+import { INote, Note } from '../../data/note/Note';
 
 import { AllNoteData } from '../../data/note/bootstrap';
 import { Button } from '@blueprintjs/core';
@@ -8,40 +8,7 @@ import { ErrorBoundary } from '../common/ErrorBoundary';
 import { NoteView } from './Note';
 import { observer } from 'mobx-react-lite';
 import { usePageControl } from '../common/usePageControl';
-
-function createStyles(): { [k: string]: React.CSSProperties } {
-  return {
-    container: {
-      paddingLeft: '4px',
-    },
-    noteToolContainer: {
-      display: 'flex',
-      alignItems: 'center',
-      height: '50px',
-      justifyContent: 'space-between',
-    },
-    collapseButton: {
-      width: '32px',
-    },
-    titleContainer: {
-      width: '100%',
-      fontSize: '1.5em',
-    },
-    toolsContainer: {
-      minWidth: '50px',
-      direction: 'rtl',
-      textAlign: 'start',
-    },
-    noticeContainer: {
-      background: '#fff',
-      border: '1px solid #ddd',
-      color: '#999',
-      padding: '8px 18px',
-      fontStyle: 'italic',
-      fontWeight: 500,
-    },
-  };
-}
+import classes from './NotebookView.module.scss';
 
 export interface NotebookViewProps {
   allNoteData: AllNoteData;
@@ -50,8 +17,6 @@ export interface NotebookViewProps {
 const NOTE_PAGE_LIMIT = 2;
 
 export const NotebookView = observer((props: NotebookViewProps) => {
-  const styles = createStyles();
-
   const updateNote = (id: string, params: Partial<INote>) => {
     const nIndex = props.allNoteData.allNote.findNoteIndex(id);
     if (nIndex < 0) {
@@ -91,15 +56,15 @@ export const NotebookView = observer((props: NotebookViewProps) => {
 
   return (
     <ErrorBoundary>
-      <div style={styles.container}>
+      <div className={classes.container}>
         {getCurrentPageNotes().length <= 0 ? (
-          <div style={styles.noticeContainer}>
+          <div className={classes.noticeContainer}>
             No notes found! You can create new note with New Note button.
           </div>
         ) : (
           ''
         )}
-        <div style={styles.noteToolContainer}>
+        <div className={classes.noteToolContainer}>
           <div>
             <Button
               icon="draw"

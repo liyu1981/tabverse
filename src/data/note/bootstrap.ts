@@ -1,4 +1,4 @@
-import { AllNote, Note } from './Noote';
+import { AllNote, Note } from './Note';
 import {
   SavedNoteStore,
   monitorAllNoteChange,

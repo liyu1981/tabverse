@@ -1,0 +1,34 @@
+@use '../../../global.scss';
+
+.sessionSelectorMenu {
+  margin-bottom: 40px;
+}
+.sessionLabelActive {
+  border-left: solid global.$color-main-brand;
+}
+
+.sessionLabelContainer {
+  padding-left: 8px;
+}
+
+.sessionLabelSub {
+  margin-top: -10px;
+  color: global.$color-light-accent;
+}
+
+.sessionLabelContentContainer {
+  display: flex;
+  align-items: center;
+}
+
+.sessionLabelContent {
+  width: 100%;
+}
+
+.sessionLabelTools {
+  min-width: 20px;
+}
+
+.sessionMenuGroupSelector {
+  margin-bottom: 8px;
+}

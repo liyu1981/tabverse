@@ -1,0 +1,93 @@
+.card {
+  margin-top: 6px;
+  padding: 8px 12px;
+  min-height: 53px;
+}
+
+.leftSide {
+  display: flex;
+  float: left;
+  margin-top: 10px;
+}
+
+.dragHandle {
+  margin-left: -8px;
+  margin-right: 10px;
+  color: #666;
+  cursor: grab;
+}
+
+.content {
+  display: block;
+  padding-left: 44px;
+  padding-right: 64px;
+}
+
+.rightSide {
+  display: flex;
+  float: right;
+  margin-top: 4px;
+}
+
+.wrapText {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  hyphens: auto;
+}
+
+.tabTitle {
+  font-size: 1.2em;
+}
+
+.tabUrl {
+  color: #888;
+}
+
+.previewHeaderContainer {
+  padding: 8px;
+  border-bottom: 1px solid #ccc;
+  background-color: rgb(249, 249, 249);
+  border-radius: 6px 6px 0px 0px;
+}
+
+.previewFavIconContainer {
+  margin-top: 0px;
+  margin-right: 10px;
+}
+
+.previewCard {
+  padding: 0px;
+  max-width: 524px;
+}
+
+.previewTitleH {
+  display: inline-block;
+  font-size: 1.5em;
+}
+
+.previewWrapText {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  hyphens: auto;
+  word-break: break-all;
+}
+
+.previewTitle {
+  display: flex;
+  align-items: center;
+}
+
+.previewImageContainer {
+  padding: 12px;
+}
+
+.previewImage {
+  box-shadow: 0 2.8px 2.2px rgba(0, 0, 0, 0.034),
+    0 6.7px 5.3px rgba(0, 0, 0, 0.048), 0 12.5px 10px rgba(0, 0, 0, 0.06),
+    0 22.3px 17.9px rgba(0, 0, 0, 0.072), 0 41.8px 33.4px rgba(0, 0, 0, 0.086),
+    0 100px 80px rgba(0, 0, 0, 0.12);
+  border-radius: 8px;
+  max-width: 500px;
+  max-height: 500px;
+  border: 1px solid #ccc;
+}

@@ -1,0 +1,13 @@
+$icon-size: 32px;
+
+.container {
+  margin-top: -10px;
+  margin-right: 10px;
+}
+
+.img {
+  max-width: $icon-size;
+  min-width: $icon-size;
+  max-height: $icon-size;
+  min-height: $icon-size;
+}

@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { IManagerQueryParams, ManagerViewRoute } from '../ManagerView';
 
-import { BottomNav } from '../BottomNav';
+import { BottomNav } from '../BottomNav/BottomNav';
 import { BrowserSession } from './BrowserSession';
 import { ErrorBoundary } from '../../common/ErrorBoundary';
 import { ITabSpaceData } from '../../../data/tabSpace/bootstrap';
@@ -10,6 +10,7 @@ import { Icon } from '@blueprintjs/core';
 import { LiveTabSpace } from './LiveTabSpace';
 import { SavedTabSpace } from './SavedTabSpace';
 import { TabSpaceLogo } from '../../common/TabSpaceLogo';
+import classes from './Sidebar.module.scss';
 import clsx from 'clsx';
 import { getAllChromeSessionData } from '../../../data/chromeSession/bootstrap';
 
@@ -24,27 +25,6 @@ export interface ISidebarComponentProps {
   active: boolean;
 }
 
-export function createSidebarComponentStyles(): {
-  [k: string]: React.CSSProperties;
-} {
-  return {
-    container: {
-      backgroundColor: 'white',
-      borderRadius: '3px',
-      marginBottom: '18px',
-      padding: '3px',
-      boxShadow: '0px 0px 5px -1px #333',
-    },
-    sectionHeadContainer: {
-      lineHeight: '42px',
-      paddingLeft: '10px',
-      fontSize: '1.2em',
-      backgroundColor: '#fafafa',
-      fontWeight: 'bold',
-    },
-  };
-}
-
 export function SidebarComponent({
   active,
   route,
@@ -57,25 +37,16 @@ export function SidebarComponent({
   onSwitch: (value) => void;
   children?: JSX.Element | JSX.Element[];
 }) {
-  const styles = createSidebarComponentStyles();
-
   return (
     <ErrorBoundary>
       <div
         className={clsx(
-          'tabverse-sidebar-component',
-          active
-            ? 'tabverse-sidebar-component-active'
-            : 'tabverse-sidebar-component-inactive',
+          classes.sidebarComponent,
+          active ? classes.active : classes.inactive,
         )}
-        style={styles.container}
       >
-        <div className="tabverse-sidebar-component-edge"> </div>
-        <div
-          className={'tabverse-sidebar-component-header'}
-          style={styles.sectionHeadContainer}
-          onClick={() => onSwitch(route)}
-        >
+        <div className={classes.edge}> </div>
+        <div className={classes.header} onClick={() => onSwitch(route)}>
           {header}
         </div>
         {active ? children : <></>}

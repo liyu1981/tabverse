@@ -10,6 +10,8 @@ import { Tab } from '../../../data/tabSpace/Tab';
 import { getAllBookmarkData } from '../../../data/bookmark/bootstrap';
 import { merge } from 'lodash';
 import { observer } from 'mobx-react-lite';
+import classes from './TabCard.module.scss';
+import clsx from 'clsx';
 
 function createStyles(): { [k: string]: React.CSSProperties } {
   return {
@@ -97,28 +99,26 @@ function createStyles(): { [k: string]: React.CSSProperties } {
 }
 
 const TabDetailPreviewPanel = (props) => {
-  const styles = createStyles();
-
   return props.tab ? (
     <Card
       interactive={false}
       elevation={Elevation.ONE}
-      style={styles.previewCard}
+      className={classes.previewCard}
     >
-      <div style={styles.previewHeaderContainer}>
-        <div style={styles.previewTitle}>
+      <div className={classes.previewHeaderContainer}>
+        <div className={classes.previewTitle}>
           <FavIcon
+            className={classes.previewFavIconContainer}
             url={props.tab.favIconUrl}
-            containerStyle={styles.previewFavIconContainer}
           />
-          <h3 style={merge(styles.previewWrapText, styles.previewTitleH)}>
+          <h3 className={clsx(classes.previewWrapText, classes.previewTitleH)}>
             <a href="#">{props.tab.title}</a>
           </h3>
         </div>
-        <div style={styles.previewWrapText}>{props.tab.url}</div>
+        <div className={classes.previewWrapText}>{props.tab.url}</div>
       </div>
-      <div style={styles.previewImageContainer}>
-        <img style={styles.previewImage} src={props.tabPreview} />
+      <div className={classes.previewImageContainer}>
+        <img className={classes.previewImage} src={props.tabPreview} />
       </div>
     </Card>
   ) : (
@@ -159,7 +159,6 @@ interface ITabCardProps {
 }
 
 export const TabCard = observer((props: ITabCardProps) => {
-  const styles = createStyles();
   const needPreview = props.needPreview ?? false;
 
   const switchToTab = (t: Tab) => {
@@ -175,17 +174,17 @@ export const TabCard = observer((props: ITabCardProps) => {
       key={props.tab.id}
       interactive={true}
       elevation={Elevation.ONE}
-      style={styles.card}
+      className={classes.card}
     >
-      <div style={styles.leftSide}>
+      <div className={classes.leftSide}>
         {props.tab.chromeTabId ? (
-          <Icon style={styles.dragHandle} icon="drag-handle-vertical" />
+          <Icon className={classes.dragHandle} icon="drag-handle-vertical" />
         ) : (
           <></>
         )}
         <FavIcon url={props.tab.favIconUrl} />
       </div>
-      <div style={styles.rightSide}>
+      <div className={classes.rightSide}>
         {props.tab.chromeTabId ? (
           <ButtonGroup>
             {props.inBookmark === undefined ? (
@@ -206,17 +205,17 @@ export const TabCard = observer((props: ITabCardProps) => {
         )}
       </div>
       <div
-        style={styles.content}
+        className={classes.content}
         onClick={() => {
           props.tab.chromeTabId ? switchToTab(props.tab) : '';
         }}
       >
-        <div style={merge(styles.tabTitle, styles.wrapText)}>
+        <div className={clsx(classes.tabTitle, classes.wrapText)}>
           <b>
             <CollapsibleLabel maxLength={56} text={props.tab.title} />
           </b>
         </div>
-        <div style={merge(styles.tabUrl, styles.wrapText)}>
+        <div className={clsx(classes.tabUrl, classes.wrapText)}>
           <small>
             <CollapsibleLabel text={props.tab.url} />
           </small>

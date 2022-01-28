@@ -2,6 +2,7 @@
 
 cd ./dist
 rm -f assets
+rm -rf generated/dev/*
 ln -sf generated/dev/ assets
 cd -
 

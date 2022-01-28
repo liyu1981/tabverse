@@ -1,0 +1,31 @@
+@use '../../../global.scss';
+
+.sessionTitle {
+  font-size: 1.1em;
+  min-height: 48px;
+  line-height: 48px;
+  margin-left: 8px;
+  font-weight: bold;
+}
+
+.chromeTabTitle {
+  font-size: 1.2em;
+  padding-left: 4px;
+  word-break: break-all;
+  cursor: pointer;
+}
+
+.domainLabel {
+  color: global.$color-light-accent;
+}
+
+.tabFavIcon {
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+}
+
+.indicatorLineSpan {
+  margin-left: 6px;
+  margin-right: 6px;
+}

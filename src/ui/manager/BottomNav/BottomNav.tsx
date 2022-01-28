@@ -8,41 +8,25 @@ import {
   NavbarGroup,
 } from '@blueprintjs/core';
 
-import { AboutDialog } from '../dialog/AboutDialog';
-import { DropboxDialog } from '../dialog/DropboxDialog';
-import { SettingDialog } from '../dialog/SettingDialog';
-import { TABSPACE_VERSION } from '../../global';
+import { AboutDialog } from '../../dialog/AboutDialog';
+import { DropboxDialog } from '../../dialog/DropboxDialog';
+import { SettingDialog } from '../../dialog/SettingDialog';
+import { TABSPACE_VERSION } from '../../../global';
 import { useState } from 'react';
-
-function createStyles(): { [k: string]: React.CSSProperties } {
-  return {
-    container: {
-      position: 'fixed',
-      bottom: '0px',
-      left: '-1px',
-      width: '320px',
-    },
-    version: {
-      color: '#999',
-      textShadow: '0 1px 0 black',
-    },
-  };
-}
+import classes from './BottomNav.module.scss';
 
 export const BottomNav = (props) => {
-  const styles = createStyles();
-
   const [settingOpened, setSettingOpened] = useState(false);
   const [aboutOpened, setAboutOpened] = useState(false);
   const [driveOpened, setDriveOpened] = useState(false);
 
   return (
-    <div style={styles.container}>
+    <div className={classes.container}>
       <Navbar className={Classes.DARK}>
         <NavbarGroup align={Alignment.LEFT}>
-          <a style={styles.version} onClick={() => setAboutOpened(true)}>
+          <Button minimal={true} onClick={() => setAboutOpened(true)}>
             {TABSPACE_VERSION}
-          </a>
+          </Button>
         </NavbarGroup>
         <NavbarGroup align={Alignment.RIGHT}>
           {/* <Button icon="cog" onClick={() => setSettingOpened(true)} /> */}

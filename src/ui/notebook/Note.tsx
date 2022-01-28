@@ -2,32 +2,11 @@ import * as React from 'react';
 
 import { Button, Collapse, EditableText, Icon } from '@blueprintjs/core';
 import { EditorState, convertFromRaw, convertToRaw } from 'draft-js';
-import { INote, Note } from '../../data/note/Noote';
+import { INote, Note } from '../../data/note/Note';
 
 import { DraftRichEditor } from './DraftRichEditor';
 import { useState } from 'react';
-
-function createStyles(): { [k: string]: React.CSSProperties } {
-  return {
-    container: {
-      display: 'flex',
-      alignItems: 'center',
-      height: '50px',
-    },
-    collapseButton: {
-      width: '32px',
-    },
-    titleContainer: {
-      width: '100%',
-      fontSize: '1.5em',
-    },
-    toolsContainer: {
-      minWidth: '50px',
-      direction: 'rtl',
-      textAlign: 'start',
-    },
-  };
-}
+import classes from './Note.module.scss';
 
 export interface INoteViewProps {
   note: Note;
@@ -36,8 +15,6 @@ export interface INoteViewProps {
 }
 
 export const NoteView = (props: INoteViewProps) => {
-  const styles = createStyles();
-
   const [name, setName] = useState(props.note.name);
   const [editorState, setEditorState] = useState(
     props.note.data.length > 0
@@ -59,9 +36,9 @@ export const NoteView = (props: INoteViewProps) => {
   const [editorOpen, setEditorOpen] = useState(true);
   return (
     <div>
-      <div style={styles.container}>
+      <div className={classes.container}>
         <div
-          style={styles.collapseButton}
+          className={classes.collapseButton}
           onClick={() => {
             setEditorOpen((lastValue) => {
               if (lastValue) {
@@ -78,7 +55,7 @@ export const NoteView = (props: INoteViewProps) => {
             <Icon icon="caret-right" />
           )}
         </div>
-        <div style={styles.titleContainer}>
+        <div className={classes.titleContainer}>
           <EditableText
             className="bp3-editable-text-fullwidth"
             alwaysRenderInput={true}
@@ -89,7 +66,7 @@ export const NoteView = (props: INoteViewProps) => {
             onConfirm={() => confirmName()}
           />
         </div>
-        <div style={styles.toolsContainer}>
+        <div className={classes.toolsContainer}>
           <Button
             icon="trash"
             minimal={true}

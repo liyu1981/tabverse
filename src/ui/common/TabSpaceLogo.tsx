@@ -1,7 +1,6 @@
-import './TabSpaceLogo.scss';
-
 import * as React from 'react';
 
+import classes from './TabSpaceLogo.module.scss';
 import { merge } from 'lodash';
 
 export const TabSpaceLogo = (props) => {
@@ -38,7 +37,7 @@ export const TabSpaceLogo = (props) => {
           props.textStyles,
         )}
       >
-        <h1 className="tabspace-logo">{props.text ?? 'TABVERSE'}</h1>
+        <h1 className={classes.logo}>{props.text ?? 'TABVERSE'}</h1>
       </div>
     </div>
   );

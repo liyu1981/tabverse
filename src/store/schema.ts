@@ -1,5 +1,5 @@
 import { AllBookmark, Bookmark } from '../data/bookmark/Bookmark';
-import { AllNote, Note } from '../data/note/Noote';
+import { AllNote, Note } from '../data/note/Note';
 import { AllTodo, Todo } from '../data/todo/Todo';
 
 import { ChromeSession } from '../data/chromeSession/ChromeSession';

@@ -1,0 +1,80 @@
+@use '../../../global.scss';
+
+.container {
+  margin-left: 2px;
+  margin-top: 20px;
+}
+
+.bottomPlaceholder {
+  min-height: 80px;
+}
+
+.titleContainer {
+  display: flex;
+}
+
+.titleMain {
+  display: flex;
+  width: 100%;
+}
+
+.titleH1 {
+  width: 98%;
+  margin-left: 4px;
+}
+
+.titleButtons {
+  display: flex;
+  align-items: center;
+}
+
+.toolbarContainer {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 40px;
+}
+
+.toolbarLeftContainer {
+  display: flex;
+  width: 100%;
+}
+
+.toolbarRightContainer {
+  display: flex;
+  min-width: 200px;
+  text-align: start;
+  direction: rtl;
+}
+
+.editableTextFullwidth {
+  min-width: 100%;
+}
+
+.header {
+  border-radius: 8px 8px 8px 8px;
+  background-color: global.$color-light-shade;
+  padding: 16px 26px;
+  margin-bottom: 18px;
+  box-shadow: 0 0 0 1px rgb(16 22 26 / 10%), 0 0 0 rgb(16 22 26 / 0%),
+    0 1px 1px rgb(16 22 26 / 20%);
+  transition: box-shadow 150ms linear;
+}
+
+.headerPlaceholder {
+  height: 0px;
+}
+
+.stickyOn .header {
+  position: fixed;
+  z-index: 100;
+  width: calc(50vw - 140px);
+  box-shadow: 0 10px 10px -8px rgb(16 22 26 / 60%),
+    0 0 0px 1px rgb(16 22 26 / 10%), 0 0 0 rgb(16 22 26 / 0%),
+    0 1px 1px rgb(16 22 26 / 20%);
+}
+
+.stickyOn .headerPlaceholder {
+  height: 166px;
+}

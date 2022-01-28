@@ -1,10 +1,11 @@
 import * as React from 'react';
 
-import { merge } from 'lodash';
+import classes from './FavIcon.module.scss';
+import clsx from 'clsx';
 
 interface IFavIconProps {
   url: string;
-  containerStyle?: React.CSSProperties;
+  className?: string;
 }
 
 function createStyles(): { [k: string]: React.CSSProperties } {
@@ -23,11 +24,10 @@ function createStyles(): { [k: string]: React.CSSProperties } {
 }
 
 export const FavIcon = (props: IFavIconProps) => {
-  const styles = createStyles();
   return (
-    <span style={merge(styles.container, props.containerStyle)}>
+    <span className={clsx(classes.container, props.className ?? '')}>
       <img
-        style={styles.img}
+        className={classes.img}
         src={
           props.url.length > 0
             ? props.url

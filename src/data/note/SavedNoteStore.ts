@@ -1,4 +1,4 @@
-import { AllNote, IAllNoteSavePayload, INoteJSON, Note } from './Noote';
+import { AllNote, IAllNoteSavePayload, INoteJSON, Note } from './Note';
 import {
   DEFAULT_SAVE_DEBOUNCE,
   InSavingStatus,

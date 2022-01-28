@@ -3,7 +3,7 @@
   src: url('./resource/Shrikhand.woff2') format('woff2');
 }
 
-.tabspace-logo {
+.logo {
   background: linear-gradient(
     #fd004c 16.7%,
     #fe9000 16.7%,
@@ -28,8 +28,10 @@
   margin-right: auto;
 }
 
-@keyframes rainbow {
-  100% {
-    background-position: 0 30em;
+:global {
+  @keyframes rainbow {
+    100% {
+      background-position: 0 30em;
+    }
   }
 }

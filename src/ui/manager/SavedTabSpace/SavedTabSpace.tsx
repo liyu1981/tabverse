@@ -1,82 +1,25 @@
 import * as Moment from 'moment';
 import * as React from 'react';
 
-import {
-  Button,
-  ButtonGroup,
-  Card,
-  Colors,
-  Elevation,
-  Icon,
-  Tag,
-} from '@blueprintjs/core';
+import { Button, Card, Colors, Elevation, Icon, Tag } from '@blueprintjs/core';
 import {
   TabSpaceRegistry,
   TabSpaceStub,
 } from '../../../data/tabSpace/TabSpaceRegistry';
 import { TabSpaceRegistryMsg, sendChromeMessage } from '../../../message';
 
+import { IndicatorLine } from '../../common/IndicatorLine';
 import { SavedTabSpaceCollection } from '../../../data/tabSpace/SavedTabSpaceCollection';
 import { SavedTabSpaceDetail } from './SavedTabSpaceDetail';
 import { SavedTabSpaceStore } from '../../../data/tabSpace/SavedTabSpaceStore';
 import { StickyContainer } from '../../common/StickyContainer';
 import { TabSpace } from '../../../data/tabSpace/TabSpace';
 import { TabSpaceOp } from '../../../global';
-import clsx from 'clsx';
+import classes from './SavedTabSpace.module.scss';
 import { observer } from 'mobx-react-lite';
 import { useAsyncEffect } from '../../common/useAsyncEffect';
 import { useMemo } from 'react';
-
-function createStyles(): { [k: string]: React.CSSProperties } {
-  return {
-    container: {
-      padding: '20px 8px',
-      display: 'flex',
-      justifyContent: 'center',
-    },
-    tabSpaceListContainer: {
-      maxWidth: '900px',
-      width: '900px',
-    },
-    tabSpaceCard: {
-      marginBottom: '18px',
-      backgroundColor: '#f1f1f1',
-    },
-    pagingControlContainer: {
-      textAlign: 'center',
-    },
-    openedTabSpaceNoticeCard: {
-      backgroundColor: '#bdc4ca',
-    },
-    stickyOpened: {
-      position: 'fixed',
-      width: '900px',
-      zIndex: 100,
-    },
-  };
-}
-
-enum IndicatorLineContentPosition {
-  LEFT = 'left',
-  CENTER = 'center',
-  RIGHT = 'right',
-}
-
-function IndicatorLine(props: {
-  children: React.ElementType | string;
-  position?: IndicatorLineContentPosition;
-}) {
-  return (
-    <div
-      className={clsx(
-        'tabverse-indicator-line',
-        `tabverse-indicator-line-${props.position ?? ''}`,
-      )}
-    >
-      {props.children}
-    </div>
-  );
-}
+import { PagingControl } from '../../common/PagingControl';
 
 function calcGroupedSavedTabSpaces(
   savedTabSpaces: TabSpace[],
@@ -149,8 +92,6 @@ export const SavedTabSpace = observer(
     savedTabSpaceStore,
     savedTabSpaceCollection,
   }: SavedTabSpaceProps) => {
-    const styles = createStyles();
-
     useAsyncEffect(async () => {
       await savedTabSpaceCollection.load(tabSpaceRegistry);
     }, [tabSpaceRegistry.registry, savedTabSpaceStore.savedDataVersion]);
@@ -192,37 +133,24 @@ export const SavedTabSpace = observer(
 
     const renderPagingControl = () => {
       return (
-        <ButtonGroup>
-          <Button
-            minimal={true}
-            icon="chevron-left"
-            onClick={() => {
-              savedTabSpaceCollection.prevPage();
-            }}
-          ></Button>
-          <Button minimal={true}>{`${
-            savedTabSpaceCollection.savedTabSpacesPageStart + 1
-          }/${savedTabSpaceCollection.totalPageCount}`}</Button>
-          <Button
-            minimal={true}
-            icon="chevron-right"
-            onClick={() => {
-              savedTabSpaceCollection.nextPage();
-            }}
-          ></Button>
-        </ButtonGroup>
+        <PagingControl
+          current={savedTabSpaceCollection.savedTabSpacesPageStart + 1}
+          total={savedTabSpaceCollection.totalPageCount}
+          onNext={savedTabSpaceCollection.nextPage}
+          onPrev={savedTabSpaceCollection.prevPage}
+        />
       );
     };
 
     return (
       <div>
-        <div style={styles.container}>
-          <div style={styles.tabSpaceListContainer}>
+        <div className={classes.container}>
+          <div className={classes.tabSpaceListContainer}>
             {savedTabSpaceCollection.openedSavedTabSpaces.length > 0 ? (
-              <StickyContainer thresh={0} stickyStyle={styles.stickyOpened}>
+              <StickyContainer thresh={0} stickyOnClassName={classes.stickyOn}>
                 <Card
                   elevation={Elevation.TWO}
-                  style={styles.openedTabSpaceNoticeCard}
+                  className={classes.openedTabSpaceNoticeCard}
                 >
                   {savedTabSpaceCollection.openedSavedTabSpaces.map(
                     (tabSpaceStub) => {
@@ -239,13 +167,11 @@ export const SavedTabSpace = observer(
             ) : (
               <div></div>
             )}
-            <div style={styles.savedContainer}>
+            <div className={classes.savedContainer}>
               {groupedSavedTabSpaces.map(([m, savedTabSpaces]) => {
                 return (
                   <div key={m}>
-                    <IndicatorLine
-                      position={IndicatorLineContentPosition.RIGHT}
-                    >{`${savedTabSpaces.length} ${
+                    <IndicatorLine>{`${savedTabSpaces.length} ${
                       savedTabSpaces.length <= 1 ? 'tabverse' : 'tabverses'
                     } created ${m}`}</IndicatorLine>
                     <div>
@@ -253,7 +179,7 @@ export const SavedTabSpace = observer(
                         return (
                           <Card
                             key={savedTabSpace.id}
-                            style={styles.tabSpaceCard}
+                            className={classes.tabSpaceCard}
                             elevation={Elevation.TWO}
                           >
                             <SavedTabSpaceDetail
@@ -270,7 +196,7 @@ export const SavedTabSpace = observer(
                   </div>
                 );
               })}
-              <div style={styles.pagingControlContainer}>
+              <div className={classes.pagingControlContainer}>
                 {savedTabSpaceCollection.totalPageCount > 1
                   ? renderPagingControl()
                   : ''}

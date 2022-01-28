@@ -3,7 +3,6 @@ import * as React from 'react';
 
 import {
   Button,
-  Colors,
   ControlGroup,
   HTMLSelect,
   Menu,
@@ -14,41 +13,12 @@ import {
   IChromeSessionSavePayload,
   NotSessionId,
 } from '../../../data/chromeSession/ChromeSession';
-import { flatten, merge, uniq } from 'lodash';
+import { flatten, uniq } from 'lodash';
 
 import { IDisplaySavedSessionGroup } from '../../../data/chromeSession/sessionStore';
 import { useState } from 'react';
-
-function createStyles(): { [k: string]: React.CSSProperties } {
-  return {
-    sessionSelectorMenu: {
-      marginBottom: '40px',
-    },
-    sessionLabelActive: {
-      borderLeft: `solid ${Colors.GRAY1}`,
-    },
-    sessionLabelContainer: {
-      paddingLeft: '8px',
-    },
-    sessionLabelSub: {
-      marginTop: '-10px',
-      color: Colors.GRAY3,
-    },
-    sessionLabelContentContainer: {
-      display: 'flex',
-      alignItems: 'center',
-    },
-    sessionLabelContent: {
-      width: '100%',
-    },
-    sessionLabelTools: {
-      minWidth: '20px',
-    },
-    sessionMenuGroupSelector: {
-      marginBottom: '8px',
-    },
-  };
-}
+import classes from './SessionSelector.module.scss';
+import clsx from 'clsx';
 
 interface SessionLabelProps {
   session: ChromeSession | IChromeSessionSavePayload;
@@ -57,28 +27,26 @@ interface SessionLabelProps {
 }
 
 const SessionLabel = ({ session, selected, onDelete }: SessionLabelProps) => {
-  const styles = createStyles();
-
   return (
     <div
-      style={merge(
-        styles.sessionLabelContainer,
-        selected ? styles.sessionLabelActive : null,
+      className={clsx(
+        classes.sessionLabelContainer,
+        selected ? classes.sessionLabelActive : '',
       )}
     >
-      <div style={styles.sessionLabelContentContainer}>
-        <div style={styles.sessionLabelContent}>
+      <div className={classes.sessionLabelContentContainer}>
+        <div className={classes.sessionLabelContent}>
           <div>
             <span title={session.id}>Session</span>
           </div>
-          <div style={styles.sessionLabelSub}>
+          <div className={classes.sessionLabelSub}>
             <sub>Created at {Moment(session.createdAt).calendar()}</sub>
           </div>
-          <div style={styles.sessionLabelSub}>
+          <div className={classes.sessionLabelSub}>
             <sub>Saved at {Moment(session.updatedAt).calendar()}</sub>
           </div>
         </div>
-        <div style={styles.sessionLabelTools}>
+        <div className={classes.sessionLabelTools}>
           <Button
             minimal={true}
             icon="trash"
@@ -103,8 +71,6 @@ export const SessionSelector = ({
   onDeleteSession,
   onSetSelectedSession,
 }: SessionSelectorProps) => {
-  const styles = createStyles();
-
   const groupTags = uniq(
     flatten(
       sessions.map((sessionGroup) => {
@@ -140,7 +106,7 @@ export const SessionSelector = ({
 
   const renderGroupTagSelector = () => {
     return (
-      <div style={styles.sessionMenuGroupSelector}>
+      <div className={classes.sessionMenuGroupSelector}>
         <ControlGroup fill={true}>
           <HTMLSelect
             onChange={(e) => {
@@ -188,7 +154,9 @@ export const SessionSelector = ({
   return (
     <div>
       {renderGroupTagSelector()}
-      <Menu style={styles.sessionSelectorMenu}>{renderSessionMenus()}</Menu>
+      <Menu className={classes.sessionSelectorMenu}>
+        {renderSessionMenus()}
+      </Menu>
     </div>
   );
 };

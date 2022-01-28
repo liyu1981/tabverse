@@ -12,37 +12,9 @@ import { restoreTab, restoreWindow } from './util';
 import { useEffect, useState } from 'react';
 
 import { ITabSpaceMap } from '../../../data/chromeSession/sessionStore';
-
-function createStyles(): { [k: string]: React.CSSProperties } {
-  return {
-    sessionTitle: {
-      fontSize: '1.2em',
-      minHeight: '48px',
-      lineHeight: '48px',
-      marginLeft: '8px',
-      fontWeight: 'bold',
-    },
-    chromeTabTitle: {
-      fontSize: '1.2em',
-      paddingLeft: '4px',
-      wordBreak: 'break-all',
-      cursor: 'pointer',
-    },
-    domainLabel: {
-      color: '#999',
-    },
-    tabFavIcon: {
-      width: '32px',
-      height: '32px',
-      marginRight: '8px',
-    },
-  };
-}
-
-interface SessionDetailProps {
-  session: IChromeSessionSavePayload;
-  tabSpaceMap: ITabSpaceMap;
-}
+import classes from './SessionDetail.module.scss';
+import { IndicatorLine } from '../../common/IndicatorLine';
+import * as Moment from 'moment';
 
 function getDomainFromUrl(urlString: string) {
   try {
@@ -53,9 +25,12 @@ function getDomainFromUrl(urlString: string) {
   }
 }
 
-export const SessionDetail = ({ session, tabSpaceMap }: SessionDetailProps) => {
-  const styles = createStyles();
+interface SessionDetailProps {
+  session: IChromeSessionSavePayload;
+  tabSpaceMap: ITabSpaceMap;
+}
 
+export const SessionDetail = ({ session, tabSpaceMap }: SessionDetailProps) => {
   const [chromeSession, setChromeSession] = useState<ChromeSession>(null);
   const [expandedMap, setExpandedMap] = useState<{ [k: number]: boolean }>({});
 
@@ -85,10 +60,12 @@ export const SessionDetail = ({ session, tabSpaceMap }: SessionDetailProps) => {
         const chromeTab = chromeSession.tabs.find((t) => t.tabId === tabId);
         return {
           id: chromeTab.tabId,
-          icon: <img style={styles.tabFavIcon} src={chromeTab.favIconUrl} />,
+          icon: (
+            <img className={classes.tabFavIcon} src={chromeTab.favIconUrl} />
+          ),
           label: (
             <div
-              style={styles.chromeTabTitle}
+              className={classes.chromeTabTitle}
               title={chromeTab.url}
               onClick={() => restoreTab(chromeSession, chromeTab.tabId)}
             >
@@ -96,7 +73,7 @@ export const SessionDetail = ({ session, tabSpaceMap }: SessionDetailProps) => {
             </div>
           ),
           secondaryLabel: (
-            <span style={styles.domainLabel}>
+            <span className={classes.domainLabel}>
               {getDomainFromUrl(chromeTab.url)}
             </span>
           ),
@@ -127,7 +104,7 @@ export const SessionDetail = ({ session, tabSpaceMap }: SessionDetailProps) => {
               size={24}
             />
           ),
-          label: <div style={styles.sessionTitle}>{label}</div>,
+          label: <div className={classes.sessionTitle}>{label}</div>,
           secondaryLabel: (
             <span>
               <Button
@@ -148,6 +125,20 @@ export const SessionDetail = ({ session, tabSpaceMap }: SessionDetailProps) => {
 
   return (
     <div>
+      {session ? (
+        <IndicatorLine>
+          <span className={classes.indicatorLineSpan}>
+            <b>created: </b>
+            {`${Moment(session.createdAt).calendar()}`}
+          </span>
+          <span className={classes.indicatorLineSpan}>
+            <b>saved: </b>
+            {`${Moment(session.updatedAt).calendar()}`}
+          </span>
+        </IndicatorLine>
+      ) : (
+        ''
+      )}
       <Tree
         contents={contents}
         onNodeCollapse={(node: any) => {
