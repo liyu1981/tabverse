@@ -6,7 +6,7 @@ import { TabPreview } from '../../../data/tabSpace/TabPreview';
 import { TabSpace } from '../../../data/tabSpace/TabSpace';
 import { TabSpaceListView } from './TabSpaceListView';
 import { TabSpaceRegistry } from '../../../data/tabSpace/TabSpaceRegistry';
-import { TabSpaceRightSideView } from './TabSpaceRightSideView';
+import { TabSpaceRightSideView } from '../TabSpaceRightSide/TabSpaceRightSideView';
 import { observer } from 'mobx-react-lite';
 import classes from './TabSpaceView.module.scss';
 
@@ -17,8 +17,6 @@ interface ITabSpaceViewProps {
   savedTabSpaceStore: SavedTabSpaceStore;
   allBookmark: AllBookmark;
 }
-
-// <div className={classes.leftSideContainer}>
 
 export const TabSpaceView = observer(
   ({ tabSpace, tabPreview, allBookmark }: ITabSpaceViewProps) => {

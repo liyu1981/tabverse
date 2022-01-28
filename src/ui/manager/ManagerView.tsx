@@ -9,7 +9,7 @@ import { SavedTabSpace } from './SavedTabSpace/SavedTabSpace';
 import { SessionBrowser } from './BrowserSession/SessionBrowser';
 import { Sidebar } from './Sidebar/Sidebar';
 import { SidebarContainer } from '../common/SidebarContainer';
-import { TabSpaceView } from './TabSpaceView/TabSpaceView';
+import { TabSpaceView } from './TabSpace/TabSpaceView';
 import { getAllBookmarkData } from '../../data/bookmark/bootstrap';
 import { getAllChromeSessionData } from '../../data/chromeSession/bootstrap';
 import { useMemo, useState } from 'react';

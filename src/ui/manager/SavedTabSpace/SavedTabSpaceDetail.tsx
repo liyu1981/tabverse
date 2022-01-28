@@ -7,7 +7,7 @@ import {
   deleteSavedTabSpace,
 } from '../../../data/tabSpace/SavedTabSpaceStore';
 
-import { TabCard } from '../TabSpaceView/TabCard';
+import { TabCard } from '../TabSpace/TabCard';
 import { TabSpace } from '../../../data/tabSpace/TabSpace';
 import { logger } from '../../../global';
 import { observer } from 'mobx-react-lite';
