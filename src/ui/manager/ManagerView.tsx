@@ -12,7 +12,7 @@ import { SidebarContainer } from '../common/SidebarContainer';
 import { TabSpaceView } from './TabSpaceView/TabSpaceView';
 import { getAllBookmarkData } from '../../data/bookmark/bootstrap';
 import { getAllChromeSessionData } from '../../data/chromeSession/bootstrap';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 export interface IManagerQueryParams {
   op: string;
@@ -40,6 +40,16 @@ export const ManagerView = (props: IManagerContainerProps) => {
       ? v
       : ManagerViewRoute.Opened;
   });
+
+  const setRouteAndPushHistoryState = useMemo(() => {
+    return (value: ManagerViewRoute) => {
+      // @ts-ignore
+      const url = new URL(window.location);
+      url.searchParams.set('route', value);
+      window.history.pushState({}, '', url);
+      setCurrentRoute(value);
+    };
+  }, []);
 
   const renderView = (route: ManagerViewRoute) => {
     switch (route) {
@@ -78,7 +88,7 @@ export const ManagerView = (props: IManagerContainerProps) => {
       <SidebarContainer>
         <Sidebar
           route={currentRoute}
-          switchRoute={(value) => setCurrentRoute(value)}
+          switchRoute={(value) => setRouteAndPushHistoryState(value)}
           tabSpaceData={props.tabSpaceData}
           queryParams={props.queryParams}
         />

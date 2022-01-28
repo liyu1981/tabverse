@@ -1,4 +1,4 @@
-import { Classes } from '@blueprintjs/core';
+import { debounce } from 'lodash';
 import * as React from 'react';
 
 import { useEffect, useRef, useState } from 'react';
@@ -25,13 +25,11 @@ export const StickyContainer = (props: StickyContainerProps) => {
   const [scrollToY, setScrollToY] = useState(0);
   const divRef = useRef<HTMLDivElement>();
 
-  const handleScroll = (event) => {
-    console.log('scrolled');
+  const handleScroll = debounce((event) => {
     setScrollToY(window.scrollY);
-  };
+  });
 
   useEffect(() => {
-    console.log('reg handler', window);
     window.addEventListener('scroll', handleScroll);
     return () => {
       window.removeEventListener('scroll', handleScroll);
@@ -44,10 +42,6 @@ export const StickyContainer = (props: StickyContainerProps) => {
   const divRefRect = divRef.current?.getBoundingClientRect() ?? {
     height: 0,
   };
-
-  if (stickyOn) {
-    console.log('stickon', divRefRect);
-  }
 
   return (
     <div ref={divRef} className={stickyOn ? props.stickyOnClassName : ''}>
