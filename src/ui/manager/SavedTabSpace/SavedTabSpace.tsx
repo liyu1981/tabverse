@@ -21,25 +21,6 @@ import { useAsyncEffect } from '../../common/useAsyncEffect';
 import { useMemo } from 'react';
 import { PagingControl } from '../../common/PagingControl';
 
-function calcGroupedSavedTabSpaces(
-  savedTabSpaces: TabSpace[],
-): [string, TabSpace[]][] {
-  return savedTabSpaces.reduce((groups, savedTabSpace) => {
-    const m = Moment(savedTabSpace.createdAt).fromNow();
-    if (groups.length <= 0) {
-      groups.push([m, [savedTabSpace]]);
-    } else {
-      const [lastGroupM, lastGroup] = groups[groups.length - 1];
-      if (lastGroupM !== m) {
-        groups.push([m, [savedTabSpace]]);
-      } else {
-        lastGroup.push(savedTabSpace);
-      }
-    }
-    return groups;
-  }, []);
-}
-
 function OpenedSavedTabSpaceCard({
   tabSpaceStub,
 }: {
@@ -127,9 +108,8 @@ export const SavedTabSpace = observer(
       [],
     );
 
-    const groupedSavedTabSpaces = calcGroupedSavedTabSpaces(
-      savedTabSpaceCollection.savedTabSpaces,
-    );
+    const [groupLabelVerb, groupedSavedTabSpaces] =
+      savedTabSpaceCollection.sortedGroupedSavedTabSpaces;
 
     const renderPagingControl = () => {
       return (
@@ -152,7 +132,7 @@ export const SavedTabSpace = observer(
                   elevation={Elevation.TWO}
                   className={classes.openedTabSpaceNoticeCard}
                 >
-                  {savedTabSpaceCollection.openedSavedTabSpaces.map(
+                  {savedTabSpaceCollection.sortedOpenedSavedTabSpaces.map(
                     (tabSpaceStub) => {
                       return (
                         <OpenedSavedTabSpaceCard
@@ -173,7 +153,7 @@ export const SavedTabSpace = observer(
                   <div key={m}>
                     <IndicatorLine>{`${savedTabSpaces.length} ${
                       savedTabSpaces.length <= 1 ? 'tabverse' : 'tabverses'
-                    } created ${m}`}</IndicatorLine>
+                    } ${groupLabelVerb} ${m}`}</IndicatorLine>
                     <div>
                       {savedTabSpaces.map((savedTabSpace) => {
                         return (

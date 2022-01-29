@@ -121,6 +121,7 @@ export const Sidebar = (props: ISidebarProps) => {
             tabSpace={props.tabSpaceData.tabSpace}
             tabSpaceRegistry={props.tabSpaceData.tabSpaceRegistry}
             savedTabSpaceStore={props.tabSpaceData.savedTabSpaceStore}
+            savedTabSpaceCollection={props.tabSpaceData.savedTabSpaceCollection}
           />
         </SidebarComponent>
         <BottomNav />

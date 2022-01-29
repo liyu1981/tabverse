@@ -45,13 +45,20 @@ export const SavedTabSpaceDetail = observer(
           <div className={classes.infoContainer}>
             <h2>{props.tabSpace.name}</h2>
             <div>
-              <sub style={{ color: Colors.GRAY3 }}>
-                Created {Moment(props.tabSpace.createdAt).fromNow()}
-              </sub>
-              <br />
-              <sub style={{ color: Colors.GRAY3 }}>
-                Saved {Moment(props.tabSpace.updatedAt).fromNow()}
-              </sub>
+              <div className={classes.tabSpaceTimeInfo}>
+                Created <b>{Moment(props.tabSpace.createdAt).fromNow()}</b> at{' '}
+                <br />
+                {Moment(props.tabSpace.createdAt).format(
+                  'MMMM Do YYYY, h:mm:ss a',
+                )}
+              </div>
+              <div className={classes.tabSpaceTimeInfo}>
+                Saved <b>{Moment(props.tabSpace.updatedAt).fromNow()}</b> at{' '}
+                <br />
+                {Moment(props.tabSpace.updatedAt).format(
+                  'MMMM Do YYYY, h:mm:ss a',
+                )}
+              </div>
             </div>
           </div>
           <ButtonGroup

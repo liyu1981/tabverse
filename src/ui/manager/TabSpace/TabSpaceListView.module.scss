@@ -1,4 +1,5 @@
 @use '../../../global.scss';
+@use '../../common/SidebarContainer.module.scss';
 
 .container {
   margin-left: 2px;
@@ -59,7 +60,7 @@
   margin-bottom: 18px;
   box-shadow: 0 0 0 1px rgb(16 22 26 / 10%), 0 0 0 rgb(16 22 26 / 0%),
     0 1px 1px rgb(16 22 26 / 20%);
-  transition: box-shadow 150ms linear;
+  transition: box-shadow width 150ms linear;
 }
 
 .headerPlaceholder {
@@ -73,6 +74,7 @@
   box-shadow: 0 10px 10px -8px rgb(16 22 26 / 60%),
     0 0 0px 1px rgb(16 22 26 / 10%), 0 0 0 rgb(16 22 26 / 0%),
     0 1px 1px rgb(16 22 26 / 20%);
+  left: calc(SidebarContainer.$sidebar-width + 14px);
 }
 
 .stickyOn .headerPlaceholder {
