@@ -9,7 +9,7 @@ import {
 } from '../SavedBookmarkStore';
 
 import { Bookmark } from '../Bookmark';
-import { initTabSpaceData } from '../../tabSpace/__tests__/tabSpaceStore.test';
+import { initTabSpaceData } from '../../tabSpace/__tests__/SavedTabSpaceStore.test';
 
 async function bootstrapAllBookmark() {
   const { tst1 } = await initTabSpaceData();

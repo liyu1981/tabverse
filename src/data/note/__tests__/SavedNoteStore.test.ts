@@ -6,7 +6,7 @@ import {
 import { queryAllNote, saveCurrentAllNote } from '../SavedNoteStore';
 
 import { Note } from '../Note';
-import { initTabSpaceData } from '../../tabSpace/__tests__/tabSpaceStore.test';
+import { initTabSpaceData } from '../../tabSpace/__tests__/SavedTabSpaceStore.test';
 
 async function bootstrapAllNote() {
   const { tst1 } = await initTabSpaceData();

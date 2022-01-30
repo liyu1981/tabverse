@@ -6,8 +6,8 @@ import {
 import { queryAllTodo, saveCurrentAllTodo } from '../SavedTodoStore';
 
 import { Todo } from '../Todo';
-import { initTabSpaceData } from '../../tabSpace/__tests__/tabSpaceStore.test';
-import { testWithDb } from '../../tabSpace/__tests__/tabSpaceStore.test';
+import { initTabSpaceData } from '../../tabSpace/__tests__/SavedTabSpaceStore.test';
+import { testWithDb } from '../../tabSpace/__tests__/SavedTabSpaceStore.test';
 
 async function bootstrapAllTodo() {
   const { tst1 } = await initTabSpaceData();
