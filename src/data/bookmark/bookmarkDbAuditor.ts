@@ -1,4 +1,4 @@
-import { AllBookmark, Bookmark, IBookmarkJSON } from './bookmark';
+import { AllBookmark, Bookmark, IBookmarkJSON } from './Bookmark';
 
 import { db } from '../../store/db';
 import { getLogger } from '../../store/store';

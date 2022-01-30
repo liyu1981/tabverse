@@ -1,12 +1,12 @@
-import './todoApp.scss';
-
 import * as React from 'react';
 
 import { AllTodoData } from '../../data/todo/bootstrap';
 import { List } from 'immutable';
-import { Todo } from '../../data/todo/todo';
+import { Todo } from '../../data/todo/Todo';
 import { observer } from 'mobx-react-lite';
 import { useState } from 'react';
+import classes from './TodoView.module.scss';
+import clsx from 'clsx';
 
 const RETURN_KEY = 13;
 const FILTER_ACTIVE = 'active';
@@ -23,14 +23,14 @@ const TodoItem = (props: ITodoItemProps) => {
   const [currentEditValue, setCurrentEditValue] = useState(props.todo.content);
   return (
     <li
-      className={[
+      className={clsx(
         props.todo.completed ? 'completed' : '',
         editing ? 'editing' : '',
-      ].join(' ')}
+      )}
     >
-      <div className="view">
+      <div className={classes.view}>
         <input
-          className="toggle"
+          className={classes.toggle}
           type="checkbox"
           checked={props.todo.completed}
           onClick={() => {
@@ -44,12 +44,12 @@ const TodoItem = (props: ITodoItemProps) => {
           {props.todo.content}
         </label>
         <button
-          className="destroy"
+          className={classes.destroy}
           onClick={() => props.removeFunc(props.todo.id)}
         />
       </div>
       <input
-        className="edit"
+        className={classes.edit}
         defaultValue={currentEditValue}
         onBlur={() => {
           const t = props.todo.clone();
@@ -122,23 +122,23 @@ export const TodoView = observer((props: ITodoViewProps) => {
   ).toArray();
 
   const main = (
-    <section className="main">
+    <section className={classes.main}>
       <input
         id="toggle-all"
-        className="toggle-all"
+        className={classes.toggleAll}
         type="checkbox"
         checked={false}
         onChange={() => {}}
       />
       <label htmlFor="toggle-all">Mark all as complete</label>
-      <ul className="todo-list">{todoItems}</ul>
+      <ul className={classes.todoList}>{todoItems}</ul>
     </section>
   );
 
   const header = (
-    <header className="header">
+    <header className={classes.header}>
       <input
-        className="new-todo"
+        className={classes.newTodo}
         placeholder="What needs to be done?"
         value={currentInputValue ?? ''}
         autoFocus={true}
@@ -165,11 +165,11 @@ export const TodoView = observer((props: ITodoViewProps) => {
   });
 
   const footer = (
-    <footer className="footer">
-      <span className="todo-count">
+    <footer className={classes.footer}>
+      <span className={classes.todoCount}>
         <strong>{activeCount}</strong> left
       </span>
-      <ul className="filters">
+      <ul className={classes.filters}>
         <li key="all">
           <a href="#" onClick={() => setFilter(null)}>
             All
@@ -188,7 +188,7 @@ export const TodoView = observer((props: ITodoViewProps) => {
       </ul>
       {hasCompleted ? (
         <button
-          className="clear-completed"
+          className={classes.clearCompleted}
           onClick={() => {
             props.allTodoData.allTodo.clearCompleted();
           }}
@@ -202,7 +202,7 @@ export const TodoView = observer((props: ITodoViewProps) => {
   );
 
   return (
-    <div className="todoapp">
+    <div className={classes.todoapp}>
       {header}
       {main}
       {footer}

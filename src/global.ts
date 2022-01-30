@@ -2,7 +2,8 @@ import { TabSpaceLogLevel, isJestTest, loglevel } from './debug';
 
 import { debounce as lodashDebounce } from 'lodash';
 
-export const TABSPACE_VERSION = 'v0.1.0';
+// Do not manual edit it, use tools/version_update to update it.
+export const TABSPACE_VERSION = 'v0.2.0';
 
 export const TABSPACE_DB_VERSION = 7;
 

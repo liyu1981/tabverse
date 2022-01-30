@@ -4,15 +4,15 @@ import {
   querySavedTabSpace,
   querySavedTabSpaceById,
   saveCurrentTabSpace,
-} from '../tabSpaceStore';
+} from '../SavedTabSpaceStore';
 
 import { initMockChrome } from './chromeTab.scanCurrentTabs.test';
 import { omit } from 'lodash';
 import { queryPageLimit } from '../../../store/store';
+import { resetTestDb } from '../../../dev/dbImplTest';
 import { startMonitorTabChanges } from '../chromeTab';
 import { bootstrap as storeManagerBootstrap } from '../../../store/bootstrap';
 import { tsTabData1 } from './common.test';
-import { resetTestDb } from '../../../dev/dbImplTest';
 
 export async function initTabSpaceData() {
   storeManagerBootstrap();

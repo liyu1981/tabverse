@@ -3,9 +3,12 @@ import {
   getTabSpaceData,
   bootstrap as tabSpaceBootstrap,
 } from '../../tabSpace/bootstrap';
-import { queryAllBookmark, saveCurrentAllBookmark } from '../bookmarkStore';
+import {
+  queryAllBookmark,
+  saveCurrentAllBookmark,
+} from '../SavedBookmarkStore';
 
-import { Bookmark } from '../bookmark';
+import { Bookmark } from '../Bookmark';
 import { initTabSpaceData } from '../../tabSpace/__tests__/tabSpaceStore.test';
 
 async function bootstrapAllBookmark() {

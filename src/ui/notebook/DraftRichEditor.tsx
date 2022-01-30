@@ -1,31 +1,27 @@
-import './DraftRichEditor.scss';
+import classes from './DraftRichEditor.module.scss';
 
 import * as React from 'react';
 
 import { Editor, RichUtils, getDefaultKeyBinding } from 'draft-js';
 
 import { Icon } from '@blueprintjs/core';
+import clsx from 'clsx';
 
 const { useRef, useCallback } = React;
 
 function getBlockStyle(block) {
   switch (block.getType()) {
     case 'blockquote':
-      return 'RichEditor-blockquote';
+      return classes.blockquote;
     default:
       return null;
   }
 }
 
 function StyleButton({ onToggle, active, icon, label, style }) {
-  let className = 'RichEditor-styleButton';
-  if (active) {
-    className += ' RichEditor-activeButton';
-  }
-
   return (
     <span
-      className={className}
+      className={clsx(classes.styleButton, active ? classes.activeButton : '')}
       onMouseDown={(e) => {
         e.preventDefault();
         onToggle(style);
@@ -63,7 +59,7 @@ function BlockStyleControls({ editorState, onToggle }) {
   ];
 
   return (
-    <div className="RichEditor-controls">
+    <div className={classes.controls}>
       {BLOCK_TYPES.map((type) => (
         <StyleButton
           key={type.label}
@@ -88,7 +84,7 @@ function InlineStyleControls({ editorState, onToggle }) {
     { icon: 'strikethrough', label: 'Strikethrough', style: 'STRIKETHROUGH' },
   ];
   return (
-    <div className="RichEditor-controls">
+    <div className={classes.controls}>
       {INLINE_STYLES.map((type) => (
         <StyleButton
           key={type.label}
@@ -152,17 +148,17 @@ export function DraftRichEditor({ editorState, setEditorState, onBlur }) {
 
   // If the user changes block type before entering any text, we can
   // either style the placeholder or hide it. Let's just hide it now.
-  let className = 'RichEditor-editor';
+  let className = classes.editor;
   const contentState = editorState.getCurrentContent();
   if (!contentState.hasText()) {
     if (contentState.getBlockMap().first().getType() !== 'unstyled') {
-      className += ' RichEditor-hidePlaceholder';
+      className = clsx(className, classes.hidePlaceholder);
     }
   }
 
   return (
-    <div className="RichEditor-root">
-      <div className="RichEditor-toolbar">
+    <div className={classes.root}>
+      <div className={classes.toolbar}>
         <InlineStyleControls
           editorState={editorState}
           onToggle={(inlineStyle) => {

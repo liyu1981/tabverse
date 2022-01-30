@@ -3,9 +3,9 @@ import {
   getTabSpaceData,
   bootstrap as tabSpaceBootstrap,
 } from '../../tabSpace/bootstrap';
-import { queryAllTodo, saveCurrentAllTodo } from '../todoStore';
+import { queryAllTodo, saveCurrentAllTodo } from '../SavedTodoStore';
 
-import { Todo } from '../todo';
+import { Todo } from '../Todo';
 import { initTabSpaceData } from '../../tabSpace/__tests__/tabSpaceStore.test';
 import { testWithDb } from '../../tabSpace/__tests__/tabSpaceStore.test';
 

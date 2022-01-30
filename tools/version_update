@@ -1,0 +1,39 @@
+#!/usr/bin/env node
+
+const args = process.argv.slice(2);
+if (args.length <= 0) {
+  console.error(
+    'usage: version_update <version>, version should be [0-9].[0-9].[0-9]',
+  );
+  process.exit(1);
+}
+
+const replace = require('replace-in-file');
+
+const options = [
+  {
+    files: 'src/global.ts',
+    from: /export const TABSPACE_VERSION = 'v[0-9].[0-9].[0-9]';/g,
+    to: `export const TABSPACE_VERSION = 'v${args[0]}';`,
+  },
+  {
+    files: './package.json',
+    from: /"version": "[0-9].[0-9].[0-9]",/g,
+    to: `"version": "${args[0]}",`,
+  },
+  {
+    files: 'dist/manifest.json',
+    from: /"version": "[0-9].[0-9].[0-9]",/g,
+    to: `"version": "${args[0]}",`,
+  },
+];
+
+options.forEach(function (option) {
+  try {
+    const results = replace.sync(option);
+    console.log('Replacement results:', results);
+  } catch (error) {
+    console.error('Error occurred:', error);
+    process.exit(1);
+  }
+});

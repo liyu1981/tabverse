@@ -1,0 +1,34 @@
+.container {
+  padding-left: 4px;
+}
+
+.noteToolContainer {
+  display: flex;
+  align-items: center;
+  height: 50px;
+  justify-content: space-between;
+}
+
+.collapseButton {
+  width: 32px;
+}
+
+.titleContainer {
+  width: 100%;
+  font-size: 1.5em;
+}
+
+.toolsContainer {
+  min-width: 50px;
+  direction: rtl;
+  text-align: start;
+}
+
+.noticeContainer {
+  background: #fff;
+  border: 1px solid #ddd;
+  color: #999;
+  padding: 8px 18px;
+  font-style: italic;
+  font-weight: 500;
+}

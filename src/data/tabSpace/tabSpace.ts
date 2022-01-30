@@ -1,10 +1,10 @@
 import { Base, IBase, getUnsavedNewId, isIdNotSaved } from '../common';
-import { ISavedTab, Tab, TabJSON } from './tab';
+import { ISavedTab, Tab, TabJSON } from './Tab';
 import { action, computed, makeObservable, observable } from 'mobx';
 import { assign, extend, isEqual, omit } from 'lodash';
 
 import { List } from 'immutable';
-import { TabSpaceStub } from './tabSpaceRegistry';
+import { TabSpaceStub } from './TabSpaceRegistry';
 import { strict as assert } from 'assert';
 
 export interface ISavedTabSpace extends IBase {

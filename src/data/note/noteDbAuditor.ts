@@ -1,4 +1,4 @@
-import { AllNote, Note, INoteJSON } from './note';
+import { AllNote, INoteJSON, Note } from './Note';
 
 import { db } from '../../store/db';
 import { getLogger } from '../../store/store';

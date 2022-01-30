@@ -1,7 +1,7 @@
 import { BackgroundMsg, sendChromeMessage } from '../../message';
-import { ChromeSession, ChromeTab } from './session';
+import { ChromeSession, ChromeTab } from './ChromeSession';
 
-import { TabSpace } from '../tabSpace/tabSpace';
+import { TabSpace } from '../tabSpace/TabSpace';
 import { strict as assert } from 'assert';
 import { getTabSpaceData } from '../tabSpace/bootstrap';
 import { isJestTest } from '../../debug';

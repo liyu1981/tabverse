@@ -1,4 +1,4 @@
-import { ChromeSession, NotTabSpaceTabId } from '../session';
+import { ChromeSession, NotTabSpaceTabId } from '../ChromeSession';
 import {
   getTabSpaceData,
   bootstrap as tabSpaceBootstrap,

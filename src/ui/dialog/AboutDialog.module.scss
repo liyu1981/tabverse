@@ -1,0 +1,49 @@
+@use '../../global.scss';
+
+.container {
+  min-height: 500px;
+  padding-bottom: 0;
+}
+
+.logoContainer {
+  background-color: global.$color-main-brand;
+  width: 100%;
+  display: table;
+  min-height: 250px;
+}
+
+.logoContainer2 {
+  width: 100%;
+  display: table-cell;
+  vertical-align: middle;
+}
+
+.otherContainer {
+  background-color: global.$color-main-brand;
+  width: 100%;
+  height: 210px;
+  display: flex;
+  border-radius: 0 0 4px 4px;
+  flex-direction: column;
+  align-items: center;
+}
+
+.aboutText1 {
+  display: block;
+  font-size: 1.6em;
+  color: white;
+  text-shadow: 0 1px 0 black;
+  margin-bottom: 80px;
+}
+
+.aboutText2 {
+  display: block;
+  font-size: 1.2em;
+  color: white;
+  text-shadow: 0 1px 0 black;
+}
+
+.aboutTextLink {
+  color: white;
+  text-decoration: underline;
+}

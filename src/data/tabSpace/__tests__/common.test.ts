@@ -6,10 +6,11 @@ import { TabSpaceRegistryMsg, sendChromeMessage } from '../../../message';
 import { scanCurrentTabs, startMonitorTabChanges } from '../chromeTab';
 
 import { ITabSpaceData } from '../bootstrap';
-import { SavedTabSpaceStore } from '../tabSpaceStore';
-import { TabPreview } from '../tabPreview';
-import { TabSpace } from '../tabSpace';
-import { TabSpaceRegistry } from '../tabSpaceRegistry';
+import { SavedTabSpaceCollection } from '../SavedTabSpaceCollection';
+import { SavedTabSpaceStore } from '../SavedTabSpaceStore';
+import { TabPreview } from '../TabPreview';
+import { TabSpace } from '../TabSpace';
+import { TabSpaceRegistry } from '../TabSpaceRegistry';
 import { initMockChrome } from './chromeTab.scanCurrentTabs.test';
 import { startMonitorTabSpaceRegistryChanges } from '../chromeMessage';
 
@@ -25,6 +26,7 @@ export function createNewTabSpaceData(
     tabSpaceRegistry: new TabSpaceRegistry(),
     tabPreview: new TabPreview(),
     savedTabSpaceStore: new SavedTabSpaceStore(),
+    savedTabSpaceCollection: new SavedTabSpaceCollection(),
   };
   if (tabId && windowId) {
     d.tabSpace.setChromeTabAndWindowId(tabId, windowId, autoSetName);

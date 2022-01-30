@@ -1,4 +1,4 @@
-import { AllTodo, Todo, ITodoJSON } from './todo';
+import { AllTodo, ITodoJSON, Todo } from './Todo';
 
 import { db } from '../../store/db';
 import { getLogger } from '../../store/store';

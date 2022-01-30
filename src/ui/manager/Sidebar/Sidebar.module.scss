@@ -1,0 +1,82 @@
+@use '../../../global.scss';
+
+.sidebarComponent {
+  position: relative;
+  background-color: global.$color-light-shade;
+  border-radius: 3px;
+  margin-bottom: 18px;
+  padding: 3px;
+  box-shadow: 0px 0px 5px -1px global.$color-dark-shade;
+}
+
+.sidebarComponent .edge {
+  position: absolute;
+  left: calc(100% - 2px);
+  top: -14px;
+  min-width: 14px;
+  height: calc(100% + 28px);
+  background-image: linear-gradient(
+    90deg,
+    global.$color-light-shade,
+    rgb(245, 246, 248)
+  );
+}
+
+.sidebarComponent .edge::before {
+  content: '';
+  width: 14px;
+  height: 14px;
+  background-color: global.$color-main-brand;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  border-bottom-right-radius: 12px;
+}
+
+.sidebarComponent .edge::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background-color: global.$color-main-brand;
+  top: calc(100% - 14px);
+  left: 0px;
+  border-top-right-radius: 12px;
+}
+
+.sidebarComponent.active .edge {
+  display: block;
+}
+
+.sidebarComponent.inactive .edge {
+  display: none;
+}
+
+.sidebarComponent .header {
+  line-height: 42px;
+  padding-left: 10px;
+  font-size: 1.2em;
+  font-weight: bold;
+}
+
+.sidebarComponent.active .header {
+  background-color: #fafafa;
+  background-image: linear-gradient(180deg, hsla(0, 0%, 100%, 0), #ced9e0);
+  box-shadow: inset 0 0 0 1px rgb(16 22 26 / 20%),
+    inset 0 -1px 0 rgb(16 22 26 / 10%);
+  border-radius: 3px;
+}
+
+.sidebarComponent.inactive {
+  opacity: 0.65;
+  cursor: pointer;
+  transition: opacity 150ms ease-in-out;
+}
+
+.sidebarComponent.inactive:hover {
+  opacity: 1;
+}
+
+.sidebarComponent .content {
+  transition: all 150ms ease-in-out;
+}

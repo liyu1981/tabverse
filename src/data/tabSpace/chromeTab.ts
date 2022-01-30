@@ -2,9 +2,9 @@ import { TabSpaceRegistryMsg, sendChromeMessage } from '../../message';
 import { isTabSpaceManagerPage, logger } from '../../global';
 
 import { ITabSpaceData } from './bootstrap';
-import { Tab } from './tab';
-import { TabPreview } from './tabPreview';
-import { TabSpace } from './tabSpace';
+import { Tab } from './Tab';
+import { TabPreview } from './TabPreview';
+import { TabSpace } from './TabSpace';
 import { action } from 'mobx';
 import { getUnsavedNewId } from '../common';
 import { isJestTest } from '../../debug';

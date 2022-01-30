@@ -3,7 +3,7 @@ import {
   IChromeSessionSavePayload,
   NotTabSpaceTabId,
   isChromeSessionChanged,
-} from './session';
+} from './ChromeSession';
 import { debounce, logger } from '../../global';
 
 import { db } from '../../store/db';

@@ -1,4 +1,4 @@
-import { AllBookmark, Bookmark } from '../bookmark';
+import { AllBookmark, Bookmark } from '../Bookmark';
 
 import { isIdNotSaved } from '../../common';
 

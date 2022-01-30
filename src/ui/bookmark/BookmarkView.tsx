@@ -6,66 +6,26 @@ import {
 } from '../../data/bookmark/bootstrap';
 import { Button, ButtonGroup, EditableText } from '@blueprintjs/core';
 
-import { Bookmark } from '../../data/bookmark/bookmark';
+import { Bookmark } from '../../data/bookmark/Bookmark';
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { observer } from 'mobx-react-lite';
 import { usePageControl } from '../common/usePageControl';
 import { useState } from 'react';
-
-function createStyles(): { [k: string]: React.CSSProperties } {
-  return {
-    container: {
-      background: '#fff',
-      position: 'relative',
-      border: '1px solid #ddd',
-      color: '#111111',
-    },
-    listContainer: {
-      margin: 0,
-      padding: 0,
-      listStyle: 'none',
-    },
-    listItemView: {
-      display: 'flex',
-      width: '100%',
-      padding: '12px 12px',
-      borderBottom: '1px solid #ededed',
-    },
-    favIcon: {
-      marginRight: '18px',
-    },
-    label: {
-      width: '98%',
-      wordBreak: 'break-all',
-    },
-    noticeContainer: {
-      background: '#fff',
-      border: '1px solid #ddd',
-      color: '#999',
-      padding: '8px 18px',
-      fontStyle: 'italic',
-      fontWeight: 500,
-    },
-    pageControlContainer: {
-      textAlign: 'center',
-    },
-  };
-}
+import classes from './BookmarkView.module.scss';
 
 interface IBookmarkItem {
   bookmark: Bookmark;
 }
 
 const BookmarkItem = (props: IBookmarkItem) => {
-  const styles = createStyles();
   const [name, setName] = useState(props.bookmark.name);
   return (
     <li>
-      <div style={styles.listItemView}>
-        <div style={styles.favIcon}>
+      <div className={classes.listItemView}>
+        <div className={classes.favIcon}>
           <img src={props.bookmark.favIconUrl} width="32" height="32" />
         </div>
-        <label style={styles.label}>
+        <label className={classes.label}>
           <div>
             <b>
               <EditableText
@@ -124,8 +84,6 @@ export interface IBookmarkViewProps {
 const BOOKMARK_PAGE_LIMIT = 10;
 
 export const BookmarkView = observer((props: IBookmarkViewProps) => {
-  const styles = createStyles();
-
   const [getCurrentPageItems, renderPageControl] = usePageControl<Bookmark>(
     props.allBookmarkData.allBookmark.bookmarks.reverse().toArray(),
     BOOKMARK_PAGE_LIMIT,
@@ -133,7 +91,7 @@ export const BookmarkView = observer((props: IBookmarkViewProps) => {
 
   const renderCurrentBookmarkItems = () => {
     return (
-      <ul style={styles.listContainer}>
+      <ul className={classes.listContainer}>
         {getCurrentPageItems().map((bookmark) => (
           <BookmarkItem key={bookmark.id} bookmark={bookmark} />
         ))}
@@ -144,14 +102,16 @@ export const BookmarkView = observer((props: IBookmarkViewProps) => {
   return (
     <ErrorBoundary>
       {getCurrentPageItems().length <= 0 ? (
-        <div style={styles.noticeContainer}>
+        <div className={classes.noticeContainer}>
           No bookmark saved. You can save bookmark from left side tab entries.
         </div>
       ) : (
-        <div style={styles.container}>
+        <div className={classes.container}>
           <div>
             {renderCurrentBookmarkItems()}
-            <div style={styles.pageControlContainer}>{renderPageControl()}</div>
+            <div className={classes.pageControlContainer}>
+              {renderPageControl()}
+            </div>
           </div>
         </div>
       )}

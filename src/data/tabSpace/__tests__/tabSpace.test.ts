@@ -1,7 +1,8 @@
-import { TabSpace } from '../tabSpace';
 import { getSavedId, isIdNotSaved } from '../../common';
-import { Tab } from '../tab';
+
 import { TABSPACE_DB_VERSION } from '../../../global';
+import { Tab } from '../Tab';
+import { TabSpace } from '../TabSpace';
 
 test('constructor', () => {
   const ts = new TabSpace();

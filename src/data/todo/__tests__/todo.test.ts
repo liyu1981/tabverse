@@ -1,4 +1,4 @@
-import { AllTodo, ITodoJSON, Todo } from '../todo';
+import { AllTodo, ITodoJSON, Todo } from '../Todo';
 
 import { isIdNotSaved } from '../../common';
 import { typeGuard } from '../../../global';

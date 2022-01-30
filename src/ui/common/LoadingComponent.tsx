@@ -8,7 +8,7 @@ export function getLoadingComponent(
   component: React.FC<any>,
   loader: () => Promise<any>,
   destProp: string,
-) {
+): React.FC {
   function wrappedComponent() {
     const [loadStatus, setLoadStatus] = useState<LoadStatus>(
       LoadStatus.Loading,
@@ -18,7 +18,6 @@ export function getLoadingComponent(
     useAsyncEffect(async () => {
       setLoadStatus(LoadStatus.Loading);
       const result = await loader();
-      console.log('loaded:', result);
       const props = {};
       props[destProp] = result;
       setPropsData(props);

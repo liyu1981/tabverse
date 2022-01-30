@@ -8,7 +8,7 @@ import {
   TabSpaceRegistryMsg,
   sendChromeMessage,
 } from '../../message';
-import { TabSpaceRegistry, TabSpaceStub } from './tabSpaceRegistry';
+import { TabSpaceRegistry, TabSpaceStub } from './TabSpaceRegistry';
 
 import { getTabSpaceData } from './bootstrap';
 import { logger } from '../../global';

@@ -98,7 +98,7 @@ export class SavedStoreManager {
   }
 }
 
-export const queryPageLimit = 20;
+export const queryPageLimit = 10;
 
 export function addPagingToQueryParams(params: any, start?: number) {
   return merge(params, {

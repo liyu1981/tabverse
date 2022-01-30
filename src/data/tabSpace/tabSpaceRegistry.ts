@@ -2,7 +2,7 @@ import { action, makeObservable, observable } from 'mobx';
 import { clone, forEach, isEqual } from 'lodash';
 
 import { Map } from 'immutable';
-import { TabSpaceJSON } from './tabSpace';
+import { TabSpaceJSON } from './TabSpace';
 
 export type TabSpaceStub = Omit<TabSpaceJSON, 'tabs'>;
 export type TabSpaceRegistryMap = Map<string, TabSpaceStub>;
@@ -16,6 +16,8 @@ export class TabSpaceRegistry {
   registry: TabSpaceRegistryMap;
 
   constructor(registry?: TabSpaceRegistryMap) {
+    this.registry = registry ? Map(registry) : Map();
+
     makeObservable(this, {
       registry: observable,
 
@@ -25,7 +27,6 @@ export class TabSpaceRegistry {
       mergeRegistry: action,
       mergeRegistryChanges: action,
     });
-    this.registry = registry ? Map(registry) : Map();
   }
 
   clone() {

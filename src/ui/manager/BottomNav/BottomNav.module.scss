@@ -1,0 +1,8 @@
+@use '../../common/SidebarContainer.module.scss';
+
+.container {
+  position: fixed;
+  bottom: 0px;
+  left: -1px;
+  width: SidebarContainer.$sidebar-width;
+}

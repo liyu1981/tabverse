@@ -1,6 +1,6 @@
 import { TABSPACE_DB_VERSION } from '../../../global';
-import { TabSpace } from '../tabSpace';
-import { TabSpaceRegistry } from '../tabSpaceRegistry';
+import { TabSpace } from '../TabSpace';
+import { TabSpaceRegistry } from '../TabSpaceRegistry';
 
 test('tabSpaceRegistry basics', () => {
   const tsr1 = new TabSpaceRegistry();

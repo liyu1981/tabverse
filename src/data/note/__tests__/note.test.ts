@@ -1,4 +1,5 @@
-import { AllNote, Note } from '../note';
+import { AllNote, Note } from '../Note';
+
 import { isIdNotSaved } from '../../common';
 
 function initAllNote() {

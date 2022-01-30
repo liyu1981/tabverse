@@ -1,0 +1,41 @@
+.container {
+  background: #fff;
+  position: relative;
+  border: 1px solid #ddd;
+  color: #111111;
+}
+
+.listContainer {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.listItemView {
+  display: flex;
+  width: 100%;
+  padding: 12px 12px;
+  border-bottom: 1px solid #ededed;
+}
+
+.favIcon {
+  margin-right: 18px;
+}
+
+.label {
+  width: 98%;
+  word-break: break-all;
+}
+
+.noticeContainer {
+  background: #fff;
+  border: 1px solid #ddd;
+  color: #999;
+  padding: 8px 18px;
+  font-style: italic;
+  font-weight: 500;
+}
+
+.pageControlContainer {
+  text-align: center;
+}

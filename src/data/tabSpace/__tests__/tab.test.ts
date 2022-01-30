@@ -1,5 +1,5 @@
 import { TABSPACE_DB_VERSION } from '../../../global';
-import { Tab } from '../tab';
+import { Tab } from '../Tab';
 import { isIdNotSaved } from '../../common';
 
 test('constructor', () => {

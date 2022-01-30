@@ -3,24 +3,26 @@ import {
   monitorDbChanges,
   monitorTabSpaceChange,
   querySavedTabSpaceById,
-} from './tabSpaceStore';
+} from './SavedTabSpaceStore';
 import { TabSpaceRegistryMsg, sendChromeMessage } from '../../message';
 import { filter, map } from 'lodash';
 import { scanCurrentTabs, startMonitorTabChanges } from './chromeTab';
 
-import { TabPreview } from './tabPreview';
-import { TabSpace } from './tabSpace';
-import { TabSpaceRegistry } from './tabSpaceRegistry';
+import { SavedTabSpaceCollection } from './SavedTabSpaceCollection';
+import { TabPreview } from './TabPreview';
+import { TabSpace } from './TabSpace';
+import { TabSpaceRegistry } from './TabSpaceRegistry';
 import { strict as assert } from 'assert';
 import { exposeDebugData } from '../../debug';
 import { getSavedStoreManager } from '../../store/bootstrap';
 import { startMonitorTabSpaceRegistryChanges } from './chromeMessage';
 
 export interface ITabSpaceData {
-  tabSpace: TabSpace;
-  tabSpaceRegistry: TabSpaceRegistry;
-  tabPreview: TabPreview;
-  savedTabSpaceStore: SavedTabSpaceStore;
+  tabSpace: Readonly<TabSpace>;
+  tabSpaceRegistry: Readonly<TabSpaceRegistry>;
+  tabPreview: Readonly<TabPreview>;
+  savedTabSpaceStore: Readonly<SavedTabSpaceStore>;
+  savedTabSpaceCollection: Readonly<SavedTabSpaceCollection>;
 }
 
 let tabSpaceData: ITabSpaceData | null = null;
@@ -31,6 +33,7 @@ function createTabSpaceData() {
     tabSpaceRegistry: new TabSpaceRegistry(),
     tabPreview: new TabPreview(),
     savedTabSpaceStore: new SavedTabSpaceStore(),
+    savedTabSpaceCollection: new SavedTabSpaceCollection(),
   };
 }
 
@@ -42,7 +45,8 @@ export function getTabSpaceData(): ITabSpaceData {
   return tabSpaceData;
 }
 
-async function bootstrapCommon(tabSpaceData: ITabSpaceData) {
+async function bootstrapCommon() {
+  const tabSpaceData = getTabSpaceData();
   await scanCurrentTabs(tabSpaceData);
   startMonitorTabChanges(tabSpaceData);
   startMonitorTabSpaceRegistryChanges(tabSpaceData.tabSpaceRegistry);
@@ -54,20 +58,27 @@ export async function bootstrap(
   chromeTabId: number,
   chromeWindowId: number,
 ): Promise<void> {
-  const { tabSpace, tabSpaceRegistry, tabPreview, savedTabSpaceStore } =
-    createTabSpaceData();
+  const {
+    tabSpace,
+    tabSpaceRegistry,
+    tabPreview,
+    savedTabSpaceStore,
+    savedTabSpaceCollection,
+  } = createTabSpaceData();
+
   tabSpace.setChromeTabAndWindowId(chromeTabId, chromeWindowId, true);
   tabSpaceRegistry.add(tabSpace.toTabSpaceStub());
 
   getSavedStoreManager().addSavedStore('tabverse', savedTabSpaceStore);
   exposeDebugData('tabverse', { getTabSpaceData });
 
-  // now we mount to our global variable
+  // remount to our global variable so that others knows it is changed
   tabSpaceData = {
     tabSpace,
     tabSpaceRegistry,
     tabPreview,
     savedTabSpaceStore,
+    savedTabSpaceCollection,
   };
 
   sendChromeMessage({
@@ -75,7 +86,7 @@ export async function bootstrap(
     payload: tabSpace.toTabSpaceStub(),
   });
 
-  await bootstrapCommon(tabSpaceData);
+  await bootstrapCommon();
 }
 
 export async function bootstrapFromTabSpaceId(
@@ -128,7 +139,7 @@ export async function bootstrapFromTabSpaceId(
     payload: tabSpaceData.tabSpace.toTabSpaceStub(),
   });
 
-  await bootstrapCommon(tabSpaceData);
+  await bootstrapCommon();
 
   // focus tabspace tab
   const currentTab = await chrome.tabs.getCurrent();

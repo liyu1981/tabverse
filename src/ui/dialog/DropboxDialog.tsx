@@ -25,34 +25,13 @@ import {
 import { useEffect, useState } from 'react';
 
 import { useSettingItem } from '../../store/localSetting';
+import classes from './DropboxDialog.module.scss';
+import clsx from 'clsx';
 
 export const SETTING_KEY_DROPBOX_ACCESSTOKEN = 'tabverse_dropboxAccessToken';
 export const SETTING_KEY_DROPBOX_AUTOBACKUP = 'tabverse_dropboxAutobackup';
 
-function createStyles(): { [k: string]: React.CSSProperties } {
-  return {
-    container: {
-      minWidth: '900px',
-      minHeight: '400px',
-    },
-    dialogIcon: {
-      paddingRight: '8px',
-      marginLeft: '-8px',
-      fontSize: '1.4em',
-    },
-    dialogInnerContainer: {
-      padding: '24px 10px',
-    },
-    dialogCard: {
-      paddingTop: '4px',
-      paddingBottom: '4px',
-      marginBottom: '20px',
-    },
-  };
-}
-
 const DropboxSetup = ({ accessToken, setAccessToken }: any) => {
-  const styles = createStyles();
   const [accessTokenVerifyStatus, setAccessTokenVerifyStatus] =
     useState<VerifyStatus>(VerifyStatus.NotYetPerformed);
 
@@ -86,7 +65,7 @@ const DropboxSetup = ({ accessToken, setAccessToken }: any) => {
   }, [accessToken]);
 
   return (
-    <div style={styles.dialogCard}>
+    <div className={classes.dialogCard}>
       <h3>Dropbox Authentication</h3>
       <FormGroup
         helperText={
@@ -149,7 +128,6 @@ interface ITargetFileRecord {
 }
 
 const DropboxExport = ({ accessToken }: IDropboxExportProps) => {
-  const styles = createStyles();
   const [targetFileRecord, setTargetFileRecord] =
     useState<ITargetFileRecord>(null);
   const [inBackup, setInBackup] = useState(false);
@@ -164,7 +142,7 @@ const DropboxExport = ({ accessToken }: IDropboxExportProps) => {
   };
 
   return (
-    <div style={styles.dialogCard}>
+    <div className={classes.dialogCard}>
       <h3>Export backups to Dropbox</h3>
       <div>
         <div>
@@ -193,7 +171,6 @@ interface IDropboxImportProps {
 }
 
 const DropboxImport = ({ accessToken }: IDropboxImportProps) => {
-  const styles = createStyles();
   const [selectedPath, setSelectedPath] =
     useState<IDropboxBackupFileRecord>(null);
   const [allPaths, setAllPaths] = useState<IDropboxBackupFileRecord[]>([]);
@@ -225,7 +202,7 @@ const DropboxImport = ({ accessToken }: IDropboxImportProps) => {
   };
 
   return (
-    <div style={styles.dialogCard}>
+    <div className={classes.dialogCard}>
       <h3>Import from Dropbox backups</h3>
       <div>
         <FormGroup
@@ -265,8 +242,6 @@ interface IDropboxDialogProps {
 }
 
 export const DropboxDialog = (props: IDropboxDialogProps) => {
-  const styles = createStyles();
-
   const [accessToken, setAccessToken] = useSettingItem<string>(
     SETTING_KEY_DROPBOX_ACCESSTOKEN,
     (v) => {
@@ -283,11 +258,11 @@ export const DropboxDialog = (props: IDropboxDialogProps) => {
       onClose={props.onClose}
       canOutsideClickClose={false}
       canEscapeKeyClose={false}
-      icon={<i className="fab fa-dropbox" style={styles.dialogIcon}></i>}
+      icon={<i className={clsx('fab', 'fa-dropbox', classes.dialogIcon)}></i>}
       title="Export/Import from/to Dropbox"
-      style={styles.container}
+      className={classes.container}
     >
-      <div style={styles.dialogInnerContainer}>
+      <div className={classes.dialogInnerContainer}>
         <BPTabs renderActiveTabPanelOnly={false} vertical={true}>
           {isAccessTokenValid() ? (
             <BPTab

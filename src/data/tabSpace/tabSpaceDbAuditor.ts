@@ -1,6 +1,6 @@
-import { Tab, TabJSON } from './tab';
+import { Tab, TabJSON } from './Tab';
 
-import { TabSpace } from './tabSpace';
+import { TabSpace } from './TabSpace';
 import { db } from '../../store/db';
 import { getLogger } from '../../store/store';
 import { map } from 'lodash';
