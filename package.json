@@ -1,6 +1,6 @@
 {
   "name": "tabverse",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Tabverse is an opinionated tab manager for Chrome browser.",
   "scripts": {
     "test": "jest --coverage",
