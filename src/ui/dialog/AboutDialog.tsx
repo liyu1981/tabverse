@@ -4,6 +4,7 @@ import { Dialog } from '@blueprintjs/core';
 
 import { TabSpaceLogo } from '../common/TabSpaceLogo';
 import classes from './AboutDialog.module.scss';
+import { TABSPACE_VERSION } from '../../global';
 
 export const AboutDialog = (props) => {
   return (
@@ -21,7 +22,11 @@ export const AboutDialog = (props) => {
         </div>
       </div>
       <div className={classes.otherContainer}>
-        <p className={classes.aboutText1}>Opinionated Way of Managing Tabs</p>
+        <p className={classes.aboutText1}>
+          Opinionated Way of Managing Tabs
+          <br />
+          <sub>{TABSPACE_VERSION}</sub>
+        </p>
         <p className={classes.aboutText2}>Created in Sydney</p>
         <p className={classes.aboutText2}>
           <a
