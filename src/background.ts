@@ -1,8 +1,5 @@
 import { dbAuditAndClearance, registerDbAuditor } from './store/store';
-import {
-  monitorChromeTabChanges,
-  dbAuditor as sessionSaverDbAuditor,
-} from './data/chromeSession/sessionSaver';
+import { monitorChromeTabChanges } from './data/chromeSession/sessionSaver';
 
 import { dbAuditor as bookmarkDbAuditor } from './data/bookmark/bookmarkDbAuditor';
 import { logger } from './global';
@@ -23,7 +20,6 @@ registerDbAuditor(tabSpaceDbAuditor);
 registerDbAuditor(todoDbAuditor);
 registerDbAuditor(noteDbAuditor);
 registerDbAuditor(bookmarkDbAuditor);
-registerDbAuditor(sessionSaverDbAuditor);
 //dbAuditAndClearance();
 
 chrome.idle.onStateChanged.addListener((newState: chrome.idle.IdleState) => {
