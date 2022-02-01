@@ -4,6 +4,7 @@ import { ISavedTabSpace, TabSpace } from '../tabSpace/TabSpace';
 import { db } from '../../store/db';
 import { filter } from 'lodash';
 import { isIdNotSaved } from '../common';
+import { getAllChromeSessionData } from './bootstrap';
 
 export type ISavedSessionGroup = {
   tag: string;
@@ -101,4 +102,5 @@ export async function loadSavedSessionsForDisplay(): Promise<
 
 export async function deleteSavedSession(sessionId: string) {
   await db.table(ChromeSession.DB_TABLE_NAME).delete(sessionId);
+  getAllChromeSessionData().savedChromeSessionCollection.load();
 }

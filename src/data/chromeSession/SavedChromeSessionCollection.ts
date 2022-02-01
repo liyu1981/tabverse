@@ -9,20 +9,16 @@ import { flatten, uniq } from 'lodash';
 
 export class SavedChromeSessionCollection {
   savedSessionGroups: IDisplaySavedSessionGroup[];
-  savedVersion: number;
 
   constructor() {
     this.savedSessionGroups = [];
-    this.savedVersion = 0;
 
     makeObservable(this, {
       savedSessionGroups: observable,
-      savedVersion: observable,
 
       groupTags: computed,
 
       load: action,
-      increaseSavedVersion: action,
     });
   }
 
@@ -40,9 +36,5 @@ export class SavedChromeSessionCollection {
         }),
       ),
     ).sort((a, b) => b - a);
-  }
-
-  increaseSavedVersion() {
-    this.savedVersion += 1;
   }
 }
