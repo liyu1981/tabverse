@@ -26,6 +26,7 @@ export function monitorChromeTabChanges(debounceTime: number) {
   chrome.tabs.onMoved.addListener(commonResponder);
   chrome.tabs.onReplaced.addListener(commonResponder);
   chrome.tabs.onRemoved.addListener(commonResponder);
+  chrome.tabs.onUpdated.addListener(commonResponder);
   chrome.windows.onCreated.addListener(commonResponder);
   chrome.windows.onRemoved.addListener(commonResponder);
 }

@@ -5,6 +5,10 @@ import { db } from '../../store/db';
 import { filter } from 'lodash';
 import { isIdNotSaved } from '../common';
 import { getAllChromeSessionData } from './bootstrap';
+import { SavedChromeSessionCollection } from './SavedChromeSessionCollection';
+import { subscribePubSubMessage, TabSpaceDBMsg } from '../../message';
+import { IDatabaseChange } from 'dexie-observable/api';
+import { logger } from '../../global';
 
 export type ISavedSessionGroup = {
   tag: string;
@@ -15,6 +19,22 @@ export type ITabSpaceMap = { [k: string]: ISavedTabSpace };
 export type IDisplaySavedSessionGroup = ISavedSessionGroup & {
   tabSpaceMap: ITabSpaceMap;
 };
+
+export function monitorDbChanges(
+  savedChromeSessionCollection: SavedChromeSessionCollection,
+) {
+  subscribePubSubMessage(
+    TabSpaceDBMsg.Changed,
+    (message, data: IDatabaseChange[]) => {
+      logger.log('pubsub:', message, data);
+      data.forEach((d) => {
+        if (d.table === ChromeSession.DB_TABLE_NAME) {
+          savedChromeSessionCollection.load();
+        }
+      });
+    },
+  );
+}
 
 export async function loadSavedSessionsAsGroups(): Promise<
   ISavedSessionGroup[]
