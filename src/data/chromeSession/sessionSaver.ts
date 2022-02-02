@@ -97,6 +97,12 @@ export async function saveSession(
 
   await scanCurrentTabsForBackground(session);
 
+  if (session.tabs.size <= 0) {
+    // if there is actually no tab (will happen when the browser relaunch
+    // between updating itself), skip saving
+    return;
+  }
+
   if (countSessionNonTabverseTabs(session) <= 0) {
     // when the session is empty (will happen when the tabverse just loaded by
     // chrome), skip saving
