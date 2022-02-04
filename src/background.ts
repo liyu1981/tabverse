@@ -1,8 +1,10 @@
 import { dbAuditAndClearance, registerDbAuditor } from './store/store';
-import { monitorChromeTabChanges } from './data/chromeSession/sessionSaver';
 
 import { dbAuditor as bookmarkDbAuditor } from './data/bookmark/bookmarkDbAuditor';
+import { bootstrap as fullTextBootstrap } from './fullTextSearch/index';
 import { logger } from './global';
+import { monitorChromeTabChanges } from './background/session';
+import { monitorFullTextSearchMsg } from './background/fullTextSearch/chromeMessage';
 import { dbAuditor as noteDbAuditor } from './data/note/noteDbAuditor';
 import { startAutoExportToDropbox } from './dropbox';
 import { dbAuditor as tabSpaceDbAuditor } from './data/tabSpace/tabSpaceDbAuditor';
@@ -35,6 +37,9 @@ chrome.idle.onStateChanged.addListener((newState: chrome.idle.IdleState) => {
 // setupSessionSaver();
 const BACKGROUND_DEBOUNCE_TIME = 2 * 1000;
 monitorChromeTabChanges(BACKGROUND_DEBOUNCE_TIME);
+
+fullTextBootstrap();
+monitorFullTextSearchMsg();
 
 // TODO: temporary leave the dropbox auto backup feature behind, as currently
 // there is no good way of dealing with local settings across tabs/background

@@ -24,6 +24,7 @@ module.exports = {
   rules: {
     'no-unused-vars': 'off',
     'react/prop-types': 'off',
+    'no-control-regex': 'off',
     '@typescript-eslint/no-unused-vars': 'off',
     '@typescript-eslint/ban-ts-comment': 'off',
     '@typescript-eslint/explicit-module-boundary-types': 'off',

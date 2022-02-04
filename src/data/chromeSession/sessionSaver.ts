@@ -4,32 +4,13 @@ import {
   NotTabSpaceTabId,
   isChromeSessionChanged,
 } from './ChromeSession';
-import { debounce, logger } from '../../global';
 
 import { db } from '../../store/db';
-import { getNewId } from '../common';
 import { isJestTest } from '../../debug';
+import { logger } from '../../global';
 import { scanCurrentTabsForBackground } from './chromeScan';
 
 const MAX_SAVED_SESSIONS = isJestTest() ? 3 : 64;
-
-export function monitorChromeTabChanges(debounceTime: number) {
-  const tag = getNewId();
-  const sessionCreatedTime = Date.now();
-  const commonResponder = debounce(() => {
-    saveSession(tag, sessionCreatedTime);
-  }, debounceTime);
-
-  chrome.tabs.onAttached.addListener(commonResponder);
-  chrome.tabs.onCreated.addListener(commonResponder);
-  chrome.tabs.onDetached.addListener(commonResponder);
-  chrome.tabs.onMoved.addListener(commonResponder);
-  chrome.tabs.onReplaced.addListener(commonResponder);
-  chrome.tabs.onRemoved.addListener(commonResponder);
-  chrome.tabs.onUpdated.addListener(commonResponder);
-  chrome.windows.onCreated.addListener(commonResponder);
-  chrome.windows.onRemoved.addListener(commonResponder);
-}
 
 function countSessionNonTabverseTabs(session: ChromeSession): number {
   // calculate how many real tabs we have, excluding tabverse manager tabs

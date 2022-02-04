@@ -128,10 +128,11 @@ export async function querySavedTabSpaceById(
   tabSpaceId: string,
 ): Promise<TabSpace> {
   const savedTabSpaces = await querySavedTabSpace({ anyOf: [tabSpaceId] });
-  assert(
-    savedTabSpaces.length === 1,
-    `queried saved tabspace id ${tabSpaceId} returns ${savedTabSpaces.length} results!`,
-  );
+  if (savedTabSpaces.length !== 1) {
+    throw new Error(
+      `queried saved tabspace id ${tabSpaceId} returns ${savedTabSpaces.length} results!`,
+    );
+  }
   return savedTabSpaces[0];
 }
 
