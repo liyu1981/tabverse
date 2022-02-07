@@ -1,5 +1,5 @@
 import { ISavedTab, Tab } from '../../data/tabSpace/Tab';
-import { addToIndex, getContext } from '../../fullTextSearch';
+import { addToIndex, getContext, removeFromIndex } from '../../fullTextSearch';
 
 import { db } from '../../store/db';
 import { logger } from '../../global';
@@ -28,13 +28,17 @@ export const addToIndexHandlers = {};
 addToIndexHandlers[SearchableType.Tab] = async (type: string, id: string) => {
   try {
     const savedTab = await querySavedTabById(id);
-    addToIndex(getContext(), {
+    const ctx = getContext();
+    // we try to remove the old index first then add them back, so that from the
+    // outside view, addToIndex is repeatable.
+    await removeFromIndex(ctx, { owner: savedTab.id });
+    await addToIndex(ctx, {
       owner: savedTab.id,
       content: savedTab.title,
       type: SearchableType.Tab,
       field: SearchableField.Title,
     });
-    addToIndex(getContext(), {
+    await addToIndex(ctx, {
       owner: savedTab.id,
       content: savedTab.url,
       type: SearchableType.Tab,

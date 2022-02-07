@@ -18,7 +18,7 @@ import { ManagerView } from './manager/ManagerView';
 import { strict as assert } from 'assert';
 import { bootstrap as bookmarkBootstrap } from '../data/bookmark/bootstrap';
 import { find } from 'lodash';
-import { bootstrap as fullTextSearchBootstrap } from '../fullTextSearch/index';
+import { bootstrap as fullTextSearchBootstrap } from '../fullTextSearch';
 import { getQueryParameters } from './common/queryAndHashParameter';
 import { bootstrap as noteBootstrap } from '../data/note/bootstrap';
 import { renderPage } from './common/base';

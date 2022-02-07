@@ -9,9 +9,11 @@ import {
 import { TabSpaceRegistryMsg, sendChromeMessage } from '../../../message';
 
 import { IndicatorLine } from '../../common/IndicatorLine';
+import { PagingControl } from '../../common/PagingControl';
 import { SavedTabSpaceCollection } from '../../../data/tabSpace/SavedTabSpaceCollection';
 import { SavedTabSpaceDetail } from './SavedTabSpaceDetail';
 import { SavedTabSpaceStore } from '../../../data/tabSpace/SavedTabSpaceStore';
+import { SearchInput } from './Search';
 import { StickyContainer } from '../../common/StickyContainer';
 import { TabSpace } from '../../../data/tabSpace/TabSpace';
 import { TabSpaceOp } from '../../../global';
@@ -19,7 +21,6 @@ import classes from './SavedTabSpace.module.scss';
 import { observer } from 'mobx-react-lite';
 import { useAsyncEffect } from '../../common/useAsyncEffect';
 import { useMemo } from 'react';
-import { PagingControl } from '../../common/PagingControl';
 
 function OpenedSavedTabSpaceCard({
   tabSpaceStub,
@@ -114,7 +115,7 @@ export const SavedTabSpace = observer(
     const renderPagingControl = () => {
       return (
         <PagingControl
-          current={savedTabSpaceCollection.savedTabSpacesPageStart + 1}
+          current={savedTabSpaceCollection.queryPageStart + 1}
           total={savedTabSpaceCollection.totalPageCount}
           onNext={savedTabSpaceCollection.nextPage}
           onPrev={savedTabSpaceCollection.prevPage}
@@ -148,6 +149,12 @@ export const SavedTabSpace = observer(
               <div></div>
             )}
             <div className={classes.savedContainer}>
+              <SearchInput
+                onChange={(terms) => {
+                  savedTabSpaceCollection.setQueryTerms(terms);
+                  savedTabSpaceCollection.load(tabSpaceRegistry);
+                }}
+              />
               {groupedSavedTabSpaces.map(([m, savedTabSpaces]) => {
                 return (
                   <div key={m}>

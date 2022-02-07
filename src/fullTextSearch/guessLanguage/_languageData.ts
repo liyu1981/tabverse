@@ -1,5 +1,5 @@
 // borrowed from https://github.com/richtr/guessLanguage.js/blob/master/lib/_languageData.js
-// adatped for typescript
+// adapted for typescript
 
 export const models = {
   af: "ie  didieen ingan  envan vang te n dverer e v ge bede  vende in tele dererset oor 'n'n at eersteordaarsie waes e saan onis in e ordee basirinonde wel  isande eeide dom ke  omeri woe gr dalewat void it rd  aalik wet d ope tngsse enduit st leenster ree aiesworg vstan s na prn o meal of  vierdleee k deiteerkik e re pn ve ie neeneliwer of datelnieikes etaage virheiir regedes vur proeleionwete l moe mdaasios d he toentardnge ooeurlleienn bekelinraa niontbesrdivoons n adeldignas sa grniskom uimenop insonaeres o son gig moe kors gesnalvole hgebruiangigeoetar wysligas n w asmetgs deut vaalerwditkenssekel huewedinn t seestikan pntwt ieni kan edoealiemegronte honsigeniergewn hor  maindne ek aatn ' skide tadatskagersoon ks i afteend eelhulneewoorikd vn mre artebrlankkeronaamtrestrkanreeleit ograhetevotandenist dobrutoeolgrskuikrwyminlgeg eg onstr vgtewaawe ansesiesevoeepagel hivinnses ws tteieitpre",
