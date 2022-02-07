@@ -171,6 +171,7 @@ test('convertAndGetSavePayload', () => {
   expect(tabSpaceSavePayload.tabIds).toEqual([getSavedId(t1.id)]);
   expect(isNewTabSpace).toBeTruthy();
   expect(newTabSavePayloads[0].id).toEqual(getSavedId(t1.id));
+  expect(newTabSavePayloads[0].tabSpaceId).toEqual(getSavedId(ts.id));
   expect(existTabSavePayloads.length).toEqual(0);
 
   const ts4 = TabSpace.fromSavedDataWithoutTabs(tabSpaceSavePayload);
