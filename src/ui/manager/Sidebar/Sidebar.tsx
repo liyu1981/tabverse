@@ -1,11 +1,11 @@
 import * as React from 'react';
 
 import { IManagerQueryParams, ManagerViewRoute } from '../ManagerView';
+import { getTabSpaceData } from '../../../data/tabSpace/bootstrap';
 
 import { BottomNav } from '../BottomNav/BottomNav';
 import { BrowserSession } from './BrowserSession';
 import { ErrorBoundary } from '../../common/ErrorBoundary';
-import { ITabSpaceData } from '../../../data/tabSpace/bootstrap';
 import { Icon } from '@blueprintjs/core';
 import { LiveTabSpace } from './LiveTabSpace';
 import { SavedTabSpace } from './SavedTabSpace';
@@ -58,7 +58,6 @@ export function SidebarComponent({
 export interface ISidebarProps {
   route: ManagerViewRoute;
   switchRoute: (newRoute: ManagerViewRoute) => void;
-  tabSpaceData: ITabSpaceData;
   queryParams?: IManagerQueryParams;
   onCollapse?: () => void;
 }
@@ -102,8 +101,8 @@ export const Sidebar = (props: ISidebarProps) => {
         >
           <LiveTabSpace
             active={props.route === ManagerViewRoute.Opened}
-            tabSpace={props.tabSpaceData.tabSpace}
-            tabSpaceRegistry={props.tabSpaceData.tabSpaceRegistry}
+            tabSpace={getTabSpaceData().tabSpace}
+            tabSpaceRegistry={getTabSpaceData().tabSpaceRegistry}
           />
         </SidebarComponent>
         <SidebarComponent
@@ -118,10 +117,10 @@ export const Sidebar = (props: ISidebarProps) => {
         >
           <SavedTabSpace
             active={props.route === ManagerViewRoute.Opened}
-            tabSpace={props.tabSpaceData.tabSpace}
-            tabSpaceRegistry={props.tabSpaceData.tabSpaceRegistry}
-            savedTabSpaceStore={props.tabSpaceData.savedTabSpaceStore}
-            savedTabSpaceCollection={props.tabSpaceData.savedTabSpaceCollection}
+            tabSpace={getTabSpaceData().tabSpace}
+            tabSpaceRegistry={getTabSpaceData().tabSpaceRegistry}
+            savedTabSpaceStore={getTabSpaceData().savedTabSpaceStore}
+            savedTabSpaceCollection={getTabSpaceData().savedTabSpaceCollection}
           />
         </SidebarComponent>
         <BottomNav />

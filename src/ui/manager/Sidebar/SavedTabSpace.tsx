@@ -1,18 +1,19 @@
 import * as React from 'react';
 
-import { HTMLSelect } from '@blueprintjs/core';
-import { ISidebarComponentProps } from './Sidebar';
-import { SavedTabSpaceStore } from '../../../data/tabSpace/SavedTabSpaceStore';
-import { TabSpace } from '../../../data/tabSpace/TabSpace';
-import { TabSpaceRegistry } from '../../../data/tabSpace/TabSpaceRegistry';
-import { isIdNotSaved } from '../../../data/common';
-import { observer } from 'mobx-react-lite';
-import classes from './SavedTabSpace.module.scss';
 import {
   SavedTabSpaceCollection,
   SortMethods,
 } from '../../../data/tabSpace/SavedTabSpaceCollection';
 import { useEffect, useState } from 'react';
+
+import { HTMLSelect } from '@blueprintjs/core';
+import { ISidebarComponentProps } from './Sidebar';
+import { SavedTabSpaceStore } from '../../../data/tabSpace/SavedTabSpaceStore';
+import { TabSpace } from '../../../data/tabSpace/TabSpace';
+import { TabSpaceRegistry } from '../../../data/tabSpace/TabSpaceRegistry';
+import classes from './SavedTabSpace.module.scss';
+import { isIdNotSaved } from '../../../data/common';
+import { observer } from 'mobx-react-lite';
 
 export type ISavedTabSpaceProps = ISidebarComponentProps & {
   tabSpace: TabSpace;

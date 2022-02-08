@@ -3,8 +3,10 @@ import './manager.scss';
 
 import * as React from 'react';
 
-import { ErrorBoundary } from '../common/ErrorBoundary';
 import { ITabSpaceData } from '../../data/tabSpace/bootstrap';
+import { useMemo, useState } from 'react';
+
+import { ErrorBoundary } from '../common/ErrorBoundary';
 import { SavedTabSpace } from './SavedTabSpace/SavedTabSpace';
 import { SessionBrowser } from './BrowserSession/SessionBrowser';
 import { Sidebar } from './Sidebar/Sidebar';
@@ -12,7 +14,6 @@ import { SidebarContainer } from '../common/SidebarContainer';
 import { TabSpaceView } from './TabSpace/TabSpaceView';
 import { getAllBookmarkData } from '../../data/bookmark/bootstrap';
 import { getAllChromeSessionData } from '../../data/chromeSession/bootstrap';
-import { useMemo, useState } from 'react';
 
 export interface IManagerQueryParams {
   op: string;
@@ -33,7 +34,6 @@ export enum ManagerViewRoute {
 }
 
 export const ManagerView = (props: IManagerContainerProps) => {
-  const allBookmarkData = getAllBookmarkData();
   const [currentRoute, setCurrentRoute] = useState<ManagerViewRoute>(() => {
     const v = (props.queryParams?.route ?? '') as ManagerViewRoute;
     return Object.values(ManagerViewRoute).includes(v)
@@ -60,7 +60,7 @@ export const ManagerView = (props: IManagerContainerProps) => {
             tabSpaceRegistry={props.tabSpaceData.tabSpaceRegistry}
             tabPreview={props.tabSpaceData.tabPreview}
             savedTabSpaceStore={props.tabSpaceData.savedTabSpaceStore}
-            allBookmark={allBookmarkData.allBookmark}
+            allBookmark={getAllBookmarkData().allBookmark}
           />
         );
       case ManagerViewRoute.Saved:
@@ -89,7 +89,6 @@ export const ManagerView = (props: IManagerContainerProps) => {
         <Sidebar
           route={currentRoute}
           switchRoute={(value) => setRouteAndPushHistoryState(value)}
-          tabSpaceData={props.tabSpaceData}
           queryParams={props.queryParams}
         />
         {renderView(currentRoute)}

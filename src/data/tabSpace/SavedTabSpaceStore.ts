@@ -143,12 +143,6 @@ export async function saveTabSpace(tabSpace: TabSpace): Promise<number> {
     newTabSavePayloads,
     existTabSavePayloads,
   } = tabSpace.convertAndGetSavePayload();
-  console.log(
-    'will save tabspace:',
-    tabSpaceSavePayload,
-    newTabSavePayloads,
-    existTabSavePayloads,
-  );
   await db.transaction(
     'rw',
     [db.table(Tab.DB_TABLE_NAME), db.table(TabSpace.DB_TABLE_NAME)],

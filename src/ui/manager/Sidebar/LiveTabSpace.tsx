@@ -6,6 +6,7 @@ import { Tag, Tree, TreeNodeInfo } from '@blueprintjs/core';
 import { ISidebarComponentProps } from './Sidebar';
 import { TabSpace } from '../../../data/tabSpace/TabSpace';
 import { TabSpaceRegistry } from '../../../data/tabSpace/TabSpaceRegistry';
+import classes from './LiveTabSpace.module.scss';
 import { concat } from 'lodash';
 import { isIdNotSaved } from '../../../data/common';
 import { observer } from 'mobx-react-lite';
@@ -18,16 +19,6 @@ export function switchToTab(ts: TabSpace) {
   chrome.windows.update(ts.chromeWindowId, { focused: true });
 }
 
-export function createLiveTabSpaceStyles(): {
-  [k: string]: React.CSSProperties;
-} {
-  return {
-    clickable: {
-      cursor: 'pointer',
-    },
-  };
-}
-
 export type ILiveTabSpaceProps = ISidebarComponentProps & {
   tabSpace: TabSpace;
   tabSpaceRegistry: TabSpaceRegistry;
@@ -35,8 +26,6 @@ export type ILiveTabSpaceProps = ISidebarComponentProps & {
 
 export const LiveTabSpace = observer(
   ({ tabSpace, tabSpaceRegistry }: ILiveTabSpaceProps) => {
-    const styles = createLiveTabSpaceStyles();
-
     const onNodeClick = (node, nodePath, e) => {
       if (node.tabSpace) {
         switchToTab(node.tabSpace);
@@ -70,8 +59,8 @@ export const LiveTabSpace = observer(
         return {
           id: index,
           icon: 'panel-table',
-          label: <span style={styles.clickable}>{ts.name}</span>,
-          secondaryLabel: isIdNotSaved(tabSpace.id) ? '' : <Tag>saved</Tag>,
+          label: <span className={classes.clickable}>{ts.name}</span>,
+          secondaryLabel: isIdNotSaved(ts.id) ? '' : <Tag>saved</Tag>,
           tabSpace: ts,
         } as TreeNodeInfo;
       })
