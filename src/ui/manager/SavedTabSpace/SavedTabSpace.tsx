@@ -1,16 +1,7 @@
-import * as Moment from 'moment';
 import * as React from 'react';
 
-import { Button, Card, Colors, Elevation, Icon, Tag } from '@blueprintjs/core';
-import {
-  TabSpaceMsg,
-  TabSpaceRegistryMsg,
-  sendChromeMessage,
-} from '../../../message';
-import {
-  TabSpaceRegistry,
-  TabSpaceStub,
-} from '../../../data/tabSpace/TabSpaceRegistry';
+import { Card, Elevation } from '@blueprintjs/core';
+import { TabSpaceRegistry } from '../../../data/tabSpace/TabSpaceRegistry';
 
 import { IndicatorLine } from '../../common/IndicatorLine';
 import { PagingControl } from '../../common/PagingControl';
@@ -20,49 +11,15 @@ import { SavedTabSpaceStore } from '../../../data/tabSpace/SavedTabSpaceStore';
 import { SearchInput } from './Search';
 import { StickyContainer } from '../../common/StickyContainer';
 import { TabSpace } from '../../../data/tabSpace/TabSpace';
-import { TabSpaceOp } from '../../../global';
 import classes from './SavedTabSpace.module.scss';
 import { observer } from 'mobx-react-lite';
 import { useAsyncEffect } from '../../common/useAsyncEffect';
 import { useMemo } from 'react';
-
-function OpenedSavedTabSpaceCard({
-  tabSpaceStub,
-}: {
-  tabSpaceStub: TabSpaceStub;
-}) {
-  return (
-    <Card style={{ marginBottom: '8px', padding: '8px 18px' }}>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        <div>
-          <Tag>Opended</Tag>
-        </div>
-        <div>
-          <span style={{ fontSize: '1.4em', marginRight: '8px' }}>
-            <b>{tabSpaceStub.name}</b>
-          </span>
-          <span style={{ color: Colors.GRAY3, marginRight: '8px' }}>
-            Created {Moment(tabSpaceStub.createdAt).fromNow()}
-          </span>
-          <span style={{ color: Colors.GRAY3, marginRight: '8px' }}>
-            Saved {Moment(tabSpaceStub.updatedAt).fromNow()}
-          </span>
-        </div>
-        <div>
-          <Button minimal={true}>
-            <Icon icon="th-derived" />
-          </Button>
-        </div>
-      </div>
-    </Card>
-  );
-}
+import {
+  switchToTabSpaceUtil,
+  restoreSavedTabSpaceUtil,
+  loadToCurrentWindowUtil,
+} from '../../../data/tabSpace/chromeUtil';
 
 export interface SavedTabSpaceProps {
   tabSpace: TabSpace;
@@ -86,44 +43,23 @@ export const SavedTabSpace = observer(
       () => (tabSpace: TabSpace) => {
         const tabSpaceStub = tabSpaceRegistry.registry.get(tabSpace.id);
         if (tabSpaceStub) {
-          sendChromeMessage({
-            type: TabSpaceMsg.Focus,
-            payload: tabSpaceStub.chromeTabId,
-          });
-          chrome.windows.update(tabSpaceStub.chromeWindowId, { focused: true });
+          switchToTabSpaceUtil(
+            tabSpaceStub.chromeTabId,
+            tabSpaceStub.chromeWindowId,
+          );
         }
       },
       [],
     );
 
     const restoreSavedTabSpace = useMemo(
-      () => (tabSpace: TabSpace) => {
-        chrome.windows.create((window) => {
-          chrome.tabs.create({
-            active: true,
-            pinned: true,
-            url: `manager.html?op=${TabSpaceOp.LoadSaved}&stsid=${tabSpace.id}`,
-            windowId: window.id,
-          });
-        });
-      },
+      () => (tabSpace: TabSpace) => restoreSavedTabSpaceUtil(tabSpace.id),
       [],
     );
 
     const loadToCurrentWindow = useMemo(
-      () => (stsid: string) => {
-        async function action() {
-          sendChromeMessage({
-            type: TabSpaceRegistryMsg.RemoveTabSpace,
-            payload: tabSpace.id,
-          });
-          window.open(
-            `manager.html?op=${TabSpaceOp.LoadSaved}&stsid=${stsid}`,
-            '_self',
-          );
-        }
-        action();
-      },
+      () => (savedTabSpaceId: string) =>
+        loadToCurrentWindowUtil(tabSpace.id, savedTabSpaceId),
       [],
     );
 

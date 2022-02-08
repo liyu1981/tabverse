@@ -1,38 +1,47 @@
 import * as React from 'react';
 
-import { TabSpaceMsg, sendChromeMessage } from '../../../message';
 import { Tag, Tree, TreeNodeInfo } from '@blueprintjs/core';
 
 import { ISidebarComponentProps } from './Sidebar';
 import { TabSpace } from '../../../data/tabSpace/TabSpace';
-import { TabSpaceRegistry } from '../../../data/tabSpace/TabSpaceRegistry';
+import {
+  TabSpaceRegistry,
+  TabSpaceStub,
+} from '../../../data/tabSpace/TabSpaceRegistry';
 import classes from './LiveTabSpace.module.scss';
 import { concat } from 'lodash';
 import { isIdNotSaved } from '../../../data/common';
 import { observer } from 'mobx-react-lite';
-
-export function switchToTab(ts: TabSpace) {
-  sendChromeMessage({
-    type: TabSpaceMsg.Focus,
-    payload: ts.chromeTabId,
-  });
-  chrome.windows.update(ts.chromeWindowId, { focused: true });
-}
+import { switchToTabSpaceUtil } from '../../../data/tabSpace/chromeUtil';
+import { useMemo } from 'react';
 
 export type ILiveTabSpaceProps = ISidebarComponentProps & {
   tabSpace: TabSpace;
   tabSpaceRegistry: TabSpaceRegistry;
 };
 
+type TreeNodeInfoWithTabSpace = TreeNodeInfo<{ tabSpaceStub?: TabSpaceStub }>;
+
 export const LiveTabSpace = observer(
   ({ tabSpace, tabSpaceRegistry }: ILiveTabSpaceProps) => {
-    const onNodeClick = (node, nodePath, e) => {
-      if (node.tabSpace) {
-        switchToTab(node.tabSpace);
-      }
-    };
+    const onNodeClick = useMemo(
+      () =>
+        (
+          node: TreeNodeInfoWithTabSpace,
+          _nodePath: number[],
+          _e: React.MouseEvent<HTMLElement>,
+        ) => {
+          if (node.nodeData && node.nodeData.tabSpaceStub) {
+            switchToTabSpaceUtil(
+              node.nodeData.tabSpaceStub.chromeTabId,
+              node.nodeData.tabSpaceStub.chromeWindowId,
+            );
+          }
+        },
+      [],
+    );
 
-    const thisWindowNodes: TreeNodeInfo[] = [
+    const thisWindowNodes: TreeNodeInfoWithTabSpace[] = [
       {
         id: 0,
         icon: 'full-stacked-chart',
@@ -53,18 +62,19 @@ export const LiveTabSpace = observer(
       (otherTabSpace) => otherTabSpace.id !== tabSpace.id,
     );
 
-    const otherWindowChildNodes: TreeNodeInfo[] = otherTabSpaces.registry
-      .toList()
-      .map((ts, index) => {
-        return {
-          id: index,
-          icon: 'panel-table',
-          label: <span className={classes.clickable}>{ts.name}</span>,
-          secondaryLabel: isIdNotSaved(ts.id) ? '' : <Tag>saved</Tag>,
-          tabSpace: ts,
-        } as TreeNodeInfo;
-      })
-      .toArray();
+    const otherWindowChildNodes: TreeNodeInfoWithTabSpace[] =
+      otherTabSpaces.registry
+        .toList()
+        .map<TreeNodeInfoWithTabSpace>((ts, index) => {
+          return {
+            id: index,
+            icon: 'panel-table',
+            label: <span className={classes.clickable}>{ts.name}</span>,
+            secondaryLabel: isIdNotSaved(ts.id) ? '' : <Tag>saved</Tag>,
+            nodeData: { tabSpaceStub: ts },
+          };
+        })
+        .toArray();
 
     const otherWindowNodes: TreeNodeInfo[] = [
       {
