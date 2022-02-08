@@ -3,10 +3,14 @@ import * as React from 'react';
 
 import { Button, Card, Colors, Elevation, Icon, Tag } from '@blueprintjs/core';
 import {
+  TabSpaceMsg,
+  TabSpaceRegistryMsg,
+  sendChromeMessage,
+} from '../../../message';
+import {
   TabSpaceRegistry,
   TabSpaceStub,
 } from '../../../data/tabSpace/TabSpaceRegistry';
-import { TabSpaceRegistryMsg, sendChromeMessage } from '../../../message';
 
 import { IndicatorLine } from '../../common/IndicatorLine';
 import { PagingControl } from '../../common/PagingControl';
@@ -78,8 +82,22 @@ export const SavedTabSpace = observer(
       await savedTabSpaceCollection.load(tabSpaceRegistry);
     }, [tabSpaceRegistry.registry, savedTabSpaceStore.savedDataVersion]);
 
+    const switchToTabSpace = useMemo(
+      () => (tabSpace: TabSpace) => {
+        const tabSpaceStub = tabSpaceRegistry.registry.get(tabSpace.id);
+        if (tabSpaceStub) {
+          sendChromeMessage({
+            type: TabSpaceMsg.Focus,
+            payload: tabSpaceStub.chromeTabId,
+          });
+          chrome.windows.update(tabSpaceStub.chromeWindowId, { focused: true });
+        }
+      },
+      [],
+    );
+
     const restoreSavedTabSpace = useMemo(
-      () => (tabSpace: any) => {
+      () => (tabSpace: TabSpace) => {
         chrome.windows.create((window) => {
           chrome.tabs.create({
             active: true,
@@ -127,34 +145,17 @@ export const SavedTabSpace = observer(
       <div>
         <div className={classes.container}>
           <div className={classes.tabSpaceListContainer}>
-            {savedTabSpaceCollection.openedSavedTabSpaces.length > 0 ? (
-              <StickyContainer thresh={0} stickyOnClassName={classes.stickyOn}>
-                <Card
-                  elevation={Elevation.TWO}
-                  className={classes.openedTabSpaceNoticeCard}
-                >
-                  {savedTabSpaceCollection.sortedOpenedSavedTabSpaces.map(
-                    (tabSpaceStub) => {
-                      return (
-                        <OpenedSavedTabSpaceCard
-                          key={tabSpaceStub.id}
-                          tabSpaceStub={tabSpaceStub}
-                        />
-                      );
-                    },
-                  )}
-                </Card>
-              </StickyContainer>
-            ) : (
-              <div></div>
-            )}
+            <StickyContainer thresh={0} stickyOnClassName={classes.stickyOn}>
+              <div className={classes.toolbar}>
+                <SearchInput
+                  onChange={(terms) => {
+                    savedTabSpaceCollection.setQueryTerms(terms);
+                    savedTabSpaceCollection.load(tabSpaceRegistry);
+                  }}
+                />
+              </div>
+            </StickyContainer>
             <div className={classes.savedContainer}>
-              <SearchInput
-                onChange={(terms) => {
-                  savedTabSpaceCollection.setQueryTerms(terms);
-                  savedTabSpaceCollection.load(tabSpaceRegistry);
-                }}
-              />
               {groupedSavedTabSpaces.map(([m, savedTabSpaces]) => {
                 return (
                   <div key={m}>
@@ -169,10 +170,25 @@ export const SavedTabSpace = observer(
                             className={classes.tabSpaceCard}
                             elevation={Elevation.TWO}
                           >
+                            <div
+                              className={
+                                savedTabSpaceCollection.isTabSpaceOpened(
+                                  savedTabSpace.id,
+                                )
+                                  ? classes.opened
+                                  : classes.notOpened
+                              }
+                            >
+                              <div className={classes.inner}>opened</div>
+                            </div>
                             <SavedTabSpaceDetail
                               key={savedTabSpace.id}
+                              opened={savedTabSpaceCollection.isTabSpaceOpened(
+                                savedTabSpace.id,
+                              )}
                               tabSpace={savedTabSpace}
                               savedTabSpaceStore={savedTabSpaceStore}
+                              switchFunc={switchToTabSpace}
                               restoreFunc={restoreSavedTabSpace}
                               loadToCurrentWindowFunc={loadToCurrentWindow}
                             />

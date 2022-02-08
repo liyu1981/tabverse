@@ -1,15 +1,16 @@
 import * as React from 'react';
 
 import { TabSpaceMsg, sendChromeMessage } from '../../../message';
-import { Tree, TreeNodeInfo } from '@blueprintjs/core';
+import { Tag, Tree, TreeNodeInfo } from '@blueprintjs/core';
 
 import { ISidebarComponentProps } from './Sidebar';
 import { TabSpace } from '../../../data/tabSpace/TabSpace';
 import { TabSpaceRegistry } from '../../../data/tabSpace/TabSpaceRegistry';
 import { concat } from 'lodash';
+import { isIdNotSaved } from '../../../data/common';
 import { observer } from 'mobx-react-lite';
 
-function switchToTab(ts: TabSpace) {
+export function switchToTab(ts: TabSpace) {
   sendChromeMessage({
     type: TabSpaceMsg.Focus,
     payload: ts.chromeTabId,
@@ -52,7 +53,8 @@ export const LiveTabSpace = observer(
           {
             id: 1,
             icon: 'panel-table',
-            label: tabSpace.name,
+            label: <span>{tabSpace.name}</span>,
+            secondaryLabel: isIdNotSaved(tabSpace.id) ? '' : <Tag>saved</Tag>,
           },
         ],
       },
@@ -69,6 +71,7 @@ export const LiveTabSpace = observer(
           id: index,
           icon: 'panel-table',
           label: <span style={styles.clickable}>{ts.name}</span>,
+          secondaryLabel: isIdNotSaved(tabSpace.id) ? '' : <Tag>saved</Tag>,
           tabSpace: ts,
         } as TreeNodeInfo;
       })
