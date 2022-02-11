@@ -18,7 +18,6 @@ import {
 import { debounce, logger } from '../../global';
 
 import { IDatabaseChange } from 'dexie-observable/api';
-import { strict as assert } from 'assert';
 import { db } from '../../store/db';
 import { map } from 'lodash';
 import { observe } from 'mobx';
@@ -162,16 +161,9 @@ export async function saveTabSpace(tabSpace: TabSpace): Promise<number> {
 export async function deleteSavedTabSpace(
   savedTabSpaceId: string,
 ): Promise<void> {
-  const savedTabSpaces = await db
+  const savedTabSpace = await db
     .table<ISavedTabSpace>(TabSpace.DB_TABLE_NAME)
-    .where('id')
-    .equals(savedTabSpaceId)
-    .toArray();
-  assert(
-    savedTabSpaces.length === 1,
-    `More than one saved tabspace found with id ${savedTabSpaceId}`,
-  );
-  const savedTabSpace = savedTabSpaces[0];
+    .get(savedTabSpaceId);
   await db.transaction(
     'rw',
     [db.table(Tab.DB_TABLE_NAME), db.table(TabSpace.DB_TABLE_NAME)],

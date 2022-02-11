@@ -3,6 +3,7 @@ import { addToIndex, getContext, removeFromIndex } from '../../fullTextSearch';
 
 import { db } from '../../store/db';
 import { logger } from '../../global';
+import { querySavedTabSpaceById } from '../../data/tabSpace/SavedTabSpaceStore';
 
 export enum SearchableType {
   Tab = 'tab',
@@ -25,13 +26,10 @@ async function querySavedTabById(tabId: string): Promise<ISavedTab> {
 
 export const addToIndexHandlers = {};
 
-addToIndexHandlers[SearchableType.Tab] = async (type: string, id: string) => {
+export async function addTabToIndex(id: string) {
   try {
     const savedTab = await querySavedTabById(id);
     const ctx = getContext();
-    // we try to remove the old index first then add them back, so that from the
-    // outside view, addToIndex is repeatable.
-    await removeFromIndex(ctx, { owner: savedTab.id });
     await addToIndex(ctx, {
       owner: savedTab.id,
       content: savedTab.title,
@@ -47,4 +45,26 @@ addToIndexHandlers[SearchableType.Tab] = async (type: string, id: string) => {
   } catch (e) {
     logger.error(e.message);
   }
-};
+}
+
+addToIndexHandlers[SearchableType.Tab] = addTabToIndex;
+
+async function addTabSpaceToIndex(id: string) {
+  try {
+    const savedTabSpace = await querySavedTabSpaceById(id);
+    const ctx = getContext();
+    await addToIndex(ctx, {
+      owner: savedTabSpace.id,
+      content: savedTabSpace.name,
+      type: SearchableType.TabSpace,
+      field: SearchableField.Title,
+    });
+    await Promise.all(
+      savedTabSpace.tabIds.map((tabId) => addTabToIndex(tabId)),
+    );
+  } catch (e) {
+    logger.error(e.message);
+  }
+}
+
+addToIndexHandlers[SearchableType.TabSpace] = addTabSpaceToIndex;

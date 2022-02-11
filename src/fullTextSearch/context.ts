@@ -11,6 +11,7 @@ import {
 
 import { getNewId } from '../data/common';
 import { logger } from '../global';
+import { indexedDBRequestPromise } from '.';
 
 function getDbUpgradeHandler(request: IDBRequest) {
   return (e: IDBVersionChangeEvent) => {
@@ -40,6 +41,12 @@ async function newSearchContext(): Promise<IFullTextSearchState> {
     id: getNewId(),
     db,
   };
+}
+
+export async function getIndexSize(ctx: IFullTextSearchState): Promise<number> {
+  const tx = ctx.db.transaction(STORE_NAME, 'readonly');
+  const store = tx.objectStore(STORE_NAME);
+  return await indexedDBRequestPromise(store.count());
 }
 
 let _state = null;

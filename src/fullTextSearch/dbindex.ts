@@ -1,4 +1,3 @@
-import { FullTextSearchMsg, sendChromeMessage } from '../message';
 import {
   IFullTextAddToIndexParam,
   IFullTextRemoveFromIndexParam,
@@ -8,14 +7,8 @@ import {
   indexedDBRequestPromise,
 } from './common';
 
-import { flatten } from 'lodash';
-import { getContext } from './context';
 import { getNewId } from '../data/common';
-import { getTabSpaceData } from '../data/tabSpace/bootstrap';
-import { getWindow } from '../store/localSetting';
-import { isDebug } from '../debug';
 import { logger } from '../global';
-import { search } from './search';
 import { tokenize } from './tokenize';
 
 export async function addToIndex(
@@ -52,37 +45,4 @@ export async function removeFromIndex(
     allKeys.map((key) => indexedDBRequestPromise(store.delete(key))),
   );
   tx.commit();
-}
-
-if (isDebug() && getWindow()) {
-  // @ts-ignore
-  getWindow().fulltext = {
-    getContext,
-    addToIndex,
-    search,
-
-    triggerAddToIndex: (id: string, type: string) => {
-      sendChromeMessage({
-        type: FullTextSearchMsg.AddToIndex,
-        payload: { type, id },
-      });
-    },
-
-    triggerReindexAllSavedTabSpaces: async () => {
-      const allTabIds = flatten(
-        getTabSpaceData().savedTabSpaceCollection.savedTabSpaces.map(
-          (savedTabSpace) => {
-            return savedTabSpace.tabs.map((tab) => tab.id).toArray();
-          },
-        ),
-      );
-      console.log('allTabIds are:', allTabIds);
-      allTabIds.forEach((tabId) => {
-        sendChromeMessage({
-          type: FullTextSearchMsg.AddToIndex,
-          payload: { type: 'tab', id: tabId },
-        });
-      });
-    },
-  };
 }
