@@ -7,6 +7,7 @@ import {
 import { IFullTextSearchIndexRecord } from './FullTextSearchDatabase';
 import { removeStopWords } from './stopWords';
 import { SearchableField } from '../background/fullTextSearch/addToIndex';
+import { logger, typeGuard } from '../global';
 
 export interface IFullTextSearchAddToIndexParam {
   owner: string;
@@ -16,11 +17,19 @@ export interface IFullTextSearchAddToIndexParam {
   type: string;
 }
 
-export interface IFullTextSearchRemoveFromIndexParam {
+export interface IFullTextSearchRemoveFromIndexByOwnerParam {
   owner: string;
   type?: string;
   field?: string;
 }
+
+export interface IFullTextSearchRemoveFromIndexByUltimateOwnerParam {
+  ultimateOwner: string;
+}
+
+export type IFullTextSearchRemoveFromIndexParam =
+  | IFullTextSearchRemoveFromIndexByOwnerParam
+  | IFullTextSearchRemoveFromIndexByUltimateOwnerParam;
 
 export async function addToIndex(
   db: FullTextSearchDatabase,
@@ -63,6 +72,21 @@ export async function removeFromIndex(
   db: FullTextSearchDatabase,
   param: IFullTextSearchRemoveFromIndexParam,
 ) {
+  if (typeGuard<IFullTextSearchRemoveFromIndexByOwnerParam>(param)) {
+    return removeFromIndexByOwner(db, param);
+  } else if (
+    typeGuard<IFullTextSearchRemoveFromIndexByUltimateOwnerParam>(param)
+  ) {
+    removeFromIndexByUltimateOwner(db, param);
+  } else {
+    logger.error(`Param is wrong, skip. ${param}`);
+  }
+}
+
+async function removeFromIndexByOwner(
+  db: FullTextSearchDatabase,
+  param: IFullTextSearchRemoveFromIndexByOwnerParam,
+) {
   let indexToUse = '';
   let valueToSearch = [param.owner];
 
@@ -80,6 +104,22 @@ export async function removeFromIndex(
     .table<IFullTextSearchIndexRecord>(INDEX_TABLE_NAME)
     .where(indexToUse)
     .equals(valueToSearch)
+    .toArray();
+  if (existingRecords.length > 0) {
+    await db
+      .table(INDEX_TABLE_NAME)
+      .bulkDelete(existingRecords.map((record) => record.id));
+  }
+}
+
+async function removeFromIndexByUltimateOwner(
+  db: FullTextSearchDatabase,
+  param: IFullTextSearchRemoveFromIndexByUltimateOwnerParam,
+) {
+  const existingRecords = await db
+    .table<IFullTextSearchIndexRecord>(INDEX_TABLE_NAME)
+    .where('ultimateOwner')
+    .equals(param.ultimateOwner)
     .toArray();
   if (existingRecords.length > 0) {
     await db

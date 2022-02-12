@@ -7,7 +7,7 @@ export const schemas = {};
 
 export const INDEX_TABLE_NAME = 'index';
 schemas[INDEX_TABLE_NAME] =
-  'id, owner, type, field, *terms, [owner+type], [owner+type+field]';
+  'id, owner, ultimateOwner, type, field, *terms, [owner+type], [owner+type+field]';
 
 export interface IFullTextSearchIndexRecord {
   id: string;

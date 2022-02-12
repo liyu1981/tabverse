@@ -21,6 +21,10 @@ import { IDatabaseChange } from 'dexie-observable/api';
 import { db } from '../../store/db';
 import { map } from 'lodash';
 import { observe } from 'mobx';
+import {
+  addTabSpaceToIndex,
+  removeTabSpaceFromIndex,
+} from '../../background/fullTextSearch/api';
 
 export class SavedTabSpaceStore extends SavedStore {
   async querySavedTabSpaceCount() {
@@ -155,6 +159,7 @@ export async function saveTabSpace(tabSpace: TabSpace): Promise<number> {
       await db.table(Tab.DB_TABLE_NAME).bulkPut(existTabSavePayloads);
     },
   );
+  addTabSpaceToIndex(tabSpaceSavePayload.id);
   return Date.now();
 }
 
@@ -172,14 +177,17 @@ export async function deleteSavedTabSpace(
       await db.table(TabSpace.DB_TABLE_NAME).delete(savedTabSpace.id);
     },
   );
+  removeTabSpaceFromIndex(savedTabSpaceId);
 }
 
 const saveCurrentTabSpaceImpl = async () => {
   const { savedTabSpaceStore } = getTabSpaceData();
   const oldId = getTabSpaceData().tabSpace.id;
+
   savedTabSpaceStore.markInSaving(true);
   const savedTime = await saveTabSpace(getTabSpaceData().tabSpace);
   savedTabSpaceStore.markInSaving(false, savedTime);
+
   const newId = getTabSpaceData().tabSpace.id;
   if (oldId !== newId) {
     const changed = getTabSpaceData().tabSpaceRegistry.mergeRegistryChanges([

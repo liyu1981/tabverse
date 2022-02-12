@@ -51,22 +51,23 @@ export async function addTabToIndex(id: string) {
 
 addToIndexHandlers[SearchableType.Tab] = addTabToIndex;
 
-// async function addTabSpaceToIndex(id: string) {
-//   try {
-//     const savedTabSpace = await querySavedTabSpaceById(id);
-//     const ctx = getContext();
-//     await addToIndex(ctx, {
-//       owner: savedTabSpace.id,
-//       content: savedTabSpace.name,
-//       type: SearchableType.TabSpace,
-//       field: SearchableField.Title,
-//     });
-//     await Promise.all(
-//       savedTabSpace.tabIds.map((tabId) => addTabToIndex(tabId)),
-//     );
-//   } catch (e) {
-//     logger.error(e.message);
-//   }
-// }
+async function addTabSpaceToIndex(id: string) {
+  try {
+    const savedTabSpace = await querySavedTabSpaceById(id);
+    const db = getDb();
+    await addToIndex(db, {
+      owner: savedTabSpace.id,
+      ultimateOwner: savedTabSpace.id,
+      content: savedTabSpace.name,
+      type: SearchableType.TabSpace,
+      field: SearchableField.Title,
+    });
+    await Promise.all(
+      savedTabSpace.tabIds.map((tabId) => addTabToIndex(tabId)),
+    );
+  } catch (e) {
+    logger.error(e.message);
+  }
+}
 
-// addToIndexHandlers[SearchableType.TabSpace] = addTabSpaceToIndex;
+addToIndexHandlers[SearchableType.TabSpace] = addTabSpaceToIndex;

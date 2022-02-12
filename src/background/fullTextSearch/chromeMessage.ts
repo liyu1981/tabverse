@@ -5,7 +5,7 @@ import {
 
 import { addToIndexHandlers } from './addToIndex';
 import { logger } from '../../global';
-import { removeFromIndexGeneralHandler } from './removeFromIndex';
+import { removeFromIndexHandlers } from './removeFromIndex';
 
 const handlers = {};
 
@@ -17,9 +17,7 @@ handlers[FullTextSearchMsg.AddToIndex] = (
   logger.info(`FullTextSearch: AddToIndex requested with ${message.payload}.`);
   const { type, id } = message.payload;
   if (type && type in addToIndexHandlers) {
-    removeFromIndexGeneralHandler(id).then(() => {
-      addToIndexHandlers[type](type, id);
-    });
+    addToIndexHandlers[type](type, id);
   } else {
     logger.log(`Do not know how to add type ${type} into index, skip.`);
   }
@@ -35,8 +33,10 @@ handlers[FullTextSearchMsg.RemoveFromIndex] = (
   logger.info(
     `FullTextSearch: RemoveFromIndex requested with ${message.payload}`,
   );
-  const { id } = message.payload;
-  removeFromIndexGeneralHandler(id);
+  const { type, id } = message.payload;
+  if (type && type in removeFromIndexHandlers) {
+    removeFromIndexHandlers[type](type, id);
+  }
   sendResponse && sendResponse();
   return true;
 };

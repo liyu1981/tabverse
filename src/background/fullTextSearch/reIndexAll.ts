@@ -4,8 +4,9 @@ import { Tab } from '../../data/tabSpace/Tab';
 import { addTabToIndex } from './addToIndex';
 import { db } from '../../store/db';
 import { logger } from '../../global';
+import { addTabSpaceToIndex } from './api';
 
-async function reIndexAllSavedTab() {
+async function reIndexAllSavedTabSpace() {
   db.transaction(
     'readonly',
     [TabSpace.DB_TABLE_NAME, Tab.DB_TABLE_NAME],
@@ -17,6 +18,7 @@ async function reIndexAllSavedTab() {
           logger.info(
             `will reindex tabspace ${tabSpace.id} tabids: ${tabSpace.tabIds}`,
           );
+          await addTabSpaceToIndex(tabSpace.id);
           await Promise.all(
             tabSpace.tabIds.map((tabId) => {
               logger.info(`will re index tab ${tabId}`);
@@ -29,5 +31,5 @@ async function reIndexAllSavedTab() {
 }
 
 export function reIndexAll() {
-  reIndexAllSavedTab();
+  reIndexAllSavedTabSpace();
 }
