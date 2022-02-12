@@ -4,7 +4,6 @@ import { Tab } from '../../data/tabSpace/Tab';
 import { addTabToIndex } from './addToIndex';
 import { db } from '../../store/db';
 import { logger } from '../../global';
-import { getContext, getIndexSize } from '../../fullTextSearch';
 
 async function reIndexAllSavedTab() {
   db.transaction(
@@ -31,9 +30,4 @@ async function reIndexAllSavedTab() {
 
 export function reIndexAll() {
   reIndexAllSavedTab();
-}
-
-export async function shouldReIndex() {
-  const size = await getIndexSize(getContext());
-  return size <= 0;
 }

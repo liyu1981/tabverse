@@ -1,5 +1,5 @@
 import { ISavedTab, Tab } from '../../data/tabSpace/Tab';
-import { addToIndex, getContext, removeFromIndex } from '../../fullTextSearch';
+import { addToIndex, getDb } from '../../fullTextSearch';
 
 import { db } from '../../store/db';
 import { logger } from '../../global';
@@ -29,15 +29,17 @@ export const addToIndexHandlers = {};
 export async function addTabToIndex(id: string) {
   try {
     const savedTab = await querySavedTabById(id);
-    const ctx = getContext();
-    await addToIndex(ctx, {
+    const indexDb = getDb();
+    await addToIndex(indexDb, {
       owner: savedTab.id,
+      ultimateOwner: savedTab.tabSpaceId,
       content: savedTab.title,
       type: SearchableType.Tab,
       field: SearchableField.Title,
     });
-    await addToIndex(ctx, {
+    await addToIndex(indexDb, {
       owner: savedTab.id,
+      ultimateOwner: savedTab.tabSpaceId,
       content: savedTab.url,
       type: SearchableType.Tab,
       field: SearchableField.Url,
@@ -49,22 +51,22 @@ export async function addTabToIndex(id: string) {
 
 addToIndexHandlers[SearchableType.Tab] = addTabToIndex;
 
-async function addTabSpaceToIndex(id: string) {
-  try {
-    const savedTabSpace = await querySavedTabSpaceById(id);
-    const ctx = getContext();
-    await addToIndex(ctx, {
-      owner: savedTabSpace.id,
-      content: savedTabSpace.name,
-      type: SearchableType.TabSpace,
-      field: SearchableField.Title,
-    });
-    await Promise.all(
-      savedTabSpace.tabIds.map((tabId) => addTabToIndex(tabId)),
-    );
-  } catch (e) {
-    logger.error(e.message);
-  }
-}
+// async function addTabSpaceToIndex(id: string) {
+//   try {
+//     const savedTabSpace = await querySavedTabSpaceById(id);
+//     const ctx = getContext();
+//     await addToIndex(ctx, {
+//       owner: savedTabSpace.id,
+//       content: savedTabSpace.name,
+//       type: SearchableType.TabSpace,
+//       field: SearchableField.Title,
+//     });
+//     await Promise.all(
+//       savedTabSpace.tabIds.map((tabId) => addTabToIndex(tabId)),
+//     );
+//   } catch (e) {
+//     logger.error(e.message);
+//   }
+// }
 
-addToIndexHandlers[SearchableType.TabSpace] = addTabSpaceToIndex;
+// addToIndexHandlers[SearchableType.TabSpace] = addTabSpaceToIndex;

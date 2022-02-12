@@ -1,5 +1,3 @@
-// borrowed and adapted from https://gist.github.com/inexorabletash/a279f03ab5610817c0540c83857e4295
-
 import { guessLanguage } from './guessLanguage';
 
 interface TokenizeResults {

@@ -1,18 +1,18 @@
 import { dbAuditAndClearance, registerDbAuditor } from './store/store';
 
 import { dbAuditor as bookmarkDbAuditor } from './data/bookmark/bookmarkDbAuditor';
-import { bootstrap as fullTextBootstrap } from './fullTextSearch';
+import { bootstrap as fullTextBootstrap, isDbEmpty } from './fullTextSearch';
 import { logger } from './global';
 import { monitorChromeTabChanges } from './background/session';
 import { monitorFullTextSearchMsg } from './background/fullTextSearch/chromeMessage';
 import { dbAuditor as noteDbAuditor } from './data/note/noteDbAuditor';
-import {
-  reIndexAll,
-  shouldReIndex,
-} from './background/fullTextSearch/reIndexAll';
+import { reIndexAll } from './background/fullTextSearch/reIndexAll';
 import { startAutoExportToDropbox } from './dropbox';
 import { dbAuditor as tabSpaceDbAuditor } from './data/tabSpace/tabSpaceDbAuditor';
 import { dbAuditor as todoDbAuditor } from './data/todo/todoDbAuditor';
+import { setDebugLogLevel, TabSpaceLogLevel } from './debug';
+
+setDebugLogLevel(TabSpaceLogLevel.LOG);
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.tabs.query({ active: true }, (tabs) => {
@@ -46,14 +46,13 @@ const BACKGROUND_DEBOUNCE_TIME = 2 * 1000;
 monitorChromeTabChanges(BACKGROUND_DEBOUNCE_TIME);
 
 logger.info('bootstrap full text search service...');
-fullTextBootstrap().then(() => {
-  logger.info('full text service is ready.');
-  monitorFullTextSearchMsg();
-  shouldReIndex().then((should) => {
-    if (should) {
-      reIndexAll();
-    }
-  });
+fullTextBootstrap();
+logger.info('full text service is ready.');
+monitorFullTextSearchMsg();
+isDbEmpty().then((empty) => {
+  if (empty) {
+    reIndexAll();
+  }
 });
 
 // TODO: temporary leave the dropbox auto backup feature behind, as currently
