@@ -1,7 +1,11 @@
 import * as React from 'react';
 
 import { Card, Elevation } from '@blueprintjs/core';
-import { TabSpaceRegistry } from '../../../data/tabSpace/TabSpaceRegistry';
+import {
+  loadToCurrentWindowUtil,
+  restoreSavedTabSpaceUtil,
+  switchToTabSpaceUtil,
+} from '../../../data/tabSpace/chromeUtil';
 
 import { IndicatorLine } from '../../common/IndicatorLine';
 import { PagingControl } from '../../common/PagingControl';
@@ -11,15 +15,11 @@ import { SavedTabSpaceStore } from '../../../data/tabSpace/SavedTabSpaceStore';
 import { SearchInput } from './Search';
 import { StickyContainer } from '../../common/StickyContainer';
 import { TabSpace } from '../../../data/tabSpace/TabSpace';
+import { TabSpaceRegistry } from '../../../data/tabSpace/TabSpaceRegistry';
 import classes from './SavedTabSpace.module.scss';
 import { observer } from 'mobx-react-lite';
 import { useAsyncEffect } from '../../common/useAsyncEffect';
 import { useMemo } from 'react';
-import {
-  switchToTabSpaceUtil,
-  restoreSavedTabSpaceUtil,
-  loadToCurrentWindowUtil,
-} from '../../../data/tabSpace/chromeUtil';
 
 export interface SavedTabSpaceProps {
   tabSpace: TabSpace;
@@ -84,8 +84,8 @@ export const SavedTabSpace = observer(
             <StickyContainer thresh={0} stickyOnClassName={classes.stickyOn}>
               <div className={classes.toolbar}>
                 <SearchInput
-                  onChange={(terms) => {
-                    savedTabSpaceCollection.setQueryTerms(terms);
+                  onChange={(query) => {
+                    savedTabSpaceCollection.setQuery(query);
                     savedTabSpaceCollection.load(tabSpaceRegistry);
                   }}
                 />

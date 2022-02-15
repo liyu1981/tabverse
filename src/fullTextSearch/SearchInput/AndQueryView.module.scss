@@ -1,0 +1,18 @@
+.andQueryViewContainer {
+  position: relative;
+  margin-left: 28px;
+}
+
+.andQueryViewContainer::before {
+  position: absolute;
+  content: 'or';
+  left: -24px;
+}
+
+.andQueryViewContainer:first-child {
+  margin-left: 0px;
+}
+
+.andQueryViewContainer:first-child::before {
+  display: none;
+}

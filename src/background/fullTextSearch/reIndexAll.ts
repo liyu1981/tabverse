@@ -16,7 +16,7 @@ async function reIndexAllSavedTabSpace() {
         .toCollection()
         .each(async (tabSpace) => {
           logger.info(
-            `will reindex tabspace ${tabSpace.id} tabids: ${tabSpace.tabIds}`,
+            `will re-index tabspace ${tabSpace.id} tab ids: ${tabSpace.tabIds}`,
           );
           await addTabSpaceToIndex(tabSpace.id);
           await Promise.all(

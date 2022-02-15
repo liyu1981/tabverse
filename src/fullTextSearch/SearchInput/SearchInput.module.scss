@@ -1,0 +1,7 @@
+.searchInputContainer :global(.bp3-tag-input) {
+  height: 50px;
+}
+
+.searchInputContainer :global(.bp3-tag-input) > :global(.bp3-icon) {
+  margin-top: 16px;
+}

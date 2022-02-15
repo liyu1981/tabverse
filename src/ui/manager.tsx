@@ -14,7 +14,7 @@ import {
 } from '../data/tabSpace/bootstrap';
 
 import { CountExit } from './common/CountExit';
-import { ManagerView } from './manager/ManagerView';
+import { IManagerQueryParams, ManagerView } from './manager/ManagerView';
 import { strict as assert } from 'assert';
 import { bootstrap as bookmarkBootstrap } from '../data/bookmark/bootstrap';
 import { find } from 'lodash';
@@ -79,7 +79,7 @@ async function bootstrap() {
       pageComponent: (
         <div>
           <ManagerView
-            queryParams={queryParams}
+            queryParams={queryParams as IManagerQueryParams}
             tabSpaceData={getTabSpaceData()}
           />
         </div>

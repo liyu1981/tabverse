@@ -1,53 +1,75 @@
 import * as React from 'react';
 
+import {
+  AndQuery,
+  EmptyQuery,
+  FIELD_ALL,
+  Query,
+  TYPE_ALL,
+} from '../../../fullTextSearch';
+import {
+  SearchableField,
+  SearchableType,
+} from '../../../background/fullTextSearch/addToIndex';
 import { useEffect, useMemo, useState } from 'react';
 
-import { TagInput } from '@blueprintjs/core';
-import { tokenize } from '../../../fullTextSearch';
-
-function mergeTerms(terms1: string[], terms2: string[]) {
-  return Array.from(new Set(terms1.concat(terms2)));
-}
+import { SearchInput as FullTextSearchInput } from '../../../fullTextSearch/SearchInput';
 
 export interface SearchInputProps {
-  onChange: (terms: string[]) => void;
+  onChange: (query: Query) => void;
 }
 
+const scopeMap = {
+  anywhere: { type: TYPE_ALL, field: FIELD_ALL },
+  'any tabverse data': { type: SearchableType.TabSpace },
+  'any tab data': { type: SearchableType.Tab },
+  'any tabverse name': {
+    type: SearchableType.TabSpace,
+    field: SearchableField.Title,
+  },
+  'any tab title': { type: SearchableType.Tab, field: SearchableField.Title },
+  'any tab url': { type: SearchableType.Tab, field: SearchableField.Url },
+};
+
 export function SearchInput(props: SearchInputProps) {
-  const [searchQueryTerms, setSearchQueryTerms] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState<Query>(EmptyQuery);
 
-  const onAddTerm = useMemo(() => {
-    return (values: string[]) => {
-      const value = values[0];
-      tokenize(value).then(({ terms }) =>
-        setSearchQueryTerms((lastTerms) => mergeTerms(lastTerms, terms)),
-      );
-    };
-  }, []);
+  const onAddTerm = useMemo(
+    () => (values: string[]) =>
+      setSearchQuery((lastQuery) => {
+        return new Query(lastQuery).addAndQuery(values, scopeMap['anywhere']);
+      }),
+    [],
+  );
 
-  const onRemoveTerm = useMemo(() => {
-    return (value: React.ReactNode, index: number) => {
-      setSearchQueryTerms((lastTerms) => {
-        lastTerms.splice(index, 1);
-        const newTerms = [].concat(lastTerms);
-        return newTerms;
-      });
-    };
-  }, []);
+  const onRemoveTerm = useMemo(
+    () => (value: AndQuery, index: number) =>
+      setSearchQuery((lastQuery) => {
+        return new Query(lastQuery).removeAndQuery(index);
+      }),
+    [],
+  );
+
+  const onChangeQuery = useMemo(
+    () => (newQuery: Query) => setSearchQuery(newQuery),
+    [],
+  );
 
   useEffect(() => {
-    props.onChange(searchQueryTerms);
-  }, [searchQueryTerms]);
+    props.onChange(searchQuery);
+  }, [searchQuery]);
 
   return (
-    <TagInput
+    <FullTextSearchInput
       large={true}
       leftIcon={'search'}
       tagProps={{ minimal: true }}
       placeholder={'input keyword to search...'}
-      values={searchQueryTerms}
+      query={searchQuery}
       onAdd={onAddTerm}
       onRemove={onRemoveTerm}
+      onChangeQuery={onChangeQuery}
+      scopeMap={scopeMap}
     />
   );
 }

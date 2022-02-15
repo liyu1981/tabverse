@@ -48,11 +48,13 @@ export const logger = {
   },
 };
 
-export function hasOwnProperty<
-  X extends Record<string, string>,
-  Y extends PropertyKey,
->(obj: X, prop: Y): obj is X & Record<Y, string> {
-  return Object.prototype.hasOwnProperty.call(obj, prop);
+// eslint-disable-next-line @typescript-eslint/ban-types
+export function hasOwnProperty<X extends {}, Y extends PropertyKey>(
+  obj: X,
+  prop: Y,
+): obj is X & Record<Y, unknown> {
+  // eslint-disable-next-line no-prototype-builtins
+  return obj.hasOwnProperty(prop);
 }
 
 export function typeGuard<T>(x: any): x is T {

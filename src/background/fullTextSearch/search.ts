@@ -2,25 +2,26 @@ import { getDb, search } from '../../fullTextSearch';
 
 import { querySavedTabSpace } from '../../data/tabSpace/SavedTabSpaceStore';
 import { uniq } from 'lodash';
+import { Query } from '../../fullTextSearch';
 
 export interface ISearchSavedTabSpaceParams {
-  terms: string[];
+  query: Query;
   pageStart: number;
   pageLimit: number;
 }
 
 export async function searchSavedTabSpace({
-  terms,
+  query,
   pageStart,
   pageLimit,
 }: ISearchSavedTabSpaceParams) {
   const db = getDb();
-  const records = await search(db, {
-    queryTerms: { andTerms: [{ terms }] },
+  const { results, cursor } = await search(db, {
+    query,
     option: { pageStart, pageLimit },
   });
   const tabSpaces = await querySavedTabSpace({
-    anyOf: uniq(records.map((record) => record.ultimateOwner)),
+    anyOf: uniq(results.map((record) => record.ultimateOwner)),
   });
   return tabSpaces;
 }

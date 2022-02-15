@@ -1,5 +1,6 @@
 import * as Moment from 'moment';
 
+import { EmptyQuery, Query } from '../../fullTextSearch';
 import { TabSpaceRegistry, TabSpaceStub } from './TabSpaceRegistry';
 import { action, computed, makeObservable, observable } from 'mobx';
 import { addPagingToQueryParams, queryPageLimit } from '../../store/store';
@@ -18,7 +19,7 @@ export class SavedTabSpaceCollection {
   openedSavedTabSpaces: TabSpaceStub[];
   savedTabSpaces: TabSpace[];
   sortMethod: SortMethods;
-  queryTerms: string[];
+  query: Query;
   queryPageStart: number;
   queryPageLimit: number;
   totalPageCount: number;
@@ -27,7 +28,7 @@ export class SavedTabSpaceCollection {
     this.openedSavedTabSpaces = [];
     this.savedTabSpaces = [];
     this.sortMethod = SortMethods.CREATED;
-    this.queryTerms = [];
+    this.query = EmptyQuery;
     this.queryPageStart = 0;
     this.queryPageLimit = queryPageLimit;
     this.totalPageCount = 0;
@@ -36,7 +37,7 @@ export class SavedTabSpaceCollection {
       openedSavedTabSpaces: observable,
       savedTabSpaces: observable,
       sortMethod: observable,
-      queryTerms: observable,
+      query: observable,
       queryPageStart: observable,
       queryPageLimit: observable,
 
@@ -45,7 +46,7 @@ export class SavedTabSpaceCollection {
       sortedGroupedSavedTabSpaces: computed,
 
       setSortMethod: action,
-      setQueryTerms: action,
+      setQuery: action,
       setQueryPageStart: action,
       setQueryPageLimit: action,
       nextPage: action,
@@ -103,8 +104,8 @@ export class SavedTabSpaceCollection {
     this.sortMethod = value;
   }
 
-  setQueryTerms(value: string[]) {
-    this.queryTerms = value;
+  setQuery(value: Query) {
+    this.query = value;
   }
 
   setQueryPageStart(value: number) {
@@ -140,15 +141,15 @@ export class SavedTabSpaceCollection {
       .filter((tabSpaceStub) => !isIdNotSaved(tabSpaceStub.id))
       .toArray();
 
-    if (this.queryTerms.length > 0) {
-      // console.log('will search:', this.queryTerms);
+    if (!this.query.isEmpty()) {
+      console.log('will search:', this.query);
       this.savedTabSpaces = await searchSavedTabSpace({
-        terms: this.queryTerms,
+        query: this.query,
         pageStart: this.queryPageStart,
         pageLimit: this.queryPageLimit,
       });
     } else {
-      // console.log('will browse:', this.queryTerms);
+      console.log('will browse:', this.query);
       const savedTabSpaceParams = addPagingToQueryParams(
         {},
         this.queryPageStart,
