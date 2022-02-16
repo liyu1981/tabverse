@@ -1,7 +1,7 @@
 import * as Moment from 'moment';
 import * as React from 'react';
 
-import { Alignment, Button, ButtonGroup, Colors } from '@blueprintjs/core';
+import { Alignment, Button, ButtonGroup } from '@blueprintjs/core';
 import {
   SavedTabSpaceStore,
   deleteSavedTabSpace,
@@ -9,15 +9,18 @@ import {
 
 import { TabCard } from '../TabSpace/TabCard';
 import { TabSpace } from '../../../data/tabSpace/TabSpace';
+import { TabSpaceId } from '../../../message';
+import classes from './SavedTabSpaceDetail.module.scss';
 import { logger } from '../../../global';
 import { observer } from 'mobx-react-lite';
-import classes from './SavedTabSpaceDetail.module.scss';
 
 interface ISavedTabSpaceDetailProps {
+  opened: boolean;
   tabSpace: TabSpace;
   savedTabSpaceStore: SavedTabSpaceStore;
-  restoreFunc: any;
-  loadToCurrentWindowFunc: any;
+  switchFunc: (tabSpace: TabSpace) => void;
+  restoreFunc: (tabSpace: TabSpace) => void;
+  loadToCurrentWindowFunc: (tabSpaceId: TabSpaceId) => void;
 }
 
 export const SavedTabSpaceDetail = observer(
@@ -61,37 +64,56 @@ export const SavedTabSpaceDetail = observer(
               </div>
             </div>
           </div>
-          <ButtonGroup
-            large={true}
-            vertical={true}
-            minimal={true}
-            alignText={Alignment.LEFT}
-          >
-            <Button
-              icon="folder-shared"
-              onClick={() => {
-                props.restoreFunc(props.tabSpace);
-              }}
-              title="Load all tabs to new window"
+          {props.opened ? (
+            <ButtonGroup
+              large={true}
+              vertical={true}
+              minimal={true}
+              alignText={Alignment.LEFT}
             >
-              Load to New
-            </Button>
-            <Button
-              icon="folder-open"
-              onClick={() => {
-                props.loadToCurrentWindowFunc(props.tabSpace.id);
-              }}
-              title="Load all tabs to current window"
+              <Button
+                icon="duplicate"
+                title="Switch to the window of this tabverse"
+                onClick={() => {
+                  props.switchFunc(props.tabSpace);
+                }}
+              >
+                Switch to Tabverse
+              </Button>
+            </ButtonGroup>
+          ) : (
+            <ButtonGroup
+              large={true}
+              vertical={true}
+              minimal={true}
+              alignText={Alignment.LEFT}
             >
-              Load to Current
-            </Button>
-            <Button
-              icon="trash"
-              onClick={() => deleteTabSpace(props.tabSpace.id)}
-            >
-              Delete
-            </Button>
-          </ButtonGroup>
+              <Button
+                icon="folder-shared"
+                onClick={() => {
+                  props.restoreFunc(props.tabSpace);
+                }}
+                title="Load all tabs to new window"
+              >
+                Load to New
+              </Button>
+              <Button
+                icon="folder-open"
+                onClick={() => {
+                  props.loadToCurrentWindowFunc(props.tabSpace.id);
+                }}
+                title="Load all tabs to current window"
+              >
+                Load to Current
+              </Button>
+              <Button
+                icon="trash"
+                onClick={() => deleteTabSpace(props.tabSpace.id)}
+              >
+                Delete
+              </Button>
+            </ButtonGroup>
+          )}
         </div>
         <div className={classes.savedTabsContainer}>
           <p>Saved Tabs({entries.length})</p>

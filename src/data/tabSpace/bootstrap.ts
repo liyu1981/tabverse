@@ -45,8 +45,7 @@ export function getTabSpaceData(): ITabSpaceData {
   return tabSpaceData;
 }
 
-async function bootstrapCommon() {
-  const tabSpaceData = getTabSpaceData();
+async function bootstrapCommon(tabSpaceData: ITabSpaceData) {
   await scanCurrentTabs(tabSpaceData);
   startMonitorTabChanges(tabSpaceData);
   startMonitorTabSpaceRegistryChanges(tabSpaceData.tabSpaceRegistry);
@@ -86,7 +85,7 @@ export async function bootstrap(
     payload: tabSpace.toTabSpaceStub(),
   });
 
-  await bootstrapCommon();
+  await bootstrapCommon(tabSpaceData);
 }
 
 export async function bootstrapFromTabSpaceId(
@@ -139,7 +138,7 @@ export async function bootstrapFromTabSpaceId(
     payload: tabSpaceData.tabSpace.toTabSpaceStub(),
   });
 
-  await bootstrapCommon();
+  await bootstrapCommon(tabSpaceData);
 
   // focus tabspace tab
   const currentTab = await chrome.tabs.getCurrent();

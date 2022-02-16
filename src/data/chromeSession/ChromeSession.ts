@@ -190,6 +190,26 @@ export class ChromeSession extends Base implements IChromeSession {
   }
 }
 
+function isTabsChanged(tabs1: IChromeTab[], tabs2: IChromeTab[]): boolean {
+  if (tabs1.length !== tabs2.length) {
+    return true;
+  }
+
+  for (let i = 0; i < tabs1.length; i++) {
+    const t1 = tabs1[i];
+    const t2 = tabs2[i];
+    if (
+      t1.tabId !== t2.tabId ||
+      t1.windowId !== t2.windowId ||
+      t1.url !== t2.url
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 export function isChromeSessionChanged(
   s1: IChromeSessionSavePayload,
   s2: IChromeSessionSavePayload,
@@ -198,7 +218,7 @@ export function isChromeSessionChanged(
     return true;
   }
 
-  if (JSON.stringify(s1.tabs) !== JSON.stringify(s2.tabs)) {
+  if (isTabsChanged(s1.tabs, s2.tabs)) {
     return true;
   }
 

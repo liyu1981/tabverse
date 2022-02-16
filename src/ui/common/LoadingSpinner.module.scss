@@ -1,0 +1,13 @@
+@use '../../global.scss';
+
+.container {
+  position: relative;
+}
+
+.container::before {
+  position: absolute;
+  content: 'loading';
+  color: global.$color-dark-accent;
+  left: calc(50% - 24px);
+  top: calc(50% - 10px);
+}

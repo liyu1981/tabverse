@@ -1,15 +1,18 @@
 import { dbAuditAndClearance, registerDbAuditor } from './store/store';
-import {
-  monitorChromeTabChanges,
-  dbAuditor as sessionSaverDbAuditor,
-} from './data/chromeSession/sessionSaver';
 
 import { dbAuditor as bookmarkDbAuditor } from './data/bookmark/bookmarkDbAuditor';
+import { bootstrap as fullTextBootstrap, isDbEmpty } from './fullTextSearch';
 import { logger } from './global';
+import { monitorChromeTabChanges } from './background/session';
+import { monitorFullTextSearchMsg } from './background/fullTextSearch/chromeMessage';
 import { dbAuditor as noteDbAuditor } from './data/note/noteDbAuditor';
+import { reIndexAll } from './background/fullTextSearch/reIndexAll';
 import { startAutoExportToDropbox } from './dropbox';
 import { dbAuditor as tabSpaceDbAuditor } from './data/tabSpace/tabSpaceDbAuditor';
 import { dbAuditor as todoDbAuditor } from './data/todo/todoDbAuditor';
+import { setDebugLogLevel, TabSpaceLogLevel } from './debug';
+
+setDebugLogLevel(TabSpaceLogLevel.LOG);
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.tabs.query({ active: true }, (tabs) => {
@@ -19,13 +22,14 @@ chrome.runtime.onInstalled.addListener(() => {
 
 logger.info('Tabverse background job start!');
 
+logger.info('register db auditors...');
 registerDbAuditor(tabSpaceDbAuditor);
 registerDbAuditor(todoDbAuditor);
 registerDbAuditor(noteDbAuditor);
 registerDbAuditor(bookmarkDbAuditor);
-registerDbAuditor(sessionSaverDbAuditor);
 //dbAuditAndClearance();
 
+logger.info('listen to idle state...');
 chrome.idle.onStateChanged.addListener((newState: chrome.idle.IdleState) => {
   logger.info('chrome idle state change:', newState);
   if (newState === 'idle' || newState === 'locked') {
@@ -36,9 +40,20 @@ chrome.idle.onStateChanged.addListener((newState: chrome.idle.IdleState) => {
   }
 });
 
+logger.info('monitor chrome tab changes...');
 // setupSessionSaver();
 const BACKGROUND_DEBOUNCE_TIME = 2 * 1000;
 monitorChromeTabChanges(BACKGROUND_DEBOUNCE_TIME);
+
+logger.info('bootstrap full text search service...');
+fullTextBootstrap();
+logger.info('full text service is ready.');
+monitorFullTextSearchMsg();
+isDbEmpty().then((empty) => {
+  if (empty) {
+    reIndexAll();
+  }
+});
 
 // TODO: temporary leave the dropbox auto backup feature behind, as currently
 // there is no good way of dealing with local settings across tabs/background

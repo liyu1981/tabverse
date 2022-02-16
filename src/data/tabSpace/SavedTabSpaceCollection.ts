@@ -1,12 +1,15 @@
+import * as Moment from 'moment';
+
+import { EmptyQuery, Query } from '../../fullTextSearch';
 import { TabSpaceRegistry, TabSpaceStub } from './TabSpaceRegistry';
 import { action, computed, makeObservable, observable } from 'mobx';
 import { addPagingToQueryParams, queryPageLimit } from '../../store/store';
 
-import { List } from 'immutable';
+import { LoadStatus } from '../../global';
 import { TabSpace } from './TabSpace';
 import { isIdNotSaved } from '../common';
 import { querySavedTabSpace } from './SavedTabSpaceStore';
-import * as Moment from 'moment';
+import { searchSavedTabSpace } from '../../background/fullTextSearch/search';
 
 export enum SortMethods {
   CREATED = 0,
@@ -14,26 +17,32 @@ export enum SortMethods {
 }
 
 export class SavedTabSpaceCollection {
+  loadStatus: LoadStatus;
   openedSavedTabSpaces: TabSpaceStub[];
   savedTabSpaces: TabSpace[];
   sortMethod: SortMethods;
-  savedTabSpacesPageStart: number;
+  query: Query;
+  queryPageStart: number;
   queryPageLimit: number;
   totalPageCount: number;
 
   constructor() {
+    this.loadStatus = LoadStatus.Done;
     this.openedSavedTabSpaces = [];
     this.savedTabSpaces = [];
     this.sortMethod = SortMethods.CREATED;
-    this.savedTabSpacesPageStart = 0;
+    this.query = EmptyQuery;
+    this.queryPageStart = 0;
     this.queryPageLimit = queryPageLimit;
     this.totalPageCount = 0;
 
     makeObservable(this, {
+      loadStatus: observable,
       openedSavedTabSpaces: observable,
       savedTabSpaces: observable,
       sortMethod: observable,
-      savedTabSpacesPageStart: observable,
+      query: observable,
+      queryPageStart: observable,
       queryPageLimit: observable,
 
       isEmpty: computed,
@@ -41,6 +50,9 @@ export class SavedTabSpaceCollection {
       sortedGroupedSavedTabSpaces: computed,
 
       setSortMethod: action,
+      setQuery: action,
+      setQueryPageStart: action,
+      setQueryPageLimit: action,
       nextPage: action,
       prevPage: action,
       load: action,
@@ -96,37 +108,72 @@ export class SavedTabSpaceCollection {
     this.sortMethod = value;
   }
 
+  setQuery(value: Query) {
+    this.query = value;
+  }
+
+  setQueryPageStart(value: number) {
+    this.queryPageStart = value;
+  }
+
+  setQueryPageLimit(value: number) {
+    this.queryPageLimit = value;
+  }
+
   nextPage() {
-    if (this.savedTabSpacesPageStart < this.totalPageCount - 1) {
-      this.savedTabSpacesPageStart += 1;
+    if (this.queryPageStart < this.totalPageCount - 1) {
+      this.queryPageStart += 1;
     }
   }
 
   prevPage() {
-    if (this.savedTabSpacesPageStart >= 1) {
-      this.savedTabSpacesPageStart -= 1;
+    if (this.queryPageStart >= 1) {
+      this.queryPageStart -= 1;
     }
   }
 
+  isTabSpaceOpened(tabSpaceId: string): boolean {
+    return (
+      this.openedSavedTabSpaces.findIndex(
+        (tabSpaceStud) => tabSpaceStud.id === tabSpaceId,
+      ) >= 0
+    );
+  }
+
   async load(tabSpaceRegistry: TabSpaceRegistry) {
+    this.openedSavedTabSpaces = [];
+    this.savedTabSpaces = [];
+
+    this.loadStatus = LoadStatus.Loading;
+
     this.openedSavedTabSpaces = tabSpaceRegistry.registry
       .filter((tabSpaceStub) => !isIdNotSaved(tabSpaceStub.id))
       .toArray();
 
-    const savedTabSpaceParams = addPagingToQueryParams(
-      {
-        noneOf: List(tabSpaceRegistry.registry.keys()).toArray(),
-      },
-      this.savedTabSpacesPageStart,
-    );
-    this.savedTabSpaces = await querySavedTabSpace(savedTabSpaceParams);
+    if (!this.query.isEmpty()) {
+      console.log('will search:', this.query);
+      this.savedTabSpaces = await searchSavedTabSpace({
+        query: this.query,
+        pageStart: this.queryPageStart,
+        pageLimit: this.queryPageLimit,
+      });
+    } else {
+      console.log('will browse:', this.query);
+      const savedTabSpaceParams = addPagingToQueryParams(
+        {},
+        this.queryPageStart,
+        this.queryPageLimit,
+      );
+      this.savedTabSpaces = await querySavedTabSpace(savedTabSpaceParams);
+    }
 
     this.totalPageCount = Math.ceil(
       this.savedTabSpaces.length / this.queryPageLimit,
     );
 
-    if (this.savedTabSpacesPageStart >= this.totalPageCount) {
-      this.savedTabSpacesPageStart = this.totalPageCount - 1;
+    if (this.queryPageStart >= this.totalPageCount) {
+      this.queryPageStart = this.totalPageCount - 1;
     }
+    this.loadStatus = LoadStatus.Done;
   }
 }

@@ -1,6 +1,7 @@
+import { getUnsavedNewId, isIdNotSaved } from '../../common';
+
 import { TABSPACE_DB_VERSION } from '../../../global';
 import { Tab } from '../Tab';
-import { isIdNotSaved } from '../../common';
 
 test('constructor', () => {
   const t = new Tab();
@@ -12,6 +13,7 @@ test('constructor', () => {
 
 test('convertAndGetSavePayload', () => {
   const t = Tab.fromILiveTab({ chromeTabId: 1000, chromeWindowId: 1001 });
+  t.tabSpaceId = getUnsavedNewId();
   expect(t.chromeTabId).toBe(1000);
   expect(t.chromeWindowId).toBe(1001);
   const [savedTab, savePayload] = t.convertAndGetSavePayload();

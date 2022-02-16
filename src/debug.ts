@@ -36,6 +36,10 @@ export function exposeDebugData(name: string, value: any) {
 
 let debugLogLevel = TabSpaceLogLevel.ERROR + 1;
 
+export function setDebugLogLevel(level: TabSpaceLogLevel) {
+  debugLogLevel = level;
+}
+
 function getDebugLogLevel() {
   return debugLogLevel;
 }

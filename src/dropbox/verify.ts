@@ -20,7 +20,7 @@ export async function verifyDropboxAccessToken(
   const client = new Dropbox({ accessToken });
   try {
     const result = await client.checkUser({ query: 'tabverse' });
-    console.log('result', result);
+    // console.log('result', result);
     if (result.result.result === 'tabverse') {
       try {
         const result2 = await client.filesListFolder({ path: '' });

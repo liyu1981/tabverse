@@ -6,13 +6,15 @@ import {
 } from '../../../data/chromeSession/sessionStore';
 
 import { IChromeSessionSavePayload } from '../../../data/chromeSession/ChromeSession';
+import { LoadStatus } from '../../../global';
+import { LoadingSpinner } from '../../common/LoadingSpinner';
 import { SavedChromeSessionCollection } from '../../../data/chromeSession/SavedChromeSessionCollection';
 import { SessionDetail } from './SessionDetail';
 import { SessionSelector } from './SessionSelector';
+import classes from './SessionBrowser.module.scss';
 import { observer } from 'mobx-react-lite';
 import { useAsyncEffect } from '../../common/useAsyncEffect';
 import { useState } from 'react';
-import classes from './SessionBrowser.module.scss';
 
 function selectFirstSession(savedSessionGroups: IDisplaySavedSessionGroup[]) {
   if (
@@ -66,27 +68,32 @@ export const SessionBrowser = observer(
     };
 
     return (
-      <div className={classes.sessionBrowserContainer}>
-        {savedChromeSessionCollection.savedSessionGroups.length >= 1 ? (
-          <>
-            <div className={classes.sessionBrowserLeftContainer}>
-              <SessionDetail
-                session={selectedSession}
-                tabSpaceMap={getTabSpaceMap()}
-              />
-            </div>
-            <div className={classes.sessionBrowserRightContainer}>
-              <SessionSelector
-                sessions={savedChromeSessionCollection.savedSessionGroups}
-                selectedSession={selectedSession}
-                onDeleteSession={deleteSession}
-                onSetSelectedSession={setSelectedSession}
-              />
-            </div>
-          </>
-        ) : (
-          <></>
-        )}
+      <div>
+        {savedChromeSessionCollection.loadStatus === LoadStatus.Loading ? (
+          <div className={classes.loadingContainer}>
+            <LoadingSpinner />
+          </div>
+        ) : null}
+        <div className={classes.sessionBrowserContainer}>
+          {savedChromeSessionCollection.savedSessionGroups.length >= 1 ? (
+            <>
+              <div className={classes.sessionBrowserLeftContainer}>
+                <SessionDetail
+                  session={selectedSession}
+                  tabSpaceMap={getTabSpaceMap()}
+                />
+              </div>
+              <div className={classes.sessionBrowserRightContainer}>
+                <SessionSelector
+                  sessions={savedChromeSessionCollection.savedSessionGroups}
+                  selectedSession={selectedSession}
+                  onDeleteSession={deleteSession}
+                  onSetSelectedSession={setSelectedSession}
+                />
+              </div>
+            </>
+          ) : null}
+        </div>
       </div>
     );
   },

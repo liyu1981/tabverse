@@ -16,6 +16,11 @@ export interface IUpdateRegistryPayload {
   entry: TabSpaceStub;
 }
 
+export interface IFullTextAddRemoveToIndexPayload {
+  type: string;
+  id: string;
+}
+
 export enum TabSpaceRegistryMsg {
   AddTabSpace = 'tabregistry_addtabspace',
   RemoveTabSpace = 'tabregistry_removetabspace',
@@ -37,7 +42,13 @@ export enum BackgroundMsg {
   GetTabSpace = 'background_gettabspace',
 }
 
+export enum FullTextSearchMsg {
+  AddToIndex = 'fulltext_addtoindex',
+  RemoveFromIndex = 'fulltext_removefromindex',
+}
+
 export type TabSpaceId = string;
+export type TabId = string;
 export type ChromeTabId = number;
 export type AuditLogs = string[];
 export type NotNeed = undefined | null;
@@ -80,14 +91,26 @@ export async function sendChromeMessage(msgPayload: {
 }): Promise<any>;
 
 export async function sendChromeMessage(msgPayload: {
+  type: FullTextSearchMsg.AddToIndex;
+  payload: IFullTextAddRemoveToIndexPayload;
+}): Promise<any>;
+
+export async function sendChromeMessage(msgPayload: {
+  type: FullTextSearchMsg.RemoveFromIndex;
+  payload: IFullTextAddRemoveToIndexPayload;
+}): Promise<any>;
+
+export async function sendChromeMessage(msgPayload: {
   type: string;
   payload:
     | TabSpaceStub
     | TabSpaceId
+    | TabId
     | TabSpaceStub[]
     | IUpdateRegistryPayload
     | ChromeTabId
     | AuditLogs
+    | IFullTextAddRemoveToIndexPayload
     | NotNeed;
 }): Promise<any> {
   const result = await new Promise((resolve, _reject) => {

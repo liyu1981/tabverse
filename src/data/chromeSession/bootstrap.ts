@@ -1,6 +1,7 @@
 import { SavedChromeSessionCollection } from './SavedChromeSessionCollection';
 import { strict as assert } from 'assert';
 import { exposeDebugData } from '../../debug';
+import { monitorDbChanges } from './sessionStore';
 
 export interface AllChromeSessionData {
   savedChromeSessionCollection: Readonly<SavedChromeSessionCollection>;
@@ -20,6 +21,8 @@ export function bootstrap() {
   allChromeSessionData = {
     savedChromeSessionCollection: new SavedChromeSessionCollection(),
   };
+
+  monitorDbChanges(allChromeSessionData.savedChromeSessionCollection);
 
   exposeDebugData('chromeSession', { getAllChromeSessionData });
 }

@@ -1,63 +1,27 @@
-import * as Moment from 'moment';
 import * as React from 'react';
 
-import { Button, Card, Colors, Elevation, Icon, Tag } from '@blueprintjs/core';
+import { Card, Elevation } from '@blueprintjs/core';
 import {
-  TabSpaceRegistry,
-  TabSpaceStub,
-} from '../../../data/tabSpace/TabSpaceRegistry';
-import { TabSpaceRegistryMsg, sendChromeMessage } from '../../../message';
+  loadToCurrentWindowUtil,
+  restoreSavedTabSpaceUtil,
+  switchToTabSpaceUtil,
+} from '../../../data/tabSpace/chromeUtil';
 
 import { IndicatorLine } from '../../common/IndicatorLine';
+import { LoadStatus } from '../../../global';
+import { LoadingSpinner } from '../../common/LoadingSpinner';
+import { PagingControl } from '../../common/PagingControl';
 import { SavedTabSpaceCollection } from '../../../data/tabSpace/SavedTabSpaceCollection';
 import { SavedTabSpaceDetail } from './SavedTabSpaceDetail';
 import { SavedTabSpaceStore } from '../../../data/tabSpace/SavedTabSpaceStore';
+import { SearchInput } from './Search';
 import { StickyContainer } from '../../common/StickyContainer';
 import { TabSpace } from '../../../data/tabSpace/TabSpace';
-import { TabSpaceOp } from '../../../global';
+import { TabSpaceRegistry } from '../../../data/tabSpace/TabSpaceRegistry';
 import classes from './SavedTabSpace.module.scss';
 import { observer } from 'mobx-react-lite';
 import { useAsyncEffect } from '../../common/useAsyncEffect';
 import { useMemo } from 'react';
-import { PagingControl } from '../../common/PagingControl';
-
-function OpenedSavedTabSpaceCard({
-  tabSpaceStub,
-}: {
-  tabSpaceStub: TabSpaceStub;
-}) {
-  return (
-    <Card style={{ marginBottom: '8px', padding: '8px 18px' }}>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        <div>
-          <Tag>Opended</Tag>
-        </div>
-        <div>
-          <span style={{ fontSize: '1.4em', marginRight: '8px' }}>
-            <b>{tabSpaceStub.name}</b>
-          </span>
-          <span style={{ color: Colors.GRAY3, marginRight: '8px' }}>
-            Created {Moment(tabSpaceStub.createdAt).fromNow()}
-          </span>
-          <span style={{ color: Colors.GRAY3, marginRight: '8px' }}>
-            Saved {Moment(tabSpaceStub.updatedAt).fromNow()}
-          </span>
-        </div>
-        <div>
-          <Button minimal={true}>
-            <Icon icon="th-derived" />
-          </Button>
-        </div>
-      </div>
-    </Card>
-  );
-}
 
 export interface SavedTabSpaceProps {
   tabSpace: TabSpace;
@@ -77,34 +41,27 @@ export const SavedTabSpace = observer(
       await savedTabSpaceCollection.load(tabSpaceRegistry);
     }, [tabSpaceRegistry.registry, savedTabSpaceStore.savedDataVersion]);
 
-    const restoreSavedTabSpace = useMemo(
-      () => (tabSpace: any) => {
-        chrome.windows.create((window) => {
-          chrome.tabs.create({
-            active: true,
-            pinned: true,
-            url: `manager.html?op=${TabSpaceOp.LoadSaved}&stsid=${tabSpace.id}`,
-            windowId: window.id,
-          });
-        });
+    const switchToTabSpace = useMemo(
+      () => (tabSpace: TabSpace) => {
+        const tabSpaceStub = tabSpaceRegistry.registry.get(tabSpace.id);
+        if (tabSpaceStub) {
+          switchToTabSpaceUtil(
+            tabSpaceStub.chromeTabId,
+            tabSpaceStub.chromeWindowId,
+          );
+        }
       },
       [],
     );
 
+    const restoreSavedTabSpace = useMemo(
+      () => (tabSpace: TabSpace) => restoreSavedTabSpaceUtil(tabSpace.id),
+      [],
+    );
+
     const loadToCurrentWindow = useMemo(
-      () => (stsid: string) => {
-        async function action() {
-          sendChromeMessage({
-            type: TabSpaceRegistryMsg.RemoveTabSpace,
-            payload: tabSpace.id,
-          });
-          window.open(
-            `manager.html?op=${TabSpaceOp.LoadSaved}&stsid=${stsid}`,
-            '_self',
-          );
-        }
-        action();
-      },
+      () => (savedTabSpaceId: string) =>
+        loadToCurrentWindowUtil(tabSpace.id, savedTabSpaceId),
       [],
     );
 
@@ -114,7 +71,7 @@ export const SavedTabSpace = observer(
     const renderPagingControl = () => {
       return (
         <PagingControl
-          current={savedTabSpaceCollection.savedTabSpacesPageStart + 1}
+          current={savedTabSpaceCollection.queryPageStart + 1}
           total={savedTabSpaceCollection.totalPageCount}
           onNext={savedTabSpaceCollection.nextPage}
           onPrev={savedTabSpaceCollection.prevPage}
@@ -123,64 +80,73 @@ export const SavedTabSpace = observer(
     };
 
     return (
-      <div>
-        <div className={classes.container}>
-          <div className={classes.tabSpaceListContainer}>
-            {savedTabSpaceCollection.openedSavedTabSpaces.length > 0 ? (
-              <StickyContainer thresh={0} stickyOnClassName={classes.stickyOn}>
-                <Card
-                  elevation={Elevation.TWO}
-                  className={classes.openedTabSpaceNoticeCard}
-                >
-                  {savedTabSpaceCollection.sortedOpenedSavedTabSpaces.map(
-                    (tabSpaceStub) => {
-                      return (
-                        <OpenedSavedTabSpaceCard
-                          key={tabSpaceStub.id}
-                          tabSpaceStub={tabSpaceStub}
-                        />
-                      );
-                    },
-                  )}
-                </Card>
-              </StickyContainer>
-            ) : (
-              <div></div>
-            )}
-            <div className={classes.savedContainer}>
-              {groupedSavedTabSpaces.map(([m, savedTabSpaces]) => {
-                return (
-                  <div key={m}>
-                    <IndicatorLine>{`${savedTabSpaces.length} ${
-                      savedTabSpaces.length <= 1 ? 'tabverse' : 'tabverses'
-                    } ${groupLabelVerb} ${m}`}</IndicatorLine>
-                    <div>
-                      {savedTabSpaces.map((savedTabSpace) => {
-                        return (
-                          <Card
-                            key={savedTabSpace.id}
-                            className={classes.tabSpaceCard}
-                            elevation={Elevation.TWO}
-                          >
-                            <SavedTabSpaceDetail
-                              key={savedTabSpace.id}
-                              tabSpace={savedTabSpace}
-                              savedTabSpaceStore={savedTabSpaceStore}
-                              restoreFunc={restoreSavedTabSpace}
-                              loadToCurrentWindowFunc={loadToCurrentWindow}
-                            />
-                          </Card>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-              <div className={classes.pagingControlContainer}>
-                {savedTabSpaceCollection.totalPageCount > 1
-                  ? renderPagingControl()
-                  : ''}
+      <div className={classes.container}>
+        <div className={classes.tabSpaceListContainer}>
+          <StickyContainer thresh={0} stickyOnClassName={classes.stickyOn}>
+            <div className={classes.toolbar}>
+              <SearchInput
+                onChange={(query) => {
+                  savedTabSpaceCollection.setQuery(query);
+                  savedTabSpaceCollection.load(tabSpaceRegistry);
+                }}
+              />
+            </div>
+          </StickyContainer>
+          <div>
+            {savedTabSpaceCollection.loadStatus === LoadStatus.Loading ? (
+              <div className={classes.loadingContainer}>
+                <LoadingSpinner />
               </div>
+            ) : null}
+          </div>
+          <div className={classes.savedContainer}>
+            {groupedSavedTabSpaces.map(([m, savedTabSpaces]) => {
+              return (
+                <div key={m}>
+                  <IndicatorLine>{`${savedTabSpaces.length} ${
+                    savedTabSpaces.length <= 1 ? 'tabverse' : 'tabverses'
+                  } ${groupLabelVerb} ${m}`}</IndicatorLine>
+                  <div>
+                    {savedTabSpaces.map((savedTabSpace) => {
+                      return (
+                        <Card
+                          key={savedTabSpace.id}
+                          className={classes.tabSpaceCard}
+                          elevation={Elevation.TWO}
+                        >
+                          <div
+                            className={
+                              savedTabSpaceCollection.isTabSpaceOpened(
+                                savedTabSpace.id,
+                              )
+                                ? classes.opened
+                                : classes.notOpened
+                            }
+                          >
+                            <div className={classes.inner}>opened</div>
+                          </div>
+                          <SavedTabSpaceDetail
+                            key={savedTabSpace.id}
+                            opened={savedTabSpaceCollection.isTabSpaceOpened(
+                              savedTabSpace.id,
+                            )}
+                            tabSpace={savedTabSpace}
+                            savedTabSpaceStore={savedTabSpaceStore}
+                            switchFunc={switchToTabSpace}
+                            restoreFunc={restoreSavedTabSpace}
+                            loadToCurrentWindowFunc={loadToCurrentWindow}
+                          />
+                        </Card>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+            <div className={classes.pagingControlContainer}>
+              {savedTabSpaceCollection.totalPageCount > 1
+                ? renderPagingControl()
+                : ''}
             </div>
           </div>
         </div>

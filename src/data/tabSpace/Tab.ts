@@ -1,4 +1,4 @@
-import { Base, IBase, getUnsavedNewId } from '../common';
+import { Base, IBase, getSavedId, getUnsavedNewId } from '../common';
 
 import { extend } from 'lodash';
 
@@ -98,7 +98,7 @@ export class Tab extends Base implements ISavedTab, ILiveTab {
     return [
       savedTab,
       extend(savedTab.toJSON(), {
-        tabSpaceId: savedTab.tabSpaceId,
+        tabSpaceId: getSavedId(savedTab.tabSpaceId),
         title: savedTab.title,
         url: savedTab.url,
         favIconUrl: savedTab.favIconUrl,

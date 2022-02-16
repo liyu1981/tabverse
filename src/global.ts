@@ -3,7 +3,7 @@ import { TabSpaceLogLevel, isJestTest, loglevel } from './debug';
 import { debounce as lodashDebounce } from 'lodash';
 
 // Do not manual edit it, use tools/version_update to update it.
-export const TABSPACE_VERSION = 'v0.2.0';
+export const TABSPACE_VERSION = 'v0.3.0';
 
 export const TABSPACE_DB_VERSION = 7;
 
@@ -48,11 +48,13 @@ export const logger = {
   },
 };
 
-export function hasOwnProperty<
-  X extends Record<string, string>,
-  Y extends PropertyKey,
->(obj: X, prop: Y): obj is X & Record<Y, string> {
-  return Object.prototype.hasOwnProperty.call(obj, prop);
+// eslint-disable-next-line @typescript-eslint/ban-types
+export function hasOwnProperty<X extends {}, Y extends PropertyKey>(
+  obj: X,
+  prop: Y,
+): obj is X & Record<Y, unknown> {
+  // eslint-disable-next-line no-prototype-builtins
+  return obj.hasOwnProperty(prop);
 }
 
 export function typeGuard<T>(x: any): x is T {

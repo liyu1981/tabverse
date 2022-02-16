@@ -10,7 +10,15 @@ import { getMockChrome } from '../../../dev/chromeMock';
 import { getNewId } from '../../common';
 import { saveSession } from '../sessionSaver';
 
-test('saveSession', async () => {
+async function getSavedSessions() {
+  return await db
+    .table<IChromeSessionSavePayload>(ChromeSession.DB_TABLE_NAME)
+    .orderBy('updatedAt')
+    .reverse()
+    .toArray();
+}
+
+test('saveSession same tag', async () => {
   const tag1 = getNewId();
   const time1 = Date.now() - 1000;
   const time11 = time1 + 10;
@@ -30,39 +38,45 @@ test('saveSession', async () => {
   const t4 = mockChrome.insertTabFromData(tabData2, w2.id);
 
   await saveSession(tag1, time1);
-  let savedSessions = await db
-    .table<IChromeSessionSavePayload>(ChromeSession.DB_TABLE_NAME)
-    .orderBy('updatedAt')
-    .reverse()
-    .filter((savedSession) => savedSession.tag === tag1)
-    .toArray();
+  let savedSessions = await getSavedSessions();
   expect(savedSessions.length).toEqual(1);
+  // console.log(
+  //   savedSessions.map((savedSession) =>
+  //     JSON.stringify(savedSession.windows, null, 2),
+  //   ),
+  // );
 
   const t5 = mockChrome.insertTabFromData(tabData3, w1.id);
   await saveSession(tag1, time1);
-  savedSessions = await db
-    .table<IChromeSessionSavePayload>(ChromeSession.DB_TABLE_NAME)
-    .orderBy('updatedAt')
-    .reverse()
-    .filter((savedSession) => savedSession.tag === tag1)
-    .toArray();
+  savedSessions = await getSavedSessions();
   expect(savedSessions.length).toEqual(2);
+  // console.log(
+  //   savedSessions.map((savedSession) =>
+  //     JSON.stringify(savedSession.windows, null, 2),
+  //   ),
+  // );
 
   const t6 = mockChrome.insertTabFromData(tabData1, w2.id);
   await saveSession(tag1, time1);
-  savedSessions = await db
-    .table<IChromeSessionSavePayload>(ChromeSession.DB_TABLE_NAME)
-    .orderBy('updatedAt')
-    .reverse()
-    .filter((savedSession) => savedSession.tag === tag1)
-    .toArray();
-  expect(savedSessions.length).toEqual(2);
-  expect(savedSessions[0].windows.map((window) => window.tabIds)).toEqual([
-    [101, 102, 103, 105],
+  savedSessions = await getSavedSessions();
+  expect(savedSessions.length).toEqual(3);
+  // console.log(
+  //   savedSessions.map((savedSession) =>
+  //     JSON.stringify(savedSession.windows, null, 2),
+  //   ),
+  // );
+
+  const t7 = mockChrome.insertTabFromData(tabData2, w1.id);
+  await saveSession(tag1, time1);
+  savedSessions = await getSavedSessions();
+  expect(savedSessions.length).toEqual(3);
+  // console.log(
+  //   savedSessions.map((savedSession) =>
+  //     JSON.stringify(savedSession.windows, null, 2),
+  //   ),
+  // );
+  expect(savedSessions[0].windows.map((w) => w.tabIds)).toEqual([
+    [101, 102, 103, 105, 107],
     [104, 106],
-  ]);
-  expect(savedSessions[1].windows.map((window) => window.tabIds)).toEqual([
-    [101, 102, 103, 105],
-    [104],
   ]);
 });

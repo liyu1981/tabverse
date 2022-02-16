@@ -18,10 +18,13 @@ import {
 import { debounce, logger } from '../../global';
 
 import { IDatabaseChange } from 'dexie-observable/api';
-import { strict as assert } from 'assert';
 import { db } from '../../store/db';
 import { map } from 'lodash';
 import { observe } from 'mobx';
+import {
+  addTabSpaceToIndex,
+  removeTabSpaceFromIndex,
+} from '../../background/fullTextSearch/api';
 
 export class SavedTabSpaceStore extends SavedStore {
   async querySavedTabSpaceCount() {
@@ -93,7 +96,7 @@ export async function querySavedTabSpace(
   params?: IQuerySavedTabSpaceParams,
 ): Promise<TabSpace[]> {
   let saveDataQuery = db
-    .table(TabSpace.DB_TABLE_NAME)
+    .table<ISavedTabSpace>(TabSpace.DB_TABLE_NAME)
     .orderBy('createdAt')
     .reverse();
 
@@ -128,10 +131,11 @@ export async function querySavedTabSpaceById(
   tabSpaceId: string,
 ): Promise<TabSpace> {
   const savedTabSpaces = await querySavedTabSpace({ anyOf: [tabSpaceId] });
-  assert(
-    savedTabSpaces.length === 1,
-    `queried saved tabspace id ${tabSpaceId} returns ${savedTabSpaces.length} results!`,
-  );
+  if (savedTabSpaces.length !== 1) {
+    throw new Error(
+      `queried saved tabspace id ${tabSpaceId} returns ${savedTabSpaces.length} results!`,
+    );
+  }
   return savedTabSpaces[0];
 }
 
@@ -155,22 +159,16 @@ export async function saveTabSpace(tabSpace: TabSpace): Promise<number> {
       await db.table(Tab.DB_TABLE_NAME).bulkPut(existTabSavePayloads);
     },
   );
+  addTabSpaceToIndex(tabSpaceSavePayload.id);
   return Date.now();
 }
 
 export async function deleteSavedTabSpace(
   savedTabSpaceId: string,
 ): Promise<void> {
-  const savedTabSpaces = await db
+  const savedTabSpace = await db
     .table<ISavedTabSpace>(TabSpace.DB_TABLE_NAME)
-    .where('id')
-    .equals(savedTabSpaceId)
-    .toArray();
-  assert(
-    savedTabSpaces.length === 1,
-    `More than one saved tabspace found with id ${savedTabSpaceId}`,
-  );
-  const savedTabSpace = savedTabSpaces[0];
+    .get(savedTabSpaceId);
   await db.transaction(
     'rw',
     [db.table(Tab.DB_TABLE_NAME), db.table(TabSpace.DB_TABLE_NAME)],
@@ -179,14 +177,17 @@ export async function deleteSavedTabSpace(
       await db.table(TabSpace.DB_TABLE_NAME).delete(savedTabSpace.id);
     },
   );
+  removeTabSpaceFromIndex(savedTabSpaceId);
 }
 
 const saveCurrentTabSpaceImpl = async () => {
   const { savedTabSpaceStore } = getTabSpaceData();
   const oldId = getTabSpaceData().tabSpace.id;
+
   savedTabSpaceStore.markInSaving(true);
   const savedTime = await saveTabSpace(getTabSpaceData().tabSpace);
   savedTabSpaceStore.markInSaving(false, savedTime);
+
   const newId = getTabSpaceData().tabSpace.id;
   if (oldId !== newId) {
     const changed = getTabSpaceData().tabSpaceRegistry.mergeRegistryChanges([

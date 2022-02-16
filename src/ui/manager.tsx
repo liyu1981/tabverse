@@ -14,10 +14,11 @@ import {
 } from '../data/tabSpace/bootstrap';
 
 import { CountExit } from './common/CountExit';
-import { ManagerView } from './manager/ManagerView';
+import { IManagerQueryParams, ManagerView } from './manager/ManagerView';
 import { strict as assert } from 'assert';
 import { bootstrap as bookmarkBootstrap } from '../data/bookmark/bootstrap';
 import { find } from 'lodash';
+import { bootstrap as fullTextSearchBootstrap } from '../fullTextSearch';
 import { getQueryParameters } from './common/queryAndHashParameter';
 import { bootstrap as noteBootstrap } from '../data/note/bootstrap';
 import { renderPage } from './common/base';
@@ -72,11 +73,13 @@ async function bootstrap() {
       payload: getTabSpaceData().tabSpace.toTabSpaceStub(),
     });
 
+    fullTextSearchBootstrap();
+
     renderPage({
       pageComponent: (
         <div>
           <ManagerView
-            queryParams={queryParams}
+            queryParams={queryParams as IManagerQueryParams}
             tabSpaceData={getTabSpaceData()}
           />
         </div>
