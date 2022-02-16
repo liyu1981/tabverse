@@ -5,6 +5,7 @@ import { TabSpaceRegistry, TabSpaceStub } from './TabSpaceRegistry';
 import { action, computed, makeObservable, observable } from 'mobx';
 import { addPagingToQueryParams, queryPageLimit } from '../../store/store';
 
+import { LoadStatus } from '../../global';
 import { TabSpace } from './TabSpace';
 import { isIdNotSaved } from '../common';
 import { querySavedTabSpace } from './SavedTabSpaceStore';
@@ -16,6 +17,7 @@ export enum SortMethods {
 }
 
 export class SavedTabSpaceCollection {
+  loadStatus: LoadStatus;
   openedSavedTabSpaces: TabSpaceStub[];
   savedTabSpaces: TabSpace[];
   sortMethod: SortMethods;
@@ -25,6 +27,7 @@ export class SavedTabSpaceCollection {
   totalPageCount: number;
 
   constructor() {
+    this.loadStatus = LoadStatus.Done;
     this.openedSavedTabSpaces = [];
     this.savedTabSpaces = [];
     this.sortMethod = SortMethods.CREATED;
@@ -34,6 +37,7 @@ export class SavedTabSpaceCollection {
     this.totalPageCount = 0;
 
     makeObservable(this, {
+      loadStatus: observable,
       openedSavedTabSpaces: observable,
       savedTabSpaces: observable,
       sortMethod: observable,
@@ -137,6 +141,11 @@ export class SavedTabSpaceCollection {
   }
 
   async load(tabSpaceRegistry: TabSpaceRegistry) {
+    this.openedSavedTabSpaces = [];
+    this.savedTabSpaces = [];
+
+    this.loadStatus = LoadStatus.Loading;
+
     this.openedSavedTabSpaces = tabSpaceRegistry.registry
       .filter((tabSpaceStub) => !isIdNotSaved(tabSpaceStub.id))
       .toArray();
@@ -165,5 +174,6 @@ export class SavedTabSpaceCollection {
     if (this.queryPageStart >= this.totalPageCount) {
       this.queryPageStart = this.totalPageCount - 1;
     }
+    this.loadStatus = LoadStatus.Done;
   }
 }

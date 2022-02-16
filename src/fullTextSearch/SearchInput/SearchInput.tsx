@@ -178,7 +178,6 @@ class SearchInputImpl extends AbstractPureComponent2<
   ) => {
     const { inputValue, onAdd } = this.props;
     const newValues = this.getValues(value);
-    console.log('will call addTags:', newValues);
     const shouldClearInput =
       onAdd?.(newValues, method) !== false && inputValue === undefined;
     if (shouldClearInput) {
@@ -384,7 +383,6 @@ class SearchInputImpl extends AbstractPureComponent2<
    * accordingly. */
   private removeIndexFromValues(index: number) {
     const { onRemove, query } = this.props;
-    console.log('will call onRemove:', index, query.andQueries[index]);
     onRemove?.(query.andQueries[index], index);
   }
 

@@ -81,7 +81,6 @@ export async function search(
   query: IFullTextSearchQuery,
 ): Promise<IFullTextSearchResult> {
   if (query.query.isEmpty()) {
-    console.log('query is empty!!');
     return {
       results: [],
       cursor: { next: '', restPages: 0 },
@@ -104,7 +103,6 @@ export async function search(
     if (q !== null) {
       q = q.offset(pageStart * pageLimit - results.length).limit(pageLimit);
       qResults = await q.toArray();
-      console.log('results are:', qResults);
       results = results.concat(qResults);
     }
     if (results.length >= pageLimit) {

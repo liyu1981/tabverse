@@ -7,13 +7,18 @@ import {
 import { action, computed, makeObservable, observable } from 'mobx';
 import { flatten, uniq } from 'lodash';
 
+import { LoadStatus } from '../../global';
+
 export class SavedChromeSessionCollection {
+  loadStatus: LoadStatus;
   savedSessionGroups: IDisplaySavedSessionGroup[];
 
   constructor() {
+    this.loadStatus = LoadStatus.Done;
     this.savedSessionGroups = [];
 
     makeObservable(this, {
+      loadStatus: observable,
       savedSessionGroups: observable,
 
       groupTags: computed,
@@ -23,7 +28,10 @@ export class SavedChromeSessionCollection {
   }
 
   async load() {
+    this.savedSessionGroups = [];
+    this.loadStatus = LoadStatus.Loading;
     this.savedSessionGroups = await loadSavedSessionsForDisplay();
+    this.loadStatus = LoadStatus.Done;
   }
 
   get groupTags() {

@@ -31,6 +31,14 @@ export function TermPlusView(props: TermPlusViewProps) {
     [],
   );
 
+  const onInputBlur = useMemo(
+    () => () => {
+      setActivated(false);
+      props.onFocusBackToInput();
+    },
+    [],
+  );
+
   useEffect(() => {
     if (activated && inputRef && inputRef.current) {
       inputRef.current.focus();
@@ -44,6 +52,7 @@ export function TermPlusView(props: TermPlusViewProps) {
           ref={inputRef}
           className={clsx(Classes.INPUT, Classes.ROUND, classes.termPlusInput)}
           onKeyDown={onInputKeyDown}
+          onBlur={onInputBlur}
           type="text"
         ></input>
       ) : (

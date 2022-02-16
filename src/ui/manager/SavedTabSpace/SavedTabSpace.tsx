@@ -8,6 +8,8 @@ import {
 } from '../../../data/tabSpace/chromeUtil';
 
 import { IndicatorLine } from '../../common/IndicatorLine';
+import { LoadStatus } from '../../../global';
+import { LoadingSpinner } from '../../common/LoadingSpinner';
 import { PagingControl } from '../../common/PagingControl';
 import { SavedTabSpaceCollection } from '../../../data/tabSpace/SavedTabSpaceCollection';
 import { SavedTabSpaceDetail } from './SavedTabSpaceDetail';
@@ -78,68 +80,73 @@ export const SavedTabSpace = observer(
     };
 
     return (
-      <div>
-        <div className={classes.container}>
-          <div className={classes.tabSpaceListContainer}>
-            <StickyContainer thresh={0} stickyOnClassName={classes.stickyOn}>
-              <div className={classes.toolbar}>
-                <SearchInput
-                  onChange={(query) => {
-                    savedTabSpaceCollection.setQuery(query);
-                    savedTabSpaceCollection.load(tabSpaceRegistry);
-                  }}
-                />
+      <div className={classes.container}>
+        <div className={classes.tabSpaceListContainer}>
+          <StickyContainer thresh={0} stickyOnClassName={classes.stickyOn}>
+            <div className={classes.toolbar}>
+              <SearchInput
+                onChange={(query) => {
+                  savedTabSpaceCollection.setQuery(query);
+                  savedTabSpaceCollection.load(tabSpaceRegistry);
+                }}
+              />
+            </div>
+          </StickyContainer>
+          <div>
+            {savedTabSpaceCollection.loadStatus === LoadStatus.Loading ? (
+              <div className={classes.loadingContainer}>
+                <LoadingSpinner />
               </div>
-            </StickyContainer>
-            <div className={classes.savedContainer}>
-              {groupedSavedTabSpaces.map(([m, savedTabSpaces]) => {
-                return (
-                  <div key={m}>
-                    <IndicatorLine>{`${savedTabSpaces.length} ${
-                      savedTabSpaces.length <= 1 ? 'tabverse' : 'tabverses'
-                    } ${groupLabelVerb} ${m}`}</IndicatorLine>
-                    <div>
-                      {savedTabSpaces.map((savedTabSpace) => {
-                        return (
-                          <Card
-                            key={savedTabSpace.id}
-                            className={classes.tabSpaceCard}
-                            elevation={Elevation.TWO}
-                          >
-                            <div
-                              className={
-                                savedTabSpaceCollection.isTabSpaceOpened(
-                                  savedTabSpace.id,
-                                )
-                                  ? classes.opened
-                                  : classes.notOpened
-                              }
-                            >
-                              <div className={classes.inner}>opened</div>
-                            </div>
-                            <SavedTabSpaceDetail
-                              key={savedTabSpace.id}
-                              opened={savedTabSpaceCollection.isTabSpaceOpened(
+            ) : null}
+          </div>
+          <div className={classes.savedContainer}>
+            {groupedSavedTabSpaces.map(([m, savedTabSpaces]) => {
+              return (
+                <div key={m}>
+                  <IndicatorLine>{`${savedTabSpaces.length} ${
+                    savedTabSpaces.length <= 1 ? 'tabverse' : 'tabverses'
+                  } ${groupLabelVerb} ${m}`}</IndicatorLine>
+                  <div>
+                    {savedTabSpaces.map((savedTabSpace) => {
+                      return (
+                        <Card
+                          key={savedTabSpace.id}
+                          className={classes.tabSpaceCard}
+                          elevation={Elevation.TWO}
+                        >
+                          <div
+                            className={
+                              savedTabSpaceCollection.isTabSpaceOpened(
                                 savedTabSpace.id,
-                              )}
-                              tabSpace={savedTabSpace}
-                              savedTabSpaceStore={savedTabSpaceStore}
-                              switchFunc={switchToTabSpace}
-                              restoreFunc={restoreSavedTabSpace}
-                              loadToCurrentWindowFunc={loadToCurrentWindow}
-                            />
-                          </Card>
-                        );
-                      })}
-                    </div>
+                              )
+                                ? classes.opened
+                                : classes.notOpened
+                            }
+                          >
+                            <div className={classes.inner}>opened</div>
+                          </div>
+                          <SavedTabSpaceDetail
+                            key={savedTabSpace.id}
+                            opened={savedTabSpaceCollection.isTabSpaceOpened(
+                              savedTabSpace.id,
+                            )}
+                            tabSpace={savedTabSpace}
+                            savedTabSpaceStore={savedTabSpaceStore}
+                            switchFunc={switchToTabSpace}
+                            restoreFunc={restoreSavedTabSpace}
+                            loadToCurrentWindowFunc={loadToCurrentWindow}
+                          />
+                        </Card>
+                      );
+                    })}
                   </div>
-                );
-              })}
-              <div className={classes.pagingControlContainer}>
-                {savedTabSpaceCollection.totalPageCount > 1
-                  ? renderPagingControl()
-                  : ''}
-              </div>
+                </div>
+              );
+            })}
+            <div className={classes.pagingControlContainer}>
+              {savedTabSpaceCollection.totalPageCount > 1
+                ? renderPagingControl()
+                : ''}
             </div>
           </div>
         </div>
