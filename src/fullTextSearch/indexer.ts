@@ -1,13 +1,14 @@
-import { getNewId } from '../data/common';
-import { tokenize } from './tokenizer';
 import {
   FullTextSearchDatabase,
   INDEX_TABLE_NAME,
 } from './FullTextSearchDatabase';
-import { IFullTextSearchIndexRecord } from './FullTextSearchDatabase';
-import { removeStopWords } from './stopWords';
-import { SearchableField } from '../background/fullTextSearch/addToIndex';
 import { logger, typeGuard } from '../global';
+
+import { IFullTextSearchIndexRecord } from './FullTextSearchDatabase';
+import { SearchableField } from '../background/fullTextSearch/addToIndex';
+import { getNewId } from '../data/common';
+import { removeStopWords } from './stopWords';
+import { tokenize } from './tokenizer';
 
 export interface IFullTextSearchAddToIndexParam {
   owner: string;

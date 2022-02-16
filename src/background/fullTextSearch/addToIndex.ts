@@ -51,7 +51,7 @@ export async function addTabToIndex(id: string) {
 
 addToIndexHandlers[SearchableType.Tab] = addTabToIndex;
 
-async function addTabSpaceToIndex(id: string) {
+export async function addTabSpaceToIndex(id: string) {
   try {
     const savedTabSpace = await querySavedTabSpaceById(id);
     const db = getDb();
@@ -60,7 +60,7 @@ async function addTabSpaceToIndex(id: string) {
       ultimateOwner: savedTabSpace.id,
       content: savedTabSpace.name,
       type: SearchableType.TabSpace,
-      field: SearchableField.Title,
+      field: SearchableField.Name,
     });
     await Promise.all(
       savedTabSpace.tabIds.map((tabId) => addTabToIndex(tabId)),

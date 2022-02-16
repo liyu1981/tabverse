@@ -46,7 +46,7 @@ export class Query implements OrQuery {
     const newQ = new Query(this);
     const newAndQuery = {
       scope,
-      terms,
+      terms: terms.map((term) => term.toLowerCase()),
     };
     newQ.andQueries = this.andQueries.concat([newAndQuery]);
     return newQ;

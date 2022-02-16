@@ -1,10 +1,9 @@
 import { ISavedTabSpace, TabSpace } from '../../data/tabSpace/TabSpace';
+import { addTabSpaceToIndex, addTabToIndex } from './addToIndex';
 
 import { Tab } from '../../data/tabSpace/Tab';
-import { addTabToIndex } from './addToIndex';
 import { db } from '../../store/db';
 import { logger } from '../../global';
-import { addTabSpaceToIndex } from './api';
 
 async function reIndexAllSavedTabSpace() {
   db.transaction(

@@ -22,11 +22,11 @@ export interface SearchInputProps {
 const scopeMap = {
   anywhere: { type: TYPE_ALL, field: FIELD_ALL },
   'any tabverse data': { type: SearchableType.TabSpace },
-  'any tab data': { type: SearchableType.Tab },
   'any tabverse name': {
     type: SearchableType.TabSpace,
-    field: SearchableField.Title,
+    field: SearchableField.Name,
   },
+  'any tab data': { type: SearchableType.Tab },
   'any tab title': { type: SearchableType.Tab, field: SearchableField.Title },
   'any tab url': { type: SearchableType.Tab, field: SearchableField.Url },
 };
