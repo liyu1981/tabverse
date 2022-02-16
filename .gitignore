@@ -8,3 +8,4 @@ node_modules/
 .parcel-cache/
 coverage/
 dist_crx/
+*/.watchman-cookie*

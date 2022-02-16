@@ -11,6 +11,12 @@ function getSegmenter(lang: string) {
   return new Intl.Segmenter(lang, { granularity: 'word' });
 }
 
+function splitWord(word: string) {
+  // use this function to further split by common separator, like ':,-/'
+  // eslint-disable-next-line no-useless-escape
+  return word.split(/[.,:;\-\/\\`!\|?]/);
+}
+
 export async function tokenize(content: string): Promise<TokenizeResults> {
   const lang = await new Promise<string>((resolve, reject) =>
     guessLanguage.detect(content, resolve),
@@ -20,7 +26,7 @@ export async function tokenize(content: string): Promise<TokenizeResults> {
   for (const { segment, isWordLike } of segmenter.segment(content)) {
     if (isWordLike) {
       const word = segment.toLowerCase();
-      words.add(word);
+      splitWord(word).forEach((word) => words.add(word));
     }
   }
   return {
