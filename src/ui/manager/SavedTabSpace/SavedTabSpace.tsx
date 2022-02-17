@@ -85,6 +85,7 @@ export const SavedTabSpace = observer(
           <StickyContainer thresh={0} stickyOnClassName={classes.stickyOn}>
             <div className={classes.toolbar}>
               <SearchInput
+                query={savedTabSpaceCollection.query}
                 onChange={(query) => {
                   savedTabSpaceCollection.setQuery(query);
                   savedTabSpaceCollection.load(tabSpaceRegistry);

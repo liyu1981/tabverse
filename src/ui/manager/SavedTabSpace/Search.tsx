@@ -1,21 +1,16 @@
 import * as React from 'react';
 
-import {
-  AndQuery,
-  EmptyQuery,
-  FIELD_ALL,
-  Query,
-  TYPE_ALL,
-} from '../../../fullTextSearch';
+import { AndQuery, FIELD_ALL, Query, TYPE_ALL } from '../../../fullTextSearch';
 import {
   SearchableField,
   SearchableType,
 } from '../../../background/fullTextSearch/addToIndex';
-import { useEffect, useMemo, useState } from 'react';
 
 import { SearchInput as FullTextSearchInput } from '../../../fullTextSearch/SearchInput';
+import { useMemo } from 'react';
 
 export interface SearchInputProps {
+  query: Query;
   onChange: (query: Query) => void;
 }
 
@@ -31,33 +26,30 @@ const scopeMap = {
   'any tab url': { type: SearchableType.Tab, field: SearchableField.Url },
 };
 
-export function SearchInput(props: SearchInputProps) {
-  const [searchQuery, setSearchQuery] = useState<Query>(EmptyQuery);
-
+export function SearchInput({ query, onChange }: SearchInputProps) {
   const onAddTerm = useMemo(
-    () => (values: string[]) =>
-      setSearchQuery((lastQuery) => {
-        return new Query(lastQuery).addAndQuery(values, scopeMap['anywhere']);
-      }),
+    () => (values: string[]) => {
+      const newQuery = new Query(query).addAndQuery(
+        values,
+        scopeMap['anywhere'],
+      );
+      onChange(newQuery);
+    },
     [],
   );
 
   const onRemoveTerm = useMemo(
-    () => (value: AndQuery, index: number) =>
-      setSearchQuery((lastQuery) => {
-        return new Query(lastQuery).removeAndQuery(index);
-      }),
+    () => (value: AndQuery, index: number) => {
+      const newQuery = new Query(query).removeAndQuery(index);
+      onChange(newQuery);
+    },
     [],
   );
 
   const onChangeQuery = useMemo(
-    () => (newQuery: Query) => setSearchQuery(newQuery),
+    () => (newQuery: Query) => onChange(newQuery),
     [],
   );
-
-  useEffect(() => {
-    props.onChange(searchQuery);
-  }, [searchQuery]);
 
   return (
     <FullTextSearchInput
@@ -65,7 +57,7 @@ export function SearchInput(props: SearchInputProps) {
       leftIcon={'search'}
       tagProps={{ minimal: true }}
       placeholder={'input keyword to search...'}
-      query={searchQuery}
+      query={query}
       onAdd={onAddTerm}
       onRemove={onRemoveTerm}
       onChangeQuery={onChangeQuery}
