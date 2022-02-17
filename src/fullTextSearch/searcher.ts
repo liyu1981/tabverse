@@ -4,7 +4,7 @@ import {
   FullTextSearchDatabase,
   INDEX_TABLE_NAME,
 } from './FullTextSearchDatabase';
-import { hasOwnProperty, typeGuard } from '../global';
+import { hasOwnProperty, perfEnd, perfStart } from '../global';
 
 import { IFullTextSearchIndexRecord } from './FullTextSearchDatabase';
 import { Query } from './query';
@@ -87,6 +87,7 @@ export async function search(
     };
   }
 
+  perfStart();
   const queries = query.query.andQueries.map((andQuery) =>
     createQueryForAndQuery(db, andQuery),
   );
@@ -124,6 +125,7 @@ export async function search(
   }
 
   console.log('search results returned: ', results, cursor);
+  perfEnd('search');
   return { results, cursor };
 }
 

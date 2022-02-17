@@ -54,7 +54,7 @@ export function hasOwnProperty<X extends {}, Y extends PropertyKey>(
   prop: Y,
 ): obj is X & Record<Y, unknown> {
   // eslint-disable-next-line no-prototype-builtins
-  return obj.hasOwnProperty(prop);
+  return obj && obj.hasOwnProperty(prop);
 }
 
 export function typeGuard<T>(x: any): x is T {
@@ -67,3 +67,21 @@ export const debounce = isJestTest()
       lodashDebounce(() => {
         f();
       }, t);
+
+let _perf_timeStart = 0;
+let _perf_timeEnd = 0;
+export const perfStart: () => void = isJestTest()
+  ? () => {}
+  : () => {
+      _perf_timeStart = Date.now();
+    };
+
+export const perfEnd: (message: string) => void = isJestTest()
+  ? (message: string) => {}
+  : (message: string) => {
+      _perf_timeEnd = Date.now();
+      console.log(
+        `%cperf: ${message}, time used: ${_perf_timeEnd - _perf_timeStart}ms`,
+        'color: red; background-color: yellow',
+      );
+    };

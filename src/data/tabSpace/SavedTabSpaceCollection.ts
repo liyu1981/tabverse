@@ -1,9 +1,12 @@
 import * as Moment from 'moment';
 
 import { EmptyQuery, Query } from '../../fullTextSearch';
+import {
+  QUERY_PAGE_LIMIT_DEFAULT,
+  addPagingToQueryParams,
+} from '../../store/store';
 import { TabSpaceRegistry, TabSpaceStub } from './TabSpaceRegistry';
 import { action, computed, makeObservable, observable } from 'mobx';
-import { addPagingToQueryParams, queryPageLimit } from '../../store/store';
 
 import { LoadStatus } from '../../global';
 import { TabSpace } from './TabSpace';
@@ -33,7 +36,7 @@ export class SavedTabSpaceCollection {
     this.sortMethod = SortMethods.CREATED;
     this.query = EmptyQuery;
     this.queryPageStart = 0;
-    this.queryPageLimit = queryPageLimit;
+    this.queryPageLimit = QUERY_PAGE_LIMIT_DEFAULT;
     this.totalPageCount = 0;
 
     makeObservable(this, {
@@ -164,7 +167,10 @@ export class SavedTabSpaceCollection {
         this.queryPageStart,
         this.queryPageLimit,
       );
+      const timeStart = Date.now();
       this.savedTabSpaces = await querySavedTabSpace(savedTabSpaceParams);
+      const timeStop = Date.now();
+      console.log('browse used time: ', timeStop - timeStart);
     }
 
     this.totalPageCount = Math.ceil(
