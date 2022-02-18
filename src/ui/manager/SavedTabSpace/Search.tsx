@@ -27,24 +27,25 @@ const scopeMap = {
 };
 
 export function SearchInput({ query, onChange }: SearchInputProps) {
-  const onAddTerm = useMemo(
-    () => (values: string[]) => {
-      const newQuery = new Query(query).addAndQuery(
-        values,
-        scopeMap['anywhere'],
-      );
-      onChange(newQuery);
-    },
-    [],
-  );
+  // const onAddTerm = useMemo(
+  //   () => (values: string[]) => {
+  //     console.log('will add to query terms', query, values);
+  //     const newQuery = new Query(query).addAndQuery(
+  //       values,
+  //       scopeMap['anywhere'],
+  //     );
+  //     onChange(newQuery);
+  //   },
+  //   [query],
+  // );
 
-  const onRemoveTerm = useMemo(
-    () => (value: AndQuery, index: number) => {
-      const newQuery = new Query(query).removeAndQuery(index);
-      onChange(newQuery);
-    },
-    [],
-  );
+  // const onRemoveTerm = useMemo(
+  //   () => (value: AndQuery, index: number) => {
+  //     const newQuery = new Query(query).removeAndQuery(index);
+  //     onChange(newQuery);
+  //   },
+  //   [query],
+  // );
 
   const onChangeQuery = useMemo(
     () => (newQuery: Query) => onChange(newQuery),
@@ -56,11 +57,10 @@ export function SearchInput({ query, onChange }: SearchInputProps) {
       large={true}
       leftIcon={'search'}
       tagProps={{ minimal: true }}
-      placeholder={'input keyword to search...'}
+      placeholder={'input keywords, press enter to search...'}
       query={query}
-      onAdd={onAddTerm}
-      onRemove={onRemoveTerm}
       onChangeQuery={onChangeQuery}
+      scopeDefault={scopeMap['anywhere']}
       scopeMap={scopeMap}
     />
   );
