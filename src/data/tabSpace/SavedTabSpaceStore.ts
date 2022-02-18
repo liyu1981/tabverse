@@ -103,7 +103,7 @@ async function querySavedTabsForTabSpace(
 export async function querySavedTabSpace(
   params?: IQuerySavedTabSpaceParams,
 ): Promise<TabSpace[]> {
-  perfStart();
+  perfStart('query table space');
   let savedData: ISavedTabSpace[] = [];
   const pageStart = params?.pageStart ?? 0;
   const pageLimit = params?.pageLimit ?? QUERY_PAGE_LIMIT_DEFAULT;
@@ -131,15 +131,18 @@ export async function querySavedTabSpace(
   } else {
     const savedDataQuery = db
       .table<ISavedTabSpace>(TabSpace.DB_TABLE_NAME)
-      .orderBy('createdAt')
+      .where('createdAt')
+      .above(0)
+      //.orderBy('createdAt')
       .reverse()
       .offset(pageStart)
       .limit(pageLimit);
     savedData = await savedDataQuery.toArray();
+    //savedData = savedData.slice(pageStart * pageLimit, pageLimit);
   }
   perfEnd('query table space');
 
-  perfStart();
+  perfStart('query tabids for tabspaces');
   // performance optimization to bulk load all tabs of tabSpaces then distribute
   const toLoadTabIds = savedData.reduce<string[]>((s, data) => {
     return s.concat(data.tabIds);

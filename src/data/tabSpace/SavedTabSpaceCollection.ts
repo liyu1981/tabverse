@@ -1,6 +1,7 @@
 import * as Moment from 'moment';
 
 import { EmptyQuery, Query } from '../../fullTextSearch';
+import { LoadStatus, perfEnd, perfStart } from '../../global';
 import {
   QUERY_PAGE_LIMIT_DEFAULT,
   addPagingToQueryParams,
@@ -8,7 +9,6 @@ import {
 import { TabSpaceRegistry, TabSpaceStub } from './TabSpaceRegistry';
 import { action, computed, makeObservable, observable } from 'mobx';
 
-import { LoadStatus } from '../../global';
 import { TabSpace } from './TabSpace';
 import { isIdNotSaved } from '../common';
 import { querySavedTabSpace } from './SavedTabSpaceStore';
@@ -154,23 +154,22 @@ export class SavedTabSpaceCollection {
       .toArray();
 
     if (!this.query.isEmpty()) {
-      console.log('will search:', this.query);
+      perfStart('load:search');
       this.savedTabSpaces = await searchSavedTabSpace({
         query: this.query,
         pageStart: this.queryPageStart,
         pageLimit: this.queryPageLimit,
       });
+      perfEnd('load:search');
     } else {
-      console.log('will browse:', this.query);
+      perfStart('load:browse');
       const savedTabSpaceParams = addPagingToQueryParams(
         {},
         this.queryPageStart,
         this.queryPageLimit,
       );
-      const timeStart = Date.now();
       this.savedTabSpaces = await querySavedTabSpace(savedTabSpaceParams);
-      const timeStop = Date.now();
-      console.log('browse used time: ', timeStop - timeStart);
+      perfEnd('load:browse');
     }
 
     this.totalPageCount = Math.ceil(

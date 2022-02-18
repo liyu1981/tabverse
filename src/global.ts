@@ -68,20 +68,22 @@ export const debounce = isJestTest()
         f();
       }, t);
 
-let _perf_timeStart = 0;
-let _perf_timeEnd = 0;
-export const perfStart: () => void = isJestTest()
-  ? () => {}
-  : () => {
-      _perf_timeStart = Date.now();
+const _perf_timeStart: { [name: string]: number } = {};
+export const perfStart: (name: string) => void = isJestTest()
+  ? (name: string) => {}
+  : (name: string) => {
+      _perf_timeStart[name] = Date.now();
     };
 
-export const perfEnd: (message: string) => void = isJestTest()
-  ? (message: string) => {}
-  : (message: string) => {
-      _perf_timeEnd = Date.now();
+export const perfEnd: (name: string) => void = isJestTest()
+  ? (name: string) => {}
+  : (name: string) => {
+      const _perf_timeEnd = Date.now();
       console.log(
-        `%cperf: ${message}, time used: ${_perf_timeEnd - _perf_timeStart}ms`,
+        `%cperf: ${name}, time used: ${
+          _perf_timeEnd - _perf_timeStart[name]
+        }ms`,
         'color: red; background-color: yellow',
       );
+      delete _perf_timeStart[name];
     };

@@ -1,8 +1,9 @@
 import { getDb, search } from '../../fullTextSearch';
+import { perfEnd, perfStart } from '../../global';
 
+import { Query } from '../../fullTextSearch';
 import { querySavedTabSpace } from '../../data/tabSpace/SavedTabSpaceStore';
 import { uniq } from 'lodash';
-import { Query } from '../../fullTextSearch';
 
 export interface ISearchSavedTabSpaceParams {
   query: Query;

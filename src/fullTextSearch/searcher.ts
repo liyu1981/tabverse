@@ -39,13 +39,15 @@ function createQueryForAndQuery(
     return null;
   }
 
+  const sortedTerms = andQuery.terms.sort();
+
   let q = db
     .table<IFullTextSearchIndexRecord>(INDEX_TABLE_NAME)
     .where('terms')
-    .equals(andQuery.terms[0]);
+    .equals(sortedTerms[0]);
 
-  for (let i = 1; i < andQuery.terms.length; i++) {
-    const term = andQuery.terms[i];
+  for (let i = 1; i < sortedTerms.length; i++) {
+    const term = sortedTerms[i];
     q = q.and((x) => x.terms.findIndex((v) => v === term) >= 0);
   }
 
@@ -87,7 +89,7 @@ export async function search(
     };
   }
 
-  perfStart();
+  perfStart('fulltext:search');
   const queries = query.query.andQueries.map((andQuery) =>
     createQueryForAndQuery(db, andQuery),
   );
@@ -125,7 +127,7 @@ export async function search(
   }
 
   console.log('search results returned: ', results, cursor);
-  perfEnd('search');
+  perfEnd('fulltext:search');
   return { results, cursor };
 }
 
