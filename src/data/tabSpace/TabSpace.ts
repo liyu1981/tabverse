@@ -4,7 +4,7 @@ import { action, computed, makeObservable, observable } from 'mobx';
 import { assign, extend, isEqual, omit } from 'lodash';
 
 import { List } from 'immutable';
-import { TabSpaceStub } from './TabSpaceRegistry';
+import { TabSpaceStub } from '../../tabSpaceRegistry/TabSpaceRegistry';
 import { strict as assert } from 'assert';
 
 export interface ISavedTabSpace extends IBase {

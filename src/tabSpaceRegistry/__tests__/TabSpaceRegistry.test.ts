@@ -1,5 +1,5 @@
-import { TABSPACE_DB_VERSION } from '../../../global';
-import { TabSpace } from '../TabSpace';
+import { TABSPACE_DB_VERSION } from '../../global';
+import { TabSpace } from '../../data/tabSpace/TabSpace';
 import { TabSpaceRegistry } from '../TabSpaceRegistry';
 
 test('tabSpaceRegistry basics', () => {

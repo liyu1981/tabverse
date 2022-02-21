@@ -13,11 +13,8 @@ local tabSpace registry when leader announce the new version.
 
 */
 
-import { getTabSpaceData } from '../../data/tabSpace/bootstrap';
-import {
-  TabSpaceRegistryChange,
-  TabSpaceStub,
-} from '../../data/tabSpace/TabSpaceRegistry';
+import { getTabSpaceData } from '../data/tabSpace/bootstrap';
+import { TabSpaceRegistryChange, TabSpaceStub } from './TabSpaceRegistry';
 import {
   InternServiceState,
   TabSpaceRegistryBroadcastChannel,

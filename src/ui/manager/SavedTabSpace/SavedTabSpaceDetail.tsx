@@ -9,7 +9,7 @@ import {
 
 import { TabCard } from '../TabSpace/TabCard';
 import { TabSpace } from '../../../data/tabSpace/TabSpace';
-import { TabSpaceId } from '../../../message';
+import { TabSpaceId } from '../../../message/message';
 import classes from './SavedTabSpaceDetail.module.scss';
 import { logger } from '../../../global';
 import { observer } from 'mobx-react-lite';

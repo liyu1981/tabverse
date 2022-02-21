@@ -26,7 +26,7 @@ import { bootstrap as storeBootstrap } from '../store/bootstrap';
 import {
   addTabSpace as tabSpaceRegistryAddTabSpace,
   bootstrap as tabSpaceRegistryServiceBootstrap,
-} from '../service/tabSpaceRegistry';
+} from '../tabSpaceRegistry';
 import { bootstrap as todoBootstrap } from '../data/todo/bootstrap';
 
 async function bootstrap() {
@@ -77,10 +77,7 @@ async function bootstrap() {
     renderPage({
       pageComponent: (
         <div>
-          <ManagerView
-            queryParams={queryParams as IManagerQueryParams}
-            tabSpaceData={getTabSpaceData()}
-          />
+          <ManagerView queryParams={queryParams as IManagerQueryParams} />
         </div>
       ),
     });

@@ -1,6 +1,6 @@
 import { TabSpaceOp } from '../../global';
-import { sendChromeMessage, TabSpaceMsg } from '../../message';
-import { removeTabSpace as tabSpaceRegistryRemoveTabSpace } from '../../service/tabSpaceRegistry';
+import { sendChromeMessage, TabSpaceMsg } from '../../message/message';
+import { removeTabSpace as tabSpaceRegistryRemoveTabSpace } from '../../tabSpaceRegistry';
 
 export function switchToTabSpaceUtil(
   chromeTabId: number,

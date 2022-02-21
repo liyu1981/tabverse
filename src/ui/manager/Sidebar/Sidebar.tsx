@@ -13,7 +13,7 @@ import { TabSpaceLogo } from '../../common/TabSpaceLogo';
 import classes from './Sidebar.module.scss';
 import clsx from 'clsx';
 import { getAllChromeSessionData } from '../../../data/chromeSession/bootstrap';
-import { getTabSpaceRegistry } from '../../../service/tabSpaceRegistry';
+import { getTabSpaceRegistry } from '../../../tabSpaceRegistry';
 
 enum Route {
   New = 'new',

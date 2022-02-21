@@ -10,7 +10,7 @@ import { SavedTabSpaceStore } from '../SavedTabSpaceStore';
 import { TabPreview } from '../TabPreview';
 import { TabSpace } from '../TabSpace';
 import { initMockChrome } from './chromeTab.scanCurrentTabs.test';
-import { startMonitorChromeMessage } from '../chromeMessage';
+import { startMonitorChromeMessage } from '../../../message/chromeMessage';
 
 export const flushPromises = () => new Promise(setImmediate);
 

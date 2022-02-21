@@ -13,7 +13,7 @@ import { TabSpace } from './TabSpace';
 import { strict as assert } from 'assert';
 import { exposeDebugData } from '../../debug';
 import { getSavedStoreManager } from '../../store/bootstrap';
-import { startMonitorChromeMessage } from './chromeMessage';
+import { startMonitorChromeMessage } from '../../message/chromeMessage';
 
 export interface ITabSpaceData {
   tabSpace: Readonly<TabSpace>;

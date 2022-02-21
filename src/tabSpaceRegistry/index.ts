@@ -53,11 +53,9 @@ import {
 
 import { BroadcastChannel } from 'broadcast-channel';
 import { bootstrap as electionBootstrap } from './election';
-import {
-  TabSpaceRegistryChange,
-  TabSpaceStub,
-} from '../../data/tabSpace/TabSpaceRegistry';
-import { exposeDebugData } from '../../debug';
+import { TabSpaceRegistryChange, TabSpaceStub } from './TabSpaceRegistry';
+import { exposeDebugData } from '../debug';
+import { logger } from '../global';
 
 export const _state = new InternServiceState();
 
@@ -66,7 +64,7 @@ function onLeaderChange(
   isThisTab: boolean,
   broadcastChannel: BroadcastChannel<TabSpaceRegistryBroadcastMsg>,
 ) {
-  console.log('leader changed to:', leaderTabId, isThisTab);
+  logger.log('leader changed to:', leaderTabId, isThisTab);
   chrome.tabs.getCurrent((tab) => {
     _state.setTabId(tab.id);
     _state.setLeaderTabId(leaderTabId);
@@ -99,10 +97,10 @@ export function getTabSpaceRegistry() {
 export function addTabSpace(tabSpaceStud: TabSpaceStub) {
   retryIfStateNotReady(_state, () => {
     if (_state.isLeader()) {
-      console.log('will addTabSpaceByLeader');
+      logger.log('will addTabSpaceByLeader');
       addTabSpaceByLeader(tabSpaceStud);
     } else {
-      console.log('will addTabSpaceToLeader');
+      logger.log('will addTabSpaceToLeader');
       addTabSpaceToLeader(tabSpaceStud);
     }
   });
@@ -111,7 +109,7 @@ export function addTabSpace(tabSpaceStud: TabSpaceStub) {
 export function removeTabSpace(chromeTabId: number) {
   retryIfStateNotReady(_state, () => {
     if (_state.isLeader()) {
-      console.log('will removeTabSpaceByLeader', chromeTabId);
+      logger.log('will removeTabSpaceByLeader', chromeTabId);
       removeTabSpaceByLeader(chromeTabId);
     }
   });
@@ -120,10 +118,10 @@ export function removeTabSpace(chromeTabId: number) {
 export function updateTabSpace(tabSpaceRegistryChange: TabSpaceRegistryChange) {
   retryIfStateNotReady(_state, () => {
     if (_state.isLeader()) {
-      console.log('will updateTabSpaceByLeader', tabSpaceRegistryChange);
+      logger.log('will updateTabSpaceByLeader', tabSpaceRegistryChange);
       updateTabSpaceByLeader(tabSpaceRegistryChange);
     } else {
-      console.log('will updateTabSpaceToLeader', tabSpaceRegistryChange);
+      logger.log('will updateTabSpaceToLeader', tabSpaceRegistryChange);
       updateTabSpaceToLeader(tabSpaceRegistryChange);
     }
   });

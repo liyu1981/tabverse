@@ -1,12 +1,7 @@
-import {
-  AuditLogs,
-  BackgroundMsg,
-  ChromeTabId,
-  TabSpaceMsg,
-} from '../../message';
+import { AuditLogs, BackgroundMsg, ChromeTabId, TabSpaceMsg } from './message';
 
-import { getTabSpaceData } from './bootstrap';
-import { logger } from '../../global';
+import { getTabSpaceData } from '../data/tabSpace/bootstrap';
+import { logger } from '../global';
 
 const handlers = {};
 

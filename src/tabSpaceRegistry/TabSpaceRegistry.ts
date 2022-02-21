@@ -2,7 +2,7 @@ import { action, makeObservable, observable } from 'mobx';
 import { clone, forEach, isEqual } from 'lodash';
 
 import { Map } from 'immutable';
-import { TabSpaceJSON } from './TabSpace';
+import { TabSpaceJSON } from '../data/tabSpace/TabSpace';
 
 export type TabSpaceStub = Omit<TabSpaceJSON, 'tabs'>;
 export type TabSpaceRegistryMap = Map<string, TabSpaceStub>;
@@ -114,7 +114,6 @@ export class TabSpaceRegistry {
         this.registry = this.registry
           .remove(from)
           .set(to, Object.freeze(clone(entry)));
-        console.log('after remove:', this.registry.toJS());
         changed = true;
       } else {
         if (this.registry.has(to)) {

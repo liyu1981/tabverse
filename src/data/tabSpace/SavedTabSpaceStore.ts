@@ -12,7 +12,7 @@ import {
   TabSpaceMsg,
   sendPubSubMessage,
   subscribePubSubMessage,
-} from '../../message';
+} from '../../message/message';
 import {
   addTabSpaceToIndex,
   removeTabSpaceFromIndex,
@@ -28,7 +28,7 @@ import {
 import { IDatabaseChange } from 'dexie-observable/api';
 import { db } from '../../store/db';
 import { observe } from 'mobx';
-import { updateTabSpace as tabSpaceRegistryUpdateTabSpace } from '../../service/tabSpaceRegistry';
+import { updateTabSpace as tabSpaceRegistryUpdateTabSpace } from '../../tabSpaceRegistry';
 
 export class SavedTabSpaceStore extends SavedStore {
   async querySavedTabSpaceCount() {

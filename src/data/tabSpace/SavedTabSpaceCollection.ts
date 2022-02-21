@@ -6,7 +6,10 @@ import {
   QUERY_PAGE_LIMIT_DEFAULT,
   addPagingToQueryParams,
 } from '../../store/store';
-import { TabSpaceRegistry, TabSpaceStub } from './TabSpaceRegistry';
+import {
+  TabSpaceRegistry,
+  TabSpaceStub,
+} from '../../tabSpaceRegistry/TabSpaceRegistry';
 import { action, computed, makeObservable, observable } from 'mobx';
 
 import { TabSpace } from './TabSpace';

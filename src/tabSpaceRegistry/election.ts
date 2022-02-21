@@ -3,7 +3,7 @@ import {
   LeaderElector,
   createLeaderElection,
 } from 'broadcast-channel';
-import { hasOwnProperty, logger } from '../../global';
+import { hasOwnProperty, logger } from '../global';
 import {
   InternServiceState,
   TabSpaceRegistryBroadcastMsg,
@@ -28,7 +28,7 @@ function getLeaderOnMessage(leaderTabId: number) {
     ev: TabSpaceRegistryBroadcastMsg,
   ) {
     const { type } = ev;
-    console.log('leader recv msg:', ev);
+    logger.log('leader recv msg:', ev);
     if (type === TabSpaceRegistryBroadcastMsgType.QueryForLeader) {
       _channel.postMessage({
         type: TabSpaceRegistryBroadcastMsgType.AnnounceLeader,

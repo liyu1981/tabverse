@@ -1,4 +1,4 @@
-import { FullTextSearchMsg, sendChromeMessage } from '../../message';
+import { FullTextSearchMsg, sendChromeMessage } from '../../message/message';
 import { SearchableType } from './addToIndex';
 
 export function addTabSpaceToIndex(tabSpaceId: string) {

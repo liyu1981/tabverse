@@ -1,4 +1,4 @@
-import { BackgroundMsg, sendChromeMessage } from '../../message';
+import { BackgroundMsg, sendChromeMessage } from '../../message/message';
 import { ChromeSession, ChromeTab } from './ChromeSession';
 
 import { TabSpace } from '../tabSpace/TabSpace';
@@ -6,7 +6,7 @@ import { strict as assert } from 'assert';
 import { getTabSpaceData } from '../tabSpace/bootstrap';
 import { isJestTest } from '../../debug';
 import { isTabSpaceManagerPage } from '../../global';
-import { getTabSpaceRegistry } from '../../service/tabSpaceRegistry';
+import { getTabSpaceRegistry } from '../../tabSpaceRegistry';
 
 async function updateWindowTabIds(session: ChromeSession, windowId: number) {
   const windowTabIds = (await chrome.tabs.query({ windowId: windowId })).map(

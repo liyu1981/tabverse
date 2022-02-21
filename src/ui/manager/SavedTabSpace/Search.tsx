@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { AndQuery, FIELD_ALL, Query, TYPE_ALL } from '../../../fullTextSearch';
+import { FIELD_ALL, Query, TYPE_ALL } from '../../../fullTextSearch';
 import {
   SearchableField,
   SearchableType,
@@ -27,26 +27,6 @@ const scopeMap = {
 };
 
 export function SearchInput({ query, onChange }: SearchInputProps) {
-  // const onAddTerm = useMemo(
-  //   () => (values: string[]) => {
-  //     console.log('will add to query terms', query, values);
-  //     const newQuery = new Query(query).addAndQuery(
-  //       values,
-  //       scopeMap['anywhere'],
-  //     );
-  //     onChange(newQuery);
-  //   },
-  //   [query],
-  // );
-
-  // const onRemoveTerm = useMemo(
-  //   () => (value: AndQuery, index: number) => {
-  //     const newQuery = new Query(query).removeAndQuery(index);
-  //     onChange(newQuery);
-  //   },
-  //   [query],
-  // );
-
   const onChangeQuery = useMemo(
     () => (newQuery: Query) => onChange(newQuery),
     [],

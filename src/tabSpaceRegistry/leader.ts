@@ -28,8 +28,8 @@ import {
   TabSpaceRegistryChange,
   TabSpaceRegistryJSON,
   TabSpaceStub,
-} from '../../data/tabSpace/TabSpaceRegistry';
-import { NotNeedPayload } from '../../message';
+} from './TabSpaceRegistry';
+import { NotNeedPayload } from '../message/message';
 
 let _internState: InternServiceState | null = null;
 

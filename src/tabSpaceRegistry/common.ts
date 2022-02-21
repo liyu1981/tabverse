@@ -1,5 +1,5 @@
 import { BroadcastChannel } from 'broadcast-channel';
-import { TabSpaceRegistry } from '../../data/tabSpace/TabSpaceRegistry';
+import { TabSpaceRegistry } from './TabSpaceRegistry';
 
 export enum TabSpaceRegistryBroadcastMsgType {
   QueryForLeader = 'tsrb_queryforleader',

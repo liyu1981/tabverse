@@ -10,7 +10,7 @@ import {
   getTabSpaceRegistry,
   removeTabSpace as tabSpaceRegistryRemoveTabSpace,
   updateTabSpace as tabSpaceRegistryUpdateTabSpace,
-} from '../../service/tabSpaceRegistry';
+} from '../../tabSpaceRegistry';
 
 export async function scanCurrentTabs(tabSpaceData: ITabSpaceData) {
   const { tabSpace } = tabSpaceData;

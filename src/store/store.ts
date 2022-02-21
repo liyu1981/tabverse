@@ -1,4 +1,4 @@
-import { BackgroundMsg, sendChromeMessage } from '../message';
+import { BackgroundMsg, sendChromeMessage } from '../message/message';
 import { action, makeObservable, observable } from 'mobx';
 import { forEach, map, merge } from 'lodash';
 
