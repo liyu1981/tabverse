@@ -11,6 +11,7 @@ export type TabSpaceRegistryChange = {
   to: string;
   entry: TabSpaceStub;
 };
+export type TabSpaceRegistryJSON = { [k: string]: TabSpaceStub };
 
 export class TabSpaceRegistry {
   registry: TabSpaceRegistryMap;
@@ -26,6 +27,7 @@ export class TabSpaceRegistry {
       removeByChromeTabId: action,
       mergeRegistry: action,
       mergeRegistryChanges: action,
+      replaceFromJSON: action,
     });
   }
 
@@ -112,6 +114,7 @@ export class TabSpaceRegistry {
         this.registry = this.registry
           .remove(from)
           .set(to, Object.freeze(clone(entry)));
+        console.log('after remove:', this.registry.toJS());
         changed = true;
       } else {
         if (this.registry.has(to)) {
@@ -131,5 +134,9 @@ export class TabSpaceRegistry {
 
   findTabIdByChromeTabId(tabId: number): string {
     return this.registry.findKey((entry) => entry.chromeTabId === tabId);
+  }
+
+  replaceFromJSON(tabSpaceRegistryJSON: TabSpaceRegistryJSON) {
+    this.registry = Map(tabSpaceRegistryJSON);
   }
 }

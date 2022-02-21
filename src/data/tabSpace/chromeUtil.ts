@@ -1,9 +1,6 @@
 import { TabSpaceOp } from '../../global';
-import {
-  sendChromeMessage,
-  TabSpaceMsg,
-  TabSpaceRegistryMsg,
-} from '../../message';
+import { sendChromeMessage, TabSpaceMsg } from '../../message';
+import { removeTabSpace as tabSpaceRegistryRemoveTabSpace } from '../../service/tabSpaceRegistry';
 
 export function switchToTabSpaceUtil(
   chromeTabId: number,
@@ -31,15 +28,12 @@ export function restoreSavedTabSpaceUtil(tabSpaceId: string) {
 }
 
 export function loadToCurrentWindowUtil(
-  currentTabSpaceId: string,
+  currentTabSpaceChromeTabId: number,
   savedTabSpaceId: string,
-  willSendChromeMessage = true,
+  willUpdateTabSpaceRegistry = true,
 ) {
-  if (willSendChromeMessage) {
-    sendChromeMessage({
-      type: TabSpaceRegistryMsg.RemoveTabSpace,
-      payload: currentTabSpaceId,
-    });
+  if (willUpdateTabSpaceRegistry) {
+    tabSpaceRegistryRemoveTabSpace(currentTabSpaceChromeTabId);
   }
   window.open(
     `manager.html?op=${TabSpaceOp.LoadSaved}&stsid=${savedTabSpaceId}`,

@@ -61,7 +61,7 @@ export const SavedTabSpace = observer(
 
     const loadToCurrentWindow = useMemo(
       () => (savedTabSpaceId: string) =>
-        loadToCurrentWindowUtil(tabSpace.id, savedTabSpaceId),
+        loadToCurrentWindowUtil(tabSpace.chromeTabId, savedTabSpaceId),
       [],
     );
 

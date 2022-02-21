@@ -14,6 +14,7 @@ import { SidebarContainer } from '../common/SidebarContainer';
 import { TabSpaceView } from './TabSpace/TabSpaceView';
 import { getAllBookmarkData } from '../../data/bookmark/bootstrap';
 import { getAllChromeSessionData } from '../../data/chromeSession/bootstrap';
+import { getTabSpaceRegistry } from '../../service/tabSpaceRegistry';
 
 export interface IManagerQueryParams {
   op: string;
@@ -57,7 +58,7 @@ export const ManagerView = (props: IManagerContainerProps) => {
         return (
           <TabSpaceView
             tabSpace={props.tabSpaceData.tabSpace}
-            tabSpaceRegistry={props.tabSpaceData.tabSpaceRegistry}
+            tabSpaceRegistry={getTabSpaceRegistry()}
             tabPreview={props.tabSpaceData.tabPreview}
             savedTabSpaceStore={props.tabSpaceData.savedTabSpaceStore}
             allBookmark={getAllBookmarkData().allBookmark}
@@ -67,7 +68,7 @@ export const ManagerView = (props: IManagerContainerProps) => {
         return (
           <SavedTabSpace
             tabSpace={props.tabSpaceData.tabSpace}
-            tabSpaceRegistry={props.tabSpaceData.tabSpaceRegistry}
+            tabSpaceRegistry={getTabSpaceRegistry()}
             savedTabSpaceStore={props.tabSpaceData.savedTabSpaceStore}
             savedTabSpaceCollection={props.tabSpaceData.savedTabSpaceCollection}
           />

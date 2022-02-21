@@ -6,6 +6,7 @@ import { strict as assert } from 'assert';
 import { getTabSpaceData } from '../tabSpace/bootstrap';
 import { isJestTest } from '../../debug';
 import { isTabSpaceManagerPage } from '../../global';
+import { getTabSpaceRegistry } from '../../service/tabSpaceRegistry';
 
 async function updateWindowTabIds(session: ChromeSession, windowId: number) {
   const windowTabIds = (await chrome.tabs.query({ windowId: windowId })).map(
@@ -48,11 +49,15 @@ export async function scanCurrentTabsForTabSpaceManager(
   session: ChromeSession,
 ) {
   await scanCurrentTabsImpl(session, async (tabId: number): Promise<string> => {
-    const result = getTabSpaceData().tabSpaceRegistry.registry.find(
+    const result = getTabSpaceRegistry().registry.find(
       (stub) => stub.chromeTabId === tabId,
     );
-    assert(result, `must find an entry for chrome tab ${tabId}, but not!`);
-    return Promise.resolve(result.id);
+    if (isJestTest()) {
+      return Promise.resolve('jest test tabspace');
+    } else {
+      assert(result, `must find an entry for chrome tab ${tabId}, but not!`);
+      return Promise.resolve(result.id);
+    }
   });
 }
 

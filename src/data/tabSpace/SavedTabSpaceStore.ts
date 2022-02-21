@@ -1,4 +1,3 @@
-import { Collection, IndexableType } from 'dexie';
 import {
   DEFAULT_SAVE_DEBOUNCE,
   InSavingStatus,
@@ -11,8 +10,6 @@ import { ITabSpaceData, getTabSpaceData } from './bootstrap';
 import {
   TabSpaceDBMsg,
   TabSpaceMsg,
-  TabSpaceRegistryMsg,
-  sendChromeMessage,
   sendPubSubMessage,
   subscribePubSubMessage,
 } from '../../message';
@@ -27,12 +24,11 @@ import {
   perfEnd,
   perfStart,
 } from '../../global';
-import { map, times } from 'lodash';
 
 import { IDatabaseChange } from 'dexie-observable/api';
-import { PAGE_LIMIT_DEFAULT } from '../../fullTextSearch';
 import { db } from '../../store/db';
 import { observe } from 'mobx';
+import { updateTabSpace as tabSpaceRegistryUpdateTabSpace } from '../../service/tabSpaceRegistry';
 
 export class SavedTabSpaceStore extends SavedStore {
   async querySavedTabSpaceCount() {
@@ -81,23 +77,6 @@ export interface IQuerySavedTabSpaceParams {
   noneOf?: string[];
   pageStart?: number;
   pageLimit?: number;
-}
-
-async function querySavedTabsForTabSpace(
-  savedData: ISavedTabSpace,
-): Promise<TabSpace> {
-  const tabSpace = TabSpace.fromSavedDataWithoutTabs(savedData);
-  const savedTabs = await db
-    .table<ISavedTab>(Tab.DB_TABLE_NAME)
-    .where('id')
-    .anyOf(savedData.tabIds)
-    .toArray();
-  savedData.tabIds.forEach((tabId) => {
-    const savedTab = savedTabs.find((savedTab) => savedTab.id === tabId);
-    const tab = Tab.fromSavedData(savedTab);
-    tabSpace.addTab(tab);
-  });
-  return tabSpace;
 }
 
 export async function querySavedTabSpace(
@@ -228,23 +207,11 @@ const saveCurrentTabSpaceImpl = async () => {
 
   const newId = getTabSpaceData().tabSpace.id;
   if (oldId !== newId) {
-    const changed = getTabSpaceData().tabSpaceRegistry.mergeRegistryChanges([
-      {
-        from: oldId,
-        to: newId,
-        entry: getTabSpaceData().tabSpace.toTabSpaceStub(),
-      },
-    ]);
-    if (changed) {
-      sendChromeMessage({
-        type: TabSpaceRegistryMsg.UpdateRegistry,
-        payload: {
-          from: oldId,
-          to: newId,
-          entry: getTabSpaceData().tabSpace.toTabSpaceStub(),
-        },
-      });
-    }
+    tabSpaceRegistryUpdateTabSpace({
+      from: oldId,
+      to: newId,
+      entry: getTabSpaceData().tabSpace.toTabSpaceStub(),
+    });
     sendPubSubMessage(TabSpaceMsg.ChangeID, { from: oldId, to: newId });
   }
 };

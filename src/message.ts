@@ -21,13 +21,6 @@ export interface IFullTextAddRemoveToIndexPayload {
   id: string;
 }
 
-export enum TabSpaceRegistryMsg {
-  AddTabSpace = 'tabregistry_addtabspace',
-  RemoveTabSpace = 'tabregistry_removetabspace',
-  Announce = 'tabregistry_announce',
-  UpdateRegistry = 'tabregistry_update',
-}
-
 export enum TabSpaceMsg {
   Focus = 'tabspace_focus',
   ChangeID = 'tabspace_changeid',
@@ -54,26 +47,6 @@ export type AuditLogs = string[];
 export type NotNeed = undefined | null;
 
 export const NotNeedPayload = undefined;
-
-export async function sendChromeMessage(msgPayload: {
-  type: TabSpaceRegistryMsg.AddTabSpace;
-  payload: TabSpaceStub;
-}): Promise<any>;
-
-export async function sendChromeMessage(msgPayload: {
-  type: TabSpaceRegistryMsg.RemoveTabSpace;
-  payload: TabSpaceId;
-}): Promise<any>;
-
-export async function sendChromeMessage(msgPayload: {
-  type: TabSpaceRegistryMsg.Announce;
-  payload: TabSpaceStub[];
-}): Promise<any>;
-
-export async function sendChromeMessage(msgPayload: {
-  type: TabSpaceRegistryMsg.UpdateRegistry;
-  payload: IUpdateRegistryPayload;
-}): Promise<any>;
 
 export async function sendChromeMessage(msgPayload: {
   type: TabSpaceMsg.Focus;

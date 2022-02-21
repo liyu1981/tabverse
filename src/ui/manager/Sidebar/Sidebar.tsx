@@ -13,6 +13,7 @@ import { TabSpaceLogo } from '../../common/TabSpaceLogo';
 import classes from './Sidebar.module.scss';
 import clsx from 'clsx';
 import { getAllChromeSessionData } from '../../../data/chromeSession/bootstrap';
+import { getTabSpaceRegistry } from '../../../service/tabSpaceRegistry';
 
 enum Route {
   New = 'new',
@@ -102,7 +103,8 @@ export const Sidebar = (props: ISidebarProps) => {
           <LiveTabSpace
             active={props.route === ManagerViewRoute.Opened}
             tabSpace={getTabSpaceData().tabSpace}
-            tabSpaceRegistry={getTabSpaceData().tabSpaceRegistry}
+            // tabSpaceRegistry={getTabSpaceData().tabSpaceRegistry}
+            tabSpaceRegistry={getTabSpaceRegistry()}
           />
         </SidebarComponent>
         <SidebarComponent
@@ -118,7 +120,7 @@ export const Sidebar = (props: ISidebarProps) => {
           <SavedTabSpace
             active={props.route === ManagerViewRoute.Opened}
             tabSpace={getTabSpaceData().tabSpace}
-            tabSpaceRegistry={getTabSpaceData().tabSpaceRegistry}
+            tabSpaceRegistry={getTabSpaceRegistry()}
             savedTabSpaceStore={getTabSpaceData().savedTabSpaceStore}
             savedTabSpaceCollection={getTabSpaceData().savedTabSpaceCollection}
           />
