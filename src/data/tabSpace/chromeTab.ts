@@ -142,6 +142,7 @@ async function maintainTabOrder(tabSpace: TabSpace) {
 }
 
 export function updateTabSpaceName(tabSpace: TabSpace, newName: string) {
+  tabSpace.setName(newName);
   tabSpaceRegistryUpdateTabSpace({
     from: tabSpace.id,
     to: tabSpace.id,

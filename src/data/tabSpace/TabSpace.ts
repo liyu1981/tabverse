@@ -43,6 +43,7 @@ export class TabSpace extends Base implements ILiveTabSpace {
 
         tabIds: computed,
 
+        setName: action,
         setChromeTabAndWindowId: action,
         reset: action,
         addTab: action,
@@ -119,6 +120,10 @@ export class TabSpace extends Base implements ILiveTabSpace {
     this.id = newId ?? getUnsavedNewId();
     this.tabs = List();
     return this;
+  }
+
+  setName(value: string) {
+    this.name = value;
   }
 
   setChromeTabAndWindowId(
