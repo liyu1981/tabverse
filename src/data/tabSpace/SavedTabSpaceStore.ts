@@ -92,9 +92,6 @@ export async function querySavedTabSpace(
       .table<ISavedTabSpace>(TabSpace.DB_TABLE_NAME)
       .bulkGet(params.anyOf);
     savedData.sort((d1, d2) => d2.createdAt - d1.createdAt);
-    // savedDataQuery = savedDataQuery.filter((entry) => {
-    //   return params.anyOf.findIndex((id) => id === entry.id) >= 0;
-    // });
     savedData = savedData.slice(
       pageStart * pageLimit,
       (pageStart + 1) * pageLimit,

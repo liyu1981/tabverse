@@ -1,5 +1,7 @@
-@use '../../../global.scss';
 @use 'sass:color';
+@use '@blueprintjs/colors/src/colors.scss';
+@use '../../../global.scss';
+@use '../../common/SidebarContainer.module.scss';
 
 $tabspace-card-width: 900px;
 
@@ -7,6 +9,10 @@ $tabspace-card-width: 900px;
   padding: 20px 8px;
   display: flex;
   justify-content: center;
+}
+
+.savedContainer {
+  margin-bottom: 80px;
 }
 
 .tabSpaceListContainer {
@@ -48,6 +54,13 @@ $tabspace-card-width: 900px;
 
 .pagingControlContainer {
   text-align: center;
+  position: fixed;
+  bottom: 0px;
+  height: 42px;
+  padding-top: 6px;
+  left: SidebarContainer.$sidebar-width;
+  width: calc(100vw - SidebarContainer.$sidebar-width);
+  background-color: colors.$light-gray5;
 }
 
 .stickyOn .toolbar {

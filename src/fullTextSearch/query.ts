@@ -30,6 +30,10 @@ export class Query implements OrQuery {
     }
   }
 
+  toJSON(): OrQuery {
+    return { andQueries: this.andQueries };
+  }
+
   isEmpty(): boolean {
     if (this.andQueries.length <= 0) {
       return true;

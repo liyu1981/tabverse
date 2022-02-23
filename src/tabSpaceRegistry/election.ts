@@ -116,6 +116,9 @@ async function getHandleDuplicate(
   callback: AttendeeCallback,
 ) {
   return async () => {
+    logger.info(
+      'duplicate leader found, will reset the channel and re elect leader.',
+    );
     await _elector.die();
     await _channel.close();
     _internState.reset();

@@ -4,32 +4,35 @@ import {
   FullTextSearchDatabase,
   INDEX_TABLE_NAME,
 } from './FullTextSearchDatabase';
-import { hasOwnProperty, perfEnd, perfStart } from '../global';
+import { hasOwnProperty, logger, perfEnd, perfStart } from '../global';
 
 import { IFullTextSearchIndexRecord } from './FullTextSearchDatabase';
 import { Query } from './query';
 
-export interface IFullTextSearchOption {
-  pageStart?: number;
-  pageLimit?: number;
-}
-
 export interface IFullTextSearchQuery {
   query: Query;
-  option?: IFullTextSearchOption;
+  cursor: IFullTextSearchCursor;
 }
 
 export interface IFullTextSearchCursor {
   next: string;
-  restPages: number;
+  hasMorePage: boolean;
 }
 
 export interface IFullTextSearchResult {
   results: IFullTextSearchIndexRecord[];
-  cursor: IFullTextSearchCursor | null;
+  nextCursor: IFullTextSearchCursor;
 }
 
+type DecodedCursorNext = {
+  query: Query;
+  nextQueryIndex: number;
+  pageStart: number;
+  pageLimit: number;
+};
+
 export const PAGE_LIMIT_DEFAULT = 2;
+const NullCursor = { next: '', hasMorePage: false };
 
 function createQueryForAndQuery(
   db: FullTextSearchDatabase,
@@ -82,10 +85,10 @@ export async function search(
   db: FullTextSearchDatabase,
   query: IFullTextSearchQuery,
 ): Promise<IFullTextSearchResult> {
-  if (query.query.isEmpty()) {
+  if (query.query.isEmpty() || !query.cursor.hasMorePage) {
     return {
       results: [],
-      cursor: { next: '', restPages: 0 },
+      nextCursor: { next: '', hasMorePage: false },
     };
   }
 
@@ -94,26 +97,38 @@ export async function search(
     createQueryForAndQuery(db, andQuery),
   );
 
+  let queryCursorNext: DecodedCursorNext = null;
+  try {
+    queryCursorNext = decodeCursorNext(query.cursor.next);
+  } catch (e) {
+    logger.error('decodeCursorNext failed:', e);
+    return {
+      results: [],
+      nextCursor: NullCursor,
+    };
+  }
+
   let results = [];
-  let cursor = null;
-  let pageStart = query.option?.pageStart ?? 0;
-  const pageLimit = query.option?.pageLimit ?? PAGE_LIMIT_DEFAULT;
+  let nextCursor = NullCursor;
+  let pageStart = queryCursorNext.pageStart;
+  const pageLimit = queryCursorNext.pageLimit;
   let qResults = [];
   let qResultsLeftCount = 0;
 
-  for (let i = 0; i < queries.length; i++) {
-    let q = queries[0];
-    if (q !== null) {
-      q = q.offset(pageStart * pageLimit - results.length).limit(pageLimit);
+  for (let i = queryCursorNext.nextQueryIndex; i < queries.length; i++) {
+    let q = queries[i];
+    if (q) {
+      // by limit as 2*pageLimit we will know whether there is next page without
+      // query everything
+      q = q.offset(pageStart * pageLimit - results.length).limit(2 * pageLimit);
       qResults = await q.toArray();
       results = results.concat(qResults);
     }
     if (results.length >= pageLimit) {
       qResultsLeftCount = results.length - pageLimit;
       results = results.slice(0, pageLimit);
-      cursor = calcCursor(
+      nextCursor = calcCursor(
         query.query,
-        results,
         qResultsLeftCount,
         i,
         queries.length - 1,
@@ -126,47 +141,33 @@ export async function search(
     }
   }
 
-  console.log('search results returned: ', results, cursor);
+  logger.log('search results returned: ', query, results, nextCursor);
   perfEnd('fulltext:search');
-  return { results, cursor };
+  return { results, nextCursor };
 }
 
 function calcCursor(
   query: Query,
-  results: IFullTextSearchIndexRecord[],
   qResultsLeftCount: number,
   currentQueryIndex: number,
   maxQueryIndex: number,
   pageStart: number,
   pageLimit: number,
 ): IFullTextSearchCursor | null {
-  let cursor = null;
-  if (results.length === pageLimit) {
+  if (qResultsLeftCount > 0) {
+    // there are more in current query
+    return {
+      next: calcCursorNext(query, currentQueryIndex, pageStart + 1, pageLimit),
+      hasMorePage: true,
+    };
+  } else {
     if (currentQueryIndex >= maxQueryIndex) {
       // we are at the last page and last query
-      return null;
+      return NullCursor;
     } else if (currentQueryIndex < maxQueryIndex) {
       return {
         next: calcCursorNext(query, currentQueryIndex + 1, 0, pageLimit),
-        restPages: 1,
-      };
-    }
-  } else {
-    // we still left some results in this query or still have more queries
-    if (qResultsLeftCount > 0) {
-      cursor = {
-        next: calcCursorNext(
-          query,
-          currentQueryIndex,
-          pageStart + 1,
-          pageLimit,
-        ),
-        restPages: 1,
-      };
-    } else {
-      cursor = {
-        next: calcCursorNext(query, currentQueryIndex + 1, 0, pageLimit),
-        restPages: 1,
+        hasMorePage: true,
       };
     }
   }
@@ -178,5 +179,29 @@ function calcCursorNext(
   pageStart: number,
   pageLimit: number,
 ): string {
-  return btoa(JSON.stringify({ query, nextQueryIndex, pageStart, pageLimit }));
+  return btoa(
+    JSON.stringify({
+      queryJSON: query.toJSON(),
+      nextQueryIndex,
+      pageStart,
+      pageLimit,
+    }),
+  );
+}
+
+function decodeCursorNext(cursorNext: string): DecodedCursorNext {
+  const result = JSON.parse(atob(cursorNext));
+  return {
+    query: new Query(result.queryJSON),
+    nextQueryIndex: result.nextQueryIndex,
+    pageStart: result.pageStart,
+    pageLimit: result.pageLimit,
+  };
+}
+
+export function calcCursorBegin(
+  query: Query,
+  pageLimit: number,
+): IFullTextSearchCursor {
+  return { next: calcCursorNext(query, 0, 0, pageLimit), hasMorePage: true };
 }

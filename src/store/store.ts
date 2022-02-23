@@ -98,7 +98,7 @@ export class SavedStoreManager {
   }
 }
 
-export const QUERY_PAGE_LIMIT_DEFAULT = 10;
+export const QUERY_PAGE_LIMIT_DEFAULT = 10; // 2;
 
 export function addPagingToQueryParams(
   params: any,

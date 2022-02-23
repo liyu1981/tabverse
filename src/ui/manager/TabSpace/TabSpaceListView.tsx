@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Button, EditableText, Icon, Intent } from '@blueprintjs/core';
+import { Button, EditableText, Intent } from '@blueprintjs/core';
 
 import { AllBookmark } from '../../../data/bookmark/Bookmark';
 import { ErrorBoundary } from '../../common/ErrorBoundary';
