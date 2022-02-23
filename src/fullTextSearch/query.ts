@@ -30,6 +30,10 @@ export class Query implements OrQuery {
     }
   }
 
+  toJSON(): OrQuery {
+    return { andQueries: this.andQueries };
+  }
+
   isEmpty(): boolean {
     if (this.andQueries.length <= 0) {
       return true;
@@ -46,7 +50,7 @@ export class Query implements OrQuery {
     const newQ = new Query(this);
     const newAndQuery = {
       scope,
-      terms,
+      terms: terms.map((term) => term.toLowerCase()),
     };
     newQ.andQueries = this.andQueries.concat([newAndQuery]);
     return newQ;

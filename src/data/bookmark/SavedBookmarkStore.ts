@@ -13,7 +13,7 @@ import {
   TabSpaceDBMsg,
   TabSpaceMsg,
   subscribePubSubMessage,
-} from '../../message';
+} from '../../message/message';
 import { debounce, logger } from '../../global';
 
 import { IDatabaseChange } from 'dexie-observable/api';

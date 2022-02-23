@@ -6,7 +6,7 @@ import { filter } from 'lodash';
 import { isIdNotSaved } from '../common';
 import { getAllChromeSessionData } from './bootstrap';
 import { SavedChromeSessionCollection } from './SavedChromeSessionCollection';
-import { subscribePubSubMessage, TabSpaceDBMsg } from '../../message';
+import { subscribePubSubMessage, TabSpaceDBMsg } from '../../message/message';
 import { IDatabaseChange } from 'dexie-observable/api';
 import { logger } from '../../global';
 

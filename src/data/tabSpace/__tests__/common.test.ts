@@ -2,7 +2,6 @@ import {
   TABSPACE_MANAGER_TAB_TITLE_PREFIX,
   TABSPACE_MANAGER_TAB_URL_PREFIX,
 } from '../../../global';
-import { TabSpaceRegistryMsg, sendChromeMessage } from '../../../message';
 import { scanCurrentTabs, startMonitorTabChanges } from '../chromeTab';
 
 import { ITabSpaceData } from '../bootstrap';
@@ -10,9 +9,8 @@ import { SavedTabSpaceCollection } from '../SavedTabSpaceCollection';
 import { SavedTabSpaceStore } from '../SavedTabSpaceStore';
 import { TabPreview } from '../TabPreview';
 import { TabSpace } from '../TabSpace';
-import { TabSpaceRegistry } from '../TabSpaceRegistry';
 import { initMockChrome } from './chromeTab.scanCurrentTabs.test';
-import { startMonitorTabSpaceRegistryChanges } from '../chromeMessage';
+import { startMonitorChromeMessage } from '../../../message/chromeMessage';
 
 export const flushPromises = () => new Promise(setImmediate);
 
@@ -23,7 +21,6 @@ export function createNewTabSpaceData(
 ) {
   const d = {
     tabSpace: new TabSpace(),
-    tabSpaceRegistry: new TabSpaceRegistry(),
     tabPreview: new TabPreview(),
     savedTabSpaceStore: new SavedTabSpaceStore(),
     savedTabSpaceCollection: new SavedTabSpaceCollection(),
@@ -53,12 +50,7 @@ export async function setupMockChromeAnd2TabSpacesWithMonitoring() {
   await scanCurrentTabs(d2);
   startMonitorTabChanges(d2);
 
-  startMonitorTabSpaceRegistryChanges(d1.tabSpaceRegistry);
-  startMonitorTabSpaceRegistryChanges(d2.tabSpaceRegistry);
-  sendChromeMessage({
-    type: TabSpaceRegistryMsg.AddTabSpace,
-    payload: d2.tabSpace.toTabSpaceStub(),
-  });
+  startMonitorChromeMessage();
   await mockChrome.flushMessages();
 
   return { mockChrome, w1, w2, t1, t2, t3, t4, tst1, d1, tst2, d2 };
@@ -106,6 +98,4 @@ test('common', async () => {
     t4.id,
   ]);
   expect(d2.tabSpace.tabIds).toEqual(d2.tabSpace.tabIds);
-  expect(d1.tabSpaceRegistry.registry.size).toEqual(2);
-  expect(d2.tabSpaceRegistry.registry.size).toEqual(2);
 });

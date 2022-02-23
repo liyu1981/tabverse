@@ -1,7 +1,7 @@
 import {
   FullTextSearchMsg,
   IFullTextAddRemoveToIndexPayload,
-} from '../../message';
+} from '../../message/message';
 
 import { addToIndexHandlers } from './addToIndex';
 import { logger } from '../../global';

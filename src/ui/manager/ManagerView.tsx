@@ -3,7 +3,7 @@ import './manager.scss';
 
 import * as React from 'react';
 
-import { ITabSpaceData } from '../../data/tabSpace/bootstrap';
+import { getTabSpaceData } from '../../data/tabSpace/bootstrap';
 import { useMemo, useState } from 'react';
 
 import { ErrorBoundary } from '../common/ErrorBoundary';
@@ -14,6 +14,7 @@ import { SidebarContainer } from '../common/SidebarContainer';
 import { TabSpaceView } from './TabSpace/TabSpaceView';
 import { getAllBookmarkData } from '../../data/bookmark/bootstrap';
 import { getAllChromeSessionData } from '../../data/chromeSession/bootstrap';
+import { getTabSpaceRegistry } from '../../tabSpaceRegistry';
 
 export interface IManagerQueryParams {
   op: string;
@@ -23,7 +24,6 @@ export interface IManagerQueryParams {
 
 interface IManagerContainerProps {
   queryParams?: IManagerQueryParams;
-  tabSpaceData: ITabSpaceData;
 }
 
 export enum ManagerViewRoute {
@@ -56,20 +56,20 @@ export const ManagerView = (props: IManagerContainerProps) => {
       case ManagerViewRoute.Opened:
         return (
           <TabSpaceView
-            tabSpace={props.tabSpaceData.tabSpace}
-            tabSpaceRegistry={props.tabSpaceData.tabSpaceRegistry}
-            tabPreview={props.tabSpaceData.tabPreview}
-            savedTabSpaceStore={props.tabSpaceData.savedTabSpaceStore}
+            tabSpace={getTabSpaceData().tabSpace}
+            tabSpaceRegistry={getTabSpaceRegistry()}
+            tabPreview={getTabSpaceData().tabPreview}
+            savedTabSpaceStore={getTabSpaceData().savedTabSpaceStore}
             allBookmark={getAllBookmarkData().allBookmark}
           />
         );
       case ManagerViewRoute.Saved:
         return (
           <SavedTabSpace
-            tabSpace={props.tabSpaceData.tabSpace}
-            tabSpaceRegistry={props.tabSpaceData.tabSpaceRegistry}
-            savedTabSpaceStore={props.tabSpaceData.savedTabSpaceStore}
-            savedTabSpaceCollection={props.tabSpaceData.savedTabSpaceCollection}
+            tabSpace={getTabSpaceData().tabSpace}
+            tabSpaceRegistry={getTabSpaceRegistry()}
+            savedTabSpaceStore={getTabSpaceData().savedTabSpaceStore}
+            savedTabSpaceCollection={getTabSpaceData().savedTabSpaceCollection}
           />
         );
       case ManagerViewRoute.Session:

@@ -20,7 +20,7 @@ import { TermsView } from './TermsView';
 import classNames from 'classnames';
 import { eq } from 'lodash';
 
-export type AndQueryViewProps = TagProps & {
+export type AndQueryViewProps = Omit<TagProps, 'active'> & {
   andQuery: AndQuery;
   scopeMap: QueryScopeMap;
   onChangeAndQuery: (newAndQuery: AndQuery) => void;
@@ -40,7 +40,6 @@ export function AndQueryView(props: AndQueryViewProps) {
     scopeMap,
     onChangeAndQuery,
     onFocusBackToInput,
-    active,
     children,
     className,
     fill,
@@ -64,7 +63,6 @@ export function AndQueryView(props: AndQueryViewProps) {
     Classes.TAG,
     Classes.intentClass(intent),
     {
-      [Classes.ACTIVE]: active,
       [Classes.FILL]: fill,
       [Classes.INTERACTIVE]: interactive,
       [Classes.LARGE]: large,

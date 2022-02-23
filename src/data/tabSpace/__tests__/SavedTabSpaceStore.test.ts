@@ -6,9 +6,9 @@ import {
   saveCurrentTabSpace,
 } from '../SavedTabSpaceStore';
 
+import { QUERY_PAGE_LIMIT_DEFAULT } from '../../../store/store';
 import { initMockChrome } from './chromeTab.scanCurrentTabs.test';
 import { omit } from 'lodash';
-import { queryPageLimit } from '../../../store/store';
 import { resetTestDb } from '../../../dev/dbImplTest';
 import { startMonitorTabChanges } from '../chromeTab';
 import { bootstrap as storeManagerBootstrap } from '../../../store/bootstrap';
@@ -83,7 +83,7 @@ test('tabSpaceStore', async () => {
     const savedTabSpaces3 = await querySavedTabSpace({
       anyOf: [tabSpace.id],
       pageStart: 1,
-      pageLimit: queryPageLimit,
+      pageLimit: QUERY_PAGE_LIMIT_DEFAULT,
     });
     expect(savedTabSpaces3.length).toEqual(0);
   });

@@ -2,7 +2,7 @@ import { action, makeObservable, observable } from 'mobx';
 import { clone, forEach, isEqual } from 'lodash';
 
 import { Map } from 'immutable';
-import { TabSpaceJSON } from './TabSpace';
+import { TabSpaceJSON } from '../data/tabSpace/TabSpace';
 
 export type TabSpaceStub = Omit<TabSpaceJSON, 'tabs'>;
 export type TabSpaceRegistryMap = Map<string, TabSpaceStub>;
@@ -11,6 +11,7 @@ export type TabSpaceRegistryChange = {
   to: string;
   entry: TabSpaceStub;
 };
+export type TabSpaceRegistryJSON = { [k: string]: TabSpaceStub };
 
 export class TabSpaceRegistry {
   registry: TabSpaceRegistryMap;
@@ -26,6 +27,7 @@ export class TabSpaceRegistry {
       removeByChromeTabId: action,
       mergeRegistry: action,
       mergeRegistryChanges: action,
+      replaceFromJSON: action,
     });
   }
 
@@ -131,5 +133,9 @@ export class TabSpaceRegistry {
 
   findTabIdByChromeTabId(tabId: number): string {
     return this.registry.findKey((entry) => entry.chromeTabId === tabId);
+  }
+
+  replaceFromJSON(tabSpaceRegistryJSON: TabSpaceRegistryJSON) {
+    this.registry = Map(tabSpaceRegistryJSON);
   }
 }

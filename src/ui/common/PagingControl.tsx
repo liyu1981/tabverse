@@ -6,11 +6,18 @@ export interface PagingControlProps {
   total: number;
   onNext: () => void;
   onPrev: () => void;
+  onLast: () => void;
+  onFirst: () => void;
 }
 
 export function PagingControl(props: PagingControlProps) {
   return (
     <ButtonGroup>
+      <Button
+        minimal={true}
+        icon="double-chevron-left"
+        onClick={props.onFirst}
+      ></Button>
       <Button
         minimal={true}
         icon="chevron-left"
@@ -21,6 +28,11 @@ export function PagingControl(props: PagingControlProps) {
         minimal={true}
         icon="chevron-right"
         onClick={props.onNext}
+      ></Button>
+      <Button
+        minimal={true}
+        icon="double-chevron-right"
+        onClick={props.onLast}
       ></Button>
     </ButtonGroup>
   );

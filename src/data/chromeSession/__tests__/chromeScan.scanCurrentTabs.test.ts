@@ -44,7 +44,7 @@ test('scanCurrentTabs', async () => {
     },
     {
       tabIds: List([tab3.id, tab4.id]),
-      tabSpaceId: getTabSpaceData().tabSpace.id,
+      tabSpaceId: 'jest test tabspace',
       tabSpaceTabId: tst1.id,
       windowId: window2.id,
     },

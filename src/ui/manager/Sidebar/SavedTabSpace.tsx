@@ -10,7 +10,7 @@ import { HTMLSelect } from '@blueprintjs/core';
 import { ISidebarComponentProps } from './Sidebar';
 import { SavedTabSpaceStore } from '../../../data/tabSpace/SavedTabSpaceStore';
 import { TabSpace } from '../../../data/tabSpace/TabSpace';
-import { TabSpaceRegistry } from '../../../data/tabSpace/TabSpaceRegistry';
+import { TabSpaceRegistry } from '../../../tabSpaceRegistry/TabSpaceRegistry';
 import classes from './SavedTabSpace.module.scss';
 import { isIdNotSaved } from '../../../data/common';
 import { observer } from 'mobx-react-lite';

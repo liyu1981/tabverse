@@ -1,15 +1,25 @@
 import * as Moment from 'moment';
 
-import { EmptyQuery, Query } from '../../fullTextSearch';
-import { TabSpaceRegistry, TabSpaceStub } from './TabSpaceRegistry';
+import {
+  calcCursorBegin,
+  EmptyQuery,
+  IFullTextSearchCursor,
+  Query,
+} from '../../fullTextSearch';
+import { LoadStatus, perfEnd, perfStart } from '../../global';
+import {
+  QUERY_PAGE_LIMIT_DEFAULT,
+  addPagingToQueryParams,
+} from '../../store/store';
+import { TabSpaceStub } from '../../tabSpaceRegistry/TabSpaceRegistry';
 import { action, computed, makeObservable, observable } from 'mobx';
-import { addPagingToQueryParams, queryPageLimit } from '../../store/store';
 
-import { LoadStatus } from '../../global';
 import { TabSpace } from './TabSpace';
 import { isIdNotSaved } from '../common';
 import { querySavedTabSpace } from './SavedTabSpaceStore';
 import { searchSavedTabSpace } from '../../background/fullTextSearch/search';
+import { getTabSpaceData } from './bootstrap';
+import { getTabSpaceRegistry } from '../../tabSpaceRegistry';
 
 export enum SortMethods {
   CREATED = 0,
@@ -21,10 +31,16 @@ export class SavedTabSpaceCollection {
   openedSavedTabSpaces: TabSpaceStub[];
   savedTabSpaces: TabSpace[];
   sortMethod: SortMethods;
+  totalPageCount: number;
   query: Query;
+  // when query is not empty we will use queryCursorPrev & queryCursorNext
+  queryCursors: IFullTextSearchCursor[];
+  queryCursorCurrentIndex: number;
+  queryCursorsVisited: { [index: number]: boolean };
+  queryCursorsLocked: boolean;
+  // when query is empty we will use queryPageStart & queryPageLimit
   queryPageStart: number;
   queryPageLimit: number;
-  totalPageCount: number;
 
   constructor() {
     this.loadStatus = LoadStatus.Done;
@@ -32,8 +48,11 @@ export class SavedTabSpaceCollection {
     this.savedTabSpaces = [];
     this.sortMethod = SortMethods.CREATED;
     this.query = EmptyQuery;
+    this.queryCursors = [];
+    this.queryCursorCurrentIndex = -1;
+    this.queryCursorsVisited = {};
     this.queryPageStart = 0;
-    this.queryPageLimit = queryPageLimit;
+    this.queryPageLimit = QUERY_PAGE_LIMIT_DEFAULT;
     this.totalPageCount = 0;
 
     makeObservable(this, {
@@ -42,12 +61,17 @@ export class SavedTabSpaceCollection {
       savedTabSpaces: observable,
       sortMethod: observable,
       query: observable,
+      queryCursors: observable,
+      queryCursorCurrentIndex: observable,
       queryPageStart: observable,
       queryPageLimit: observable,
 
       isEmpty: computed,
+      isSearchMode: computed,
       sortedOpenedSavedTabSpaces: computed,
       sortedGroupedSavedTabSpaces: computed,
+      cursorsForSearchPaging: computed,
+      shouldShowSearchPaging: computed,
 
       setSortMethod: action,
       setQuery: action,
@@ -55,6 +79,10 @@ export class SavedTabSpaceCollection {
       setQueryPageLimit: action,
       nextPage: action,
       prevPage: action,
+      lastPage: action,
+      firstPage: action,
+      goQueryCursor: action,
+      goQueryCursorNext: action,
       load: action,
     });
   }
@@ -63,6 +91,10 @@ export class SavedTabSpaceCollection {
     return (
       this.openedSavedTabSpaces.length > 0 || this.savedTabSpaces.length > 0
     );
+  }
+
+  get isSearchMode(): boolean {
+    return !this.query.isEmpty();
   }
 
   get sortedOpenedSavedTabSpaces(): TabSpaceStub[] {
@@ -104,31 +136,109 @@ export class SavedTabSpaceCollection {
     ];
   }
 
+  get cursorsForSearchPaging(): {
+    availableCursors: IFullTextSearchCursor[];
+    currentCursor: IFullTextSearchCursor | null;
+    currentCursorIndex: number | null;
+    nextCursor: IFullTextSearchCursor | null;
+  } {
+    const currentCursor =
+      this.queryCursorCurrentIndex < this.queryCursors.length
+        ? this.queryCursors[this.queryCursorCurrentIndex]
+        : null;
+    const nextCursor =
+      this.queryCursors.length >= 1
+        ? this.queryCursors[this.queryCursors.length - 1]
+        : null;
+    // copy from 0 to 2nd last cursors, as the last one is next cursor
+    const availableCursors = this.queryCursors.slice(0, -1);
+    return {
+      availableCursors,
+      currentCursor,
+      currentCursorIndex:
+        currentCursor === null ? null : this.queryCursorCurrentIndex,
+      nextCursor,
+    };
+  }
+
+  get shouldShowSearchPaging(): boolean {
+    if (this.queryCursors.length <= 0) {
+      return false;
+    } else {
+      const nextCursor = this.queryCursors[this.queryCursors.length - 1];
+      if (this.queryCursors.length <= 2 && nextCursor.hasMorePage === false) {
+        return false; // single page result case
+      } else {
+        return true;
+      }
+    }
+  }
+
   setSortMethod(value: SortMethods) {
     this.sortMethod = value;
+    this.load();
   }
 
   setQuery(value: Query) {
     this.query = value;
+    if (this.query.isEmpty()) {
+      this.queryPageStart = 0;
+      this.queryPageLimit = QUERY_PAGE_LIMIT_DEFAULT;
+    } else {
+      this.queryCursors = [
+        calcCursorBegin(this.query, QUERY_PAGE_LIMIT_DEFAULT),
+      ];
+      this.queryCursorCurrentIndex = 0;
+      this.queryCursorsVisited = {};
+    }
+    this.load();
   }
 
   setQueryPageStart(value: number) {
     this.queryPageStart = value;
+    this.load();
   }
 
   setQueryPageLimit(value: number) {
     this.queryPageLimit = value;
+    this.load();
   }
 
   nextPage() {
     if (this.queryPageStart < this.totalPageCount - 1) {
       this.queryPageStart += 1;
+      this.load();
     }
   }
 
   prevPage() {
     if (this.queryPageStart >= 1) {
       this.queryPageStart -= 1;
+      this.load();
+    }
+  }
+
+  lastPage() {
+    this.queryPageStart = this.totalPageCount - 1;
+    this.load();
+  }
+
+  firstPage() {
+    this.queryPageStart = 0;
+    this.load();
+  }
+
+  goQueryCursor(cursorIndex: number) {
+    if (cursorIndex >= 0 && cursorIndex < this.queryCursors.length) {
+      this.queryCursorCurrentIndex = cursorIndex;
+      this.load();
+    }
+  }
+
+  goQueryCursorNext() {
+    if (this.queryCursors.length >= 1) {
+      this.queryCursorCurrentIndex = this.queryCursors.length - 1;
+      this.load();
     }
   }
 
@@ -140,40 +250,52 @@ export class SavedTabSpaceCollection {
     );
   }
 
-  async load(tabSpaceRegistry: TabSpaceRegistry) {
+  async load() {
     this.openedSavedTabSpaces = [];
     this.savedTabSpaces = [];
 
     this.loadStatus = LoadStatus.Loading;
 
-    this.openedSavedTabSpaces = tabSpaceRegistry.registry
-      .filter((tabSpaceStub) => !isIdNotSaved(tabSpaceStub.id))
+    this.openedSavedTabSpaces = getTabSpaceRegistry()
+      .registry.filter((tabSpaceStub) => !isIdNotSaved(tabSpaceStub.id))
       .toArray();
 
+    let totalCount = 0;
+
     if (!this.query.isEmpty()) {
-      console.log('will search:', this.query);
-      this.savedTabSpaces = await searchSavedTabSpace({
+      perfStart('load:search');
+      const currentCursor = this.queryCursors[this.queryCursorCurrentIndex];
+      const [savedTabSpaces, nextCursor] = await searchSavedTabSpace({
         query: this.query,
-        pageStart: this.queryPageStart,
-        pageLimit: this.queryPageLimit,
+        cursor: currentCursor,
       });
+      this.savedTabSpaces = savedTabSpaces;
+      if (!this.queryCursorsVisited[this.queryCursorCurrentIndex]) {
+        this.queryCursors.push(nextCursor);
+      }
+      this.queryCursorsVisited[this.queryCursorCurrentIndex] = true;
+      perfEnd('load:search');
     } else {
-      console.log('will browse:', this.query);
+      perfStart('load:browse');
       const savedTabSpaceParams = addPagingToQueryParams(
         {},
-        this.queryPageStart,
+        this.queryPageStart * this.queryPageLimit,
         this.queryPageLimit,
       );
+      totalCount = getTabSpaceData().savedTabSpaceStore.totalSavedCount;
       this.savedTabSpaces = await querySavedTabSpace(savedTabSpaceParams);
+      this.totalPageCount = Math.ceil(totalCount / this.queryPageLimit);
+
+      if (this.queryPageStart >= this.totalPageCount) {
+        this.queryPageStart = this.totalPageCount - 1;
+      }
+      this.totalPageCount = Math.ceil(totalCount / this.queryPageLimit);
+      if (this.queryPageStart >= this.totalPageCount) {
+        this.queryPageStart = this.totalPageCount - 1;
+      }
+      perfEnd('load:browse');
     }
 
-    this.totalPageCount = Math.ceil(
-      this.savedTabSpaces.length / this.queryPageLimit,
-    );
-
-    if (this.queryPageStart >= this.totalPageCount) {
-      this.queryPageStart = this.totalPageCount - 1;
-    }
     this.loadStatus = LoadStatus.Done;
   }
 }

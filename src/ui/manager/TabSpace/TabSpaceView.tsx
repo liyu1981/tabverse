@@ -5,7 +5,7 @@ import { SavedTabSpaceStore } from '../../../data/tabSpace/SavedTabSpaceStore';
 import { TabPreview } from '../../../data/tabSpace/TabPreview';
 import { TabSpace } from '../../../data/tabSpace/TabSpace';
 import { TabSpaceListView } from './TabSpaceListView';
-import { TabSpaceRegistry } from '../../../data/tabSpace/TabSpaceRegistry';
+import { TabSpaceRegistry } from '../../../tabSpaceRegistry/TabSpaceRegistry';
 import { TabSpaceRightSideView } from '../TabSpaceRightSide/TabSpaceRightSideView';
 import { observer } from 'mobx-react-lite';
 import classes from './TabSpaceView.module.scss';

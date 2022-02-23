@@ -11,12 +11,3 @@ test('normal', async () => {
   expect(d1.tabSpace.findTabByChromeTabId(t2.id)).toBeUndefined();
   expect(d1.tabSpace.tabIds.includes(tab2.id)).toBeFalsy();
 });
-
-test('tabSpaceAction', async () => {
-  const { mockChrome, w1, w2, t1, t2, t3, t4, tst1, d1, tst2, d2 } =
-    await setupMockChromeAnd2TabSpacesWithMonitoring();
-
-  mockChrome.removeTab(tst1.id);
-  await mockChrome.flushMessages();
-  expect(d2.tabSpaceRegistry.registry.size).toEqual(1);
-});

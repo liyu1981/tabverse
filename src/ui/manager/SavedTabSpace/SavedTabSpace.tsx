@@ -17,11 +17,12 @@ import { SavedTabSpaceStore } from '../../../data/tabSpace/SavedTabSpaceStore';
 import { SearchInput } from './Search';
 import { StickyContainer } from '../../common/StickyContainer';
 import { TabSpace } from '../../../data/tabSpace/TabSpace';
-import { TabSpaceRegistry } from '../../../data/tabSpace/TabSpaceRegistry';
+import { TabSpaceRegistry } from '../../../tabSpaceRegistry/TabSpaceRegistry';
 import classes from './SavedTabSpace.module.scss';
 import { observer } from 'mobx-react-lite';
 import { useAsyncEffect } from '../../common/useAsyncEffect';
 import { useMemo } from 'react';
+import { SearchPagingControl } from '../../../fullTextSearch/SearchInput';
 
 export interface SavedTabSpaceProps {
   tabSpace: TabSpace;
@@ -38,7 +39,7 @@ export const SavedTabSpace = observer(
     savedTabSpaceCollection,
   }: SavedTabSpaceProps) => {
     useAsyncEffect(async () => {
-      await savedTabSpaceCollection.load(tabSpaceRegistry);
+      await savedTabSpaceCollection.load();
     }, [tabSpaceRegistry.registry, savedTabSpaceStore.savedDataVersion]);
 
     const switchToTabSpace = useMemo(
@@ -61,7 +62,7 @@ export const SavedTabSpace = observer(
 
     const loadToCurrentWindow = useMemo(
       () => (savedTabSpaceId: string) =>
-        loadToCurrentWindowUtil(tabSpace.id, savedTabSpaceId),
+        loadToCurrentWindowUtil(tabSpace.chromeTabId, savedTabSpaceId),
       [],
     );
 
@@ -69,13 +70,40 @@ export const SavedTabSpace = observer(
       savedTabSpaceCollection.sortedGroupedSavedTabSpaces;
 
     const renderPagingControl = () => {
-      return (
-        <PagingControl
-          current={savedTabSpaceCollection.queryPageStart + 1}
-          total={savedTabSpaceCollection.totalPageCount}
-          onNext={savedTabSpaceCollection.nextPage}
-          onPrev={savedTabSpaceCollection.prevPage}
-        />
+      let content = null;
+      if (savedTabSpaceCollection.isSearchMode) {
+        if (savedTabSpaceCollection.shouldShowSearchPaging) {
+          const { availableCursors, currentCursorIndex, nextCursor } =
+            savedTabSpaceCollection.cursorsForSearchPaging;
+          content = (
+            <SearchPagingControl
+              cursors={availableCursors}
+              currentCursorIndex={currentCursorIndex}
+              nextCursor={nextCursor}
+              onClickCursor={(cursorIndex) =>
+                savedTabSpaceCollection.goQueryCursor(cursorIndex)
+              }
+              onClickMore={() => savedTabSpaceCollection.goQueryCursorNext()}
+            />
+          );
+        }
+      } else {
+        if (savedTabSpaceCollection.totalPageCount > 1) {
+          content = (
+            <PagingControl
+              current={savedTabSpaceCollection.queryPageStart + 1}
+              total={savedTabSpaceCollection.totalPageCount}
+              onNext={() => savedTabSpaceCollection.nextPage()}
+              onPrev={() => savedTabSpaceCollection.prevPage()}
+              onLast={() => savedTabSpaceCollection.lastPage()}
+              onFirst={() => savedTabSpaceCollection.firstPage()}
+            />
+          );
+        }
+      }
+
+      return content === null ? null : (
+        <div className={classes.pagingControlContainer}>{content}</div>
       );
     };
 
@@ -85,9 +113,9 @@ export const SavedTabSpace = observer(
           <StickyContainer thresh={0} stickyOnClassName={classes.stickyOn}>
             <div className={classes.toolbar}>
               <SearchInput
+                query={savedTabSpaceCollection.query}
                 onChange={(query) => {
                   savedTabSpaceCollection.setQuery(query);
-                  savedTabSpaceCollection.load(tabSpaceRegistry);
                 }}
               />
             </div>
@@ -143,11 +171,7 @@ export const SavedTabSpace = observer(
                 </div>
               );
             })}
-            <div className={classes.pagingControlContainer}>
-              {savedTabSpaceCollection.totalPageCount > 1
-                ? renderPagingControl()
-                : ''}
-            </div>
+            {renderPagingControl()}
           </div>
         </div>
       </div>

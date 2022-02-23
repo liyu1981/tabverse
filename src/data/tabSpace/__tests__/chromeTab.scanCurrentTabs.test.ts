@@ -31,6 +31,4 @@ test('scanCurrentTabs', async () => {
   expect(getTabSpaceChromeTabIds(d)).toEqual([t1.id, t2.id, t3.id]);
   expect(d.tabSpace.chromeTabId).toBe(tst1.id);
   expect(d.tabSpace.chromeWindowId).toBe(tst1.windowId);
-  expect(d.tabSpaceRegistry.registry.size).toBe(1);
-  expect(d.tabSpaceRegistry.registry.has(d.tabSpace.id)).toBeTruthy();
 });

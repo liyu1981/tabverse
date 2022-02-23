@@ -7,7 +7,7 @@ import { TabSpace } from '../../../data/tabSpace/TabSpace';
 import {
   TabSpaceRegistry,
   TabSpaceStub,
-} from '../../../data/tabSpace/TabSpaceRegistry';
+} from '../../../tabSpaceRegistry/TabSpaceRegistry';
 import classes from './LiveTabSpace.module.scss';
 import { concat } from 'lodash';
 import { isIdNotSaved } from '../../../data/common';

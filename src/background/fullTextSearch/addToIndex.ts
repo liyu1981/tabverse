@@ -29,15 +29,15 @@ export const addToIndexHandlers = {};
 export async function addTabToIndex(id: string) {
   try {
     const savedTab = await querySavedTabById(id);
-    const indexDb = getDb();
-    await addToIndex(indexDb, {
+    const db = getDb();
+    await addToIndex(db, {
       owner: savedTab.id,
       ultimateOwner: savedTab.tabSpaceId,
       content: savedTab.title,
       type: SearchableType.Tab,
       field: SearchableField.Title,
     });
-    await addToIndex(indexDb, {
+    await addToIndex(db, {
       owner: savedTab.id,
       ultimateOwner: savedTab.tabSpaceId,
       content: savedTab.url,
@@ -51,7 +51,7 @@ export async function addTabToIndex(id: string) {
 
 addToIndexHandlers[SearchableType.Tab] = addTabToIndex;
 
-async function addTabSpaceToIndex(id: string) {
+export async function addTabSpaceToIndex(id: string) {
   try {
     const savedTabSpace = await querySavedTabSpaceById(id);
     const db = getDb();
@@ -60,11 +60,8 @@ async function addTabSpaceToIndex(id: string) {
       ultimateOwner: savedTabSpace.id,
       content: savedTabSpace.name,
       type: SearchableType.TabSpace,
-      field: SearchableField.Title,
+      field: SearchableField.Name,
     });
-    await Promise.all(
-      savedTabSpace.tabIds.map((tabId) => addTabToIndex(tabId)),
-    );
   } catch (e) {
     logger.error(e.message);
   }

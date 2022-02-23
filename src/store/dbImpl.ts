@@ -1,6 +1,6 @@
 import * as DexieObservable from 'dexie-observable';
 
-import { TabSpaceDBMsg, sendPubSubMessage } from '../message';
+import { TabSpaceDBMsg, sendPubSubMessage } from '../message/message';
 
 import Dexie from 'dexie';
 import { IDatabaseChange } from 'dexie-observable/api';

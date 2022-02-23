@@ -1,8 +1,8 @@
 import * as PubSub from 'pubsub-js';
 
 import { IDatabaseChange } from 'dexie-observable/api';
-import { TabSpaceStub } from './data/tabSpace/TabSpaceRegistry';
-import { logger } from './global';
+import { TabSpaceStub } from '../tabSpaceRegistry/TabSpaceRegistry';
+import { logger } from '../global';
 
 export type MsgHandler = (
   payload: any,
@@ -19,13 +19,6 @@ export interface IUpdateRegistryPayload {
 export interface IFullTextAddRemoveToIndexPayload {
   type: string;
   id: string;
-}
-
-export enum TabSpaceRegistryMsg {
-  AddTabSpace = 'tabregistry_addtabspace',
-  RemoveTabSpace = 'tabregistry_removetabspace',
-  Announce = 'tabregistry_announce',
-  UpdateRegistry = 'tabregistry_update',
 }
 
 export enum TabSpaceMsg {
@@ -54,26 +47,6 @@ export type AuditLogs = string[];
 export type NotNeed = undefined | null;
 
 export const NotNeedPayload = undefined;
-
-export async function sendChromeMessage(msgPayload: {
-  type: TabSpaceRegistryMsg.AddTabSpace;
-  payload: TabSpaceStub;
-}): Promise<any>;
-
-export async function sendChromeMessage(msgPayload: {
-  type: TabSpaceRegistryMsg.RemoveTabSpace;
-  payload: TabSpaceId;
-}): Promise<any>;
-
-export async function sendChromeMessage(msgPayload: {
-  type: TabSpaceRegistryMsg.Announce;
-  payload: TabSpaceStub[];
-}): Promise<any>;
-
-export async function sendChromeMessage(msgPayload: {
-  type: TabSpaceRegistryMsg.UpdateRegistry;
-  payload: IUpdateRegistryPayload;
-}): Promise<any>;
 
 export async function sendChromeMessage(msgPayload: {
   type: TabSpaceMsg.Focus;

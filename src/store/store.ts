@@ -1,4 +1,4 @@
-import { BackgroundMsg, sendChromeMessage } from '../message';
+import { BackgroundMsg, sendChromeMessage } from '../message/message';
 import { action, makeObservable, observable } from 'mobx';
 import { forEach, map, merge } from 'lodash';
 
@@ -98,7 +98,7 @@ export class SavedStoreManager {
   }
 }
 
-export const queryPageLimit = 10;
+export const QUERY_PAGE_LIMIT_DEFAULT = 10; // 2;
 
 export function addPagingToQueryParams(
   params: any,
@@ -107,7 +107,7 @@ export function addPagingToQueryParams(
 ) {
   return merge(params, {
     pageStart: start ?? 0,
-    pageLimit: limit ?? queryPageLimit,
+    pageLimit: limit ?? QUERY_PAGE_LIMIT_DEFAULT,
   });
 }
 

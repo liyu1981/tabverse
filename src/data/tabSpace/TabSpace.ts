@@ -4,7 +4,7 @@ import { action, computed, makeObservable, observable } from 'mobx';
 import { assign, extend, isEqual, omit } from 'lodash';
 
 import { List } from 'immutable';
-import { TabSpaceStub } from './TabSpaceRegistry';
+import { TabSpaceStub } from '../../tabSpaceRegistry/TabSpaceRegistry';
 import { strict as assert } from 'assert';
 
 export interface ISavedTabSpace extends IBase {
@@ -43,6 +43,7 @@ export class TabSpace extends Base implements ILiveTabSpace {
 
         tabIds: computed,
 
+        setName: action,
         setChromeTabAndWindowId: action,
         reset: action,
         addTab: action,
@@ -119,6 +120,10 @@ export class TabSpace extends Base implements ILiveTabSpace {
     this.id = newId ?? getUnsavedNewId();
     this.tabs = List();
     return this;
+  }
+
+  setName(value: string) {
+    this.name = value;
   }
 
   setChromeTabAndWindowId(

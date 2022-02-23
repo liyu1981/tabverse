@@ -1,12 +1,12 @@
 import * as React from 'react';
 
+import { IManagerQueryParams, ManagerView } from './manager/ManagerView';
 import {
   TabSpaceOp,
   hasOwnProperty,
   isTabSpaceManagerPage,
   logger,
 } from '../global';
-import { TabSpaceRegistryMsg, sendChromeMessage } from '../message';
 import {
   bootstrap as dataBootstrap,
   bootstrapFromTabSpaceId as dataBootstrapFromTabSpaceId,
@@ -14,7 +14,6 @@ import {
 } from '../data/tabSpace/bootstrap';
 
 import { CountExit } from './common/CountExit';
-import { IManagerQueryParams, ManagerView } from './manager/ManagerView';
 import { strict as assert } from 'assert';
 import { bootstrap as bookmarkBootstrap } from '../data/bookmark/bootstrap';
 import { find } from 'lodash';
@@ -24,6 +23,10 @@ import { bootstrap as noteBootstrap } from '../data/note/bootstrap';
 import { renderPage } from './common/base';
 import { bootstrap as savedChromeSessionBootstrap } from '../data/chromeSession/bootstrap';
 import { bootstrap as storeBootstrap } from '../store/bootstrap';
+import {
+  addTabSpace as tabSpaceRegistryAddTabSpace,
+  bootstrap as tabSpaceRegistryServiceBootstrap,
+} from '../tabSpaceRegistry';
 import { bootstrap as todoBootstrap } from '../data/todo/bootstrap';
 
 async function bootstrap() {
@@ -45,11 +48,14 @@ async function bootstrap() {
       'queryParams do not have attribute op.',
     );
 
+    tabSpaceRegistryServiceBootstrap();
+
     storeBootstrap();
     bookmarkBootstrap();
     noteBootstrap();
     todoBootstrap();
     savedChromeSessionBootstrap();
+    fullTextSearchBootstrap();
 
     switch (queryParams.op) {
       case TabSpaceOp.LoadSaved:
@@ -68,23 +74,15 @@ async function bootstrap() {
 
     await getTabSpaceData().savedTabSpaceStore.querySavedTabSpaceCount();
 
-    sendChromeMessage({
-      type: TabSpaceRegistryMsg.AddTabSpace,
-      payload: getTabSpaceData().tabSpace.toTabSpaceStub(),
-    });
-
-    fullTextSearchBootstrap();
-
     renderPage({
       pageComponent: (
         <div>
-          <ManagerView
-            queryParams={queryParams as IManagerQueryParams}
-            tabSpaceData={getTabSpaceData()}
-          />
+          <ManagerView queryParams={queryParams as IManagerQueryParams} />
         </div>
       ),
     });
+
+    tabSpaceRegistryAddTabSpace(getTabSpaceData().tabSpace.toTabSpaceStub());
   }
 
   chrome.tabs.getCurrent((tab) => {
