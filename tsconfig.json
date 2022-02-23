@@ -5,9 +5,8 @@
     "module": "commonjs",
     "jsx": "react",
     "skipLibCheck": true,
-    "useDefineForClassFields": true
+    "useDefineForClassFields": true,
+    "forceConsistentCasingInFileNames": true
   },
-  "exclude": [
-    "node_modules"
-  ],
+  "exclude": ["node_modules"]
 }

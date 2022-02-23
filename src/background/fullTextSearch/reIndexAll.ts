@@ -2,7 +2,7 @@ import { ISavedTabSpace, TabSpace } from '../../data/tabSpace/TabSpace';
 import { addTabSpaceToIndex, addTabToIndex } from './addToIndex';
 
 import { Tab } from '../../data/tabSpace/Tab';
-import { TaskQueue } from '../taskQueue';
+import { TaskQueue } from '../TaskQueue';
 import { db } from '../../store/db';
 import { logger } from '../../global';
 
