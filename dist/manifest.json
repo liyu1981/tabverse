@@ -1,6 +1,6 @@
 {
   "name": "Tabverse",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "manifest_version": 3,
   "description": "Tabverse is an opinionated way of managing tabs.",
   "homepage_url": "https://tabverse.github.io",
