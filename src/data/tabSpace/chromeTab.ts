@@ -321,13 +321,7 @@ function onChromeTabUpdated(tabSpaceData: ITabSpaceData) {
     tabId: number,
     changeInfo: chrome.tabs.TabChangeInfo,
   ) {
-    if (tabSpace.chromeTabId === tabId) {
-      // self page refresh will clear tabSpaceRegistry, but history.pushstate
-      // will want to keep tabSpaceRegistry. So here we do nothing if it is
-      // current tabSpace.
-    } else {
-      tabSpaceRegistryRemoveTabSpace(tabId);
-    }
+    tabSpaceRegistryRemoveTabSpace(tabId);
   }
 
   async function normalTabAction(

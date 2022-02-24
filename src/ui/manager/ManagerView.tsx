@@ -14,7 +14,10 @@ import { SidebarContainer } from '../common/SidebarContainer';
 import { TabSpaceView } from './TabSpace/TabSpaceView';
 import { getAllBookmarkData } from '../../data/bookmark/bootstrap';
 import { getAllChromeSessionData } from '../../data/chromeSession/bootstrap';
-import { getTabSpaceRegistry } from '../../tabSpaceRegistry';
+import {
+  addTabSpace as tabSpaceRegistryAddTabSpace,
+  getTabSpaceRegistry,
+} from '../../tabSpaceRegistry';
 
 export interface IManagerQueryParams {
   op: string;
@@ -48,6 +51,11 @@ export const ManagerView = (props: IManagerContainerProps) => {
       url.searchParams.set('route', value);
       window.history.pushState({}, '', url);
       setCurrentRoute(value);
+      // after we history.pushState, chrome will issue chrome.tabs.onRemove and
+      // it will be captured by current leader so that current tabspace will be
+      // deleted from tabSpaceRegistry. Below we manually issue an message to
+      // add it back.
+      tabSpaceRegistryAddTabSpace(getTabSpaceData().tabSpace.toTabSpaceStub());
     };
   }, []);
 
