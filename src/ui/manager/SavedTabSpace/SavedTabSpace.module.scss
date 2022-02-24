@@ -23,13 +23,15 @@ $tabspace-card-width: 900px;
 .tabSpaceCard {
   position: relative;
   margin-bottom: 18px;
-  background-color: global.$color-light-shade;
+  background-color: darken(global.$color-light-shade, 1%);
+  border-radius: 30px;
+  box-shadow: none;
 }
 
 .tabSpaceCard .opened {
   position: absolute;
-  left: 4px;
-  top: 8px;
+  left: -60px;
+  top: 10px;
   height: calc(100% - 16px);
   padding: 0px;
   z-index: -1;
@@ -37,15 +39,18 @@ $tabspace-card-width: 900px;
 
 .tabSpaceCard .opened .inner {
   transform-origin: 0 0;
-  transform: rotate(90deg);
+  transform: rotate(-36deg);
   font-family: sans-serif;
   font-weight: bold;
   font-size: 1.2em;
   text-transform: uppercase;
   background-color: global.$color-main-brand;
   color: white;
-  padding: 8px;
-  border-radius: 6px;
+  padding-top: 24px;
+  border-radius: 100px;
+  width: 100px;
+  height: 100px;
+  text-align: center;
 }
 
 .tabSpaceCard .notOpened * {
@@ -63,10 +68,17 @@ $tabspace-card-width: 900px;
   background-color: colors.$light-gray5;
 }
 
-.stickyOn .toolbar {
+.searchBar :global(.bp3-tag-input) {
+  border-radius: 28px;
+}
+
+.stickyOn .searchBar {
   position: fixed;
   width: $tabspace-card-width;
   z-index: 100;
+}
+
+.stickyOn .searchBar :global(.bp3-tag-input) {
   box-shadow: 0 10px 10px -8px rgb(16 22 26 / 60%),
     0 0 0 1px rgb(16 22 26 / 10%), 0 1px 1px rgb(16 22 26 / 20%),
     0 2px 6px rgb(16 22 26 / 20%);

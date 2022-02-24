@@ -1,31 +1,41 @@
 @use '@blueprintjs/colors/src/colors.scss';
+@use '../../global.scss';
 
 body {
-  background-color: colors.$light-gray5;
+  color: darken(global.$color-d, 15%);
+  background-color: global.$color-c;
 }
 
-.bp3-editable-text-fullwidth {
-  min-width: 100%;
+:focus {
+  outline: none;
 }
 
-.bp3-intent-danger {
-  background-color: desaturate(#db3737, 35%) !important;
+:global(.bp3-button) {
+  border-radius: 18px;
 }
 
-.bp3-tab-panel-dialog {
-  width: 100%;
-  margin-top: -16px !important;
-  margin-left: 8px;
-}
+// .bp3-editable-text-fullwidth {
+//   min-width: 100%;
+// }
 
-.saved-tabspace-tree-node {
-  min-height: 56px;
-}
+// .bp3-intent-danger {
+//   background-color: desaturate(#db3737, 35%) !important;
+// }
 
-.tabverse-session-tree-node {
-  min-height: 48px;
-}
+// .bp3-tab-panel-dialog {
+//   width: 100%;
+//   margin-top: -16px !important;
+//   margin-left: 8px;
+// }
 
-.tabverse-session-tree-node .bp3-tree-node-content {
-  min-height: 48px;
-}
+// .saved-tabspace-tree-node {
+//   min-height: 56px;
+// }
+
+// .tabverse-session-tree-node {
+//   min-height: 48px;
+// }
+
+// .tabverse-session-tree-node .bp3-tree-node-content {
+//   min-height: 48px;
+// }

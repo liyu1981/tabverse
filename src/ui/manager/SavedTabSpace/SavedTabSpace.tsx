@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Card, Elevation } from '@blueprintjs/core';
+import { Card } from '@blueprintjs/core';
 import {
   loadToCurrentWindowUtil,
   restoreSavedTabSpaceUtil,
@@ -111,7 +111,7 @@ export const SavedTabSpace = observer(
       <div className={classes.container}>
         <div className={classes.tabSpaceListContainer}>
           <StickyContainer thresh={0} stickyOnClassName={classes.stickyOn}>
-            <div className={classes.toolbar}>
+            <div className={classes.searchBar}>
               <SearchInput
                 query={savedTabSpaceCollection.query}
                 onChange={(query) => {
@@ -140,7 +140,6 @@ export const SavedTabSpace = observer(
                         <Card
                           key={savedTabSpace.id}
                           className={classes.tabSpaceCard}
-                          elevation={Elevation.TWO}
                         >
                           <div
                             className={

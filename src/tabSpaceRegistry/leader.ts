@@ -77,6 +77,10 @@ export function destroy() {
 
 async function broadcast(tabSpaceRegistryJSON: TabSpaceRegistryJSON) {
   if (_internState !== null) {
+    console.log('will broadcast message:', {
+      type: TabSpaceRegistryBroadcastMsgType.AnnounceTabSpaceRegistry,
+      payload: tabSpaceRegistryJSON,
+    });
     await _internState.broadcastChannel.postMessage({
       type: TabSpaceRegistryBroadcastMsgType.AnnounceTabSpaceRegistry,
       payload: tabSpaceRegistryJSON,

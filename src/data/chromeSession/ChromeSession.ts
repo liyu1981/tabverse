@@ -194,20 +194,9 @@ function isTabsChanged(tabs1: IChromeTab[], tabs2: IChromeTab[]): boolean {
   if (tabs1.length !== tabs2.length) {
     return true;
   }
-
-  for (let i = 0; i < tabs1.length; i++) {
-    const t1 = tabs1[i];
-    const t2 = tabs2[i];
-    if (
-      t1.tabId !== t2.tabId ||
-      t1.windowId !== t2.windowId ||
-      t1.url !== t2.url
-    ) {
-      return true;
-    }
-  }
-
-  return false;
+  const allUrls1 = tabs1.map((tab) => tab.url).sort();
+  const allUrls2 = tabs2.map((tab) => tab.url).sort();
+  return JSON.stringify(allUrls1) !== JSON.stringify(allUrls2);
 }
 
 export function isChromeSessionChanged(

@@ -109,6 +109,12 @@ export async function saveSession(
   } else {
     const lastSavedSession = lastSavedSessions[0];
     sessionSavePayload = session.getSavePayload();
+    console.log(
+      'want to save session:',
+      lastSavedSession,
+      sessionSavePayload,
+      isChromeSessionChanged(lastSavedSession, sessionSavePayload),
+    );
     if (isChromeSessionChanged(lastSavedSession, sessionSavePayload)) {
       if (lastSavedSessions.length + 1 > MAX_SAVED_SESSIONS) {
         const toDeleteSavedSession = findSessionToDelete(

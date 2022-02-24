@@ -111,7 +111,7 @@ export const TabSpaceListView = observer(
     return (
       <div className={classes.container}>
         {tabSpaceHeaderView}
-        <div>{tabEntries}</div>
+        <div className={classes.tabEntriesContainer}>{tabEntries}</div>
         <div className={classes.bottomPlaceholder}></div>
       </div>
     );

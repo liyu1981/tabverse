@@ -6,6 +6,10 @@
   margin-top: 20px;
 }
 
+.tabEntriesContainer {
+  padding: 0px 24px;
+}
+
 .bottomPlaceholder {
   min-height: 80px;
 }
@@ -54,12 +58,12 @@
 }
 
 .header {
-  border-radius: 8px 8px 8px 8px;
+  border-radius: 18px;
   background-color: global.$color-light-shade;
   padding: 16px 26px;
   margin-bottom: 18px;
-  box-shadow: 0 0 0 1px rgb(16 22 26 / 10%), 0 0 0 rgb(16 22 26 / 0%),
-    0 1px 1px rgb(16 22 26 / 20%);
+  // box-shadow: 0 0 0 1px rgb(16 22 26 / 10%), 0 0 0 rgb(16 22 26 / 0%),
+  //   0 1px 1px rgb(16 22 26 / 20%);
   transition: box-shadow width 150ms linear;
 }
 

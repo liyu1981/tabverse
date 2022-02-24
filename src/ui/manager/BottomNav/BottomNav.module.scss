@@ -1,8 +1,17 @@
 @use '../../common/SidebarContainer.module.scss';
+@use '../../../global.scss';
 
 .container {
   position: fixed;
   bottom: 0px;
   left: -1px;
   width: SidebarContainer.$sidebar-width;
+}
+
+.navbar {
+  background-color: darken($color: global.$color-d, $amount: 5%) !important;
+}
+
+.navbar :global(.bp3-button) {
+  border-radius: 16px;
 }
