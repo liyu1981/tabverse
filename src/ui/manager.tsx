@@ -81,8 +81,6 @@ async function bootstrap() {
         </div>
       ),
     });
-
-    tabSpaceRegistryAddTabSpace(getTabSpaceData().tabSpace.toTabSpaceStub());
   }
 
   chrome.tabs.getCurrent((tab) => {

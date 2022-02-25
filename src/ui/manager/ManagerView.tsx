@@ -4,7 +4,7 @@ import './manager.scss';
 import * as React from 'react';
 
 import { getTabSpaceData } from '../../data/tabSpace/bootstrap';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { SavedTabSpace } from './SavedTabSpace/SavedTabSpace';
@@ -51,13 +51,16 @@ export const ManagerView = (props: IManagerContainerProps) => {
       url.searchParams.set('route', value);
       window.history.pushState({}, '', url);
       setCurrentRoute(value);
-      // after we history.pushState, chrome will issue chrome.tabs.onRemove and
-      // it will be captured by current leader so that current tabspace will be
-      // deleted from tabSpaceRegistry. Below we manually issue an message to
-      // add it back.
-      tabSpaceRegistryAddTabSpace(getTabSpaceData().tabSpace.toTabSpaceStub());
     };
   }, []);
+
+  useEffect(() => {
+    // after we history.pushState, chrome will issue chrome.tabs.onRemove and
+    // it will be captured by current leader so that current tabspace will be
+    // deleted from tabSpaceRegistry. Below we manually issue an message to
+    // add it back.
+    tabSpaceRegistryAddTabSpace(getTabSpaceData().tabSpace.toTabSpaceStub());
+  }, [currentRoute]);
 
   const renderView = (route: ManagerViewRoute) => {
     switch (route) {

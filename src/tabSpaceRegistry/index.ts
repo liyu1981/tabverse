@@ -71,10 +71,10 @@ function onLeaderChange(
     _state.setBroadcastChannel(broadcastChannel);
     if (isThisTab) {
       attendeeDestroy();
-      leaderInit(_state);
+      leaderInit();
     } else {
       leaderDestroy();
-      attendeeInit(_state);
+      attendeeInit();
     }
     _state.setReady(true);
   });
@@ -92,6 +92,10 @@ export function bootstrap() {
 
 export function getTabSpaceRegistry() {
   return _state.tabSpaceRegistry;
+}
+
+export function getInternState() {
+  return _state;
 }
 
 export function addTabSpace(tabSpaceStud: TabSpaceStub) {

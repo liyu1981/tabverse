@@ -18,7 +18,6 @@ accept changes send by other attendees or itself.
 */
 
 import {
-  InternServiceState,
   TabSpaceRegistryBroadcastChannel,
   TabSpaceRegistryBroadcastMsg,
   TabSpaceRegistryBroadcastMsgType,
@@ -30,16 +29,15 @@ import {
   TabSpaceStub,
 } from './TabSpaceRegistry';
 import { NotNeedPayload } from '../message/message';
-
-let _internState: InternServiceState | null = null;
+import { getInternState } from './index';
 
 function leaderOnMessageAddTabSpace(
   message: TabSpaceRegistryBroadcastMsg,
   channel: TabSpaceRegistryBroadcastChannel,
 ) {
   const { payload: tabSpaceStub } = message;
-  _internState.tabSpaceRegistry.add(tabSpaceStub);
-  broadcast(_internState.tabSpaceRegistry.toJSON());
+  getInternState().tabSpaceRegistry.add(tabSpaceStub);
+  broadcast(getInternState().tabSpaceRegistry.toJSON());
 }
 
 function leaderOnMessageUpdateTabSpace(
@@ -47,17 +45,18 @@ function leaderOnMessageUpdateTabSpace(
   channel: TabSpaceRegistryBroadcastChannel,
 ) {
   const { payload: tabSpaceRegistryChange } = message;
-  _internState.tabSpaceRegistry.mergeRegistryChanges([tabSpaceRegistryChange]);
-  broadcast(_internState.tabSpaceRegistry.toJSON());
+  getInternState().tabSpaceRegistry.mergeRegistryChanges([
+    tabSpaceRegistryChange,
+  ]);
+  broadcast(getInternState().tabSpaceRegistry.toJSON());
 }
 
-export function init(interState: InternServiceState) {
-  _internState = interState;
-  _internState.setBroadcastChannelListener(
+export function init() {
+  getInternState().setBroadcastChannelListener(
     TabSpaceRegistryBroadcastMsgType.AddTabSpace,
     leaderOnMessageAddTabSpace,
   );
-  _internState.setBroadcastChannelListener(
+  getInternState().setBroadcastChannelListener(
     TabSpaceRegistryBroadcastMsgType.UpdateTabSpace,
     leaderOnMessageUpdateTabSpace,
   );
@@ -65,23 +64,23 @@ export function init(interState: InternServiceState) {
 }
 
 export function destroy() {
-  if (_internState !== null) {
-    _internState.unsetBroadcastChannelListener(
+  if (getInternState() !== null) {
+    getInternState().unsetBroadcastChannelListener(
       TabSpaceRegistryBroadcastMsgType.AddTabSpace,
     );
-    _internState.unsetBroadcastChannelListener(
+    getInternState().unsetBroadcastChannelListener(
       TabSpaceRegistryBroadcastMsgType.UpdateTabSpace,
     );
   }
 }
 
 async function broadcast(tabSpaceRegistryJSON: TabSpaceRegistryJSON) {
-  if (_internState !== null) {
+  if (getInternState() !== null) {
     console.log('will broadcast message:', {
       type: TabSpaceRegistryBroadcastMsgType.AnnounceTabSpaceRegistry,
       payload: tabSpaceRegistryJSON,
     });
-    await _internState.broadcastChannel.postMessage({
+    await getInternState().broadcastChannel.postMessage({
       type: TabSpaceRegistryBroadcastMsgType.AnnounceTabSpaceRegistry,
       payload: tabSpaceRegistryJSON,
     });
@@ -89,8 +88,8 @@ async function broadcast(tabSpaceRegistryJSON: TabSpaceRegistryJSON) {
 }
 
 async function rollcall() {
-  if (_internState !== null) {
-    await _internState.broadcastChannel.postMessage({
+  if (getInternState() !== null) {
+    await getInternState().broadcastChannel.postMessage({
       type: TabSpaceRegistryBroadcastMsgType.RollCall,
       payload: NotNeedPayload,
     });
@@ -98,26 +97,26 @@ async function rollcall() {
 }
 
 export async function removeTabSpaceByLeader(chromeTabId: number) {
-  if (_internState !== null) {
-    _internState.tabSpaceRegistry.removeByChromeTabId(chromeTabId);
-    broadcast(_internState.tabSpaceRegistry.toJSON());
+  if (getInternState() !== null) {
+    getInternState().tabSpaceRegistry.removeByChromeTabId(chromeTabId);
+    broadcast(getInternState().tabSpaceRegistry.toJSON());
   }
 }
 
 export async function addTabSpaceByLeader(tabSpaceStub: TabSpaceStub) {
-  if (_internState !== null) {
-    _internState.tabSpaceRegistry.add(tabSpaceStub);
-    broadcast(_internState.tabSpaceRegistry.toJSON());
+  if (getInternState() !== null) {
+    getInternState().tabSpaceRegistry.add(tabSpaceStub);
+    broadcast(getInternState().tabSpaceRegistry.toJSON());
   }
 }
 
 export async function updateTabSpaceByLeader(
   tabSpaceRegistryChange: TabSpaceRegistryChange,
 ) {
-  if (_internState !== null) {
-    _internState.tabSpaceRegistry.mergeRegistryChanges([
+  if (getInternState() !== null) {
+    getInternState().tabSpaceRegistry.mergeRegistryChanges([
       tabSpaceRegistryChange,
     ]);
-    broadcast(_internState.tabSpaceRegistry.toJSON());
+    broadcast(getInternState().tabSpaceRegistry.toJSON());
   }
 }

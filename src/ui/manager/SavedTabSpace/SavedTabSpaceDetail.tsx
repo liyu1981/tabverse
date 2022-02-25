@@ -116,7 +116,10 @@ export const SavedTabSpaceDetail = observer(
           )}
         </div>
         <div className={classes.savedTabsContainer}>
-          <p>Saved Tabs({entries.length})</p>
+          <p>
+            Working on <b>{entries.length}</b>{' '}
+            {entries.length > 1 ? 'tabs' : 'tab'}
+          </p>
           {entries}
         </div>
       </div>

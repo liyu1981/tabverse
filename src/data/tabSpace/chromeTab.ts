@@ -318,10 +318,14 @@ function onChromeTabUpdated(tabSpaceData: ITabSpaceData) {
   const { tabSpace, tabPreview } = tabSpaceData;
 
   async function tabSpaceAction(
-    tabId: number,
+    chromeTabId: number,
     changeInfo: chrome.tabs.TabChangeInfo,
   ) {
-    tabSpaceRegistryRemoveTabSpace(tabId);
+    if (chromeTabId === tabSpace.chromeTabId) {
+      // do not do anything when this tabSpace tab is updating
+    } else {
+      tabSpaceRegistryRemoveTabSpace(chromeTabId);
+    }
   }
 
   async function normalTabAction(
