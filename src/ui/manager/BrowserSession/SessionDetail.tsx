@@ -15,6 +15,7 @@ import { ITabSpaceMap } from '../../../data/chromeSession/sessionStore';
 import classes from './SessionDetail.module.scss';
 import { IndicatorLine } from '../../common/IndicatorLine';
 import * as Moment from 'moment';
+import clsx from 'clsx';
 
 function getDomainFromUrl(urlString: string) {
   try {
@@ -56,7 +57,7 @@ export const SessionDetail = ({ session, tabSpaceMap }: SessionDetailProps) => {
 
   const getWindowChildNodes = (window: IChromeWindow): TreeNodeInfo[] => {
     return window.tabIds
-      .map((tabId): TreeNodeInfo => {
+      .map((tabId, index): TreeNodeInfo => {
         const chromeTab = chromeSession.tabs.find((t) => t.tabId === tabId);
         return {
           id: chromeTab.tabId,
@@ -77,7 +78,10 @@ export const SessionDetail = ({ session, tabSpaceMap }: SessionDetailProps) => {
               {getDomainFromUrl(chromeTab.url)}
             </span>
           ),
-          className: 'tabverse-session-tree-node',
+          className: clsx(
+            classes.windowChildNode,
+            index === 0 ? classes.windowChildNodeFirst : '',
+          ),
         };
       })
       .toArray();
@@ -86,7 +90,7 @@ export const SessionDetail = ({ session, tabSpaceMap }: SessionDetailProps) => {
   const contents =
     chromeSession &&
     chromeSession.windows
-      .map<TreeNodeInfo>((window) => {
+      .map<TreeNodeInfo>((window, index) => {
         const tabSpaceName = tabSpaceMap[window.tabSpaceId]?.name ?? 'Unsaved';
         const label =
           window.tabSpaceTabId === NotTabSpaceTabId
@@ -118,7 +122,10 @@ export const SessionDetail = ({ session, tabSpaceMap }: SessionDetailProps) => {
           isExpanded: expandedMap[window.windowId],
           childNodes: getWindowChildNodes(window),
           windowId: window.windowId,
-          className: 'tabverse-session-tree-node',
+          className: clsx(
+            classes.windowNode,
+            index === 0 ? classes.windowNodeFirst : '',
+          ),
         };
       })
       .toArray();
@@ -141,6 +148,7 @@ export const SessionDetail = ({ session, tabSpaceMap }: SessionDetailProps) => {
       )}
       <Tree
         contents={contents}
+        className={classes.windowTreeContainer}
         onNodeCollapse={(node: any) => {
           if (node.windowId) {
             setExpandedMap((lastMap) => {

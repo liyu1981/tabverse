@@ -13,6 +13,9 @@ import { TabSpaceId } from '../../../message/message';
 import classes from './SavedTabSpaceDetail.module.scss';
 import { logger } from '../../../global';
 import { observer } from 'mobx-react-lite';
+import { ISavedTab } from '../../../data/tabSpace/Tab';
+import { useMemo } from 'react';
+import { createNewChromeWindowWithTab } from '../BrowserSession/util';
 
 interface ISavedTabSpaceDetailProps {
   opened: boolean;
@@ -25,10 +28,23 @@ interface ISavedTabSpaceDetailProps {
 
 export const SavedTabSpaceDetail = observer(
   (props: ISavedTabSpaceDetailProps) => {
+    const openTabInNewWindow = useMemo(
+      () => (savedTab: ISavedTab) =>
+        createNewChromeWindowWithTab((theChromeWindow) => {
+          return [
+            chrome.tabs.create({
+              windowId: theChromeWindow.id,
+              url: savedTab.url,
+            }),
+          ];
+        }),
+      [],
+    );
+
     const entries: React.ReactElement[] = [];
     props.tabSpace.tabs.forEach((savedTab) => {
       entries.push(
-        <div key={savedTab.id}>
+        <div key={savedTab.id} onClick={() => openTabInNewWindow(savedTab)}>
           <TabCard key={savedTab.id} tab={savedTab} />
         </div>,
       );

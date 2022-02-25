@@ -29,3 +29,30 @@
   margin-left: 6px;
   margin-right: 6px;
 }
+
+.windowTreeContainer {
+  background-color: white;
+  border-radius: 18px;
+  padding: 18px 18px;
+  margin: 0px 18px;
+}
+
+.windowNode :global(.bp3-tree-node-content-0) {
+  margin-top: 28px;
+  margin-bottom: 18px;
+  font-size: 1.2em;
+}
+
+.windowNode.windowNodeFirst :global(.bp3-tree-node-content-0) {
+  margin-top: 0px;
+}
+
+.windowNode :global(.bp3-tree-node-content-0):hover {
+  background-color: inherit;
+}
+
+.windowChildNode :global(.bp3-tree-node-content-1) {
+  border-radius: 18px;
+  margin-bottom: 8px;
+  padding: 20px 10px;
+}
