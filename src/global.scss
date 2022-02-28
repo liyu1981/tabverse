@@ -10,4 +10,7 @@ $color-main-brand: $color-d;
 $color-dark-accent: #6b6977;
 $color-dark-shade: #1d191f;
 
+$color-text: darken($color-d, 15%);
+$color-background: $color-c;
+
 $sidebar-background-color: $color-main-brand;

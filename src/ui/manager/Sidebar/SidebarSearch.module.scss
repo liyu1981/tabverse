@@ -1,0 +1,30 @@
+@use '../../../global.scss';
+
+.sidebarSearchContainer :global(.bp3-input-group) {
+  background-color: global.$color-light-shade;
+  height: 40px;
+  font-size: 1.2em;
+}
+
+.sidebarSearchContainer :global(.bp3-input-group):focus {
+  background-color: white;
+}
+
+.sidebarSearchContainer :global(.bp3-icon) {
+  margin-top: 12px;
+}
+
+.sidebarSearchContainer :global(.bp3-input-group) :global(.bp3-input) {
+  box-shadow: none;
+  background-color: global.$color-light-shade;
+  font-size: 18px;
+}
+
+.sidebarSearchContainer :global(.bp3-input-group) :global(.bp3-input):focus {
+  box-shadow: none;
+}
+
+.sidebarSearchInnerContainer {
+  line-height: 42px;
+  font-size: 1.2em;
+}

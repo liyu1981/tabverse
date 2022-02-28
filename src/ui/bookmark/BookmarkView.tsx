@@ -29,7 +29,6 @@ const BookmarkItem = (props: IBookmarkItem) => {
           <div>
             <b>
               <EditableText
-                className="bp3-editable-text-fullwidth"
                 maxLength={256}
                 value={name}
                 selectAllOnFocus={false}

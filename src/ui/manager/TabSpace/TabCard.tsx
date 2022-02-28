@@ -14,11 +14,7 @@ import clsx from 'clsx';
 
 const TabDetailPreviewPanel = (props) => {
   return props.tab ? (
-    <Card
-      interactive={false}
-      elevation={Elevation.ONE}
-      className={classes.previewCard}
-    >
+    <Card interactive={false} className={classes.previewCard}>
       <div className={classes.previewHeaderContainer}>
         <div className={classes.previewTitle}>
           <FavIcon
@@ -35,9 +31,7 @@ const TabDetailPreviewPanel = (props) => {
         <img className={classes.previewImage} src={props.tabPreview} />
       </div>
     </Card>
-  ) : (
-    <></>
-  );
+  ) : null;
 };
 
 interface TabBookmarkBtnProps {
@@ -138,9 +132,7 @@ export const TabCard = observer((props: ITabCardProps) => {
       tab={props.tab}
       tabPreview={props.tabPreview ?? ''}
     />
-  ) : (
-    <></>
-  );
+  ) : null;
 
   return needPreview ? (
     <Popover2
@@ -148,10 +140,11 @@ export const TabCard = observer((props: ITabCardProps) => {
       placement="right"
       interactionKind="hover"
       hoverOpenDelay={800}
-      // isOpen={props.tab.title.startsWith('css trick') ? true : undefined}
+      // isOpen={props.tab.title.startsWith('Blueprint') ? true : undefined}
       content={previewContent}
       enforceFocus={false}
       fill={true}
+      portalClassName={classes.tabCardPopover}
     >
       {card}
     </Popover2>

@@ -1,5 +1,10 @@
 .searchInputContainer :global(.bp3-tag-input) {
   height: 50px;
+  box-shadow: none;
+}
+
+.searchInputContainer :global(.bp3-tag-input):focus {
+  box-shadow: none;
 }
 
 .searchInputContainer :global(.bp3-tag-input) > :global(.bp3-icon) {

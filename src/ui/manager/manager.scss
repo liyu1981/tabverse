@@ -2,8 +2,8 @@
 @use '../../global.scss';
 
 body {
-  color: darken(global.$color-d, 15%);
-  background-color: global.$color-c;
+  color: global.$color-text;
+  background-color: global.$color-background;
 }
 
 :focus {
@@ -13,29 +13,3 @@ body {
 :global(.bp3-button) {
   border-radius: 18px;
 }
-
-// .bp3-editable-text-fullwidth {
-//   min-width: 100%;
-// }
-
-// .bp3-intent-danger {
-//   background-color: desaturate(#db3737, 35%) !important;
-// }
-
-// .bp3-tab-panel-dialog {
-//   width: 100%;
-//   margin-top: -16px !important;
-//   margin-left: 8px;
-// }
-
-// .saved-tabspace-tree-node {
-//   min-height: 56px;
-// }
-
-// .tabverse-session-tree-node {
-//   min-height: 48px;
-// }
-
-// .tabverse-session-tree-node .bp3-tree-node-content {
-//   min-height: 48px;
-// }

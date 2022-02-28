@@ -37,7 +37,7 @@ export function SearchInput({ query, onChange }: SearchInputProps) {
       large={true}
       leftIcon={'search'}
       tagProps={{ minimal: true }}
-      placeholder={'input keywords, press enter to search...'}
+      placeholder={'input keywords,  then ↵ enter to search...'}
       query={query}
       onChangeQuery={onChangeQuery}
       scopeDefault={scopeMap['anywhere']}

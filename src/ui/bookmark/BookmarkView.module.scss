@@ -1,7 +1,6 @@
 .container {
   background: #fff;
   position: relative;
-  border: 1px solid #ddd;
   color: #111111;
   border-radius: 18px;
 }
@@ -26,6 +25,10 @@
 .label {
   width: 98%;
   word-break: break-all;
+}
+
+.label :global(.bp3-editable-text) {
+  width: 100%;
 }
 
 .noticeContainer {

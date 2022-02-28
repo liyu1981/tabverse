@@ -30,10 +30,10 @@ interface IManagerContainerProps {
 }
 
 export enum ManagerViewRoute {
-  New = 'new',
   Session = 'session',
   Opened = 'live',
   Saved = 'saved',
+  Search = 'search',
 }
 
 export const ManagerView = (props: IManagerContainerProps) => {
@@ -91,6 +91,8 @@ export const ManagerView = (props: IManagerContainerProps) => {
             }
           />
         );
+      // case ManagerViewRoute.Search:
+      //   return <OmniSearch />;
     }
   };
 

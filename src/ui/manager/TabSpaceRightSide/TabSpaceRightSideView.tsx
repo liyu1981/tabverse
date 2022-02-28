@@ -16,7 +16,6 @@ import { loadByTabSpaceId as noteLoadByTabSpaceId } from '../../../data/note/boo
 import { loadByTabSpaceId as todoLoadByTabSpaceId } from '../../../data/todo/bootstrap';
 import { useMemo, useState } from 'react';
 import classes from './TabSpaceRightSideView.module.scss';
-import { List } from 'immutable';
 
 enum RightSideModule {
   TODO = 'todo',
@@ -130,6 +129,7 @@ export const TabSpaceRightSideView = ({
               animate={true}
               renderActiveTabPanelOnly={false}
               selectedTabId={pinned}
+              className={classes.bpTabs}
             >
               <BPTab
                 id={pinned}
@@ -155,6 +155,7 @@ export const TabSpaceRightSideView = ({
             renderActiveTabPanelOnly={false}
             onChange={(newTabId: string) => setCurrentUnpinned(newTabId)}
             selectedTabId={currentUnpinned}
+            className={classes.bpTabs}
           >
             {unpinned.map((key) => {
               const componentClass = rightSideModules[key];

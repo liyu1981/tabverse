@@ -15,13 +15,6 @@ import clsx from 'clsx';
 import { getAllChromeSessionData } from '../../../data/chromeSession/bootstrap';
 import { getTabSpaceRegistry } from '../../../tabSpaceRegistry';
 
-enum Route {
-  New = 'new',
-  Session = 'session',
-  Opened = 'live',
-  Saved = 'saved',
-}
-
 export interface ISidebarComponentProps {
   active: boolean;
 }
@@ -33,9 +26,9 @@ export function SidebarComponent({
   onSwitch,
   children,
 }: ISidebarComponentProps & {
-  route: Route;
+  route: ManagerViewRoute;
   header: JSX.Element | React.ReactFragment;
-  onSwitch: (value) => void;
+  onSwitch: (value: ManagerViewRoute) => void;
   children?: JSX.Element | JSX.Element[];
 }) {
   return (
@@ -73,9 +66,13 @@ export const Sidebar = (props: ISidebarProps) => {
       </div>
       <br />
       <div>
+        {/* <SidebarSearch
+          active={props.route === ManagerViewRoute.Search}
+          onSwitch={(value) => props.switchRoute(value)}
+        /> */}
         <SidebarComponent
           active={props.route === ManagerViewRoute.Session}
-          route={Route.Session}
+          route={ManagerViewRoute.Session}
           onSwitch={(value) => props.switchRoute(value)}
           header={
             <>
@@ -92,7 +89,7 @@ export const Sidebar = (props: ISidebarProps) => {
         </SidebarComponent>
         <SidebarComponent
           active={props.route === ManagerViewRoute.Opened}
-          route={Route.Opened}
+          route={ManagerViewRoute.Opened}
           onSwitch={(value) => props.switchRoute(value)}
           header={
             <>
@@ -109,7 +106,7 @@ export const Sidebar = (props: ISidebarProps) => {
         </SidebarComponent>
         <SidebarComponent
           active={props.route === ManagerViewRoute.Saved}
-          route={Route.Saved}
+          route={ManagerViewRoute.Saved}
           onSwitch={(value) => props.switchRoute(value)}
           header={
             <>
