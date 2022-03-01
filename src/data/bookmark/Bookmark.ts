@@ -13,6 +13,10 @@ export interface IBookmark extends IBase {
 
 export type IBookmarkJSON = IBookmark;
 export type IBookmarkSavePayload = IBookmarkJSON;
+export type IBookmarkLocalStorage = Pick<
+  IBookmarkJSON,
+  'name' | 'url' | 'favIconUrl'
+>;
 
 export class Bookmark extends Base implements IBookmark {
   tabSpaceId: string;
@@ -87,6 +91,7 @@ export class AllBookmark extends Base {
       extend(Base.getMakeObservableDef(), {
         bookmarks: observable,
 
+        restoreFromLocalStorageJSON: action,
         addBookmark: action,
         updateBookmark: action,
         removeBookmark: action,
@@ -110,6 +115,34 @@ export class AllBookmark extends Base {
     this.cloneAttributes(otherAllBookmark);
     this.bookmarks = List(otherAllBookmark.bookmarks);
     this.tabSpaceId = otherAllBookmark.tabSpaceId;
+    return this;
+  }
+
+  getLocalStorageJSON(): IBookmarkLocalStorage[] {
+    return this.bookmarks
+      .map((bookmark) => {
+        return {
+          name: bookmark.name,
+          url: bookmark.url,
+          favIconUrl: bookmark.favIconUrl,
+        };
+      })
+      .toArray();
+  }
+
+  restoreFromLocalStorageJSON(bookmarkJSONs: IBookmarkLocalStorage[]) {
+    this.bookmarks = List(
+      bookmarkJSONs.map((bookmarkJSON) => {
+        const b = new Bookmark();
+        b.createdAt = Date.now();
+        b.updatedAt = Date.now();
+        b.tabSpaceId = this.tabSpaceId;
+        b.name = bookmarkJSON.name;
+        b.url = bookmarkJSON.url;
+        b.favIconUrl = bookmarkJSON.favIconUrl;
+        return b;
+      }),
+    );
     return this;
   }
 

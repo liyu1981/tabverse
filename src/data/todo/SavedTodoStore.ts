@@ -1,4 +1,10 @@
-import { AllTodo, IAllTodoSavePayload, ITodoJSON, Todo } from './Todo';
+import {
+  AllTodo,
+  IAllTodoSavePayload,
+  ITodoJSON,
+  ITodoLocalStorage,
+  Todo,
+} from './Todo';
 import {
   DEFAULT_SAVE_DEBOUNCE,
   InSavingStatus,
@@ -16,6 +22,15 @@ import { db } from '../../store/db';
 import { getAllTodoData } from './bootstrap';
 import { getTabSpaceData } from '../tabSpace/bootstrap';
 import { observe } from 'mobx';
+import {
+  getLocalStorageKey,
+  localStorageAddListener,
+  localStorageGetItem,
+  localStoragePutItem,
+  localStorageRemoveListener,
+} from '../../store/localStorageWrapper';
+
+export const LOCALSTORAGE_TODO_KEY = getLocalStorageKey('todo');
 
 export class SavedTodoStore extends SavedStore {}
 
@@ -41,6 +56,22 @@ export function monitorTabSpaceChanges(allTodo: AllTodo) {
   });
 }
 
+export function startMonitorLocalStorageChanges(allNote: AllTodo) {
+  localStorageAddListener(LOCALSTORAGE_TODO_KEY, (key, newValue, oldValue) => {
+    const todoJSONs = JSON.parse(newValue) as ITodoLocalStorage[];
+    allNote.restoreFromLocalStorageJSON(todoJSONs);
+  });
+  // immediately load once after the monitoring is started
+  localStorageGetItem(LOCALSTORAGE_TODO_KEY, (value: string) => {
+    const todoJSONs = JSON.parse(value) as ITodoLocalStorage[];
+    allNote.restoreFromLocalStorageJSON(todoJSONs);
+  });
+}
+
+export function stopMonitorLocalStorageChanges() {
+  localStorageRemoveListener(LOCALSTORAGE_TODO_KEY);
+}
+
 export function monitorAllTodoChange(
   allTodo: AllTodo,
   savedTodoStore: SavedTodoStore,
@@ -55,6 +86,11 @@ export function monitorAllTodoChange(
           'current tabSpace need autoSave, will then saveCurrentAllTodo',
         );
         saveCurrentAllTodo();
+      } else {
+        logger.log(
+          'current tabSpace is not on autoSave, will then save todos to localStorage',
+        );
+        saveCurrentAllTodoToLocalStorage();
       }
     }
   });
@@ -116,3 +152,11 @@ export const saveCurrentAllTodo: () => void | Promise<void> = debounce(
   saveCurrentAllTodoImpl,
   DEFAULT_SAVE_DEBOUNCE,
 );
+
+export const saveCurrentAllTodoToLocalStorage = () => {
+  const { allTodo } = getAllTodoData();
+  localStoragePutItem(
+    LOCALSTORAGE_TODO_KEY,
+    JSON.stringify(allTodo.getLocalStorageJSON()),
+  );
+};

@@ -3,6 +3,7 @@ import {
   Bookmark,
   IAllBookmarkSavePayload,
   IBookmarkJSON,
+  IBookmarkLocalStorage,
 } from './Bookmark';
 import {
   DEFAULT_SAVE_DEBOUNCE,
@@ -21,6 +22,15 @@ import { db } from '../../store/db';
 import { getAllBookmarkData } from './bootstrap';
 import { getTabSpaceData } from '../tabSpace/bootstrap';
 import { observe } from 'mobx';
+import {
+  getLocalStorageKey,
+  localStorageAddListener,
+  localStorageGetItem,
+  localStoragePutItem,
+  localStorageRemoveListener,
+} from '../../store/localStorageWrapper';
+
+export const LOCALSTORAGE_BOOKMARK_KEY = getLocalStorageKey('bookmark');
 
 export class SavedBookmarkStore extends SavedStore {}
 
@@ -46,6 +56,25 @@ export function monitorTabSpaceChanges(allBookmark: AllBookmark) {
   });
 }
 
+export function startMonitorLocalStorageChanges(allBookmark: AllBookmark) {
+  localStorageAddListener(
+    LOCALSTORAGE_BOOKMARK_KEY,
+    (key, newValue, oldValue) => {
+      const bookmarkJSONs = JSON.parse(newValue) as IBookmarkLocalStorage[];
+      allBookmark.restoreFromLocalStorageJSON(bookmarkJSONs);
+    },
+  );
+  // immediately load once after the monitoring is started
+  localStorageGetItem(LOCALSTORAGE_BOOKMARK_KEY, (value: string) => {
+    const bookmarkJSONs = JSON.parse(value) as IBookmarkLocalStorage[];
+    allBookmark.restoreFromLocalStorageJSON(bookmarkJSONs);
+  });
+}
+
+export function stopMonitorLocalStorageChanges() {
+  localStorageRemoveListener(LOCALSTORAGE_BOOKMARK_KEY);
+}
+
 export function monitorAllBookmarkChange(
   allBookmark: AllBookmark,
   savedBookmarkStore: SavedBookmarkStore,
@@ -60,6 +89,11 @@ export function monitorAllBookmarkChange(
           'curent tabSpace need autoSave, will then saveCurrentAllBookmark',
         );
         saveCurrentAllBookmark();
+      } else {
+        logger.log(
+          'current tabSpace is not on autoSave, will then save bookmarks to localStorage',
+        );
+        saveCurrentAllBookmarkToLocalStorage();
       }
     }
   });
@@ -147,3 +181,11 @@ export const saveCurrentAllBookmark = debounce(
   saveCurrentAllBookmarkImpl,
   DEFAULT_SAVE_DEBOUNCE,
 );
+
+export const saveCurrentAllBookmarkToLocalStorage = () => {
+  const { allBookmark } = getAllBookmarkData();
+  localStoragePutItem(
+    LOCALSTORAGE_BOOKMARK_KEY,
+    JSON.stringify(allBookmark.getLocalStorageJSON()),
+  );
+};

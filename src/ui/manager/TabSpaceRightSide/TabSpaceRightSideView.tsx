@@ -16,6 +16,10 @@ import { loadByTabSpaceId as noteLoadByTabSpaceId } from '../../../data/note/boo
 import { loadByTabSpaceId as todoLoadByTabSpaceId } from '../../../data/todo/bootstrap';
 import { useMemo, useState } from 'react';
 import classes from './TabSpaceRightSideView.module.scss';
+import { isIdNotSaved } from '../../../data/common';
+import { startMonitorLocalStorageChanges as noteStartMonitorLocalStorageChanges } from '../../../data/note/SavedNoteStore';
+import { startMonitorLocalStorageChanges as todoStartMonitorLocalStorageChanges } from '../../../data/todo/SavedTodoStore';
+import { startMonitorLocalStorageChanges as bookmarkStartMonitorLocalStorageChanges } from '../../../data/bookmark/SavedBookmarkStore';
 
 enum RightSideModule {
   TODO = 'todo',
@@ -35,7 +39,11 @@ export const TabSpaceRightSideView = ({
   const rightSideModules = useMemo(() => {
     const todoLoader = async () => {
       await todoLoadByTabSpaceId(tabSpace.id);
-      return getAllTodoData();
+      const allTodoData = getAllTodoData();
+      if (isIdNotSaved(tabSpace.id)) {
+        todoStartMonitorLocalStorageChanges(allTodoData.allTodo);
+      }
+      return allTodoData;
     };
     const TodoWithLoading = getLoadingComponent(
       TodoView,
@@ -45,7 +53,11 @@ export const TabSpaceRightSideView = ({
 
     const bookmarkLoader = async () => {
       await bookmarkLoadByTabSpaceId(tabSpace.id);
-      return getAllBookmarkData();
+      const allBookmarkData = getAllBookmarkData();
+      if (isIdNotSaved(tabSpace.id)) {
+        bookmarkStartMonitorLocalStorageChanges(allBookmarkData.allBookmark);
+      }
+      return allBookmarkData;
     };
     const BookmarkWithLoading = getLoadingComponent(
       BookmarkView,
@@ -55,7 +67,11 @@ export const TabSpaceRightSideView = ({
 
     const noteLoader = async () => {
       await noteLoadByTabSpaceId(tabSpace.id);
-      return getAllNoteData();
+      const allNoteData = getAllNoteData();
+      if (isIdNotSaved(tabSpace.id)) {
+        noteStartMonitorLocalStorageChanges(allNoteData.allNote);
+      }
+      return allNoteData;
     };
     const NotebookWithLoading = getLoadingComponent(
       NotebookView,
@@ -115,6 +131,14 @@ export const TabSpaceRightSideView = ({
   return (
     <ErrorBoundary>
       <div className={classes.container}>
+        {isIdNotSaved(tabSpace.id) ? (
+          <div className={classes.localStorageWarning}>
+            Using local storage for saving data from tools here. To save with
+            current Tabverse, simply save Tabverse.
+          </div>
+        ) : (
+          ''
+        )}
         {pinned !== null ? (
           <div className={classes.tabsContainer}>
             <Button

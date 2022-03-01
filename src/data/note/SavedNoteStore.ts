@@ -1,4 +1,10 @@
-import { AllNote, IAllNoteSavePayload, INoteJSON, Note } from './Note';
+import {
+  AllNote,
+  IAllNoteSavePayload,
+  INoteJSON,
+  INoteLocalStorage,
+  Note,
+} from './Note';
 import {
   DEFAULT_SAVE_DEBOUNCE,
   InSavingStatus,
@@ -16,6 +22,15 @@ import { db } from '../../store/db';
 import { getAllNoteData } from './bootstrap';
 import { getTabSpaceData } from '../tabSpace/bootstrap';
 import { observe } from 'mobx';
+import {
+  getLocalStorageKey,
+  localStorageAddListener,
+  localStorageGetItem,
+  localStoragePutItem,
+  localStorageRemoveListener,
+} from '../../store/localStorageWrapper';
+
+export const LOCALSTORAGE_NOTE_KEY = getLocalStorageKey('note');
 
 export class SavedNoteStore extends SavedStore {}
 
@@ -41,6 +56,22 @@ export function monitorTabSpaceChanges(allNote: AllNote) {
   });
 }
 
+export function startMonitorLocalStorageChanges(allNote: AllNote) {
+  localStorageAddListener(LOCALSTORAGE_NOTE_KEY, (key, newValue, oldValue) => {
+    const noteJSONs = JSON.parse(newValue) as INoteLocalStorage[];
+    allNote.restoreFromLocalStorageJSON(noteJSONs);
+  });
+  // immediately load once after the monitoring is started
+  localStorageGetItem(LOCALSTORAGE_NOTE_KEY, (value: string) => {
+    const noteJSONs = JSON.parse(value) as INoteLocalStorage[];
+    allNote.restoreFromLocalStorageJSON(noteJSONs);
+  });
+}
+
+export function stopMonitorLocalStorageChanges() {
+  localStorageRemoveListener(LOCALSTORAGE_NOTE_KEY);
+}
+
 export function monitorAllNoteChange(
   allNote: AllNote,
   savedNoteStore: SavedNoteStore,
@@ -55,6 +86,11 @@ export function monitorAllNoteChange(
           'current tabSpace need autoSave, will then saveCurrentAllNote',
         );
         saveCurrentAllNote();
+      } else {
+        logger.log(
+          'current tabSpace is not on autoSave, will then save notes to localStorage',
+        );
+        saveCurrentAllNodeToLocalStorage();
       }
     }
   });
@@ -116,3 +152,11 @@ export const saveCurrentAllNote = debounce(
   saveCurrentAllNoteImpl,
   DEFAULT_SAVE_DEBOUNCE,
 );
+
+const saveCurrentAllNodeToLocalStorage = async () => {
+  const { allNote } = getAllNoteData();
+  localStoragePutItem(
+    LOCALSTORAGE_NOTE_KEY,
+    JSON.stringify(allNote.getLocalStorageJSON()),
+  );
+};

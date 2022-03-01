@@ -23,11 +23,9 @@ import { bootstrap as noteBootstrap } from '../data/note/bootstrap';
 import { renderPage } from './common/base';
 import { bootstrap as savedChromeSessionBootstrap } from '../data/chromeSession/bootstrap';
 import { bootstrap as storeBootstrap } from '../store/bootstrap';
-import {
-  addTabSpace as tabSpaceRegistryAddTabSpace,
-  bootstrap as tabSpaceRegistryServiceBootstrap,
-} from '../tabSpaceRegistry';
+import { bootstrap as tabSpaceRegistryServiceBootstrap } from '../tabSpaceRegistry';
 import { bootstrap as todoBootstrap } from '../data/todo/bootstrap';
+import { localStorageInit } from '../store/localStorageWrapper';
 
 async function bootstrap() {
   const thisTab = await chrome.tabs.getCurrent();
@@ -56,6 +54,7 @@ async function bootstrap() {
     todoBootstrap();
     savedChromeSessionBootstrap();
     fullTextSearchBootstrap();
+    localStorageInit();
 
     switch (queryParams.op) {
       case TabSpaceOp.LoadSaved:

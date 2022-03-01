@@ -30,6 +30,7 @@ import {
 } from './TabSpaceRegistry';
 import { NotNeedPayload } from '../message/message';
 import { getInternState } from './index';
+import { logger } from '../global';
 
 function leaderOnMessageAddTabSpace(
   message: TabSpaceRegistryBroadcastMsg,
@@ -76,7 +77,7 @@ export function destroy() {
 
 async function broadcast(tabSpaceRegistryJSON: TabSpaceRegistryJSON) {
   if (getInternState() !== null) {
-    console.log('will broadcast message:', {
+    logger.log('will broadcast message:', {
       type: TabSpaceRegistryBroadcastMsgType.AnnounceTabSpaceRegistry,
       payload: tabSpaceRegistryJSON,
     });

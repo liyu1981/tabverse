@@ -12,6 +12,7 @@ export interface ITodo extends IBase {
 
 export type ITodoJSON = ITodo;
 export type ITodoSavePayload = ITodoJSON;
+export type ITodoLocalStorage = Pick<ITodoJSON, 'content' | 'completed'>;
 
 export class Todo extends Base implements ITodo {
   tabSpaceId: string;
@@ -81,6 +82,7 @@ export class AllTodo extends Base {
         todos: observable,
         tabSpaceId: observable,
 
+        restoreFromLocalStorageJSON: action,
         addTodo: action,
         updateTodo: action,
         toggle: action,
@@ -105,6 +107,29 @@ export class AllTodo extends Base {
     this.cloneAttributes(otherAllTodo);
     this.todos = List(otherAllTodo.todos);
     this.tabSpaceId = otherAllTodo.tabSpaceId;
+    return this;
+  }
+
+  getLocalStorageJSON(): ITodoLocalStorage[] {
+    return this.todos
+      .map((todo) => {
+        return { content: todo.content, completed: todo.completed };
+      })
+      .toArray();
+  }
+
+  restoreFromLocalStorageJSON(todoJSONs: ITodoLocalStorage[]) {
+    this.todos = List(
+      todoJSONs.map((todoJSON) => {
+        const t = new Todo();
+        t.createdAt = Date.now();
+        t.updatedAt = Date.now();
+        t.tabSpaceId = this.tabSpaceId;
+        t.content = todoJSON.content;
+        t.completed = todoJSON.completed;
+        return t;
+      }),
+    );
     return this;
   }
 

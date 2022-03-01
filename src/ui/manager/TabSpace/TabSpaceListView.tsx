@@ -14,9 +14,12 @@ import { isIdNotSaved } from '../../../data/common';
 import { observer } from 'mobx-react-lite';
 import { saveCurrentTabSpace } from '../../../data/tabSpace/SavedTabSpaceStore';
 import { updateTabSpaceName } from '../../../data/tabSpace/chromeTab';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import classes from './TabSpaceListView.module.scss';
 import { StickyContainer } from '../../common/StickyContainer';
+import { stopMonitorLocalStorageChanges as noteStopMonitorLocalStorageChanges } from '../../../data/note/SavedNoteStore';
+import { stopMonitorLocalStorageChanges as todoStopMonitorLocalStorageChanges } from '../../../data/todo/SavedTodoStore';
+import { stopMonitorLocalStorageChanges as bookmarkStopMonitorLocalStorageChanges } from '../../../data/bookmark/SavedBookmarkStore';
 
 function inBookmark(tab: Tab, allBookmark: AllBookmark): boolean {
   return (
@@ -33,6 +36,18 @@ interface TabSpaceListViewProps {
 export const TabSpaceListView = observer(
   ({ tabSpace, tabPreview, allBookmark }: TabSpaceListViewProps) => {
     const [title, setTitle] = useState(tabSpace.name);
+
+    const onSaveCurrentTabSpace = useMemo(
+      () => () => {
+        if (isIdNotSaved(tabSpace.id)) {
+          noteStopMonitorLocalStorageChanges();
+          todoStopMonitorLocalStorageChanges();
+          bookmarkStopMonitorLocalStorageChanges();
+        }
+        saveCurrentTabSpace();
+      },
+      [],
+    );
 
     const tabEntries = tabSpace.tabIds.map((tabId) => {
       const tab = tabSpace.findTabById(tabId);
@@ -78,7 +93,7 @@ export const TabSpaceListView = observer(
             icon="floppy-disk"
             intent={isIdNotSaved(tabSpace.id) ? Intent.PRIMARY : Intent.NONE}
             minimal={isIdNotSaved(tabSpace.id) ? false : true}
-            onClick={() => saveCurrentTabSpace()}
+            onClick={onSaveCurrentTabSpace}
           />
         </div>
       </div>

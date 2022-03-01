@@ -12,6 +12,7 @@ export interface INote extends IBase {
 
 export type INoteJSON = INote;
 export type INoteSavePayload = INoteJSON;
+export type INoteLocalStorage = Pick<INoteJSON, 'name' | 'data'>;
 
 export class Note extends Base implements INote {
   tabSpaceId: string;
@@ -99,6 +100,7 @@ export class AllNote extends Base {
       extend(Base.getMakeObservableDef(), {
         notes: observable,
 
+        restoreFromLocalStorageJSON: action,
         addNote: action,
         updateNote: action,
         removeNote: action,
@@ -127,6 +129,29 @@ export class AllNote extends Base {
 
   findNoteIndex(id: string) {
     return this.notes.findIndex((note) => note.id === id);
+  }
+
+  getLocalStorageJSON(): INoteLocalStorage[] {
+    return this.notes
+      .map((note) => {
+        return { name: note.name, data: note.data };
+      })
+      .toArray();
+  }
+
+  restoreFromLocalStorageJSON(noteJSONs: INoteLocalStorage[]) {
+    this.notes = List(
+      noteJSONs.map((noteJSON) => {
+        const n = new Note();
+        n.createdAt = Date.now();
+        n.updatedAt = Date.now();
+        n.tabSpaceId = this.tabSpaceId;
+        n.name = noteJSON.name;
+        n.data = noteJSON.data;
+        return n.makeImmutable();
+      }),
+    );
+    return this;
   }
 
   addNote(n: Note) {
