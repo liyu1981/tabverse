@@ -1,16 +1,18 @@
 import { AllNote, Note } from './Note';
 import {
   SavedNoteStore,
+  loadCurrentAllNoteFromLocalStorage,
   monitorAllNoteChange,
   monitorTabSpaceChanges,
   queryAllNote,
 } from './SavedNoteStore';
+import { exposeDebugData, isJestTest } from '../../debug';
 
 import { NotTabSpaceId } from '../chromeSession/ChromeSession';
 import { addPagingToQueryParams } from '../../store/store';
 import { strict as assert } from 'assert';
-import { exposeDebugData } from '../../debug';
 import { getSavedStoreManager } from '../../store/bootstrap';
+import { isIdNotSaved } from '../common';
 
 export interface AllNoteData {
   allNote: Readonly<AllNote>;
@@ -38,11 +40,15 @@ export function bootstrap() {
 export async function loadByTabSpaceId(tabSpaceId: string) {
   const { allNote, savedNoteStore } = getAllNoteData();
 
-  const loadedAllNote = await queryAllNote(
-    tabSpaceId,
-    addPagingToQueryParams({}),
-  );
-  allNote.copy(loadedAllNote);
+  if (isIdNotSaved(tabSpaceId) && !isJestTest()) {
+    await loadCurrentAllNoteFromLocalStorage(allNote);
+  } else {
+    const loadedAllNote = await queryAllNote(
+      tabSpaceId,
+      addPagingToQueryParams({}),
+    );
+    allNote.copy(loadedAllNote);
+  }
 
   const latestSavedTime =
     allNote.notes.max((na: Note, nb: Note) =>

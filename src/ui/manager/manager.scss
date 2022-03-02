@@ -13,3 +13,7 @@ body {
 :global(.bp3-button) {
   border-radius: 18px;
 }
+
+:global(.bp3-card):global(.bp3-interactive):hover {
+  box-shadow: 0 2px 4px rgb(16 22 26 / 20%), 0 8px 24px rgb(16 22 26 / 20%);
+}

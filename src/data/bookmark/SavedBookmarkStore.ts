@@ -16,12 +16,6 @@ import {
   subscribePubSubMessage,
 } from '../../message/message';
 import { debounce, logger } from '../../global';
-
-import { IDatabaseChange } from 'dexie-observable/api';
-import { db } from '../../store/db';
-import { getAllBookmarkData } from './bootstrap';
-import { getTabSpaceData } from '../tabSpace/bootstrap';
-import { observe } from 'mobx';
 import {
   getLocalStorageKey,
   localStorageAddListener,
@@ -29,6 +23,12 @@ import {
   localStoragePutItem,
   localStorageRemoveListener,
 } from '../../store/localStorageWrapper';
+
+import { IDatabaseChange } from 'dexie-observable/api';
+import { db } from '../../store/db';
+import { getAllBookmarkData } from './bootstrap';
+import { getTabSpaceData } from '../tabSpace/bootstrap';
+import { observe } from 'mobx';
 
 export const LOCALSTORAGE_BOOKMARK_KEY = getLocalStorageKey('bookmark');
 
@@ -65,10 +65,7 @@ export function startMonitorLocalStorageChanges(allBookmark: AllBookmark) {
     },
   );
   // immediately load once after the monitoring is started
-  localStorageGetItem(LOCALSTORAGE_BOOKMARK_KEY, (value: string) => {
-    const bookmarkJSONs = JSON.parse(value) as IBookmarkLocalStorage[];
-    allBookmark.restoreFromLocalStorageJSON(bookmarkJSONs);
-  });
+  loadCurrentAllBookmarkFromLocalStorage(allBookmark);
 }
 
 export function stopMonitorLocalStorageChanges() {
@@ -182,10 +179,22 @@ export const saveCurrentAllBookmark = debounce(
   DEFAULT_SAVE_DEBOUNCE,
 );
 
-export const saveCurrentAllBookmarkToLocalStorage = () => {
+export function saveCurrentAllBookmarkToLocalStorage() {
   const { allBookmark } = getAllBookmarkData();
   localStoragePutItem(
     LOCALSTORAGE_BOOKMARK_KEY,
     JSON.stringify(allBookmark.getLocalStorageJSON()),
   );
-};
+}
+
+export async function loadCurrentAllBookmarkFromLocalStorage(
+  allBookmark: AllBookmark,
+) {
+  return new Promise<void>((resolve, reject) =>
+    localStorageGetItem(LOCALSTORAGE_BOOKMARK_KEY, (value: string) => {
+      const bookmarkJSONs = JSON.parse(value) as IBookmarkLocalStorage[];
+      allBookmark.restoreFromLocalStorageJSON(bookmarkJSONs);
+      resolve();
+    }),
+  );
+}

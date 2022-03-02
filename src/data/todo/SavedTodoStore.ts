@@ -16,12 +16,6 @@ import {
   subscribePubSubMessage,
 } from '../../message/message';
 import { debounce, logger } from '../../global';
-
-import { IDatabaseChange } from 'dexie-observable/api';
-import { db } from '../../store/db';
-import { getAllTodoData } from './bootstrap';
-import { getTabSpaceData } from '../tabSpace/bootstrap';
-import { observe } from 'mobx';
 import {
   getLocalStorageKey,
   localStorageAddListener,
@@ -29,6 +23,12 @@ import {
   localStoragePutItem,
   localStorageRemoveListener,
 } from '../../store/localStorageWrapper';
+
+import { IDatabaseChange } from 'dexie-observable/api';
+import { db } from '../../store/db';
+import { getAllTodoData } from './bootstrap';
+import { getTabSpaceData } from '../tabSpace/bootstrap';
+import { observe } from 'mobx';
 
 export const LOCALSTORAGE_TODO_KEY = getLocalStorageKey('todo');
 
@@ -56,16 +56,13 @@ export function monitorTabSpaceChanges(allTodo: AllTodo) {
   });
 }
 
-export function startMonitorLocalStorageChanges(allNote: AllTodo) {
+export function startMonitorLocalStorageChanges(allTodo: AllTodo) {
   localStorageAddListener(LOCALSTORAGE_TODO_KEY, (key, newValue, oldValue) => {
     const todoJSONs = JSON.parse(newValue) as ITodoLocalStorage[];
-    allNote.restoreFromLocalStorageJSON(todoJSONs);
+    allTodo.restoreFromLocalStorageJSON(todoJSONs);
   });
   // immediately load once after the monitoring is started
-  localStorageGetItem(LOCALSTORAGE_TODO_KEY, (value: string) => {
-    const todoJSONs = JSON.parse(value) as ITodoLocalStorage[];
-    allNote.restoreFromLocalStorageJSON(todoJSONs);
-  });
+  loadCurrentAllTodoFromLocalStorage(allTodo);
 }
 
 export function stopMonitorLocalStorageChanges() {
@@ -153,10 +150,20 @@ export const saveCurrentAllTodo: () => void | Promise<void> = debounce(
   DEFAULT_SAVE_DEBOUNCE,
 );
 
-export const saveCurrentAllTodoToLocalStorage = () => {
+export function saveCurrentAllTodoToLocalStorage() {
   const { allTodo } = getAllTodoData();
   localStoragePutItem(
     LOCALSTORAGE_TODO_KEY,
     JSON.stringify(allTodo.getLocalStorageJSON()),
   );
-};
+}
+
+export async function loadCurrentAllTodoFromLocalStorage(allTodo: AllTodo) {
+  return new Promise<void>((resolve, reject) => {
+    localStorageGetItem(LOCALSTORAGE_TODO_KEY, (value: string) => {
+      const todoJSONs = JSON.parse(value) as ITodoLocalStorage[];
+      allTodo.restoreFromLocalStorageJSON(todoJSONs);
+      resolve();
+    });
+  });
+}

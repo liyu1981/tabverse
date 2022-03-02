@@ -1,16 +1,18 @@
 import { AllBookmark, Bookmark, IBookmarkJSON } from './Bookmark';
 import {
   SavedBookmarkStore,
+  loadCurrentAllBookmarkFromLocalStorage,
   monitorAllBookmarkChange,
   monitorTabSpaceChanges,
   queryAllBookmark,
 } from './SavedBookmarkStore';
+import { exposeDebugData, isJestTest } from '../../debug';
 
 import { NotTabSpaceId } from '../chromeSession/ChromeSession';
 import { addPagingToQueryParams } from '../../store/store';
 import { strict as assert } from 'assert';
-import { exposeDebugData } from '../../debug';
 import { getSavedStoreManager } from '../../store/bootstrap';
+import { isIdNotSaved } from '../common';
 
 export interface AllBookmarkData {
   allBookmark: Readonly<AllBookmark>;
@@ -39,11 +41,15 @@ export function bootstrap() {
 
 export async function loadByTabSpaceId(tabSpaceId: string) {
   const { allBookmark, savedBookmarkStore } = getAllBookmarkData();
-  const loadedAllBookmark = await queryAllBookmark(
-    tabSpaceId,
-    addPagingToQueryParams({}),
-  );
-  allBookmark.copy(loadedAllBookmark);
+  if (isIdNotSaved(tabSpaceId) && !isJestTest()) {
+    await loadCurrentAllBookmarkFromLocalStorage(allBookmark);
+  } else {
+    const loadedAllBookmark = await queryAllBookmark(
+      tabSpaceId,
+      addPagingToQueryParams({}),
+    );
+    allBookmark.copy(loadedAllBookmark);
+  }
 
   const latestSavedTime =
     allBookmark.bookmarks.max((ba: Bookmark, bb: Bookmark) =>

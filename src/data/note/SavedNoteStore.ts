@@ -16,12 +16,6 @@ import {
   subscribePubSubMessage,
 } from '../../message/message';
 import { debounce, logger } from '../../global';
-
-import { IDatabaseChange } from 'dexie-observable/api';
-import { db } from '../../store/db';
-import { getAllNoteData } from './bootstrap';
-import { getTabSpaceData } from '../tabSpace/bootstrap';
-import { observe } from 'mobx';
 import {
   getLocalStorageKey,
   localStorageAddListener,
@@ -29,6 +23,12 @@ import {
   localStoragePutItem,
   localStorageRemoveListener,
 } from '../../store/localStorageWrapper';
+
+import { IDatabaseChange } from 'dexie-observable/api';
+import { db } from '../../store/db';
+import { getAllNoteData } from './bootstrap';
+import { getTabSpaceData } from '../tabSpace/bootstrap';
+import { observe } from 'mobx';
 
 export const LOCALSTORAGE_NOTE_KEY = getLocalStorageKey('note');
 
@@ -62,10 +62,7 @@ export function startMonitorLocalStorageChanges(allNote: AllNote) {
     allNote.restoreFromLocalStorageJSON(noteJSONs);
   });
   // immediately load once after the monitoring is started
-  localStorageGetItem(LOCALSTORAGE_NOTE_KEY, (value: string) => {
-    const noteJSONs = JSON.parse(value) as INoteLocalStorage[];
-    allNote.restoreFromLocalStorageJSON(noteJSONs);
-  });
+  loadCurrentAllNoteFromLocalStorage(allNote);
 }
 
 export function stopMonitorLocalStorageChanges() {
@@ -90,7 +87,7 @@ export function monitorAllNoteChange(
         logger.log(
           'current tabSpace is not on autoSave, will then save notes to localStorage',
         );
-        saveCurrentAllNodeToLocalStorage();
+        saveCurrentAllNoteToLocalStorage();
       }
     }
   });
@@ -153,10 +150,20 @@ export const saveCurrentAllNote = debounce(
   DEFAULT_SAVE_DEBOUNCE,
 );
 
-const saveCurrentAllNodeToLocalStorage = async () => {
+function saveCurrentAllNoteToLocalStorage() {
   const { allNote } = getAllNoteData();
   localStoragePutItem(
     LOCALSTORAGE_NOTE_KEY,
     JSON.stringify(allNote.getLocalStorageJSON()),
   );
-};
+}
+
+export async function loadCurrentAllNoteFromLocalStorage(allNote: AllNote) {
+  return new Promise<void>((resolve, reject) =>
+    localStorageGetItem(LOCALSTORAGE_NOTE_KEY, (value: string) => {
+      const noteJSONs = JSON.parse(value) as INoteLocalStorage[];
+      allNote.restoreFromLocalStorageJSON(noteJSONs);
+      resolve();
+    }),
+  );
+}
