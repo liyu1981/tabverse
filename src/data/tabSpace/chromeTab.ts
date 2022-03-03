@@ -1,4 +1,9 @@
-import { isTabSpaceManagerPage, logger } from '../../global';
+import { debounce, isTabSpaceManagerPage, logger } from '../../global';
+import {
+  getTabSpaceRegistry,
+  removeTabSpace as tabSpaceRegistryRemoveTabSpace,
+  updateTabSpace as tabSpaceRegistryUpdateTabSpace,
+} from '../../tabSpaceRegistry';
 
 import { ITabSpaceData } from './bootstrap';
 import { Tab } from './Tab';
@@ -6,11 +11,8 @@ import { TabPreview } from './TabPreview';
 import { TabSpace } from './TabSpace';
 import { getUnsavedNewId } from '../common';
 import { isJestTest } from '../../debug';
-import {
-  getTabSpaceRegistry,
-  removeTabSpace as tabSpaceRegistryRemoveTabSpace,
-  updateTabSpace as tabSpaceRegistryUpdateTabSpace,
-} from '../../tabSpaceRegistry';
+
+const CHROME_TAB_DEBOUNCE_TIME = 500;
 
 export async function scanCurrentTabs(tabSpaceData: ITabSpaceData) {
   const { tabSpace } = tabSpaceData;
@@ -150,7 +152,7 @@ export function updateTabSpaceName(tabSpace: TabSpace, newName: string) {
   });
 }
 
-export function onChromeTabAttached(tabSpaceData: ITabSpaceData) {
+export function getOnChromeTabAttached(tabSpaceData: ITabSpaceData) {
   const { tabSpace, tabPreview } = tabSpaceData;
   async function tabSpaceAction(
     chromeTabId: number,
@@ -203,7 +205,7 @@ export function onChromeTabAttached(tabSpaceData: ITabSpaceData) {
   };
 }
 
-export function onChromeTabCreated(tabSpaceData: ITabSpaceData) {
+export function getOnChromeTabCreated(tabSpaceData: ITabSpaceData) {
   const { tabSpace } = tabSpaceData;
   async function normalTabAction(tab: chrome.tabs.Tab) {
     const t = Tab.fromILiveTab({
@@ -222,7 +224,7 @@ export function onChromeTabCreated(tabSpaceData: ITabSpaceData) {
   };
 }
 
-export function onChromeTabDetached(tabSpaceData: ITabSpaceData) {
+export function getOnChromeTabDetached(tabSpaceData: ITabSpaceData) {
   const { tabSpace, tabPreview } = tabSpaceData;
 
   function normalTabAction(
@@ -251,7 +253,7 @@ export function onChromeTabDetached(tabSpaceData: ITabSpaceData) {
   };
 }
 
-export function onChromeTabRemoved(tabSpaceData: ITabSpaceData) {
+export function getOnChromeTabRemoved(tabSpaceData: ITabSpaceData) {
   const { tabSpace, tabPreview } = tabSpaceData;
 
   const tabSpaceAction = (
@@ -286,7 +288,7 @@ export function onChromeTabRemoved(tabSpaceData: ITabSpaceData) {
   };
 }
 
-function onChromeTabReplaced(tabSpaceData: ITabSpaceData) {
+function getOnChromeTabReplaced(tabSpaceData: ITabSpaceData) {
   const { tabSpace } = tabSpaceData;
 
   async function normalTabAction(addedTabId: number, removedTabId: number) {
@@ -314,7 +316,7 @@ function onChromeTabReplaced(tabSpaceData: ITabSpaceData) {
   };
 }
 
-function onChromeTabUpdated(tabSpaceData: ITabSpaceData) {
+function getOnChromeTabUpdated(tabSpaceData: ITabSpaceData) {
   const { tabSpace, tabPreview } = tabSpaceData;
 
   async function tabSpaceAction(
@@ -359,11 +361,18 @@ function onChromeTabUpdated(tabSpaceData: ITabSpaceData) {
       tabSpaceAction(tabId, changeInfo);
       return;
     }
-    normalTabAction(tabId, changeInfo);
+
+    // debounce tab update because app like workplace chat will update table
+    // titles frequently when there is new message.
+    const debouncedNormalTabAction = debounce(
+      () => normalTabAction(tabId, changeInfo),
+      CHROME_TAB_DEBOUNCE_TIME,
+    );
+    debouncedNormalTabAction();
   };
 }
 
-function onChromeTabMoved(tabSpaceData: ITabSpaceData) {
+function getOnChromeTabMoved(tabSpaceData: ITabSpaceData) {
   const { tabSpace } = tabSpaceData;
   async function normalTabAction(
     tabId: number,
@@ -381,7 +390,7 @@ function onChromeTabMoved(tabSpaceData: ITabSpaceData) {
   };
 }
 
-function onChromeTabActivated(tabSpaceData: ITabSpaceData) {
+function getOnChromeTabActivated(tabSpaceData: ITabSpaceData) {
   const { tabSpace, tabPreview } = tabSpaceData;
   async function normalTabAction(activeInfo: chrome.tabs.TabActiveInfo) {
     doCapturePreview(tabPreview, activeInfo.tabId, activeInfo.windowId);
@@ -401,12 +410,12 @@ function onChromeTabActivated(tabSpaceData: ITabSpaceData) {
 }
 
 export function startMonitorTabChanges(tabSpaceData: ITabSpaceData) {
-  chrome.tabs.onAttached.addListener(onChromeTabAttached(tabSpaceData));
-  chrome.tabs.onCreated.addListener(onChromeTabCreated(tabSpaceData));
-  chrome.tabs.onDetached.addListener(onChromeTabDetached(tabSpaceData));
-  chrome.tabs.onRemoved.addListener(onChromeTabRemoved(tabSpaceData));
-  chrome.tabs.onReplaced.addListener(onChromeTabReplaced(tabSpaceData));
-  chrome.tabs.onUpdated.addListener(onChromeTabUpdated(tabSpaceData));
-  chrome.tabs.onMoved.addListener(onChromeTabMoved(tabSpaceData));
-  chrome.tabs.onActivated.addListener(onChromeTabActivated(tabSpaceData));
+  chrome.tabs.onAttached.addListener(getOnChromeTabAttached(tabSpaceData));
+  chrome.tabs.onCreated.addListener(getOnChromeTabCreated(tabSpaceData));
+  chrome.tabs.onDetached.addListener(getOnChromeTabDetached(tabSpaceData));
+  chrome.tabs.onRemoved.addListener(getOnChromeTabRemoved(tabSpaceData));
+  chrome.tabs.onReplaced.addListener(getOnChromeTabReplaced(tabSpaceData));
+  chrome.tabs.onUpdated.addListener(getOnChromeTabUpdated(tabSpaceData));
+  chrome.tabs.onMoved.addListener(getOnChromeTabMoved(tabSpaceData));
+  chrome.tabs.onActivated.addListener(getOnChromeTabActivated(tabSpaceData));
 }
