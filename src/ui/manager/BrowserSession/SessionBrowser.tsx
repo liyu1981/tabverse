@@ -1,9 +1,8 @@
-import * as React from 'react';
-
 import {
   IDisplaySavedSessionGroup,
   deleteSavedSession,
 } from '../../../data/chromeSession/sessionStore';
+import React, { useState } from 'react';
 
 import { IChromeSessionSavePayload } from '../../../data/chromeSession/ChromeSession';
 import { LoadStatus } from '../../../global';
@@ -14,7 +13,6 @@ import { SessionSelector } from './SessionSelector';
 import classes from './SessionBrowser.module.scss';
 import { observer } from 'mobx-react-lite';
 import { useAsyncEffect } from '../../common/useAsyncEffect';
-import { useState } from 'react';
 
 function selectFirstSession(savedSessionGroups: IDisplaySavedSessionGroup[]) {
   if (

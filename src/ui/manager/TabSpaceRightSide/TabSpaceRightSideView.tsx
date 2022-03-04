@@ -1,7 +1,5 @@
-import * as React from 'react';
-
 import { Tab as BPTab, Tabs as BPTabs, Button, Icon } from '@blueprintjs/core';
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { BookmarkView } from '../../bookmark/BookmarkView';
 import { ErrorBoundary } from '../../common/ErrorBoundary';

@@ -1,18 +1,17 @@
-import * as React from 'react';
-
 import { IManagerQueryParams, ManagerViewRoute } from '../ManagerView';
-import { getTabSpaceData } from '../../../data/tabSpace/bootstrap';
 
 import { BottomNav } from '../BottomNav/BottomNav';
 import { BrowserSession } from './BrowserSession';
 import { ErrorBoundary } from '../../common/ErrorBoundary';
 import { Icon } from '@blueprintjs/core';
 import { LiveTabSpace } from './LiveTabSpace';
+import React from 'react';
 import { SavedTabSpace } from './SavedTabSpace';
 import { TabSpaceLogo } from '../../common/TabSpaceLogo';
 import classes from './Sidebar.module.scss';
 import clsx from 'clsx';
 import { getAllChromeSessionData } from '../../../data/chromeSession/bootstrap';
+import { getTabSpaceData } from '../../../data/tabSpace/bootstrap';
 import { getTabSpaceRegistry } from '../../../tabSpaceRegistry';
 
 export interface ISidebarComponentProps {

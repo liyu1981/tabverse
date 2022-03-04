@@ -4,6 +4,7 @@
 .container {
   margin-left: 2px;
   margin-top: 20px;
+  margin-right: 22px;
 }
 
 .tabEntriesContainer {
@@ -36,21 +37,35 @@
 .toolbarContainer {
   width: 100%;
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   min-height: 40px;
 }
 
 .toolbarLeftContainer {
   display: flex;
-  width: 100%;
+}
+
+.toolbarMiddleContainer {
+  background: global.$color-d;
+  color: global.$color-c;
+  padding: 4px 18px;
+  border-radius: 20px;
+}
+
+.toolbarMiddleContainer .selectedTabsToolbarInfo {
+  margin-right: 18px;
+}
+
+.toolbarMiddleContainer .selectedTabsToolbarToolControl :global(.bp3-button) {
+  background-image: none;
+  background-color: global.$color-c;
+  color: global.$color-d;
 }
 
 .toolbarRightContainer {
   display: flex;
-  min-width: 200px;
   text-align: start;
-  direction: rtl;
 }
 
 .editableTextFullwidth {

@@ -1,6 +1,5 @@
-import * as Moment from 'moment';
-import * as React from 'react';
-
+import Moment from 'moment';
+import React from 'react';
 import { Tooltip2 } from '@blueprintjs/popover2';
 import { getSavedStoreManager } from '../../../store/bootstrap';
 import { observer } from 'mobx-react-lite';

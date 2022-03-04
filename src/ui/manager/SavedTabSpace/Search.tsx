@@ -1,13 +1,11 @@
-import * as React from 'react';
-
 import { FIELD_ALL, Query, TYPE_ALL } from '../../../fullTextSearch';
+import React, { useMemo } from 'react';
 import {
   SearchableField,
   SearchableType,
 } from '../../../background/fullTextSearch/addToIndex';
 
 import { SearchInput as FullTextSearchInput } from '../../../fullTextSearch/SearchInput';
-import { useMemo } from 'react';
 
 export interface SearchInputProps {
   query: Query;

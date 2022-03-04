@@ -1,21 +1,19 @@
-import * as Moment from 'moment';
-import * as React from 'react';
-
 import { Alignment, Button, ButtonGroup } from '@blueprintjs/core';
+import React, { useMemo } from 'react';
 import {
   SavedTabSpaceStore,
   deleteSavedTabSpace,
 } from '../../../data/tabSpace/SavedTabSpaceStore';
 
+import { ISavedTab } from '../../../data/tabSpace/Tab';
+import Moment from 'moment';
 import { TabCard } from '../TabSpace/TabCard';
 import { TabSpace } from '../../../data/tabSpace/TabSpace';
 import { TabSpaceId } from '../../../message/message';
 import classes from './SavedTabSpaceDetail.module.scss';
+import { createNewChromeWindowWithTab } from '../BrowserSession/util';
 import { logger } from '../../../global';
 import { observer } from 'mobx-react-lite';
-import { ISavedTab } from '../../../data/tabSpace/Tab';
-import { useMemo } from 'react';
-import { createNewChromeWindowWithTab } from '../BrowserSession/util';
 
 interface ISavedTabSpaceDetailProps {
   opened: boolean;

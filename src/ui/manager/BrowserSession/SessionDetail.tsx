@@ -1,5 +1,3 @@
-import * as React from 'react';
-
 import { Button, Icon, Tree, TreeNodeInfo } from '@blueprintjs/core';
 import {
   ChromeSession,
@@ -7,14 +5,14 @@ import {
   IChromeWindow,
   NotTabSpaceTabId,
 } from '../../../data/chromeSession/ChromeSession';
+import React, { useEffect, useState } from 'react';
 import { clone, reduce } from 'lodash';
 import { restoreTab, restoreWindow } from './util';
-import { useEffect, useState } from 'react';
 
 import { ITabSpaceMap } from '../../../data/chromeSession/sessionStore';
-import classes from './SessionDetail.module.scss';
 import { IndicatorLine } from '../../common/IndicatorLine';
-import * as Moment from 'moment';
+import Moment from 'moment';
+import classes from './SessionDetail.module.scss';
 import clsx from 'clsx';
 
 function getDomainFromUrl(urlString: string) {

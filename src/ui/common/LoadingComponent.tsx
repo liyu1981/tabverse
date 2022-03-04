@@ -1,8 +1,7 @@
-import * as React from 'react';
+import React, { useState } from 'react';
 
 import { LoadStatus } from '../../global';
 import { useAsyncEffect } from './useAsyncEffect';
-import { useState } from 'react';
 
 export function getLoadingComponent(
   component: React.FC<any>,

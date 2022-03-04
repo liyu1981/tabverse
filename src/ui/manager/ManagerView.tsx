@@ -1,10 +1,11 @@
 import '../common/reactdev';
 import './manager.scss';
 
-import * as React from 'react';
-
-import { getTabSpaceData } from '../../data/tabSpace/bootstrap';
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  getTabSpaceRegistry,
+  addTabSpace as tabSpaceRegistryAddTabSpace,
+} from '../../tabSpaceRegistry';
 
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { SavedTabSpace } from './SavedTabSpace/SavedTabSpace';
@@ -14,10 +15,7 @@ import { SidebarContainer } from '../common/SidebarContainer';
 import { TabSpaceView } from './TabSpace/TabSpaceView';
 import { getAllBookmarkData } from '../../data/bookmark/bootstrap';
 import { getAllChromeSessionData } from '../../data/chromeSession/bootstrap';
-import {
-  addTabSpace as tabSpaceRegistryAddTabSpace,
-  getTabSpaceRegistry,
-} from '../../tabSpaceRegistry';
+import { getTabSpaceData } from '../../data/tabSpace/bootstrap';
 
 export interface IManagerQueryParams {
   op: string;

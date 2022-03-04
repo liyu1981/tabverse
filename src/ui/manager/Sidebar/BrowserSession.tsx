@@ -1,12 +1,11 @@
-import * as Moment from 'moment';
-import * as React from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { ISidebarComponentProps } from './Sidebar';
+import Moment from 'moment';
 import { SavedChromeSessionCollection } from '../../../data/chromeSession/SavedChromeSessionCollection';
+import classes from './BrowserSession.module.scss';
 import { observer } from 'mobx-react-lite';
 import { sum } from 'lodash';
-import classes from './BrowserSession.module.scss';
-import { useEffect, useState } from 'react';
 
 export type IBrowserSessionProps = ISidebarComponentProps & {
   savedChromeSessionCollection: SavedChromeSessionCollection;

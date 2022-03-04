@@ -1,11 +1,9 @@
-import * as React from 'react';
-
 import { Button, Collapse, EditableText, Icon } from '@blueprintjs/core';
 import { EditorState, convertFromRaw, convertToRaw } from 'draft-js';
 import { INote, Note } from '../../data/note/Note';
+import React, { useState } from 'react';
 
 import { DraftRichEditor } from './DraftRichEditor';
-import { useState } from 'react';
 import classes from './Note.module.scss';
 
 export interface INoteViewProps {

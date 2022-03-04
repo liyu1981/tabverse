@@ -1,5 +1,4 @@
-import * as React from 'react';
-
+import React from 'react';
 import classes from './FavIcon.module.scss';
 import clsx from 'clsx';
 

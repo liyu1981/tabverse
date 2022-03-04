@@ -1,6 +1,3 @@
-import * as Moment from 'moment';
-import * as React from 'react';
-
 import {
   Button,
   ControlGroup,
@@ -13,10 +10,11 @@ import {
   IChromeSessionSavePayload,
   NotSessionId,
 } from '../../../data/chromeSession/ChromeSession';
+import React, { useState } from 'react';
 import { flatten, uniq } from 'lodash';
 
 import { IDisplaySavedSessionGroup } from '../../../data/chromeSession/sessionStore';
-import { useState } from 'react';
+import Moment from 'moment';
 import classes from './SessionSelector.module.scss';
 import clsx from 'clsx';
 

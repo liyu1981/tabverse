@@ -1,19 +1,17 @@
-import * as React from 'react';
-
-import { Tag, Tree, TreeNodeInfo } from '@blueprintjs/core';
-
-import { ISidebarComponentProps } from './Sidebar';
-import { TabSpace } from '../../../data/tabSpace/TabSpace';
+import React, { useMemo } from 'react';
 import {
   TabSpaceRegistry,
   TabSpaceStub,
 } from '../../../tabSpaceRegistry/TabSpaceRegistry';
+import { Tag, Tree, TreeNodeInfo } from '@blueprintjs/core';
+
+import { ISidebarComponentProps } from './Sidebar';
+import { TabSpace } from '../../../data/tabSpace/TabSpace';
 import classes from './LiveTabSpace.module.scss';
 import { concat } from 'lodash';
 import { isIdNotSaved } from '../../../data/common';
 import { observer } from 'mobx-react-lite';
 import { switchToTabSpaceUtil } from '../../../data/tabSpace/chromeUtil';
-import { useMemo } from 'react';
 
 export type ILiveTabSpaceProps = ISidebarComponentProps & {
   tabSpace: TabSpace;

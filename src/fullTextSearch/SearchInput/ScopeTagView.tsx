@@ -1,9 +1,8 @@
-import * as React from 'react';
-
 import { Intent, Menu, MenuItem, Tag, TagProps } from '@blueprintjs/core';
 import { QueryScope, QueryScopeMap } from '..';
 
 import { Popover2 } from '@blueprintjs/popover2';
+import React from 'react';
 import classes from './ScopeTagView.module.scss';
 
 export type ScopeTagViewProps = TagProps & {

@@ -1,5 +1,4 @@
-import * as React from 'react';
-
+import React from 'react';
 import { Spinner } from '@blueprintjs/core';
 import classes from './LoadingSpinner.module.scss';
 import clsx from 'clsx';

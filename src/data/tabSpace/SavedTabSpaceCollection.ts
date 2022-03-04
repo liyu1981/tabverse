@@ -1,25 +1,24 @@
-import * as Moment from 'moment';
-
 import {
-  calcCursorBegin,
   EmptyQuery,
   IFullTextSearchCursor,
   Query,
+  calcCursorBegin,
 } from '../../fullTextSearch';
 import { LoadStatus, perfEnd, perfStart } from '../../global';
 import {
   QUERY_PAGE_LIMIT_DEFAULT,
   addPagingToQueryParams,
 } from '../../store/store';
-import { TabSpaceStub } from '../../tabSpaceRegistry/TabSpaceRegistry';
 import { action, computed, makeObservable, observable } from 'mobx';
 
+import Moment from 'moment';
 import { TabSpace } from './TabSpace';
+import { TabSpaceStub } from '../../tabSpaceRegistry/TabSpaceRegistry';
+import { getTabSpaceData } from './bootstrap';
+import { getTabSpaceRegistry } from '../../tabSpaceRegistry';
 import { isIdNotSaved } from '../common';
 import { querySavedTabSpace } from './SavedTabSpaceStore';
 import { searchSavedTabSpace } from '../../background/fullTextSearch/search';
-import { getTabSpaceData } from './bootstrap';
-import { getTabSpaceRegistry } from '../../tabSpaceRegistry';
 
 export enum SortMethods {
   CREATED = 0,

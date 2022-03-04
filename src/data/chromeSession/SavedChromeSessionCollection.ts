@@ -1,5 +1,3 @@
-import * as Moment from 'moment';
-
 import {
   IDisplaySavedSessionGroup,
   loadSavedSessionsForDisplay,
@@ -8,6 +6,7 @@ import { action, computed, makeObservable, observable } from 'mobx';
 import { flatten, uniq } from 'lodash';
 
 import { LoadStatus } from '../../global';
+import Moment from 'moment';
 
 export class SavedChromeSessionCollection {
   loadStatus: LoadStatus;

@@ -1,6 +1,5 @@
-import * as React from 'react';
-import { useState } from 'react';
-import { ButtonGroup, Button } from '@blueprintjs/core';
+import { Button, ButtonGroup } from '@blueprintjs/core';
+import React, { useState } from 'react';
 
 export function usePageControl<T>(
   pageItems: T[],

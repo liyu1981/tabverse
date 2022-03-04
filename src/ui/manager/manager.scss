@@ -17,3 +17,7 @@ body {
 :global(.bp3-card):global(.bp3-interactive):hover {
   box-shadow: 0 2px 4px rgb(16 22 26 / 20%), 0 8px 24px rgb(16 22 26 / 20%);
 }
+
+:global(.bp3-control):global(.bp3-checkbox) :global(.bp3-control-indicator) {
+  border-radius: 8px;
+}

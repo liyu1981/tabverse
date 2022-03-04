@@ -1,5 +1,3 @@
-import * as React from 'react';
-
 import {
   Alignment,
   Button,
@@ -7,12 +5,12 @@ import {
   Navbar,
   NavbarGroup,
 } from '@blueprintjs/core';
+import React, { useState } from 'react';
 
 import { AboutDialog } from '../../dialog/AboutDialog';
 import { DropboxDialog } from '../../dialog/DropboxDialog';
 import { SettingDialog } from '../../dialog/SettingDialog';
 import { TABSPACE_VERSION } from '../../../global';
-import { useState } from 'react';
 import classes from './BottomNav.module.scss';
 import clsx from 'clsx';
 

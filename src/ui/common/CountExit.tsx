@@ -1,6 +1,4 @@
-import * as React from 'react';
-
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 const FakeComponent = () => {
   window.close();

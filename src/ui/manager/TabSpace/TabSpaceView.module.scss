@@ -1,20 +1,23 @@
 @use '../../../global.scss';
 
 .container {
-  margin-left: 2px;
-  position: relative;
-  padding-right: calc(50vw - 200px);
+  display: flex;
+  // margin-left: 2px;
+  // position: relative;
+  // padding-right: calc(50vw - 200px);
+}
+
+.mainContainer {
+  overflow-y: auto;
+  flex-grow: 1;
+  height: 100vh;
 }
 
 .rightSideContainer {
-  width: 40vw;
+  width: 50%;
   max-width: 50%;
   overflow-y: auto;
-  position: fixed;
-  right: 0px;
-  top: 0px;
   background-color: global.$color-light-shade;
-  padding: 0px 48px 0px 48px;
   box-shadow: 1px 0px 1px 0px inset #bbb;
   height: 100vh;
 }

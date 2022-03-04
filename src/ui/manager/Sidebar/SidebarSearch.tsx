@@ -1,10 +1,10 @@
 import { InputGroup, Keys } from '@blueprintjs/core';
-import * as React from 'react';
-import classes from './SidebarSearch.module.scss';
-import SidebarClasses from './Sidebar.module.scss';
-import clsx from 'clsx';
+import React, { useMemo, useRef } from 'react';
+
 import { ManagerViewRoute } from '../ManagerView';
-import { useMemo, useRef } from 'react';
+import SidebarClasses from './Sidebar.module.scss';
+import classes from './SidebarSearch.module.scss';
+import clsx from 'clsx';
 
 export interface SidebarSearchProps {
   active: boolean;

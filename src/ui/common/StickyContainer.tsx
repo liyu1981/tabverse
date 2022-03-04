@@ -1,7 +1,6 @@
-import { debounce } from 'lodash';
-import * as React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
-import { useEffect, useRef, useState } from 'react';
+import { debounce } from 'lodash';
 
 function shouldBeSticky(
   thresh: number,

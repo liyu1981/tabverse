@@ -1,10 +1,8 @@
-import * as React from 'react';
-
+import React, { useEffect, useState } from 'react';
 import {
   SavedTabSpaceCollection,
   SortMethods,
 } from '../../../data/tabSpace/SavedTabSpaceCollection';
-import { useEffect, useState } from 'react';
 
 import { HTMLSelect } from '@blueprintjs/core';
 import { ISidebarComponentProps } from './Sidebar';

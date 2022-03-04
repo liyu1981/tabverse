@@ -1,7 +1,6 @@
-import * as React from 'react';
-
 import { bootstrap, getTabSpaceData } from '../data/tabSpace/bootstrap';
 
+import React from 'react';
 import ReactJson from 'react-json-view';
 import { observer } from 'mobx-react-lite';
 import { render } from 'react-dom';

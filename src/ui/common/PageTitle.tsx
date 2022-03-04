@@ -1,6 +1,4 @@
-import * as React from 'react';
-
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 
 export const PageTitle = (props) => {
   useEffect(() => {

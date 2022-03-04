@@ -1,5 +1,4 @@
-import * as React from 'react';
-
+import React from 'react';
 import classes from './TabSpaceLogo.module.scss';
 import { merge } from 'lodash';
 

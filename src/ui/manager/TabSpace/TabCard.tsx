@@ -1,16 +1,15 @@
-import * as React from 'react';
-
-import { Button, ButtonGroup, Card, Elevation, Icon } from '@blueprintjs/core';
+import { Button, ButtonGroup, Card, Checkbox } from '@blueprintjs/core';
 
 import { Bookmark } from '../../../data/bookmark/Bookmark';
 import { CollapsibleLabel } from '../../common/CollapsibleLabel';
 import { FavIcon } from '../../common/FavIcon';
 import { Popover2 } from '@blueprintjs/popover2';
+import React from 'react';
 import { Tab } from '../../../data/tabSpace/Tab';
-import { getAllBookmarkData } from '../../../data/bookmark/bootstrap';
-import { observer } from 'mobx-react-lite';
 import classes from './TabCard.module.scss';
 import clsx from 'clsx';
+import { getAllBookmarkData } from '../../../data/bookmark/bootstrap';
+import { observer } from 'mobx-react-lite';
 
 const TabDetailPreviewPanel = (props) => {
   return props.tab ? (
@@ -59,15 +58,16 @@ const TabBookmarkBtn = observer(({ tab, inBookmark }: TabBookmarkBtnProps) => {
 
 interface ITabCardProps {
   tab: Tab;
+  needSelector?: boolean;
   needPreview?: boolean;
   tabPreview?: string;
   inBookmark?: boolean;
-  onMouseOver?: any;
-  onMouseOut?: any;
+  onSelect?: (tabId: string, selected: boolean) => void;
 }
 
 export const TabCard = observer((props: ITabCardProps) => {
   const needPreview = props.needPreview ?? false;
+  const needSelector = props.needSelector ?? false;
 
   const switchToTab = (t: Tab) => {
     chrome.tabs.update(t.chromeTabId, { active: true });
@@ -80,11 +80,14 @@ export const TabCard = observer((props: ITabCardProps) => {
   const card = (
     <Card key={props.tab.id} interactive={true} className={classes.card}>
       <div className={classes.leftSide}>
-        {props.tab.chromeTabId ? (
-          <Icon className={classes.dragHandle} icon="drag-handle-vertical" />
-        ) : (
-          <></>
-        )}
+        {needSelector ? (
+          <Checkbox
+            onChange={(ev) => {
+              props.onSelect &&
+                props.onSelect(props.tab.id, ev.currentTarget.checked);
+            }}
+          />
+        ) : null}
         <FavIcon url={props.tab.favIconUrl} />
       </div>
       <div className={classes.rightSide}>

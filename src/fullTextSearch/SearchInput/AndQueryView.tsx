@@ -1,7 +1,5 @@
 // start from @blueprintjs v3 Tag to build our Search And Condition
 
-import * as React from 'react';
-
 import {
   Classes,
   Icon,
@@ -14,6 +12,7 @@ import { QueryScope, QueryScopeMap } from '..';
 
 import { AndQuery } from '../query';
 import AndQueryViewClasses from './AndQueryView.module.scss';
+import React from 'react';
 import { ScopeTagView } from './ScopeTagView';
 import { TermPlusView } from './TermPlusView';
 import { TermsView } from './TermsView';

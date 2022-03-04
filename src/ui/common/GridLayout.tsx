@@ -1,8 +1,8 @@
 import 'react-grid-layout/css/styles.css';
 
-import * as React from 'react';
-
 import { Responsive, WidthProvider } from 'react-grid-layout';
+
+import React from 'react';
 
 const ResponsiveReactGridLayout = WidthProvider(Responsive);
 

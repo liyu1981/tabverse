@@ -1,5 +1,3 @@
-import * as React from 'react';
-
 import { IManagerQueryParams, ManagerView } from './manager/ManagerView';
 import {
   TabSpaceOp,
@@ -14,18 +12,19 @@ import {
 } from '../data/tabSpace/bootstrap';
 
 import { CountExit } from './common/CountExit';
+import React from 'react';
 import { strict as assert } from 'assert';
 import { bootstrap as bookmarkBootstrap } from '../data/bookmark/bootstrap';
 import { find } from 'lodash';
 import { bootstrap as fullTextSearchBootstrap } from '../fullTextSearch';
 import { getQueryParameters } from './common/queryAndHashParameter';
+import { localStorageInit } from '../store/localStorageWrapper';
 import { bootstrap as noteBootstrap } from '../data/note/bootstrap';
 import { renderPage } from './common/base';
 import { bootstrap as savedChromeSessionBootstrap } from '../data/chromeSession/bootstrap';
 import { bootstrap as storeBootstrap } from '../store/bootstrap';
 import { bootstrap as tabSpaceRegistryServiceBootstrap } from '../tabSpaceRegistry';
 import { bootstrap as todoBootstrap } from '../data/todo/bootstrap';
-import { localStorageInit } from '../store/localStorageWrapper';
 
 async function bootstrap() {
   const thisTab = await chrome.tabs.getCurrent();

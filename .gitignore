@@ -3,6 +3,7 @@ dist/generated/*
 dist/assets
 dist/static/*.css
 dist/static/*.css.map
+dist/static/*/*.min.css
 node_modules/
 .cache/
 .parcel-cache/

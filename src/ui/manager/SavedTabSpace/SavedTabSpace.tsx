@@ -1,12 +1,11 @@
-import * as React from 'react';
-
-import { Card } from '@blueprintjs/core';
+import React, { useMemo } from 'react';
 import {
   loadToCurrentWindowUtil,
   restoreSavedTabSpaceUtil,
   switchToTabSpaceUtil,
 } from '../../../data/tabSpace/chromeUtil';
 
+import { Card } from '@blueprintjs/core';
 import { IndicatorLine } from '../../common/IndicatorLine';
 import { LoadStatus } from '../../../global';
 import { LoadingSpinner } from '../../common/LoadingSpinner';
@@ -15,14 +14,13 @@ import { SavedTabSpaceCollection } from '../../../data/tabSpace/SavedTabSpaceCol
 import { SavedTabSpaceDetail } from './SavedTabSpaceDetail';
 import { SavedTabSpaceStore } from '../../../data/tabSpace/SavedTabSpaceStore';
 import { SearchInput } from './Search';
+import { SearchPagingControl } from '../../../fullTextSearch/SearchInput';
 import { StickyContainer } from '../../common/StickyContainer';
 import { TabSpace } from '../../../data/tabSpace/TabSpace';
 import { TabSpaceRegistry } from '../../../tabSpaceRegistry/TabSpaceRegistry';
 import classes from './SavedTabSpace.module.scss';
 import { observer } from 'mobx-react-lite';
 import { useAsyncEffect } from '../../common/useAsyncEffect';
-import { useMemo } from 'react';
-import { SearchPagingControl } from '../../../fullTextSearch/SearchInput';
 
 export interface SavedTabSpaceProps {
   tabSpace: TabSpace;

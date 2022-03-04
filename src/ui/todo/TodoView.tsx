@@ -1,12 +1,11 @@
-import * as React from 'react';
+import React, { useState } from 'react';
 
 import { AllTodoData } from '../../data/todo/bootstrap';
 import { List } from 'immutable';
 import { Todo } from '../../data/todo/Todo';
-import { observer } from 'mobx-react-lite';
-import { useState } from 'react';
 import classes from './TodoView.module.scss';
 import clsx from 'clsx';
+import { observer } from 'mobx-react-lite';
 
 const RETURN_KEY = 13;
 const FILTER_ACTIVE = 'active';

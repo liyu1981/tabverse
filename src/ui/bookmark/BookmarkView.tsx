@@ -1,17 +1,15 @@
-import * as React from 'react';
-
 import {
   AllBookmarkData,
   getAllBookmarkData,
 } from '../../data/bookmark/bootstrap';
 import { Button, ButtonGroup, EditableText } from '@blueprintjs/core';
+import React, { useState } from 'react';
 
 import { Bookmark } from '../../data/bookmark/Bookmark';
 import { ErrorBoundary } from '../common/ErrorBoundary';
+import classes from './BookmarkView.module.scss';
 import { observer } from 'mobx-react-lite';
 import { usePageControl } from '../common/usePageControl';
-import { useState } from 'react';
-import classes from './BookmarkView.module.scss';
 
 interface IBookmarkItem {
   bookmark: Bookmark;
