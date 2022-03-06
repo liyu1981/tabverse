@@ -21,3 +21,20 @@ body {
 :global(.bp3-control):global(.bp3-checkbox) :global(.bp3-control-indicator) {
   border-radius: 8px;
 }
+
+:global(.tv-primary-button):global(.bp3-button) {
+  background-color: global.$color-d;
+  color: global.$color-c;
+  background-image: none;
+  box-shadow: none;
+}
+
+:global(.tv-primary-button):global(.bp3-button) :global(.bp3-icon) {
+  color: global.$color-c;
+}
+
+:global(.tv-primary-button):global(.bp3-button):hover {
+  background-color: global.$color-d;
+  color: global.$color-c;
+  box-shadow: 0px 0px 4px 4px rgb(16 22 26 / 20%);
+}

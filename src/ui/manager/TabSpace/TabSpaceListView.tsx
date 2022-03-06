@@ -6,7 +6,7 @@ import {
   Menu,
   MenuItem,
 } from '@blueprintjs/core';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import { AllBookmark } from '../../../data/bookmark/Bookmark';
 import { ErrorBoundary } from '../../common/ErrorBoundary';
@@ -48,6 +48,7 @@ function SelectedTabToolControl(props: SelectedTabToolControlProps) {
   const [currentTool, setCurrentTool] = useState<SelectedTabTool>(
     SelectedTabTool.MoveToExistTabverse,
   );
+
   const content = (
     <Menu>
       {Object.keys(SelectedTabTool).map((key) => {
@@ -86,6 +87,14 @@ export const TabSpaceListView = observer(
       isMoveToExistTabSpaceDialogOpen,
       setIsMoveToExistTabSpaceDialogOpen,
     ] = useState(false);
+
+    useEffect(() => {
+      setSelectedTabs((lastSelectedTabs) => {
+        return lastSelectedTabs
+          .filter((tab) => tabSpace.tabs.findIndex((t) => t.id === tab.id) >= 0)
+          .toList();
+      });
+    }, [tabSpace.tabs]);
 
     const onSaveCurrentTabSpace = useMemo(
       () => () => {
@@ -146,6 +155,7 @@ export const TabSpaceListView = observer(
         </div>
         <div className={classes.titleButtons}>
           <Button
+            className={isIdNotSaved(tabSpace.id) ? 'tv-primary-button' : ''}
             text={isIdNotSaved(tabSpace.id) ? 'Save' : 'Auto'}
             title={
               isIdNotSaved(tabSpace.id)
@@ -153,7 +163,7 @@ export const TabSpaceListView = observer(
                 : 'Auto save mode is on.'
             }
             icon="floppy-disk"
-            intent={isIdNotSaved(tabSpace.id) ? Intent.PRIMARY : Intent.NONE}
+            intent={Intent.NONE}
             minimal={isIdNotSaved(tabSpace.id) ? false : true}
             onClick={onSaveCurrentTabSpace}
           />
@@ -209,6 +219,7 @@ export const TabSpaceListView = observer(
         <div className={classes.tabEntriesContainer}>{tabEntries}</div>
         <div className={classes.bottomPlaceholder}></div>
         <MoveToExistTabSpaceDialog
+          tabsForMoving={selectedTabs.toArray()}
           isOpen={isMoveToExistTabSpaceDialogOpen}
           onClose={() => setIsMoveToExistTabSpaceDialogOpen(false)}
         />

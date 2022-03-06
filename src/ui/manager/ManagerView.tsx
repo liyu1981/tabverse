@@ -8,6 +8,7 @@ import {
 } from '../../tabSpaceRegistry';
 
 import { ErrorBoundary } from '../common/ErrorBoundary';
+import { ManagerViewContextSupport } from './ManagerViewContext';
 import { SavedTabSpace } from './SavedTabSpace/SavedTabSpace';
 import { SessionBrowser } from './BrowserSession/SessionBrowser';
 import { Sidebar } from './Sidebar/Sidebar';
@@ -96,14 +97,17 @@ export const ManagerView = (props: IManagerContainerProps) => {
 
   return (
     <ErrorBoundary>
-      <SidebarContainer>
-        <Sidebar
-          route={currentRoute}
-          switchRoute={(value) => setRouteAndPushHistoryState(value)}
-          queryParams={props.queryParams}
-        />
-        {renderView(currentRoute)}
-      </SidebarContainer>
+      <div>
+        <SidebarContainer>
+          <Sidebar
+            route={currentRoute}
+            switchRoute={(value) => setRouteAndPushHistoryState(value)}
+            queryParams={props.queryParams}
+          />
+          {renderView(currentRoute)}
+        </SidebarContainer>
+        <ManagerViewContextSupport />
+      </div>
     </ErrorBoundary>
   );
 };

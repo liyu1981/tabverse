@@ -12,7 +12,7 @@ export interface SearchInputProps {
   onChange: (query: Query) => void;
 }
 
-const scopeMap = {
+export const scopeMap = {
   anywhere: { type: TYPE_ALL, field: FIELD_ALL },
   'any tabverse data': { type: SearchableType.TabSpace },
   'any tabverse name': {

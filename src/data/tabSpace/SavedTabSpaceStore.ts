@@ -217,3 +217,15 @@ export const saveCurrentTabSpace: () => void | Promise<void> = debounce(
   saveCurrentTabSpaceImpl,
   DEFAULT_SAVE_DEBOUNCE,
 );
+
+export async function moveTabsToTabSpace(
+  toMoveTabs: Tab[],
+  targetTabSpace: TabSpace,
+) {
+  const newTabSpace = targetTabSpace.clone();
+  toMoveTabs.forEach((tab) => {
+    newTabSpace.addTab(tab);
+  });
+  console.log('will save tabspace after move tabs:', newTabSpace);
+  await saveTabSpace(newTabSpace);
+}
