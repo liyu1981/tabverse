@@ -10,6 +10,7 @@ import { LoadingSpinner } from '../../common/LoadingSpinner';
 import { SavedChromeSessionCollection } from '../../../data/chromeSession/SavedChromeSessionCollection';
 import { SessionDetail } from './SessionDetail';
 import { SessionSelector } from './SessionSelector';
+import SimpleBar from 'simplebar-react';
 import classes from './SessionBrowser.module.scss';
 import { observer } from 'mobx-react-lite';
 import { useAsyncEffect } from '../../common/useAsyncEffect';
@@ -76,10 +77,12 @@ export const SessionBrowser = observer(
           {savedChromeSessionCollection.savedSessionGroups.length >= 1 ? (
             <>
               <div className={classes.sessionBrowserLeftContainer}>
-                <SessionDetail
-                  session={selectedSession}
-                  tabSpaceMap={getTabSpaceMap()}
-                />
+                <SimpleBar style={{ height: '100vh' }}>
+                  <SessionDetail
+                    session={selectedSession}
+                    tabSpaceMap={getTabSpaceMap()}
+                  />
+                </SimpleBar>
               </div>
               <div className={classes.sessionBrowserRightContainer}>
                 <SessionSelector

@@ -97,6 +97,10 @@
   box-shadow: 0 8px 24px rgb(16 22 26 / 20%);
 }
 
+.tabCardPopover :global(.bp3-popover2-arrow) {
+  display: none;
+}
+
 .tabCardPopover :global(.bp3-card) {
   box-shadow: none;
 }

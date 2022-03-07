@@ -129,9 +129,9 @@ export const SessionDetail = ({ session, tabSpaceMap }: SessionDetailProps) => {
       .toArray();
 
   return (
-    <div>
+    <div className={classes.container}>
       {session ? (
-        <IndicatorLine>
+        <IndicatorLine className={classes.indicatorLine}>
           <span className={classes.indicatorLineSpan}>
             <b>created: </b>
             {`${Moment(session.createdAt).calendar()}`}

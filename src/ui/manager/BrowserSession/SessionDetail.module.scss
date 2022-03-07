@@ -1,5 +1,9 @@
 @use '../../../global.scss';
 
+.container {
+  margin-bottom: 100px;
+}
+
 .sessionTitle {
   font-size: 1.1em;
   min-height: 48px;
@@ -23,6 +27,10 @@
   width: 24px;
   height: 24px;
   margin-right: 8px;
+}
+
+.indicatorLine {
+  padding: 0px 40px;
 }
 
 .indicatorLineSpan {

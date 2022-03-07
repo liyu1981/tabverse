@@ -15,6 +15,7 @@ import { SavedTabSpaceDetail } from './SavedTabSpaceDetail';
 import { SavedTabSpaceStore } from '../../../data/tabSpace/SavedTabSpaceStore';
 import { SearchInput } from './Search';
 import { SearchPagingControl } from '../../../fullTextSearch/SearchInput';
+import SimpleBar from 'simplebar-react';
 import { StickyContainer } from '../../common/StickyContainer';
 import { TabSpace } from '../../../data/tabSpace/TabSpace';
 import { TabSpaceRegistry } from '../../../tabSpaceRegistry/TabSpaceRegistry';
@@ -106,72 +107,75 @@ export const SavedTabSpace = observer(
     };
 
     return (
-      <div className={classes.container}>
-        <div className={classes.tabSpaceListContainer}>
-          <StickyContainer thresh={0} stickyOnClassName={classes.stickyOn}>
-            <div className={classes.searchBar}>
-              <SearchInput
-                query={savedTabSpaceCollection.query}
-                onChange={(query) => {
-                  savedTabSpaceCollection.setQuery(query);
-                }}
-              />
-            </div>
-          </StickyContainer>
-          <div>
-            {savedTabSpaceCollection.loadStatus === LoadStatus.Loading ? (
-              <div className={classes.loadingContainer}>
-                <LoadingSpinner />
+      <SimpleBar style={{ height: '100vh' }}>
+        <div className={classes.container}>
+          <div className={classes.tabSpaceListContainer}>
+            <div className={classes.stickyOn}>
+              <div className={classes.searchBar}>
+                <SearchInput
+                  query={savedTabSpaceCollection.query}
+                  onChange={(query) => {
+                    savedTabSpaceCollection.setQuery(query);
+                  }}
+                />
               </div>
-            ) : null}
-          </div>
-          <div className={classes.savedContainer}>
-            {groupedSavedTabSpaces.map(([m, savedTabSpaces]) => {
-              return (
-                <div key={m}>
-                  <IndicatorLine>{`${savedTabSpaces.length} ${
-                    savedTabSpaces.length <= 1 ? 'tabverse' : 'tabverses'
-                  } ${groupLabelVerb} ${m}`}</IndicatorLine>
-                  <div>
-                    {savedTabSpaces.map((savedTabSpace) => {
-                      return (
-                        <Card
-                          key={savedTabSpace.id}
-                          className={classes.tabSpaceCard}
-                        >
-                          <div
-                            className={
-                              savedTabSpaceCollection.isTabSpaceOpened(
-                                savedTabSpace.id,
-                              )
-                                ? classes.opened
-                                : classes.notOpened
-                            }
-                          >
-                            <div className={classes.inner}>opened</div>
-                          </div>
-                          <SavedTabSpaceDetail
-                            key={savedTabSpace.id}
-                            opened={savedTabSpaceCollection.isTabSpaceOpened(
-                              savedTabSpace.id,
-                            )}
-                            tabSpace={savedTabSpace}
-                            savedTabSpaceStore={savedTabSpaceStore}
-                            switchFunc={switchToTabSpace}
-                            restoreFunc={restoreSavedTabSpace}
-                            loadToCurrentWindowFunc={loadToCurrentWindow}
-                          />
-                        </Card>
-                      );
-                    })}
-                  </div>
+              <div className={classes.stickyOnPlaceholder}></div>
+            </div>
+            <div>
+              {savedTabSpaceCollection.loadStatus === LoadStatus.Loading ? (
+                <div className={classes.loadingContainer}>
+                  <LoadingSpinner />
                 </div>
-              );
-            })}
-            {renderPagingControl()}
+              ) : null}
+            </div>
+            <div className={classes.savedContainer}>
+              {groupedSavedTabSpaces.map(([m, savedTabSpaces]) => {
+                return (
+                  <div key={m}>
+                    <IndicatorLine>{`${savedTabSpaces.length} ${
+                      savedTabSpaces.length <= 1 ? 'tabverse' : 'tabverses'
+                    } ${groupLabelVerb} ${m}`}</IndicatorLine>
+                    <div>
+                      {savedTabSpaces.map((savedTabSpace) => {
+                        return (
+                          <Card
+                            key={savedTabSpace.id}
+                            className={classes.tabSpaceCard}
+                          >
+                            <div
+                              className={
+                                savedTabSpaceCollection.isTabSpaceOpened(
+                                  savedTabSpace.id,
+                                )
+                                  ? classes.opened
+                                  : classes.notOpened
+                              }
+                            >
+                              <div className={classes.inner}>opened</div>
+                            </div>
+                            <SavedTabSpaceDetail
+                              key={savedTabSpace.id}
+                              opened={savedTabSpaceCollection.isTabSpaceOpened(
+                                savedTabSpace.id,
+                              )}
+                              tabSpace={savedTabSpace}
+                              savedTabSpaceStore={savedTabSpaceStore}
+                              switchFunc={switchToTabSpace}
+                              restoreFunc={restoreSavedTabSpace}
+                              loadToCurrentWindowFunc={loadToCurrentWindow}
+                            />
+                          </Card>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+              {renderPagingControl()}
+            </div>
           </div>
         </div>
-      </div>
+      </SimpleBar>
     );
   },
 );

@@ -5,7 +5,6 @@
   margin-left: 2px;
   margin-top: 20px;
   margin-right: 22px;
-  margin-bottom: 200px;
 }
 
 .tabEntriesContainer {
@@ -13,7 +12,7 @@
 }
 
 .bottomPlaceholder {
-  min-height: 80px;
+  min-height: 200px;
 }
 
 .titleContainer {
@@ -90,11 +89,9 @@
 .stickyOn .header {
   position: fixed;
   z-index: 100;
-  width: calc(50vw - 140px);
-  box-shadow: 0 10px 10px -8px rgb(16 22 26 / 60%),
-    0 0 0px 1px rgb(16 22 26 / 10%), 0 0 0 rgb(16 22 26 / 0%),
-    0 1px 1px rgb(16 22 26 / 20%);
-  left: calc(SidebarContainer.$sidebar-width + 14px);
+  width: calc(50% - 242px);
+  margin-left: 24px;
+  box-shadow: 0 2px 10px -5px rgb(16 22 26 / 60%);
 }
 
 .stickyOn .headerPlaceholder {

@@ -4,6 +4,7 @@
 body {
   color: global.$color-text;
   background-color: global.$color-background;
+  overflow: hidden;
 }
 
 :focus {

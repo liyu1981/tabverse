@@ -6,14 +6,14 @@ export interface ICollapsibleLabelProps {
 }
 
 export const CollapsibleLabel = (props: ICollapsibleLabelProps) => {
-  let textstr = props.text;
-  if (textstr) {
+  let textStr = props.text;
+  if (textStr) {
     const maxlength = props.maxLength || 70;
-    if (textstr.length > maxlength) {
-      textstr = `${textstr.substr(0, maxlength)}...`;
+    if (textStr.length > maxlength) {
+      textStr = `${textStr.substr(0, maxlength)}...`;
     }
   } else {
-    textstr = '';
+    textStr = '';
   }
-  return <span title={props.text}>{textstr}</span>;
+  return <span title={props.text}>{textStr}</span>;
 };

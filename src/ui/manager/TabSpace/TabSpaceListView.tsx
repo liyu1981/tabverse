@@ -14,7 +14,6 @@ import { List } from 'immutable';
 import { MoveToExistTabSpaceDialog } from '../../dialog/MoveToExistTabSpace';
 import { Popover2 } from '@blueprintjs/popover2';
 import { SaveIndicator } from './SaveIndicator';
-import { StickyContainer } from '../../common/StickyContainer';
 import { Tab } from '../../../data/tabSpace/Tab';
 import { TabCard } from './TabCard';
 import { TabPreview } from '../../../data/tabSpace/TabPreview';
@@ -205,12 +204,13 @@ export const TabSpaceListView = observer(
     );
 
     const tabSpaceHeaderView = (
-      <StickyContainer thresh={0} stickyOnClassName={classes.stickyOn}>
+      <div className={classes.stickyOn}>
         <div className={classes.header}>
           {tabSpaceTitleView}
           {tabSpaceToolbarView}
         </div>
-      </StickyContainer>
+        <div className={classes.headerPlaceholder}></div>
+      </div>
     );
 
     return (
