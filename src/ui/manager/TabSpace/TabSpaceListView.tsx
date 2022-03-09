@@ -179,9 +179,9 @@ export const TabSpaceListView = observer(
         </div>
         {selectedTabs.size > 0 ? (
           <div className={classes.toolbarMiddleContainer}>
-            <span
-              className={classes.selectedTabsToolbarInfo}
-            >{`Selected ${selectedTabs.size} tabs`}</span>
+            <span className={classes.selectedTabsToolbarInfo}>{`Selected ${
+              selectedTabs.size
+            } ${selectedTabs.size > 1 ? 'tabs' : 'tab'}`}</span>
             <SelectedTabToolControl
               className={classes.selectedTabsToolbarToolControl}
               onClick={(currentTool) => {

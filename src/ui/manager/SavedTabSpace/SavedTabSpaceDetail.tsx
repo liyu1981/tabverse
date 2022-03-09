@@ -11,7 +11,7 @@ import { TabCard } from '../TabSpace/TabCard';
 import { TabSpace } from '../../../data/tabSpace/TabSpace';
 import { TabSpaceId } from '../../../message/message';
 import classes from './SavedTabSpaceDetail.module.scss';
-import { createNewChromeWindowWithTab } from '../BrowserSession/util';
+import { createNewChromeWindowWithTab } from '../SessionBrowser/util';
 import { logger } from '../../../global';
 import { observer } from 'mobx-react-lite';
 

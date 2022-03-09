@@ -79,3 +79,7 @@
 .sidebarComponent .content {
   transition: all 150ms ease-in-out;
 }
+
+.sidebarHeaderContainer :global(.bp3-icon) {
+  margin-right: 12px;
+}

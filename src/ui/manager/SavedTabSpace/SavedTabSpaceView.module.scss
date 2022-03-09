@@ -68,10 +68,6 @@ $tabspace-card-width: 900px;
   padding-top: 20px;
 }
 
-.searchBar :global(.bp3-tag-input) {
-  border-radius: 28px;
-}
-
 .stickyOn .searchBar {
   position: fixed;
   width: $tabspace-card-width;

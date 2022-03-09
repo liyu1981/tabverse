@@ -16,27 +16,26 @@ import { SavedTabSpaceStore } from '../../../data/tabSpace/SavedTabSpaceStore';
 import { SearchInput } from './Search';
 import { SearchPagingControl } from '../../../fullTextSearch/SearchInput';
 import SimpleBar from 'simplebar-react';
-import { StickyContainer } from '../../common/StickyContainer';
 import { TabSpace } from '../../../data/tabSpace/TabSpace';
 import { TabSpaceRegistry } from '../../../tabSpaceRegistry/TabSpaceRegistry';
-import classes from './SavedTabSpace.module.scss';
+import classes from './SavedTabSpaceView.module.scss';
 import { observer } from 'mobx-react-lite';
 import { useAsyncEffect } from '../../common/useAsyncEffect';
 
-export interface SavedTabSpaceProps {
+export interface SavedTabSpaceViewProps {
   tabSpace: TabSpace;
   tabSpaceRegistry: TabSpaceRegistry;
   savedTabSpaceStore: SavedTabSpaceStore;
   savedTabSpaceCollection: SavedTabSpaceCollection;
 }
 
-export const SavedTabSpace = observer(
+export const SavedTabSpaceView = observer(
   ({
     tabSpace,
     tabSpaceRegistry,
     savedTabSpaceStore,
     savedTabSpaceCollection,
-  }: SavedTabSpaceProps) => {
+  }: SavedTabSpaceViewProps) => {
     useAsyncEffect(async () => {
       await savedTabSpaceCollection.load();
     }, [tabSpaceRegistry.registry, savedTabSpaceStore.savedDataVersion]);

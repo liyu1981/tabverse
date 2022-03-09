@@ -35,7 +35,8 @@
     "tabspace",
     "tabverse",
     "Tabverses",
-    "todos"
+    "todos",
+    "Webtool"
   ],
   "files.autoSave": "onFocusChange",
   "jest.showCoverageOnLoad": true

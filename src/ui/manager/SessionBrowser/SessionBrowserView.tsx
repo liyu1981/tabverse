@@ -11,7 +11,7 @@ import { SavedChromeSessionCollection } from '../../../data/chromeSession/SavedC
 import { SessionDetail } from './SessionDetail';
 import { SessionSelector } from './SessionSelector';
 import SimpleBar from 'simplebar-react';
-import classes from './SessionBrowser.module.scss';
+import classes from './SessionBrowserView.module.scss';
 import { observer } from 'mobx-react-lite';
 import { useAsyncEffect } from '../../common/useAsyncEffect';
 
@@ -26,12 +26,12 @@ function selectFirstSession(savedSessionGroups: IDisplaySavedSessionGroup[]) {
   }
 }
 
-export interface SessionBrowserProps {
+export interface SessionBrowserViewProps {
   savedChromeSessionCollection: SavedChromeSessionCollection;
 }
 
-export const SessionBrowser = observer(
-  ({ savedChromeSessionCollection }: SessionBrowserProps) => {
+export const SessionBrowserView = observer(
+  ({ savedChromeSessionCollection }: SessionBrowserViewProps) => {
     const [selectedSession, setSelectedSession] =
       useState<IChromeSessionSavePayload | null>(() =>
         selectFirstSession(savedChromeSessionCollection.savedSessionGroups),

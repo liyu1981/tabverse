@@ -1,11 +1,11 @@
 import { IManagerQueryParams, ManagerViewRoute } from '../ManagerView';
+import React, { useMemo } from 'react';
 
 import { BottomNav } from '../BottomNav/BottomNav';
 import { BrowserSession } from './BrowserSession';
 import { ErrorBoundary } from '../../common/ErrorBoundary';
 import { Icon } from '@blueprintjs/core';
 import { LiveTabSpace } from './LiveTabSpace';
-import React from 'react';
 import { SavedTabSpace } from './SavedTabSpace';
 import { TabSpaceLogo } from '../../common/TabSpaceLogo';
 import classes from './Sidebar.module.scss';
@@ -72,11 +72,11 @@ export const Sidebar = (props: ISidebarProps) => {
         <SidebarComponent
           active={props.route === ManagerViewRoute.Session}
           route={ManagerViewRoute.Session}
-          onSwitch={(value) => props.switchRoute(value)}
+          onSwitch={props.switchRoute}
           header={
-            <>
+            <div className={classes.sidebarHeaderContainer}>
               <Icon icon="git-repo" size={ICON_SIZE} /> Browser Session
-            </>
+            </div>
           }
         >
           <BrowserSession
@@ -89,11 +89,11 @@ export const Sidebar = (props: ISidebarProps) => {
         <SidebarComponent
           active={props.route === ManagerViewRoute.Opened}
           route={ManagerViewRoute.Opened}
-          onSwitch={(value) => props.switchRoute(value)}
+          onSwitch={props.switchRoute}
           header={
-            <>
+            <div className={classes.sidebarHeaderContainer}>
               <Icon icon="panel-table" size={ICON_SIZE} /> Live Tabverses
-            </>
+            </div>
           }
         >
           <LiveTabSpace
@@ -106,11 +106,11 @@ export const Sidebar = (props: ISidebarProps) => {
         <SidebarComponent
           active={props.route === ManagerViewRoute.Saved}
           route={ManagerViewRoute.Saved}
-          onSwitch={(value) => props.switchRoute(value)}
+          onSwitch={props.switchRoute}
           header={
-            <>
+            <div className={classes.sidebarHeaderContainer}>
               <Icon icon="git-repo" size={ICON_SIZE} /> Saved Tabverses
-            </>
+            </div>
           }
         >
           <SavedTabSpace
@@ -121,6 +121,16 @@ export const Sidebar = (props: ISidebarProps) => {
             savedTabSpaceCollection={getTabSpaceData().savedTabSpaceCollection}
           />
         </SidebarComponent>
+        <SidebarComponent
+          active={props.route === ManagerViewRoute.Webtool}
+          route={ManagerViewRoute.Webtool}
+          onSwitch={props.switchRoute}
+          header={
+            <div className={classes.sidebarHeaderContainer}>
+              <Icon icon="build" size={ICON_SIZE} /> My WebTools{' '}
+            </div>
+          }
+        ></SidebarComponent>
         <BottomNav />
       </div>
     </>
