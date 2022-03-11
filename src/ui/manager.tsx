@@ -82,7 +82,7 @@ async function bootstrap() {
   }
 
   chrome.tabs.getCurrent((tab) => {
-    chrome.tabs.update(tab.id, { pinned: true });
+    chrome.tabs.update(tab.id, { pinned: true, autoDiscardable: false });
   });
 }
 

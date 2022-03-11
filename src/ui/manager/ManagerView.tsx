@@ -9,11 +9,12 @@ import {
 
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { ManagerViewContextSupport } from './ManagerViewContext';
-import { SavedTabSpace } from './SavedTabSpace/SavedTabSpace';
-import { SessionBrowser } from './BrowserSession/SessionBrowser';
+import { SavedTabSpaceView } from './SavedTabSpace/SavedTabSpaceView';
+import { SessionBrowserView } from './SessionBrowser/SessionBrowserView';
 import { Sidebar } from './Sidebar/Sidebar';
 import { SidebarContainer } from '../common/SidebarContainer';
 import { TabSpaceView } from './TabSpace/TabSpaceView';
+import { WebtoolView } from './Webtool/WebtoolView';
 import { getAllBookmarkData } from '../../data/bookmark/bootstrap';
 import { getAllChromeSessionData } from '../../data/chromeSession/bootstrap';
 import { getTabSpaceData } from '../../data/tabSpace/bootstrap';
@@ -33,6 +34,7 @@ export enum ManagerViewRoute {
   Opened = 'live',
   Saved = 'saved',
   Search = 'search',
+  Webtool = 'webtool',
 }
 
 export const ManagerView = (props: IManagerContainerProps) => {
@@ -75,7 +77,7 @@ export const ManagerView = (props: IManagerContainerProps) => {
         );
       case ManagerViewRoute.Saved:
         return (
-          <SavedTabSpace
+          <SavedTabSpaceView
             tabSpace={getTabSpaceData().tabSpace}
             tabSpaceRegistry={getTabSpaceRegistry()}
             savedTabSpaceStore={getTabSpaceData().savedTabSpaceStore}
@@ -84,12 +86,14 @@ export const ManagerView = (props: IManagerContainerProps) => {
         );
       case ManagerViewRoute.Session:
         return (
-          <SessionBrowser
+          <SessionBrowserView
             savedChromeSessionCollection={
               getAllChromeSessionData().savedChromeSessionCollection
             }
           />
         );
+      case ManagerViewRoute.Webtool:
+        return <WebtoolView></WebtoolView>;
       // case ManagerViewRoute.Search:
       //   return <OmniSearch />;
     }

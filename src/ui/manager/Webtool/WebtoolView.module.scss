@@ -1,0 +1,42 @@
+@use '../../../global.scss';
+@use '../../common/SidebarContainer.module.scss';
+
+.stickyOn {
+  padding-top: 20px;
+}
+
+.searchBar {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.searchBar :global(.bp3-tag-input) {
+  border-radius: 28px;
+}
+
+.stickyOn .searchBar {
+  position: fixed;
+  width: calc(100% - SidebarContainer.$sidebar-width);
+  z-index: 100;
+}
+
+.stickyOn .searchBar .searchInputContainer {
+  width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.stickyOn .searchBar :global(.bp3-tag-input) {
+  box-shadow: 0 2px 10px -5px rgb(16 22 26 / 60%);
+}
+
+.stickyOn .stickyOnPlaceholder {
+  min-height: 50px;
+}
+
+.iframeContainer {
+  width: calc(100vw - SidebarContainer.$sidebar-width);
+  height: 100vh;
+  border: none;
+  margin-left: -20px;
+}
