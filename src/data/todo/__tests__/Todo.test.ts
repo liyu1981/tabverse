@@ -1,21 +1,27 @@
-import { AllTodo, ITodoJSON, Todo } from '../Todo';
+/* eslint-disable prefer-const */
+import {
+  addTodo,
+  clearCompleted,
+  convertAndGetAllTodoSavePayload,
+  newEmptyAllTodo,
+  removeTodo,
+  toggle,
+  updateTabSpaceId,
+  updateTodo,
+} from '../AllTodo';
+import { convertToSavedTodo, newEmptyTodo, setContent } from '../Todo';
 
 import { isIdNotSaved } from '../../common';
-import { typeGuard } from '../../../global';
 
 function initAllTodo() {
   const tabSpaceId = 'hello';
-  const allTodo = new AllTodo(tabSpaceId);
-  expect(allTodo.tabSpaceId).toEqual(tabSpaceId);
-  expect(allTodo.todos.size).toEqual(0);
+  let allTodo = updateTabSpaceId(tabSpaceId, newEmptyAllTodo());
 
-  const t1 = new Todo();
-  t1.content = 'test1';
-  const t2 = new Todo();
-  t2.content = 'test2';
+  const t1 = setContent('test1', newEmptyTodo());
+  const t2 = setContent('test2', newEmptyTodo());
 
-  allTodo.addTodo(t1);
-  allTodo.addTodo(t2);
+  allTodo = addTodo(t1, allTodo);
+  allTodo = addTodo(t2, allTodo);
 
   return { tabSpaceId, allTodo, t1, t2 };
 }
@@ -24,81 +30,86 @@ test('init & addTodo', () => {
   const { tabSpaceId, allTodo, t1, t2 } = initAllTodo();
 
   expect(allTodo.todos.size).toEqual(2);
+  expect(allTodo.tabSpaceId).toEqual(tabSpaceId);
   expect(allTodo.todos.get(0).tabSpaceId).toEqual(tabSpaceId);
   expect(allTodo.todos.get(1).tabSpaceId).toEqual(tabSpaceId);
 });
 
 test('updateTodo', () => {
-  const { tabSpaceId, allTodo, t1, t2 } = initAllTodo();
+  let { tabSpaceId, allTodo, t1, t2 } = initAllTodo();
 
-  const t3 = new Todo();
-  t3.content = 'test3';
-
-  allTodo.addTodo(t3);
+  const t3 = setContent('test3', newEmptyTodo());
+  allTodo = addTodo(t3, allTodo);
+  const newId = t3.id + 'not this';
   const newContent = t3.content + 'changed';
-  expect(
-    allTodo.updateTodo(t3.id + 'not this', { content: newContent }),
-  ).toBeNull();
-  allTodo.updateTodo(t3.id, { content: newContent });
+
+  allTodo = updateTodo(newId, { content: newContent }, allTodo);
+  expect(allTodo.todos.find((todo) => todo.id === newId)).toBe(undefined);
+
+  allTodo = updateTodo(t3.id, { content: newContent }, allTodo);
   expect(allTodo.todos.get(2).content).toEqual(newContent);
 });
 
 test('toggle', () => {
-  const { tabSpaceId, allTodo, t1, t2 } = initAllTodo();
-  allTodo.toggle('888', true);
+  let { tabSpaceId, allTodo, t1, t2 } = initAllTodo();
+
+  allTodo = toggle('888', true, allTodo);
   expect(
     allTodo.todos.countBy((todo) => (todo.completed ? 1 : 0)).toJS(),
   ).toEqual({ '0': 2 });
-  allTodo.toggle(t2.id, true);
+
+  allTodo = toggle(t2.id, true, allTodo);
   expect(
     allTodo.todos.countBy((todo) => (todo.completed ? 1 : 0)).toJS(),
   ).toEqual({ '0': 1, '1': 1 });
 });
 
 test('removeTodo & clearCompleted', () => {
-  const { tabSpaceId, allTodo, t1, t2 } = initAllTodo();
-  allTodo.removeTodo('888');
+  let { tabSpaceId, allTodo, t1, t2 } = initAllTodo();
+
+  allTodo = removeTodo('888', allTodo);
   expect(allTodo.todos.size).toEqual(2);
-  allTodo.removeTodo(t2.id);
+
+  allTodo = removeTodo(t2.id, allTodo);
   expect(allTodo.todos.size).toEqual(1);
-  allTodo.toggle(t1.id, true);
-  allTodo.clearCompleted();
+
+  allTodo = toggle(t1.id, true, allTodo);
+  allTodo = clearCompleted(allTodo);
   expect(allTodo.todos.size).toEqual(0);
 });
 
 test('updateTabSpaceId', () => {
-  const { tabSpaceId, allTodo, t1, t2 } = initAllTodo();
+  let { tabSpaceId, allTodo, t1, t2 } = initAllTodo();
   const newTabSpaceId = tabSpaceId + 'new';
-  allTodo.updateTabSpaceId(newTabSpaceId);
+  allTodo = updateTabSpaceId(newTabSpaceId, allTodo);
   expect(allTodo.todos.map((todo) => todo.tabSpaceId).toArray()).toEqual([
     newTabSpaceId,
     newTabSpaceId,
   ]);
 });
 
-test('todo', () => {
-  const { tabSpaceId, allTodo, t1, t2 } = initAllTodo();
-  const t3 = t1.clone();
-  expect(t3.toJSON()).toEqual(t1.toJSON());
-  expect(typeGuard<ITodoJSON>(t3.toJSON())).toBeTruthy();
-  const t3payload = t3.convertAndGetSavePayload();
-  expect(isIdNotSaved(t3payload.id)).toBeFalsy();
-  const t4 = Todo.fromJSON(t3payload);
-  expect(t4.toJSON()).toEqual(t3.toJSON());
+test('convertToSavedTodo', () => {
+  let { tabSpaceId, allTodo, t1, t2 } = initAllTodo();
+  const t2payload = convertToSavedTodo(t2);
+  expect(isIdNotSaved(t2payload.id)).toBeFalsy();
 });
 
 test('allTodo', () => {
-  const { tabSpaceId, allTodo, t1, t2 } = initAllTodo();
+  let { tabSpaceId, allTodo, t1, t2 } = initAllTodo();
   const {
+    allTodo: savedAllTodo,
     allTodoSavePayload,
     isNewAllTodo,
     newTodoSavePayloads,
     existTodoSavePayloads,
-  } = allTodo.convertAndGetSavePayload();
+  } = convertAndGetAllTodoSavePayload(allTodo);
   allTodoSavePayload.todoIds.forEach((todoId) =>
     expect(isIdNotSaved(todoId)).toBeFalsy(),
   );
   expect(isNewAllTodo).toBeTruthy();
+  expect(allTodoSavePayload.todoIds).toEqual(
+    savedAllTodo.todos.map((todo) => todo.id).toArray(),
+  );
   expect(allTodoSavePayload.todoIds).toEqual(
     newTodoSavePayloads.map((todoSavePayload) => todoSavePayload.id),
   );

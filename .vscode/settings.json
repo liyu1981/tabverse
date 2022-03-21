@@ -9,6 +9,7 @@
   "cSpell.words": [
     "ACCESSTOKEN",
     "addtabspace",
+    "ALLTODO",
     "auditcomplete",
     "AUTOBACKUP",
     "blueprintjs",
@@ -23,6 +24,7 @@
     "gettabspace",
     "Impls",
     "loadsaved",
+    "LOCALSTORAGE",
     "loglevel",
     "Objs",
     "reactdev",

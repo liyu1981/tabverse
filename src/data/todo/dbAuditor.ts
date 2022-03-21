@@ -1,25 +1,26 @@
-import { AllTodo, ITodoJSON, Todo } from './Todo';
+import { Todo, TODO_DB_TABLE_NAME } from './Todo';
 
 import { db } from '../../store/db';
 import { getLogger } from '../../store/store';
 import { map } from 'lodash';
+import { AllTodoSavePayload, ALLTODO_DB_TABLE_NAME } from './AllTodo';
 
 export async function dbAuditor(logs: string[]): Promise<void> {
   const logger = getLogger(logs);
   logger('todo dbAuditor start to process...');
-  const todosData = await db.table<ITodoJSON>(Todo.DB_TABLE_NAME).toArray();
-  const audit = async (todoData: ITodoJSON) => {
+  const todosData = await db.table<Todo>(TODO_DB_TABLE_NAME).toArray();
+  const audit = async (savedTodo: Todo) => {
     const c = await db
-      .table(AllTodo.DB_TABLE_NAME)
+      .table<AllTodoSavePayload>(ALLTODO_DB_TABLE_NAME)
       .where('todoIds')
-      .anyOf(todoData.id)
+      .anyOf(savedTodo.id)
       .count();
     if (c > 0) {
       // found one, valid
     } else {
-      logger(`todo ${todoData.id} is an orphan, need to be purged.`);
-      await db.table(Todo.DB_TABLE_NAME).delete(todoData.id);
-      logger(`todo ${todoData.id} purged.`);
+      logger(`todo ${savedTodo.id} is an orphan, need to be purged.`);
+      await db.table(TODO_DB_TABLE_NAME).delete(savedTodo.id);
+      logger(`todo ${savedTodo.id} purged.`);
     }
   };
   await Promise.all(map(todosData, (todoData) => audit(todoData)));

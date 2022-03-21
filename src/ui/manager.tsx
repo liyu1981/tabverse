@@ -24,7 +24,6 @@ import { renderPage } from './common/base';
 import { bootstrap as savedChromeSessionBootstrap } from '../data/chromeSession/bootstrap';
 import { bootstrap as storeBootstrap } from '../store/bootstrap';
 import { bootstrap as tabSpaceRegistryServiceBootstrap } from '../tabSpaceRegistry';
-import { bootstrap as todoBootstrap } from '../data/todo/bootstrap';
 
 async function bootstrap() {
   const thisTab = await chrome.tabs.getCurrent();
@@ -50,7 +49,6 @@ async function bootstrap() {
     storeBootstrap();
     bookmarkBootstrap();
     noteBootstrap();
-    todoBootstrap();
     savedChromeSessionBootstrap();
     fullTextSearchBootstrap();
     localStorageInit();

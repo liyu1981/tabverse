@@ -25,7 +25,6 @@ import { isIdNotSaved } from '../../../data/common';
 import { stopMonitorLocalStorageChanges as noteStopMonitorLocalStorageChanges } from '../../../data/note/SavedNoteStore';
 import { observer } from 'mobx-react-lite';
 import { saveCurrentTabSpace } from '../../../data/tabSpace/SavedTabSpaceStore';
-import { stopMonitorLocalStorageChanges as todoStopMonitorLocalStorageChanges } from '../../../data/todo/SavedTodoStore';
 import { updateTabSpaceName } from '../../../data/tabSpace/chromeTab';
 
 function inBookmark(tab: Tab, allBookmark: AllBookmark): boolean {
@@ -99,7 +98,6 @@ export const TabSpaceListView = observer(
       () => () => {
         if (isIdNotSaved(tabSpace.id)) {
           noteStopMonitorLocalStorageChanges();
-          todoStopMonitorLocalStorageChanges();
           bookmarkStopMonitorLocalStorageChanges();
         }
         saveCurrentTabSpace();

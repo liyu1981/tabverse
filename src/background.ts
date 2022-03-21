@@ -9,7 +9,7 @@ import { dbAuditor as noteDbAuditor } from './data/note/noteDbAuditor';
 import { reIndexAll } from './background/fullTextSearch/reIndexAll';
 import { startAutoExportToDropbox } from './dropbox';
 import { dbAuditor as tabSpaceDbAuditor } from './data/tabSpace/tabSpaceDbAuditor';
-import { dbAuditor as todoDbAuditor } from './data/todo/todoDbAuditor';
+import { dbAuditor as todoDbAuditor } from './data/todo/dbAuditor';
 import { setDebugLogLevel, TabSpaceLogLevel } from './debug';
 
 setDebugLogLevel(TabSpaceLogLevel.LOG);

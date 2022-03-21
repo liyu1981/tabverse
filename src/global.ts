@@ -62,8 +62,10 @@ export function typeGuard<T>(x: any): x is T {
 }
 
 export const debounce = isJestTest()
-  ? (f: any, t: any) => f
-  : (f: any, t: any) =>
+  ? // eslint-disable-next-line @typescript-eslint/ban-types
+    <T extends Function>(f: T, t: any) => f
+  : // eslint-disable-next-line @typescript-eslint/ban-types
+    <T extends Function>(f: T, t: any) =>
       lodashDebounce(() => {
         f();
       }, t);

@@ -11,14 +11,15 @@ import { startMonitorLocalStorageChanges as bookmarkStartMonitorLocalStorageChan
 import classes from './TabSpaceRightSideView.module.scss';
 import { getAllBookmarkData } from '../../../data/bookmark/bootstrap';
 import { getAllNoteData } from '../../../data/note/bootstrap';
-import { getAllTodoData } from '../../../data/todo/bootstrap';
-import { getLoadingComponent } from '../../common/LoadingComponent';
+import {
+  getLoadingComponent,
+  getLoadingComponent2,
+} from '../../common/LoadingComponent';
 import { isIdNotSaved } from '../../../data/common';
 import { loadByTabSpaceId as noteLoadByTabSpaceId } from '../../../data/note/bootstrap';
 import { startMonitorLocalStorageChanges as noteStartMonitorLocalStorageChanges } from '../../../data/note/SavedNoteStore';
 import { observer } from 'mobx-react-lite';
-import { loadByTabSpaceId as todoLoadByTabSpaceId } from '../../../data/todo/bootstrap';
-import { startMonitorLocalStorageChanges as todoStartMonitorLocalStorageChanges } from '../../../data/todo/SavedTodoStore';
+import { loadAllTodoByTabSpaceId } from '../../../data/todo/util';
 
 enum RightSideModule {
   TODO = 'todo',
@@ -36,17 +37,13 @@ export const TabSpaceRightSideView = observer(
 
     const rightSideModules = useMemo(() => {
       const todoLoader = async () => {
-        await todoLoadByTabSpaceId(tabSpace.id);
-        const allTodoData = getAllTodoData();
-        if (isIdNotSaved(tabSpace.id)) {
-          todoStartMonitorLocalStorageChanges(allTodoData.allTodo);
-        }
-        return allTodoData;
+        await loadAllTodoByTabSpaceId(tabSpace.id);
       };
-      const TodoWithLoading = getLoadingComponent(
-        TodoView,
-        todoLoader,
-        'allTodoData',
+      const TodoWithLoading = getLoadingComponent2(TodoView, todoLoader);
+      const todoTitle = (
+        <span>
+          <Icon icon="confirm" /> Todo
+        </span>
       );
 
       const bookmarkLoader = async () => {
@@ -62,6 +59,11 @@ export const TabSpaceRightSideView = observer(
         bookmarkLoader,
         'allBookmarkData',
       );
+      const bookmarkTitle = (
+        <span>
+          <Icon icon="book" /> Bookmark
+        </span>
+      );
 
       const noteLoader = async () => {
         await noteLoadByTabSpaceId(tabSpace.id);
@@ -76,31 +78,25 @@ export const TabSpaceRightSideView = observer(
         noteLoader,
         'allNoteData',
       );
+      const notebookTitle = (
+        <span>
+          <Icon icon="clipboard" /> Note
+        </span>
+      );
 
       return {
-        [RightSideModule.TODO]: TodoWithLoading,
-        [RightSideModule.NOTE]: NotebookWithLoading,
-        [RightSideModule.BOOKMARK]: BookmarkWithLoading,
-      };
-    }, []);
-
-    const rightSideModuleTitles = useMemo(() => {
-      return {
-        [RightSideModule.TODO]: (
-          <span>
-            <Icon icon="confirm" /> Todo
-          </span>
-        ),
-        [RightSideModule.NOTE]: (
-          <span>
-            <Icon icon="clipboard" /> Note
-          </span>
-        ),
-        [RightSideModule.BOOKMARK]: (
-          <span>
-            <Icon icon="book" /> Bookmark
-          </span>
-        ),
+        [RightSideModule.TODO]: {
+          component: TodoWithLoading,
+          title: todoTitle,
+        },
+        [RightSideModule.NOTE]: {
+          component: NotebookWithLoading,
+          title: notebookTitle,
+        },
+        [RightSideModule.BOOKMARK]: {
+          component: BookmarkWithLoading,
+          title: bookmarkTitle,
+        },
       };
     }, []);
 
@@ -111,26 +107,24 @@ export const TabSpaceRightSideView = observer(
       return restUnpinned[0];
     });
 
-    const unpinCurrentTool = useMemo(
-      () => () => {
-        setPinned(null);
-        setCurrentUnpinned(pinned);
-      },
-      [],
-    );
+    const unpinCurrentTool = () => {
+      setPinned(null);
+      setCurrentUnpinned(pinned);
+    };
 
-    const pinCurrentTool = useMemo(
-      () => () => {
-        setPinned(currentUnpinned);
-        const restUnpinned = Object.keys(rightSideModules).filter(
-          (k) => k !== currentUnpinned,
-        );
-        setCurrentUnpinned(restUnpinned[0]);
-      },
-      [],
-    );
+    const pinCurrentTool = () => {
+      setPinned(currentUnpinned);
+      const restUnpinned = Object.keys(rightSideModules).filter(
+        (k) => k !== currentUnpinned,
+      );
+      setCurrentUnpinned(restUnpinned[0]);
+    };
 
     const unpinned = Object.keys(rightSideModules).filter((k) => k !== pinned);
+
+    console.log(
+      `current pinned: ${pinned} and unpinned: ${unpinned}, tabSpaceId: ${tabSpace.id}`,
+    );
 
     return (
       <ErrorBoundary>
@@ -155,14 +149,19 @@ export const TabSpaceRightSideView = observer(
               </Button>
               <BPTabs
                 animate={true}
-                renderActiveTabPanelOnly={false}
+                renderActiveTabPanelOnly={true}
                 selectedTabId={pinned}
                 className={classes.bpTabs}
               >
                 <BPTab
                   id={pinned}
-                  title={rightSideModuleTitles[pinned]}
-                  panel={React.createElement(rightSideModules[pinned])}
+                  title={rightSideModules[pinned].title}
+                  panel={React.createElement(
+                    rightSideModules[pinned].component,
+                    {
+                      tabSpaceId: tabSpace.id,
+                    },
+                  )}
                 />
               </BPTabs>
             </div>
@@ -180,19 +179,21 @@ export const TabSpaceRightSideView = observer(
             </Button>
             <BPTabs
               animate={true}
-              renderActiveTabPanelOnly={false}
+              renderActiveTabPanelOnly={true}
               onChange={(newTabId: string) => setCurrentUnpinned(newTabId)}
               selectedTabId={currentUnpinned}
               className={classes.bpTabs}
             >
               {unpinned.map((key) => {
-                const componentClass = rightSideModules[key];
+                const componentClass = rightSideModules[key].component;
                 return (
                   <BPTab
                     key={key}
                     id={key}
-                    title={rightSideModuleTitles[key]}
-                    panel={React.createElement(componentClass)}
+                    title={rightSideModules[key].title}
+                    panel={React.createElement(componentClass, {
+                      tabSpaceId: tabSpace.id,
+                    })}
                   />
                 );
               })}
