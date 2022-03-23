@@ -1,50 +1,57 @@
-import { INote, Note } from '../../data/note/Note';
-import React, { useMemo } from 'react';
+import { newEmptyNote, Note, setName } from '../../data/note/Note';
+import React, { useEffect } from 'react';
 
-import { AllNoteData } from '../../data/note/bootstrap';
 import { Button } from '@blueprintjs/core';
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { NoteView } from './Note';
 import classes from './NotebookView.module.scss';
-import { observer } from 'mobx-react-lite';
+import { useStore } from 'effector-react';
+import { $allNote, noteStoreApi } from '../../data/note/store';
+import {
+  monitorAllNoteChanges,
+  monitorTabSpaceChanges,
+  startMonitorLocalStorageChanges,
+  stopMonitorLocalStorageChanges,
+} from '../../data/note/util';
+import { isIdNotSaved } from '../../data/common';
 
 export interface NotebookViewProps {
-  allNoteData: AllNoteData;
+  tabSpaceId: string;
 }
 
-export const NotebookView = observer((props: NotebookViewProps) => {
-  const updateNote = useMemo(
-    () => (id: string, params: Partial<INote>) => {
-      const nIndex = props.allNoteData.allNote.findNoteIndex(id);
-      if (nIndex < 0) {
-        return;
-      }
-      const oldNote = props.allNoteData.allNote.notes.get(nIndex);
-      const n = oldNote.clone();
-      let changed = false;
-      if ('name' in params) {
-        n.name = params.name;
-        changed = true;
-      }
-      if ('data' in params) {
-        n.data = params.data;
-        changed = true;
-      }
-      if (changed) {
-        props.allNoteData.allNote.updateNote(n.id, n);
-      }
-    },
-    [],
-  );
+export function NotebookView({ tabSpaceId }: NotebookViewProps) {
+  const allNote = useStore($allNote);
 
-  const removeNote = useMemo(
-    () => (id: string) => {
-      props.allNoteData.allNote.removeNote(id);
-    },
-    [],
-  );
+  useEffect(() => {
+    console.log('notebook start monitor tabspace, alltodo changes');
+    monitorTabSpaceChanges();
+    monitorAllNoteChanges();
+  }, []);
 
-  const currentNotes = props.allNoteData.allNote.notes.reverse().toArray();
+  useEffect(() => {
+    if (tabSpaceId && isIdNotSaved(tabSpaceId)) {
+      console.log('notebook start monitor localstorage changes');
+      startMonitorLocalStorageChanges();
+      return () => {
+        console.log('notebook stop monitor localstorage changes');
+        stopMonitorLocalStorageChanges();
+      };
+    }
+  }, [tabSpaceId]);
+
+  const updateNote = (nid: string, changes: Partial<Note>) => {
+    noteStoreApi.updateNote({ nid, changes });
+  };
+
+  const removeNote = (nid: string) => {
+    noteStoreApi.removeNote(nid);
+  };
+
+  const newNote = () => {
+    noteStoreApi.addNote(setName(`Note ${Date.now()}`, newEmptyNote()));
+  };
+
+  const currentNotes = allNote.notes.reverse().toArray();
 
   const renderNotes = () => {
     return currentNotes.map((note) => (
@@ -69,13 +76,7 @@ export const NotebookView = observer((props: NotebookViewProps) => {
         )}
         <div className={classes.noteToolContainer}>
           <div>
-            <Button
-              icon="draw"
-              minimal={true}
-              onClick={() => {
-                props.allNoteData.allNote.addNote(new Note());
-              }}
-            >
+            <Button icon="draw" minimal={true} onClick={newNote}>
               New Note
             </Button>
           </div>
@@ -84,4 +85,4 @@ export const NotebookView = observer((props: NotebookViewProps) => {
       </div>
     </ErrorBoundary>
   );
-});
+}

@@ -5,7 +5,7 @@ import { bootstrap as fullTextBootstrap, isDbEmpty } from './fullTextSearch';
 import { logger } from './global';
 import { monitorChromeTabChanges } from './background/session';
 import { monitorFullTextSearchMsg } from './background/fullTextSearch/chromeMessage';
-import { dbAuditor as noteDbAuditor } from './data/note/noteDbAuditor';
+import { dbAuditor as noteDbAuditor } from './data/note/dbAuditor';
 import { reIndexAll } from './background/fullTextSearch/reIndexAll';
 import { startAutoExportToDropbox } from './dropbox';
 import { dbAuditor as tabSpaceDbAuditor } from './data/tabSpace/tabSpaceDbAuditor';

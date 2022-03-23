@@ -10,16 +10,14 @@ import { loadByTabSpaceId as bookmarkLoadByTabSpaceId } from '../../../data/book
 import { startMonitorLocalStorageChanges as bookmarkStartMonitorLocalStorageChanges } from '../../../data/bookmark/SavedBookmarkStore';
 import classes from './TabSpaceRightSideView.module.scss';
 import { getAllBookmarkData } from '../../../data/bookmark/bootstrap';
-import { getAllNoteData } from '../../../data/note/bootstrap';
 import {
   getLoadingComponent,
   getLoadingComponent2,
 } from '../../common/LoadingComponent';
 import { isIdNotSaved } from '../../../data/common';
-import { loadByTabSpaceId as noteLoadByTabSpaceId } from '../../../data/note/bootstrap';
-import { startMonitorLocalStorageChanges as noteStartMonitorLocalStorageChanges } from '../../../data/note/SavedNoteStore';
 import { observer } from 'mobx-react-lite';
 import { loadAllTodoByTabSpaceId } from '../../../data/todo/util';
+import { loadAllNoteByTabSpaceId } from '../../../data/note/util';
 
 enum RightSideModule {
   TODO = 'todo',
@@ -65,18 +63,12 @@ export const TabSpaceRightSideView = observer(
         </span>
       );
 
-      const noteLoader = async () => {
-        await noteLoadByTabSpaceId(tabSpace.id);
-        const allNoteData = getAllNoteData();
-        if (isIdNotSaved(tabSpace.id)) {
-          noteStartMonitorLocalStorageChanges(allNoteData.allNote);
-        }
-        return allNoteData;
+      const notebookLoader = async () => {
+        await loadAllNoteByTabSpaceId(tabSpace.id);
       };
-      const NotebookWithLoading = getLoadingComponent(
+      const NotebookWithLoading = getLoadingComponent2(
         NotebookView,
-        noteLoader,
-        'allNoteData',
+        notebookLoader,
       );
       const notebookTitle = (
         <span>

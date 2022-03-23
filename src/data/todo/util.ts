@@ -8,7 +8,7 @@ import {
   newEmptyAllTodo,
   updateTabSpaceId,
 } from './AllTodo';
-import { $allTodo, $todoStorage, todoStoreApi } from './store';
+import { $allTodo, $todoStorageStore, todoStoreApi } from './store';
 import {
   addPagingToQueryParams,
   DEFAULT_SAVE_DEBOUNCE,
@@ -30,6 +30,7 @@ import { getTabSpaceData } from '../tabSpace/bootstrap';
 import { isIdNotSaved } from '../common';
 import { isJestTest } from '../../debug';
 import { updateFromSaved } from '../Base';
+import { isArray } from 'lodash';
 
 export const LOCALSTORAGE_TODO_KEY = getLocalStorageKey('todo');
 
@@ -45,7 +46,9 @@ export async function loadCurrentAllTodoFromLocalStorage() {
   return new Promise<void>((resolve, reject) => {
     localStorageGetItem(LOCALSTORAGE_TODO_KEY, (value: string) => {
       const todoJSONs = JSON.parse(value) as TodoLocalStorage[];
-      todoStoreApi.restoreFromLocalStorageJSON(todoJSONs);
+      if (isArray(todoJSONs)) {
+        todoStoreApi.restoreFromLocalStorageJSON(todoJSONs);
+      }
       resolve();
     });
   });
@@ -53,7 +56,7 @@ export async function loadCurrentAllTodoFromLocalStorage() {
 
 export async function loadAllTodoByTabSpaceId(tabSpaceId: string) {
   if (isIdNotSaved(tabSpaceId) && !isJestTest()) {
-    loadCurrentAllTodoFromLocalStorage();
+    await loadCurrentAllTodoFromLocalStorage();
   } else {
     const savedAllTodo = await queryAllTodo(
       tabSpaceId,
@@ -77,10 +80,10 @@ export function stopMonitorLocalStorageChanges() {
   localStorageRemoveListener(LOCALSTORAGE_TODO_KEY);
 }
 
-export function monitorAllTodoChange() {
+export function monitorAllTodoChanges() {
   $allTodo.watch((currentAllTodo) => {
     logger.log('allTodo changed:', currentAllTodo);
-    if ($todoStorage.getState().inSaving === InSavingStatus.InSaving) {
+    if ($todoStorageStore.getState().inSaving === InSavingStatus.InSaving) {
       logger.log('todo inSaving, skip');
     } else {
       if (getTabSpaceData().tabSpace.needAutoSave()) {

@@ -22,7 +22,6 @@ import { stopMonitorLocalStorageChanges as bookmarkStopMonitorLocalStorageChange
 import classes from './TabSpaceListView.module.scss';
 import { getSavedStoreManager } from '../../../store/bootstrap';
 import { isIdNotSaved } from '../../../data/common';
-import { stopMonitorLocalStorageChanges as noteStopMonitorLocalStorageChanges } from '../../../data/note/SavedNoteStore';
 import { observer } from 'mobx-react-lite';
 import { saveCurrentTabSpace } from '../../../data/tabSpace/SavedTabSpaceStore';
 import { updateTabSpaceName } from '../../../data/tabSpace/chromeTab';
@@ -97,7 +96,6 @@ export const TabSpaceListView = observer(
     const onSaveCurrentTabSpace = useMemo(
       () => () => {
         if (isIdNotSaved(tabSpace.id)) {
-          noteStopMonitorLocalStorageChanges();
           bookmarkStopMonitorLocalStorageChanges();
         }
         saveCurrentTabSpace();

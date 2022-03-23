@@ -20,14 +20,10 @@ import { createApi, createStore } from 'effector';
 
 import { Todo, TodoLocalStorage } from './Todo';
 import { merge } from 'lodash';
+import { createGeneralStorageStoreAndApi } from '../storage/store';
 
 export const $allTodo = createStore<AllTodo>(newEmptyAllTodo());
 export type AllTodoStore = typeof $allTodo;
-
-export const $todoStorage = createStore<GeneralStorage>(
-  newEmptyGeneralStorage(),
-);
-export type TodoStorageStore = typeof $todoStorage;
 
 const allTodoApi = createApi($allTodo, {
   update: (lastAllTodo, updatedAllTodo: AllTodo) => updatedAllTodo,
@@ -48,14 +44,10 @@ const allTodoApi = createApi($allTodo, {
   ) => toggle(tid, completed, lastAllTodo),
 });
 
-const todoStorageApi = createApi($todoStorage, {
-  increaseSavedDataVersion: (lastStorage) =>
-    increaseSavedDataVersion(lastStorage),
-  markInSaving: (lastStorage, inSaving: boolean) =>
-    markInSaving(inSaving, lastStorage),
-  updateLastSavedTime: (lastStorage, lastSavedTime: number) =>
-    updateLastSavedTime(lastSavedTime, lastStorage),
-});
+const { $store: $todoStorageStoreImpl, api: todoStorageApi } =
+  createGeneralStorageStoreAndApi();
+export const $todoStorageStore = $todoStorageStoreImpl;
+export type TodoStorageStore = typeof $todoStorageStoreImpl;
 
 export const todoStoreApi = merge(allTodoApi, todoStorageApi);
 export type TodoStoreApi = typeof todoStoreApi;

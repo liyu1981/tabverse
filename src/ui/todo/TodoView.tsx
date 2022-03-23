@@ -7,7 +7,7 @@ import { useStore } from 'effector-react';
 import { $allTodo, todoStoreApi } from '../../data/todo/store';
 import { newEmptyTodo, setContent } from '../../data/todo/Todo';
 import {
-  monitorAllTodoChange,
+  monitorAllTodoChanges,
   monitorTabSpaceChanges,
   startMonitorLocalStorageChanges,
   stopMonitorLocalStorageChanges,
@@ -93,17 +93,17 @@ export function TodoView({ tabSpaceId }: TodoViewProps) {
   );
 
   useEffect(() => {
-    console.log('start monitor tabspace, alltodo changes');
+    console.log('todo start monitor tabspace, alltodo changes');
     monitorTabSpaceChanges();
-    monitorAllTodoChange();
+    monitorAllTodoChanges();
   }, []);
 
   useEffect(() => {
     if (tabSpaceId && isIdNotSaved(tabSpaceId)) {
-      console.log('start monitor localstorage changes');
+      console.log('todo start monitor localstorage changes');
       startMonitorLocalStorageChanges();
       return () => {
-        console.log('stop monitor localstorage changes');
+        console.log('todo stop monitor localstorage changes');
         stopMonitorLocalStorageChanges();
       };
     }

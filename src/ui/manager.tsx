@@ -19,7 +19,6 @@ import { find } from 'lodash';
 import { bootstrap as fullTextSearchBootstrap } from '../fullTextSearch';
 import { getQueryParameters } from './common/queryAndHashParameter';
 import { localStorageInit } from '../store/localStorageWrapper';
-import { bootstrap as noteBootstrap } from '../data/note/bootstrap';
 import { renderPage } from './common/base';
 import { bootstrap as savedChromeSessionBootstrap } from '../data/chromeSession/bootstrap';
 import { bootstrap as storeBootstrap } from '../store/bootstrap';
@@ -48,7 +47,6 @@ async function bootstrap() {
 
     storeBootstrap();
     bookmarkBootstrap();
-    noteBootstrap();
     savedChromeSessionBootstrap();
     fullTextSearchBootstrap();
     localStorageInit();

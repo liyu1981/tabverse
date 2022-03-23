@@ -1,16 +1,22 @@
-import { AllNote, Note } from '../Note';
+/* eslint-disable prefer-const */
+import { cloneNote, isEqualContent, newEmptyNote, setName } from '../Note';
 
 import { isIdNotSaved } from '../../common';
+import {
+  addNote,
+  convertAndGetAllNoteSavePayload,
+  newEmptyAllNote,
+  removeNote,
+  updateNote,
+  updateTabSpaceId,
+} from '../AllNote';
 
 function initAllNote() {
   const tabSpaceId = 'hello';
-  const allNote = new AllNote(tabSpaceId);
-  const n1 = new Note();
-  n1.name = 'Note 1';
-  const n2 = new Note();
-  n2.name = 'Note 2';
-  allNote.addNote(n1);
-  allNote.addNote(n2);
+  let allNote = updateTabSpaceId(tabSpaceId, newEmptyAllNote());
+  allNote = addNote(setName('Note 1', newEmptyNote()), allNote);
+  allNote = addNote(setName('Note 2', newEmptyNote()), allNote);
+  const [n1, n2] = allNote.notes.toArray();
   return { tabSpaceId, allNote, n1, n2 };
 }
 
@@ -18,33 +24,33 @@ test('init', () => {
   const { tabSpaceId, allNote, n1, n2 } = initAllNote();
   expect(allNote.notes.size).toEqual(2);
   expect(allNote.tabSpaceId).toEqual(tabSpaceId);
-  expect(n1.tabSpaceId).toEqual(tabSpaceId);
-  expect(n2.tabSpaceId).toEqual(tabSpaceId);
-  expect(allNote.findNoteIndex(n2.id)).toEqual(1);
+  expect(allNote.notes.map((note) => note.tabSpaceId).toArray()).toEqual([
+    tabSpaceId,
+    tabSpaceId,
+  ]);
 });
 
 test('updateNote', () => {
-  const { tabSpaceId, allNote, n1, n2 } = initAllNote();
-  const n3 = Note.fromJSON(n2.toJSON());
-  n3.name = n2.name + 'changed';
-  expect(allNote.updateNote('888', n3)).toBeNull();
-  allNote.updateNote(n2.id, n3);
-  const i = allNote.findNoteIndex(n2.id);
-  expect(allNote.notes.get(i).name).toEqual(n3.name);
+  let { tabSpaceId, allNote, n1, n2 } = initAllNote();
+  const changedName = n2.name + 'changed';
+  allNote = updateNote('888', { name: changedName }, allNote);
+  expect(allNote.notes.toArray()).toEqual([n1, n2]);
+  allNote = updateNote(n2.id, { name: changedName }, allNote);
+  expect(allNote.notes.get(1).name).toEqual(changedName);
 });
 
 test('removeNote', () => {
-  const { tabSpaceId, allNote, n1, n2 } = initAllNote();
-  allNote.removeNote('888');
+  let { tabSpaceId, allNote, n1, n2 } = initAllNote();
+  allNote = removeNote('888', allNote);
   expect(allNote.notes.size).toEqual(2);
-  allNote.removeNote(n2.id);
+  allNote = removeNote(n2.id, allNote);
   expect(allNote.notes.size).toEqual(1);
 });
 
 test('updateTabSpaceId', () => {
-  const { tabSpaceId, allNote, n1, n2 } = initAllNote();
+  let { tabSpaceId, allNote, n1, n2 } = initAllNote();
   const newTabSpaceId = tabSpaceId + 'changed';
-  allNote.updateTabSpaceId(newTabSpaceId);
+  allNote = updateTabSpaceId(newTabSpaceId, allNote);
   expect(allNote.tabSpaceId).toEqual(newTabSpaceId);
   expect(allNote.notes.map((note) => note.tabSpaceId).toArray()).toEqual([
     newTabSpaceId,
@@ -54,22 +60,25 @@ test('updateTabSpaceId', () => {
 
 test('note isEqualContent', () => {
   const { tabSpaceId, allNote, n1, n2 } = initAllNote();
-  expect(n1.isEqualContent(n2)).toBeFalsy();
-  expect(n1.isEqualContent(n2, true)).toBeFalsy();
-  expect(n1.isEqualContent(undefined)).toBeFalsy();
-  const n3 = n1.clone();
-  expect(n1.isEqualContent(n3)).toBeTruthy();
-  expect(n1.isEqualContent(n3, true)).toBeTruthy();
+  expect(isEqualContent(n1, n2)).toBeFalsy();
+  expect(isEqualContent(n1, n2, true)).toBeFalsy();
+  expect(isEqualContent(n1, undefined)).toBeFalsy();
+  const n3 = cloneNote(n1);
+  expect(isEqualContent(n1, n3)).toBeTruthy();
+  expect(isEqualContent(n1, n3, true)).toBeTruthy();
 });
 
 test('misc', () => {
-  const { tabSpaceId, allNote, n1, n2 } = initAllNote();
+  let { tabSpaceId, allNote, n1, n2 } = initAllNote();
   const {
+    allNote: savedAllNote,
     allNoteSavePayload,
     isNewAllNote,
     newNoteSavePayloads,
     existNoteSavePayloads,
-  } = allNote.convertAndGetSavePayload();
+  } = convertAndGetAllNoteSavePayload(allNote);
+  expect(isIdNotSaved(savedAllNote.tabSpaceId)).toBeFalsy();
+  expect(savedAllNote.notes.toArray()).toEqual(newNoteSavePayloads);
   allNoteSavePayload.noteIds.forEach((noteId) => {
     expect(isIdNotSaved(noteId)).toBeFalsy();
   });

@@ -56,7 +56,7 @@ export function updateTodo(
   const tIndex = targetAllTodo.todos.findIndex((todo) => todo.id === tid);
   if (tIndex >= 0) {
     const existTodo = targetAllTodo.todos.get(tIndex);
-    const newTodo = { ...cloneTodo(existTodo), ...changes };
+    const newTodo = { ...existTodo, ...changes };
     return {
       ...targetAllTodo,
       todos: targetAllTodo.todos.set(tIndex, newTodo),
