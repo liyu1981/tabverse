@@ -6,18 +6,13 @@ import { ErrorBoundary } from '../../common/ErrorBoundary';
 import { NotebookView } from '../../notebook/NotebookView';
 import { TabSpace } from '../../../data/tabSpace/TabSpace';
 import { TodoView } from '../../todo/TodoView';
-import { loadByTabSpaceId as bookmarkLoadByTabSpaceId } from '../../../data/bookmark/bootstrap';
-import { startMonitorLocalStorageChanges as bookmarkStartMonitorLocalStorageChanges } from '../../../data/bookmark/SavedBookmarkStore';
 import classes from './TabSpaceRightSideView.module.scss';
-import { getAllBookmarkData } from '../../../data/bookmark/bootstrap';
-import {
-  getLoadingComponent,
-  getLoadingComponent2,
-} from '../../common/LoadingComponent';
+import { getLoadingComponent2 } from '../../common/LoadingComponent';
 import { isIdNotSaved } from '../../../data/common';
 import { observer } from 'mobx-react-lite';
 import { loadAllTodoByTabSpaceId } from '../../../data/todo/util';
 import { loadAllNoteByTabSpaceId } from '../../../data/note/util';
+import { loadAllBookmarkByTabSpaceId } from '../../../data/bookmark/util';
 
 enum RightSideModule {
   TODO = 'todo',
@@ -45,17 +40,11 @@ export const TabSpaceRightSideView = observer(
       );
 
       const bookmarkLoader = async () => {
-        await bookmarkLoadByTabSpaceId(tabSpace.id);
-        const allBookmarkData = getAllBookmarkData();
-        if (isIdNotSaved(tabSpace.id)) {
-          bookmarkStartMonitorLocalStorageChanges(allBookmarkData.allBookmark);
-        }
-        return allBookmarkData;
+        await loadAllBookmarkByTabSpaceId(tabSpace.id);
       };
-      const BookmarkWithLoading = getLoadingComponent(
+      const BookmarkWithLoading = getLoadingComponent2(
         BookmarkView,
         bookmarkLoader,
-        'allBookmarkData',
       );
       const bookmarkTitle = (
         <span>

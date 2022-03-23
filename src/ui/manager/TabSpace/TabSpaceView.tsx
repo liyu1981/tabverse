@@ -1,4 +1,3 @@
-import { AllBookmark } from '../../../data/bookmark/Bookmark';
 import React from 'react';
 import { SavedTabSpaceStore } from '../../../data/tabSpace/SavedTabSpaceStore';
 import SimpleBarReact from 'simplebar-react';
@@ -15,20 +14,15 @@ interface ITabSpaceViewProps {
   tabSpaceRegistry: TabSpaceRegistry;
   tabPreview: TabPreview;
   savedTabSpaceStore: SavedTabSpaceStore;
-  allBookmark: AllBookmark;
 }
 
 export const TabSpaceView = observer(
-  ({ tabSpace, tabPreview, allBookmark }: ITabSpaceViewProps) => {
+  ({ tabSpace, tabPreview }: ITabSpaceViewProps) => {
     return (
       <div className={classes.container}>
         <div className={classes.mainContainer}>
           <SimpleBarReact autoHide={true} style={{ maxHeight: '100vh' }}>
-            <TabSpaceListView
-              tabSpace={tabSpace}
-              tabPreview={tabPreview}
-              allBookmark={allBookmark}
-            />
+            <TabSpaceListView tabSpace={tabSpace} tabPreview={tabPreview} />
           </SimpleBarReact>
         </div>
         <div className={classes.rightSideContainer}>

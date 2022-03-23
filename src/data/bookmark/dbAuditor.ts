@@ -1,18 +1,18 @@
-import { AllBookmark, Bookmark, IBookmarkJSON } from './Bookmark';
-
 import { db } from '../../store/db';
 import { getLogger } from '../../store/store';
 import { map } from 'lodash';
+import { Bookmark, BOOKMARK_DB_TABLE_NAME } from './Bookmark';
+import { ALLBOOKMARK_DB_TABLE_NAME } from './AllBookmark';
 
 export async function dbAuditor(logs: string[]): Promise<void> {
   const logger = getLogger(logs);
   logger('bookmark dbAuditor start to process...');
   const bookmarksData = await db
-    .table<IBookmarkJSON>(Bookmark.DB_TABLE_NAME)
+    .table<Bookmark>(BOOKMARK_DB_TABLE_NAME)
     .toArray();
-  const audit = async (bookmarkData: IBookmarkJSON) => {
+  const audit = async (bookmarkData: Bookmark) => {
     const c = await db
-      .table(AllBookmark.DB_TABLE_NAME)
+      .table(ALLBOOKMARK_DB_TABLE_NAME)
       .where('bookmarkIds')
       .anyOf(bookmarkData.id)
       .count();
@@ -20,7 +20,7 @@ export async function dbAuditor(logs: string[]): Promise<void> {
       // found one, valid
     } else {
       logger(`bookmark ${bookmarkData.id} is an orphan, need to be purged.`);
-      await db.table(Bookmark.DB_TABLE_NAME).delete(bookmarkData.id);
+      await db.table(BOOKMARK_DB_TABLE_NAME).delete(bookmarkData.id);
       logger(`bookmark ${bookmarkData.id} purged.`);
     }
   };

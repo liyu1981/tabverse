@@ -14,7 +14,6 @@ import {
 import { CountExit } from './common/CountExit';
 import React from 'react';
 import { strict as assert } from 'assert';
-import { bootstrap as bookmarkBootstrap } from '../data/bookmark/bootstrap';
 import { find } from 'lodash';
 import { bootstrap as fullTextSearchBootstrap } from '../fullTextSearch';
 import { getQueryParameters } from './common/queryAndHashParameter';
@@ -46,7 +45,6 @@ async function bootstrap() {
     tabSpaceRegistryServiceBootstrap();
 
     storeBootstrap();
-    bookmarkBootstrap();
     savedChromeSessionBootstrap();
     fullTextSearchBootstrap();
     localStorageInit();

@@ -1,6 +1,5 @@
 import { Button, ButtonGroup, Card, Checkbox } from '@blueprintjs/core';
 
-import { Bookmark } from '../../../data/bookmark/Bookmark';
 import { CollapsibleLabel } from '../../common/CollapsibleLabel';
 import { FavIcon } from '../../common/FavIcon';
 import { Popover2 } from '@blueprintjs/popover2';
@@ -8,7 +7,6 @@ import React from 'react';
 import { Tab } from '../../../data/tabSpace/Tab';
 import classes from './TabCard.module.scss';
 import clsx from 'clsx';
-import { getAllBookmarkData } from '../../../data/bookmark/bootstrap';
 import { observer } from 'mobx-react-lite';
 
 const TabDetailPreviewPanel = (props) => {
@@ -35,33 +33,33 @@ const TabDetailPreviewPanel = (props) => {
 
 interface TabBookmarkBtnProps {
   tab: Tab;
-  inBookmark: boolean;
+  isBookmarked: boolean;
+  onBookmark: (tab: Tab) => void;
 }
 
-const TabBookmarkBtn = observer(({ tab, inBookmark }: TabBookmarkBtnProps) => {
-  return inBookmark ? (
-    <div></div>
-  ) : (
-    <Button
-      icon="bookmark"
-      minimal={true}
-      onClick={() => {
-        const b = new Bookmark();
-        b.name = tab.title;
-        b.url = tab.url;
-        b.favIconUrl = tab.favIconUrl;
-        getAllBookmarkData().allBookmark.addBookmark(b);
-      }}
-    />
-  );
-});
+const TabBookmarkBtn = observer(
+  ({ tab, isBookmarked, onBookmark }: TabBookmarkBtnProps) => {
+    return isBookmarked ? (
+      <div></div>
+    ) : (
+      <Button
+        icon="bookmark"
+        minimal={true}
+        onClick={() => {
+          onBookmark(tab);
+        }}
+      />
+    );
+  },
+);
 
 interface ITabCardProps {
   tab: Tab;
   needSelector?: boolean;
   needPreview?: boolean;
   tabPreview?: string;
-  inBookmark?: boolean;
+  isBookmarked?: boolean;
+  onBookmark?: (tab: Tab) => void;
   onSelect?: (tabId: string, selected: boolean) => void;
 }
 
@@ -93,10 +91,14 @@ export const TabCard = observer((props: ITabCardProps) => {
       <div className={classes.rightSide}>
         {props.tab.chromeTabId ? (
           <ButtonGroup>
-            {props.inBookmark === undefined ? (
+            {props.isBookmarked === undefined ? (
               ''
             ) : (
-              <TabBookmarkBtn tab={props.tab} inBookmark={props.inBookmark} />
+              <TabBookmarkBtn
+                tab={props.tab}
+                isBookmarked={props.isBookmarked}
+                onBookmark={props.onBookmark}
+              />
             )}
             <Button
               icon="cross"

@@ -1,6 +1,6 @@
 import { dbAuditAndClearance, registerDbAuditor } from './store/store';
 
-import { dbAuditor as bookmarkDbAuditor } from './data/bookmark/bookmarkDbAuditor';
+import { dbAuditor as bookmarkDbAuditor } from './data/bookmark/dbAuditor';
 import { bootstrap as fullTextBootstrap, isDbEmpty } from './fullTextSearch';
 import { logger } from './global';
 import { monitorChromeTabChanges } from './background/session';

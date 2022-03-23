@@ -15,7 +15,6 @@ import { Sidebar } from './Sidebar/Sidebar';
 import { SidebarContainer } from '../common/SidebarContainer';
 import { TabSpaceView } from './TabSpace/TabSpaceView';
 import { WebtoolView } from './Webtool/WebtoolView';
-import { getAllBookmarkData } from '../../data/bookmark/bootstrap';
 import { getAllChromeSessionData } from '../../data/chromeSession/bootstrap';
 import { getTabSpaceData } from '../../data/tabSpace/bootstrap';
 
@@ -72,7 +71,6 @@ export const ManagerView = (props: IManagerContainerProps) => {
             tabSpaceRegistry={getTabSpaceRegistry()}
             tabPreview={getTabSpaceData().tabPreview}
             savedTabSpaceStore={getTabSpaceData().savedTabSpaceStore}
-            allBookmark={getAllBookmarkData().allBookmark}
           />
         );
       case ManagerViewRoute.Saved:

@@ -6,9 +6,8 @@ import {
   Menu,
   MenuItem,
 } from '@blueprintjs/core';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
-import { AllBookmark } from '../../../data/bookmark/Bookmark';
 import { ErrorBoundary } from '../../common/ErrorBoundary';
 import { List } from 'immutable';
 import { MoveToExistTabSpaceDialog } from '../../dialog/MoveToExistTabSpace';
@@ -18,19 +17,20 @@ import { Tab } from '../../../data/tabSpace/Tab';
 import { TabCard } from './TabCard';
 import { TabPreview } from '../../../data/tabSpace/TabPreview';
 import { TabSpace } from '../../../data/tabSpace/TabSpace';
-import { stopMonitorLocalStorageChanges as bookmarkStopMonitorLocalStorageChanges } from '../../../data/bookmark/SavedBookmarkStore';
 import classes from './TabSpaceListView.module.scss';
 import { getSavedStoreManager } from '../../../store/bootstrap';
 import { isIdNotSaved } from '../../../data/common';
 import { observer } from 'mobx-react-lite';
 import { saveCurrentTabSpace } from '../../../data/tabSpace/SavedTabSpaceStore';
 import { updateTabSpaceName } from '../../../data/tabSpace/chromeTab';
-
-function inBookmark(tab: Tab, allBookmark: AllBookmark): boolean {
-  return (
-    allBookmark.bookmarks.findIndex((bookmark) => bookmark.url === tab.url) >= 0
-  );
-}
+import { $allBookmark, bookmarkStoreApi } from '../../../data/bookmark/store';
+import {
+  setName,
+  setUrl,
+  setFavIconUrl,
+  newEmptyBookmark,
+} from '../../../data/bookmark/Bookmark';
+import { useStore } from 'effector-react';
 
 enum SelectedTabTool {
   MoveToExistTabverse = 'Move to Exist Tabverse',
@@ -73,11 +73,18 @@ function SelectedTabToolControl(props: SelectedTabToolControlProps) {
 interface TabSpaceListViewProps {
   tabSpace: TabSpace;
   tabPreview: TabPreview;
-  allBookmark: AllBookmark;
 }
 
 export const TabSpaceListView = observer(
-  ({ tabSpace, tabPreview, allBookmark }: TabSpaceListViewProps) => {
+  ({ tabSpace, tabPreview }: TabSpaceListViewProps) => {
+    const allBookmark = useStore($allBookmark);
+
+    const isBookmarked = (url: string): boolean => {
+      return (
+        allBookmark.bookmarks.findIndex((bookmark) => bookmark.url === url) >= 0
+      );
+    };
+
     const [title, setTitle] = useState(tabSpace.name);
     const [selectedTabs, setSelectedTabs] = useState<List<Tab>>(List());
     const [
@@ -93,15 +100,9 @@ export const TabSpaceListView = observer(
       });
     }, [tabSpace.tabs]);
 
-    const onSaveCurrentTabSpace = useMemo(
-      () => () => {
-        if (isIdNotSaved(tabSpace.id)) {
-          bookmarkStopMonitorLocalStorageChanges();
-        }
-        saveCurrentTabSpace();
-      },
-      [],
-    );
+    const onSaveCurrentTabSpace = () => {
+      saveCurrentTabSpace();
+    };
 
     const tabEntries = tabSpace.tabIds.map((tabId) => {
       const tab = tabSpace.findTabById(tabId);
@@ -113,7 +114,15 @@ export const TabSpaceListView = observer(
               needPreview={true}
               needSelector={true}
               tabPreview={tabPreview.getPreview(tab.chromeTabId)}
-              inBookmark={inBookmark(tab, allBookmark)}
+              isBookmarked={isBookmarked(tab.url)}
+              onBookmark={(tab: Tab) => {
+                bookmarkStoreApi.addBookmark(
+                  setFavIconUrl(
+                    tab.favIconUrl,
+                    setName(tab.title, setUrl(tab.url, newEmptyBookmark())),
+                  ),
+                );
+              }}
               onSelect={(tabId, selected) => {
                 if (selected) {
                   setSelectedTabs((lastSelected) =>

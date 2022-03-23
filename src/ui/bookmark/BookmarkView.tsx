@@ -1,15 +1,19 @@
-import {
-  AllBookmarkData,
-  getAllBookmarkData,
-} from '../../data/bookmark/bootstrap';
 import { Button, ButtonGroup, EditableText } from '@blueprintjs/core';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { Bookmark } from '../../data/bookmark/Bookmark';
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import classes from './BookmarkView.module.scss';
-import { observer } from 'mobx-react-lite';
 import { usePageControl } from '../common/usePageControl';
+import { useStore } from 'effector-react';
+import { $allBookmark, bookmarkStoreApi } from '../../data/bookmark/store';
+import {
+  monitorAllBookmarkChanges,
+  monitorTabSpaceChanges,
+  stopMonitorLocalStorageChanges,
+  startMonitorLocalStorageChanges,
+} from '../../data/bookmark/util';
+import { isIdNotSaved } from '../../data/common';
 
 interface IBookmarkItem {
   bookmark: Bookmark;
@@ -32,10 +36,10 @@ const BookmarkItem = (props: IBookmarkItem) => {
                 selectAllOnFocus={false}
                 onChange={(value) => setName(value)}
                 onConfirm={() => {
-                  getAllBookmarkData().allBookmark.updateBookmark(
-                    props.bookmark.id,
-                    { name: name },
-                  );
+                  bookmarkStoreApi.updateBookmark({
+                    bid: props.bookmark.id,
+                    changes: { name },
+                  });
                 }}
               >
                 {props.bookmark.name}
@@ -62,9 +66,7 @@ const BookmarkItem = (props: IBookmarkItem) => {
               title="Delete It"
               minimal={true}
               onClick={() => {
-                getAllBookmarkData().allBookmark.removeBookmark(
-                  props.bookmark.id,
-                );
+                bookmarkStoreApi.removeBookmark(props.bookmark.id);
               }}
             />
           </ButtonGroup>
@@ -75,14 +77,33 @@ const BookmarkItem = (props: IBookmarkItem) => {
 };
 
 export interface IBookmarkViewProps {
-  allBookmarkData: AllBookmarkData;
+  tabSpaceId: string;
 }
 
 const BOOKMARK_PAGE_LIMIT = 10;
 
-export const BookmarkView = observer((props: IBookmarkViewProps) => {
+export function BookmarkView({ tabSpaceId }: IBookmarkViewProps) {
+  const allBookmark = useStore($allBookmark);
+
+  useEffect(() => {
+    console.log('bookmark start monitor tabspace, alltodo changes');
+    monitorTabSpaceChanges();
+    monitorAllBookmarkChanges();
+  }, []);
+
+  useEffect(() => {
+    if (tabSpaceId && isIdNotSaved(tabSpaceId)) {
+      console.log('bookmark start monitor localstorage changes');
+      startMonitorLocalStorageChanges();
+      return () => {
+        console.log('todo stop monitor localstorage changes');
+        stopMonitorLocalStorageChanges();
+      };
+    }
+  }, [tabSpaceId]);
+
   const [getCurrentPageItems, renderPageControl] = usePageControl<Bookmark>(
-    props.allBookmarkData.allBookmark.bookmarks.reverse().toArray(),
+    allBookmark.bookmarks.reverse().toArray(),
     BOOKMARK_PAGE_LIMIT,
   );
 
@@ -114,4 +135,4 @@ export const BookmarkView = observer((props: IBookmarkViewProps) => {
       )}
     </ErrorBoundary>
   );
-});
+}
