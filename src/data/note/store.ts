@@ -11,6 +11,7 @@ import { createApi, createStore } from 'effector';
 import { merge } from 'lodash';
 import { Note, NoteLocalStorage } from './Note';
 import { createGeneralStorageStoreAndApi } from '../storage/store';
+import { exposeDebugData } from '../../debug';
 
 export const $allNote = createStore<AllNote>(newEmptyAllNote());
 export type AllNoteStore = typeof $allNote;
@@ -36,3 +37,5 @@ export type NoteStorageStore = typeof $noteStorageStore;
 
 export const noteStoreApi = merge(allNoteApi, noteStorageApi);
 export type NoteStoreApi = typeof noteStorageApi;
+
+exposeDebugData('note', { $allNote, $noteStorageStore });
