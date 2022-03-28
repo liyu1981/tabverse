@@ -1,47 +1,33 @@
-import {
-  IDisplaySavedSessionGroup,
-  loadSavedSessionsForDisplay,
-} from './sessionStore';
-import { action, computed, makeObservable, observable } from 'mobx';
+import { DisplaySavedSessionGroup } from './sessionStore';
 import { flatten, uniq } from 'lodash';
 
 import { LoadStatus } from '../../global';
 import Moment from 'moment';
 
-export class SavedChromeSessionCollection {
+export type SavedChromeSessionCollection = {
   loadStatus: LoadStatus;
-  savedSessionGroups: IDisplaySavedSessionGroup[];
+  savedSessionGroups: DisplaySavedSessionGroup[];
+};
 
-  constructor() {
-    this.loadStatus = LoadStatus.Done;
-    this.savedSessionGroups = [];
+export function newEmptySavedChromeSessionCollection(): SavedChromeSessionCollection {
+  return {
+    loadStatus: LoadStatus.Done,
+    savedSessionGroups: [],
+  };
+}
 
-    makeObservable(this, {
-      loadStatus: observable,
-      savedSessionGroups: observable,
-
-      groupTags: computed,
-
-      load: action,
-    });
-  }
-
-  async load() {
-    this.savedSessionGroups = [];
-    this.loadStatus = LoadStatus.Loading;
-    this.savedSessionGroups = await loadSavedSessionsForDisplay();
-    this.loadStatus = LoadStatus.Done;
-  }
-
-  get groupTags() {
-    return uniq(
-      flatten(
-        this.savedSessionGroups.map((sessionGroup) => {
+export function getGroupTags(
+  targetSavedChromeSessionCollection: SavedChromeSessionCollection,
+): number[] {
+  return uniq(
+    flatten(
+      targetSavedChromeSessionCollection.savedSessionGroups.map(
+        (sessionGroup) => {
           return sessionGroup.sessions.map((session) => {
             return Moment(session.createdAt).startOf('day').valueOf();
           });
-        }),
+        },
       ),
-    ).sort((a, b) => b - a);
-  }
+    ),
+  ).sort((a, b) => b - a);
 }

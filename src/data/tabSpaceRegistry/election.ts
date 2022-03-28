@@ -3,12 +3,13 @@ import {
   LeaderElector,
   createLeaderElection,
 } from 'broadcast-channel';
-import { hasOwnProperty, logger } from '../global';
+import { hasOwnProperty, logger } from '../../global';
 import {
-  InternServiceState,
+  getBroadcastChannelListener,
   TabSpaceRegistryBroadcastMsg,
   TabSpaceRegistryBroadcastMsgType,
-} from './common';
+} from './state';
+import { $tabSpaceRegistryState, tabSpaceRegistryStateApi } from './store';
 
 const BROADCAST_CHANNEL_NAME = 'tabspaceregistry_broadcast_channel';
 
@@ -18,7 +19,6 @@ type AttendeeCallback = (
   broadcastChannel: BroadcastChannel<TabSpaceRegistryBroadcastMsg>,
 ) => void;
 
-let _internState: InternServiceState | null = null;
 let _channel: BroadcastChannel<TabSpaceRegistryBroadcastMsg> | null = null;
 let _elector: LeaderElector | null = null;
 
@@ -36,12 +36,14 @@ function getLeaderOnMessage(leaderTabId: number) {
       });
     } else {
       if (
-        _internState !== null &&
-        hasOwnProperty(_internState.broadcastChannelMessageHandlers, type)
+        hasOwnProperty(
+          $tabSpaceRegistryState.getState().broadcastChannelMessageHandlers,
+          type,
+        )
       ) {
-        _internState.getBroadcastChannelListener(type)(
+        getBroadcastChannelListener(type, $tabSpaceRegistryState.getState())(
           ev,
-          _internState.broadcastChannel,
+          $tabSpaceRegistryState.getState().broadcastChannel,
         );
       } else {
         logger.error(
@@ -69,12 +71,14 @@ function getAttendeeOnMessage(callback: AttendeeCallback) {
       callback(payload, false, _channel);
     } else {
       if (
-        _internState !== null &&
-        hasOwnProperty(_internState.broadcastChannelMessageHandlers, type)
+        hasOwnProperty(
+          $tabSpaceRegistryState.getState().broadcastChannelMessageHandlers,
+          type,
+        )
       ) {
-        _internState.getBroadcastChannelListener(type)(
+        getBroadcastChannelListener(type, $tabSpaceRegistryState.getState())(
           ev,
-          _internState.broadcastChannel,
+          $tabSpaceRegistryState.getState().broadcastChannel,
         );
       } else {
         logger.error(
@@ -111,31 +115,24 @@ async function postBootstrapAsAttendee(callback: AttendeeCallback) {
   attendeeQueryForLeader();
 }
 
-async function getHandleDuplicate(
-  internState: InternServiceState,
-  callback: AttendeeCallback,
-) {
+async function getHandleDuplicate(callback: AttendeeCallback) {
   return async () => {
     logger.info(
       'duplicate leader found, will reset the channel and re elect leader.',
     );
     await _elector.die();
     await _channel.close();
-    _internState.reset();
-    bootstrap(internState, callback);
+    tabSpaceRegistryStateApi.reset();
+    bootstrap(callback);
   };
 }
 
-export function bootstrap(
-  internState: InternServiceState,
-  callback: AttendeeCallback,
-) {
-  _internState = internState;
+export function bootstrap(callback: AttendeeCallback) {
   _channel = new BroadcastChannel<TabSpaceRegistryBroadcastMsg>(
     BROADCAST_CHANNEL_NAME,
   );
   _elector = createLeaderElection(_channel);
-  _elector.onduplicate = () => getHandleDuplicate(internState, callback);
+  _elector.onduplicate = () => getHandleDuplicate(callback);
   _elector.awaitLeadership().then(() => {
     postBootstrapAsLeader(callback);
   });

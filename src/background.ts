@@ -1,5 +1,3 @@
-import { dbAuditAndClearance, registerDbAuditor } from './store/store';
-
 import { dbAuditor as bookmarkDbAuditor } from './data/bookmark/dbAuditor';
 import { bootstrap as fullTextBootstrap, isDbEmpty } from './fullTextSearch';
 import { logger } from './global';
@@ -8,9 +6,13 @@ import { monitorFullTextSearchMsg } from './background/fullTextSearch/chromeMess
 import { dbAuditor as noteDbAuditor } from './data/note/dbAuditor';
 import { reIndexAll } from './background/fullTextSearch/reIndexAll';
 import { startAutoExportToDropbox } from './dropbox';
-import { dbAuditor as tabSpaceDbAuditor } from './data/tabSpace/tabSpaceDbAuditor';
+import { dbAuditor as tabSpaceDbAuditor } from './data/tabSpace/dbAuditor';
 import { dbAuditor as todoDbAuditor } from './data/todo/dbAuditor';
 import { setDebugLogLevel, TabSpaceLogLevel } from './debug';
+import {
+  dbAuditAndClearance,
+  registerDbAuditor,
+} from './store/dbAuditorManager';
 
 setDebugLogLevel(TabSpaceLogLevel.LOG);
 

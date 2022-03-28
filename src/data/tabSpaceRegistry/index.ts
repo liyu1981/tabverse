@@ -1,6 +1,6 @@
 /**
 
-# TabSpace Registry Service
+# TabSpace Registry
 
 ```
 -----------------broadcast channel---------------------------
@@ -11,9 +11,10 @@
 |---|                        |------- tab(attendee) <-------|
 ```
 
-TabSpace Registry is a data structure kept synced between our TabSpace tabs. It
-is synced between TabSpace tabs through broadcast channel. Among all TabSpace
-tabs, there is one as leader, and rest are attendees.
+TabSpace Registry is a data structure shared and kept synced between our
+TabSpace manager tabs. It is synced between TabSpace manager tabs through
+broadcast channel. Among all TabSpace tabs, there is one as leader, and rest are
+attendees.
 
 1. There is a tab acting as leader, who is elected shortly after TabSpace
    Registry Service is bootstrapped.
@@ -33,11 +34,6 @@ With above connection structure, we should be able to
 */
 
 import {
-  InternServiceState,
-  retryIfStateNotReady,
-  TabSpaceRegistryBroadcastMsg,
-} from './common';
-import {
   addTabSpaceToLeader,
   destroy as attendeeDestroy,
   init as attendeeInit,
@@ -54,10 +50,13 @@ import {
 import { BroadcastChannel } from 'broadcast-channel';
 import { bootstrap as electionBootstrap } from './election';
 import { TabSpaceRegistryChange, TabSpaceStub } from './TabSpaceRegistry';
-import { exposeDebugData } from '../debug';
-import { logger } from '../global';
-
-export const _state = new InternServiceState();
+import { logger } from '../../global';
+import { isLeader, TabSpaceRegistryBroadcastMsg } from './state';
+import {
+  $tabSpaceRegistryState,
+  retryIfStateNotReady,
+  tabSpaceRegistryStateApi,
+} from './store';
 
 function onLeaderChange(
   leaderTabId: number,
@@ -66,9 +65,9 @@ function onLeaderChange(
 ) {
   logger.log('leader changed to:', leaderTabId, isThisTab);
   chrome.tabs.getCurrent((tab) => {
-    _state.setTabId(tab.id);
-    _state.setLeaderTabId(leaderTabId);
-    _state.setBroadcastChannel(broadcastChannel);
+    tabSpaceRegistryStateApi.setTabId(tab.id);
+    tabSpaceRegistryStateApi.setLeaderTabId(leaderTabId);
+    tabSpaceRegistryStateApi.setBroadcastChannel(broadcastChannel);
     if (isThisTab) {
       attendeeDestroy();
       leaderInit();
@@ -76,31 +75,17 @@ function onLeaderChange(
       leaderDestroy();
       attendeeInit();
     }
-    _state.setReady(true);
+    tabSpaceRegistryStateApi.setReady(true);
   });
 }
 
 export function bootstrap() {
-  electionBootstrap(_state, onLeaderChange);
-
-  exposeDebugData('service', {
-    getTabSpaceRegistry: () => {
-      return _state;
-    },
-  });
-}
-
-export function getTabSpaceRegistry() {
-  return _state.tabSpaceRegistry;
-}
-
-export function getInternState() {
-  return _state;
+  electionBootstrap(onLeaderChange);
 }
 
 export function addTabSpace(tabSpaceStud: TabSpaceStub) {
-  retryIfStateNotReady(_state, () => {
-    if (_state.isLeader()) {
+  retryIfStateNotReady(() => {
+    if (isLeader($tabSpaceRegistryState.getState())) {
       logger.log('will addTabSpaceByLeader');
       addTabSpaceByLeader(tabSpaceStud);
     } else {
@@ -111,8 +96,8 @@ export function addTabSpace(tabSpaceStud: TabSpaceStub) {
 }
 
 export function removeTabSpace(chromeTabId: number) {
-  retryIfStateNotReady(_state, () => {
-    if (_state.isLeader()) {
+  retryIfStateNotReady(() => {
+    if (isLeader($tabSpaceRegistryState.getState())) {
       logger.log('will removeTabSpaceByLeader', chromeTabId);
       removeTabSpaceByLeader(chromeTabId);
     }
@@ -120,8 +105,8 @@ export function removeTabSpace(chromeTabId: number) {
 }
 
 export function updateTabSpace(tabSpaceRegistryChange: TabSpaceRegistryChange) {
-  retryIfStateNotReady(_state, () => {
-    if (_state.isLeader()) {
+  retryIfStateNotReady(() => {
+    if (isLeader($tabSpaceRegistryState.getState())) {
       logger.log('will updateTabSpaceByLeader', tabSpaceRegistryChange);
       updateTabSpaceByLeader(tabSpaceRegistryChange);
     } else {

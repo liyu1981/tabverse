@@ -1,6 +1,6 @@
 import { Button, ButtonGroup } from '@blueprintjs/core';
 
-import { IFullTextSearchCursor } from '..';
+import { IFullTextSearchCursor } from '../searcher';
 import React from 'react';
 
 export interface SearchPagingControlProps {

@@ -1,9 +1,9 @@
-import { ISavedTab, Tab } from '../../data/tabSpace/Tab';
 import { addToIndex, getDb } from '../../fullTextSearch';
 
 import { db } from '../../store/db';
 import { logger } from '../../global';
-import { querySavedTabSpaceById } from '../../data/tabSpace/SavedTabSpaceStore';
+import { TabCore, TAB_DB_TABLE_NAME } from '../../data/tabSpace/Tab';
+import { querySavedTabSpaceById } from '../../data/tabSpace/util';
 
 export enum SearchableType {
   Tab = 'tab',
@@ -19,8 +19,8 @@ export enum SearchableField {
   Name = 'name',
 }
 
-async function querySavedTabById(tabId: string): Promise<ISavedTab> {
-  const savedTab = await db.table<ISavedTab>(Tab.DB_TABLE_NAME).get(tabId);
+async function querySavedTabById(tabId: string): Promise<TabCore> {
+  const savedTab = await db.table<TabCore>(TAB_DB_TABLE_NAME).get(tabId);
   return savedTab;
 }
 

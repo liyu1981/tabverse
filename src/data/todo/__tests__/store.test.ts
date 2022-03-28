@@ -1,20 +1,17 @@
-import {
-  getTabSpaceData,
-  bootstrap as tabSpaceBootstrap,
-} from '../../tabSpace/bootstrap';
-
 import { newEmptyTodo, setContent } from '../Todo';
-import { initTabSpaceData } from '../../tabSpace/__tests__/SavedTabSpaceStore.test';
-import { testWithDb } from '../../tabSpace/__tests__/SavedTabSpaceStore.test';
 import { queryAllTodo, saveCurrentAllTodo } from '../util';
 import { $allTodo, todoStoreApi } from '../store';
 import { omit } from 'lodash';
 import { newEmptyAllTodo } from '../AllTodo';
+import {
+  initTabSpaceData,
+  testWithDb,
+} from '../../tabSpace/__tests__/store.test';
+import { $tabSpace } from '../../tabSpace/store';
 
 async function bootstrapAllTodo() {
-  const { tst1 } = await initTabSpaceData();
-  await tabSpaceBootstrap(tst1.id, tst1.windowId);
-  const tabSpaceId = getTabSpaceData().tabSpace.id;
+  await initTabSpaceData();
+  const tabSpaceId = $tabSpace.getState().id;
   todoStoreApi.update(newEmptyAllTodo());
   todoStoreApi.updateTabSpaceId(tabSpaceId);
   return { tabSpaceId };

@@ -13,11 +13,12 @@ import {
 import {
   addPagingToQueryParams,
   DEFAULT_SAVE_DEBOUNCE,
-} from '../../store/store';
+} from '../../store/storage';
 import { updateFromSaved } from '../Base';
 import { isIdNotSaved } from '../common';
 import { InSavingStatus } from '../storage/Storage';
-import { getTabSpaceData } from '../tabSpace/bootstrap';
+import { $tabSpace } from '../tabSpace/store';
+import { needAutoSave } from '../tabSpace/TabSpace';
 import {
   addBookmark,
   AllBookmark,
@@ -92,9 +93,9 @@ export function monitorAllBookmarkChanges() {
     if ($bookmarkStorage.getState().inSaving === InSavingStatus.InSaving) {
       logger.log('bookmark in saving, skip');
     } else {
-      if (getTabSpaceData().tabSpace.needAutoSave()) {
+      if (needAutoSave($tabSpace.getState())) {
         logger.log(
-          'curent tabSpace need autoSave, will then saveCurrentAllBookmark',
+          'current tabSpace need autoSave, will then saveCurrentAllBookmark',
         );
         saveCurrentAllBookmark();
       } else {

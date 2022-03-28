@@ -38,4 +38,4 @@ export type NoteStorageStore = typeof $noteStorageStore;
 export const noteStoreApi = merge(allNoteApi, noteStorageApi);
 export type NoteStoreApi = typeof noteStorageApi;
 
-exposeDebugData('note', { $allNote, $noteStorageStore });
+exposeDebugData('note', { $allNote, $noteStorageStore, noteStoreApi });

@@ -7,19 +7,19 @@ import {
 } from '@blueprintjs/core';
 import {
   ChromeSession,
-  IChromeSessionSavePayload,
+  ChromeSessionSavePayload,
   NotSessionId,
 } from '../../../data/chromeSession/ChromeSession';
 import React, { useState } from 'react';
 import { flatten, uniq } from 'lodash';
 
-import { IDisplaySavedSessionGroup } from '../../../data/chromeSession/sessionStore';
+import { DisplaySavedSessionGroup } from '../../../data/chromeSession/sessionStore';
 import Moment from 'moment';
 import classes from './SessionSelector.module.scss';
 import clsx from 'clsx';
 
 interface SessionLabelProps {
-  session: ChromeSession | IChromeSessionSavePayload;
+  session: ChromeSession | ChromeSessionSavePayload;
   selected?: boolean;
   onDelete?: (sessionId: string) => void;
 }
@@ -57,10 +57,10 @@ const SessionLabel = ({ session, selected, onDelete }: SessionLabelProps) => {
 };
 
 interface SessionSelectorProps {
-  selectedSession: IChromeSessionSavePayload;
-  sessions: IDisplaySavedSessionGroup[];
+  selectedSession: ChromeSessionSavePayload;
+  sessions: DisplaySavedSessionGroup[];
   onDeleteSession: (sessionId: string) => void;
-  onSetSelectedSession: (session: IChromeSessionSavePayload) => void;
+  onSetSelectedSession: (session: ChromeSessionSavePayload) => void;
 }
 
 export const SessionSelector = ({

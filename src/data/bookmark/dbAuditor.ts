@@ -1,8 +1,8 @@
 import { db } from '../../store/db';
-import { getLogger } from '../../store/store';
 import { map } from 'lodash';
 import { Bookmark, BOOKMARK_DB_TABLE_NAME } from './Bookmark';
 import { ALLBOOKMARK_DB_TABLE_NAME } from './AllBookmark';
+import { getLogger } from '../../store/dbAuditorManager';
 
 export async function dbAuditor(logs: string[]): Promise<void> {
   const logger = getLogger(logs);

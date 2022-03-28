@@ -1,7 +1,7 @@
 import * as PubSub from 'pubsub-js';
 
 import { IDatabaseChange } from 'dexie-observable/api';
-import { TabSpaceStub } from '../tabSpaceRegistry/TabSpaceRegistry';
+import { TabSpaceStub } from '../data/tabSpaceRegistry/TabSpaceRegistry';
 import { logger } from '../global';
 
 export type MsgHandler = (

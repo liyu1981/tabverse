@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import {
   loadToCurrentWindowUtil,
   restoreSavedTabSpaceUtil,
@@ -10,171 +10,167 @@ import { IndicatorLine } from '../../common/IndicatorLine';
 import { LoadStatus } from '../../../global';
 import { LoadingSpinner } from '../../common/LoadingSpinner';
 import { PagingControl } from '../../common/PagingControl';
-import { SavedTabSpaceCollection } from '../../../data/tabSpace/SavedTabSpaceCollection';
 import { SavedTabSpaceDetail } from './SavedTabSpaceDetail';
-import { SavedTabSpaceStore } from '../../../data/tabSpace/SavedTabSpaceStore';
 import { SearchInput } from './Search';
 import { SearchPagingControl } from '../../../fullTextSearch/SearchInput';
 import SimpleBar from 'simplebar-react';
 import { TabSpace } from '../../../data/tabSpace/TabSpace';
-import { TabSpaceRegistry } from '../../../tabSpaceRegistry/TabSpaceRegistry';
 import classes from './SavedTabSpaceView.module.scss';
-import { observer } from 'mobx-react-lite';
 import { useAsyncEffect } from '../../common/useAsyncEffect';
+import { useStore } from 'effector-react';
+import { $tabSpace, $tabSpaceStorage } from '../../../data/tabSpace/store';
+import {
+  $tabSpaceQuery,
+  tabSpaceQueryStoreApi,
+} from '../../../data/tabSpaceQuery/store';
+import {
+  getCursorsForSearchPaging,
+  getShouldShowSearchPaging,
+  getSortedGroupedSavedTabSpaces,
+  isSearchMode,
+  isTabSpaceOpened,
+} from '../../../data/tabSpaceQuery/TabSpaceQuery';
+import { $tabSpaceRegistryState } from '../../../data/tabSpaceRegistry/store';
 
-export interface SavedTabSpaceViewProps {
-  tabSpace: TabSpace;
-  tabSpaceRegistry: TabSpaceRegistry;
-  savedTabSpaceStore: SavedTabSpaceStore;
-  savedTabSpaceCollection: SavedTabSpaceCollection;
-}
+export function SavedTabSpaceView() {
+  const tabSpace = useStore($tabSpace);
+  const tabStorage = useStore($tabSpaceStorage);
+  const tabSpaceQuery = useStore($tabSpaceQuery);
+  const { tabSpaceRegistry } = useStore($tabSpaceRegistryState);
 
-export const SavedTabSpaceView = observer(
-  ({
-    tabSpace,
-    tabSpaceRegistry,
-    savedTabSpaceStore,
-    savedTabSpaceCollection,
-  }: SavedTabSpaceViewProps) => {
-    useAsyncEffect(async () => {
-      await savedTabSpaceCollection.load();
-    }, [tabSpaceRegistry.registry, savedTabSpaceStore.savedDataVersion]);
+  useAsyncEffect(async () => {
+    await tabSpaceQueryStoreApi.reload();
+  }, [tabSpaceRegistry, tabStorage.savedDataVersion]);
 
-    const switchToTabSpace = useMemo(
-      () => (tabSpace: TabSpace) => {
-        const tabSpaceStub = tabSpaceRegistry.registry.get(tabSpace.id);
-        if (tabSpaceStub) {
-          switchToTabSpaceUtil(
-            tabSpaceStub.chromeTabId,
-            tabSpaceStub.chromeWindowId,
-          );
-        }
-      },
-      [],
-    );
-
-    const restoreSavedTabSpace = useMemo(
-      () => (tabSpace: TabSpace) => restoreSavedTabSpaceUtil(tabSpace.id),
-      [],
-    );
-
-    const loadToCurrentWindow = useMemo(
-      () => (savedTabSpaceId: string) =>
-        loadToCurrentWindowUtil(tabSpace.chromeTabId, savedTabSpaceId),
-      [],
-    );
-
-    const [groupLabelVerb, groupedSavedTabSpaces] =
-      savedTabSpaceCollection.sortedGroupedSavedTabSpaces;
-
-    const renderPagingControl = () => {
-      let content = null;
-      if (savedTabSpaceCollection.isSearchMode) {
-        if (savedTabSpaceCollection.shouldShowSearchPaging) {
-          const { availableCursors, currentCursorIndex, nextCursor } =
-            savedTabSpaceCollection.cursorsForSearchPaging;
-          content = (
-            <SearchPagingControl
-              cursors={availableCursors}
-              currentCursorIndex={currentCursorIndex}
-              nextCursor={nextCursor}
-              onClickCursor={(cursorIndex) =>
-                savedTabSpaceCollection.goQueryCursor(cursorIndex)
-              }
-              onClickMore={() => savedTabSpaceCollection.goQueryCursorNext()}
-            />
-          );
-        }
-      } else {
-        if (savedTabSpaceCollection.totalPageCount > 1) {
-          content = (
-            <PagingControl
-              current={savedTabSpaceCollection.queryPageStart + 1}
-              total={savedTabSpaceCollection.totalPageCount}
-              onNext={() => savedTabSpaceCollection.nextPage()}
-              onPrev={() => savedTabSpaceCollection.prevPage()}
-              onLast={() => savedTabSpaceCollection.lastPage()}
-              onFirst={() => savedTabSpaceCollection.firstPage()}
-            />
-          );
-        }
-      }
-
-      return content === null ? null : (
-        <div className={classes.pagingControlContainer}>{content}</div>
+  const switchToTabSpace = (tabSpace: TabSpace) => {
+    const tabSpaceStub = tabSpaceRegistry.get(tabSpace.id);
+    if (tabSpaceStub) {
+      switchToTabSpaceUtil(
+        tabSpaceStub.chromeTabId,
+        tabSpaceStub.chromeWindowId,
       );
-    };
+    }
+  };
 
-    return (
-      <SimpleBar style={{ height: '100vh' }}>
-        <div className={classes.container}>
-          <div className={classes.tabSpaceListContainer}>
-            <div className={classes.stickyOn}>
-              <div className={classes.searchBar}>
-                <SearchInput
-                  query={savedTabSpaceCollection.query}
-                  onChange={(query) => {
-                    savedTabSpaceCollection.setQuery(query);
-                  }}
-                />
+  const restoreSavedTabSpace = (tabSpace: TabSpace) =>
+    restoreSavedTabSpaceUtil(tabSpace.id);
+
+  const loadToCurrentWindow = (savedTabSpaceId: string) =>
+    loadToCurrentWindowUtil(tabSpace.chromeTabId, savedTabSpaceId);
+
+  const [groupLabelVerb, groupedSavedTabSpaces] =
+    getSortedGroupedSavedTabSpaces(tabSpaceQuery);
+
+  const renderPagingControl = () => {
+    let content = null;
+    if (isSearchMode(tabSpaceQuery)) {
+      if (getShouldShowSearchPaging(tabSpaceQuery)) {
+        const { availableCursors, currentCursorIndex, nextCursor } =
+          getCursorsForSearchPaging(tabSpaceQuery);
+        content = (
+          <SearchPagingControl
+            cursors={availableCursors}
+            currentCursorIndex={currentCursorIndex}
+            nextCursor={nextCursor}
+            onClickCursor={(cursorIndex) =>
+              tabSpaceQueryStoreApi.goQueryCursor(cursorIndex)
+            }
+            onClickMore={() => tabSpaceQueryStoreApi.goQueryCursorNext()}
+          />
+        );
+      }
+    } else {
+      if (tabSpaceQuery.totalPageCount > 1) {
+        content = (
+          <PagingControl
+            current={tabSpaceQuery.queryPageStart + 1}
+            total={tabSpaceQuery.totalPageCount}
+            onNext={() => tabSpaceQueryStoreApi.nextPage()}
+            onPrev={() => tabSpaceQueryStoreApi.prevPage()}
+            onLast={() => tabSpaceQueryStoreApi.lastPage()}
+            onFirst={() => tabSpaceQueryStoreApi.firstPage()}
+          />
+        );
+      }
+    }
+
+    return content === null ? null : (
+      <div className={classes.pagingControlContainer}>{content}</div>
+    );
+  };
+
+  return (
+    <SimpleBar style={{ height: '100vh' }}>
+      <div className={classes.container}>
+        <div className={classes.tabSpaceListContainer}>
+          <div className={classes.stickyOn}>
+            <div className={classes.searchBar}>
+              <SearchInput
+                query={tabSpaceQuery.query}
+                onChange={(query) => {
+                  tabSpaceQueryStoreApi.setQuery(query);
+                }}
+              />
+            </div>
+            <div className={classes.stickyOnPlaceholder}></div>
+          </div>
+          <div>
+            {tabSpaceQuery.loadStatus === LoadStatus.Loading ? (
+              <div className={classes.loadingContainer}>
+                <LoadingSpinner />
               </div>
-              <div className={classes.stickyOnPlaceholder}></div>
-            </div>
-            <div>
-              {savedTabSpaceCollection.loadStatus === LoadStatus.Loading ? (
-                <div className={classes.loadingContainer}>
-                  <LoadingSpinner />
-                </div>
-              ) : null}
-            </div>
-            <div className={classes.savedContainer}>
-              {groupedSavedTabSpaces.map(([m, savedTabSpaces]) => {
-                return (
-                  <div key={m}>
-                    <IndicatorLine>{`${savedTabSpaces.length} ${
+            ) : null}
+          </div>
+          <div className={classes.savedContainer}>
+            {groupedSavedTabSpaces.map(([m, savedTabSpaces]) => {
+              return (
+                <div key={m}>
+                  <IndicatorLine>
+                    &#8595;{' '}
+                    {`${savedTabSpaces.length} ${
                       savedTabSpaces.length <= 1 ? 'tabverse' : 'tabverses'
-                    } ${groupLabelVerb} ${m}`}</IndicatorLine>
-                    <div>
-                      {savedTabSpaces.map((savedTabSpace) => {
-                        return (
-                          <Card
-                            key={savedTabSpace.id}
-                            className={classes.tabSpaceCard}
+                    } ${groupLabelVerb} ${m}`}{' '}
+                    &#8595;
+                  </IndicatorLine>
+                  <div>
+                    {savedTabSpaces.map((savedTabSpace) => {
+                      return (
+                        <Card
+                          key={savedTabSpace.id}
+                          className={classes.tabSpaceCard}
+                        >
+                          <div
+                            className={
+                              isTabSpaceOpened(savedTabSpace.id, tabSpaceQuery)
+                                ? classes.opened
+                                : classes.notOpened
+                            }
                           >
-                            <div
-                              className={
-                                savedTabSpaceCollection.isTabSpaceOpened(
-                                  savedTabSpace.id,
-                                )
-                                  ? classes.opened
-                                  : classes.notOpened
-                              }
-                            >
-                              <div className={classes.inner}>opened</div>
-                            </div>
-                            <SavedTabSpaceDetail
-                              key={savedTabSpace.id}
-                              opened={savedTabSpaceCollection.isTabSpaceOpened(
-                                savedTabSpace.id,
-                              )}
-                              tabSpace={savedTabSpace}
-                              savedTabSpaceStore={savedTabSpaceStore}
-                              switchFunc={switchToTabSpace}
-                              restoreFunc={restoreSavedTabSpace}
-                              loadToCurrentWindowFunc={loadToCurrentWindow}
-                            />
-                          </Card>
-                        );
-                      })}
-                    </div>
+                            <div className={classes.inner}>opened</div>
+                          </div>
+                          <SavedTabSpaceDetail
+                            key={savedTabSpace.id}
+                            opened={isTabSpaceOpened(
+                              savedTabSpace.id,
+                              tabSpaceQuery,
+                            )}
+                            tabSpace={savedTabSpace}
+                            tabSpaceQuery={tabSpaceQuery}
+                            switchFunc={switchToTabSpace}
+                            restoreFunc={restoreSavedTabSpace}
+                            loadToCurrentWindowFunc={loadToCurrentWindow}
+                          />
+                        </Card>
+                      );
+                    })}
                   </div>
-                );
-              })}
-              {renderPagingControl()}
-            </div>
+                </div>
+              );
+            })}
+            {renderPagingControl()}
           </div>
         </div>
-      </SimpleBar>
-    );
-  },
-);
+      </div>
+    </SimpleBar>
+  );
+}

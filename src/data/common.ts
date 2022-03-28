@@ -1,6 +1,3 @@
-import { action, observable } from 'mobx';
-
-import { TABSPACE_DB_VERSION } from '../global';
 import { nanoid } from 'nanoid';
 
 export function getUnsavedNewId() {
@@ -37,58 +34,10 @@ export interface IBase {
   updatedAt: number;
 }
 
-export class Base implements IBase {
-  version: number;
-  id: string;
-  createdAt: number;
-  updatedAt: number;
-
-  constructor(newId?: string) {
-    this.version = TABSPACE_DB_VERSION;
-    this.createdAt = -1;
-    this.updatedAt = -1;
-    this.id = newId ?? getUnsavedNewId();
-  }
-
-  static getMakeObservableDef(): {
-    [k: string]: typeof observable | typeof action;
-  } {
-    return {
-      id: observable,
-      version: observable,
-      createdAt: observable,
-      updatedAt: observable,
-
-      convertToSaved: action,
-    };
-  }
-
-  cloneAttributes(other: IBase) {
-    this.id = other.id;
-    this.version = other.version;
-    this.createdAt = other.createdAt;
-    this.updatedAt = other.updatedAt;
-  }
-
-  convertToSaved() {
-    this.id = getSavedId(this.id);
-    const datenow = Date.now();
-    this.createdAt = this.createdAt < 0 ? datenow : this.createdAt;
-    this.updatedAt = datenow;
-    return this;
-  }
-
-  toJSON() {
-    return {
-      id: this.id,
-      version: this.version,
-      createdAt: this.createdAt,
-      updatedAt: this.updatedAt,
-    };
-  }
-
-  makeImmutable() {
-    Object.freeze(this);
-    return this;
-  }
+export function setAttrForObject<T1, T2>(
+  attrName: string,
+  value: T1,
+  target: T2,
+): T2 {
+  return { ...target, [attrName]: value };
 }

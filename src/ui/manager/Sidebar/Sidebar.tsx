@@ -1,5 +1,5 @@
 import { IManagerQueryParams, ManagerViewRoute } from '../ManagerView';
-import React, { useMemo } from 'react';
+import React from 'react';
 
 import { BottomNav } from '../BottomNav/BottomNav';
 import { BrowserSession } from './BrowserSession';
@@ -10,11 +10,8 @@ import { SavedTabSpace } from './SavedTabSpace';
 import { TabSpaceLogo } from '../../common/TabSpaceLogo';
 import classes from './Sidebar.module.scss';
 import clsx from 'clsx';
-import { getAllChromeSessionData } from '../../../data/chromeSession/bootstrap';
-import { getTabSpaceData } from '../../../data/tabSpace/bootstrap';
-import { getTabSpaceRegistry } from '../../../tabSpaceRegistry';
 
-export interface ISidebarComponentProps {
+export interface SidebarComponentProps {
   active: boolean;
 }
 
@@ -24,7 +21,7 @@ export function SidebarComponent({
   header,
   onSwitch,
   children,
-}: ISidebarComponentProps & {
+}: SidebarComponentProps & {
   route: ManagerViewRoute;
   header: JSX.Element | React.ReactFragment;
   onSwitch: (value: ManagerViewRoute) => void;
@@ -79,12 +76,7 @@ export const Sidebar = (props: ISidebarProps) => {
             </div>
           }
         >
-          <BrowserSession
-            active={props.route === ManagerViewRoute.Session}
-            savedChromeSessionCollection={
-              getAllChromeSessionData().savedChromeSessionCollection
-            }
-          />
+          <BrowserSession active={props.route === ManagerViewRoute.Session} />
         </SidebarComponent>
         <SidebarComponent
           active={props.route === ManagerViewRoute.Opened}
@@ -96,12 +88,7 @@ export const Sidebar = (props: ISidebarProps) => {
             </div>
           }
         >
-          <LiveTabSpace
-            active={props.route === ManagerViewRoute.Opened}
-            tabSpace={getTabSpaceData().tabSpace}
-            // tabSpaceRegistry={getTabSpaceData().tabSpaceRegistry}
-            tabSpaceRegistry={getTabSpaceRegistry()}
-          />
+          <LiveTabSpace active={props.route === ManagerViewRoute.Opened} />
         </SidebarComponent>
         <SidebarComponent
           active={props.route === ManagerViewRoute.Saved}
@@ -113,13 +100,7 @@ export const Sidebar = (props: ISidebarProps) => {
             </div>
           }
         >
-          <SavedTabSpace
-            active={props.route === ManagerViewRoute.Opened}
-            tabSpace={getTabSpaceData().tabSpace}
-            tabSpaceRegistry={getTabSpaceRegistry()}
-            savedTabSpaceStore={getTabSpaceData().savedTabSpaceStore}
-            savedTabSpaceCollection={getTabSpaceData().savedTabSpaceCollection}
-          />
+          <SavedTabSpace active={props.route === ManagerViewRoute.Opened} />
         </SidebarComponent>
         <SidebarComponent
           active={props.route === ManagerViewRoute.Webtool}

@@ -1,13 +1,13 @@
-import { SavedStoreManager } from './store';
+import { StorageManager } from './storage';
 import { strict as assert } from 'assert';
 
-let savedStoreManager = null;
+let storageManager = null;
 
-export function getSavedStoreManager(): SavedStoreManager {
-  assert(savedStoreManager, 'call bootstrap to init savedStoreManager!');
-  return savedStoreManager;
+export function getStorageManager(): StorageManager {
+  assert(storageManager, 'call bootstrap to init savedStoreManager!');
+  return storageManager;
 }
 
 export function bootstrap() {
-  savedStoreManager = new SavedStoreManager();
+  storageManager = new StorageManager();
 }

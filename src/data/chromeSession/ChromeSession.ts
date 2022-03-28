@@ -1,13 +1,14 @@
-import { Base, IBase } from '../common';
-import { isEqual, merge } from 'lodash';
+import { IBase, setAttrForObject } from '../common';
+import { isEqual } from 'lodash';
 
 import { List } from 'immutable';
+import { convertToSavedBase, newEmptyBase, updateFromSaved } from '../Base';
 
 export const NotTabSpaceTabId = -1;
 export const NotTabSpaceId = '';
 export const NotSessionId = '';
 
-export interface IChromeTab {
+export interface ChromeTab {
   tabId: number;
   windowId: number;
   title: string;
@@ -15,32 +16,33 @@ export interface IChromeTab {
   favIconUrl: string;
 }
 
-export type IChromeTabSavePayload = IChromeTab;
+export type ChromeTabSavePayload = ChromeTab;
 
-export interface IChromeWindow {
+export interface ChromeWindow {
   windowId: number;
   tabIds: List<number>;
   tabSpaceTabId: number;
   tabSpaceId: string;
 }
 
-export interface IChromeWindowSavePayload {
-  windowId: number;
+export type ChromeWindowSavePayload = Omit<ChromeWindow, 'tabIds'> & {
   tabIds: number[];
-  tabSpaceTabId: number;
-  tabSpaceId: string;
-}
+};
 
-export interface IChromeSessionSavePayload extends IBase {
+export interface ChromeSessionSavePayload extends IBase {
   tag: string;
-  tabs: IChromeTabSavePayload[];
-  windows: IChromeWindowSavePayload[];
+  tabs: ChromeTabSavePayload[];
+  windows: ChromeWindowSavePayload[];
 }
 
-export interface IChromeSession extends IBase {
-  tabs: List<IChromeTab>;
-  windows: List<IChromeWindow>;
+export interface ChromeSession extends IBase {
+  tag: string;
+  tabs: List<ChromeTab>;
+  windows: List<ChromeWindow>;
 }
+
+export const CHROMESESSION_DB_TABLE_NAME = 'ChromeSession';
+export const CHROMESESSION_DB_SCHEMA = 'id, tag, createdAt, updatedAt';
 
 export const ChromeTab = {
   new: (
@@ -49,7 +51,7 @@ export const ChromeTab = {
     title?: string,
     url?: string,
     favIconUrl?: string,
-  ): IChromeTab => ({
+  ): ChromeTab => ({
     tabId,
     windowId,
     title: title ?? '',
@@ -59,7 +61,7 @@ export const ChromeTab = {
 };
 
 export const ChromeWindow = {
-  new: (windowId: number): IChromeWindow => ({
+  new: (windowId: number): ChromeWindow => ({
     windowId,
     tabIds: List(),
     tabSpaceTabId: NotTabSpaceTabId,
@@ -67,9 +69,9 @@ export const ChromeWindow = {
   }),
 
   setTabSpaceTabId: (
-    chromeWindow: IChromeWindow,
+    chromeWindow: ChromeWindow,
     tabSpaceTabId: number,
-  ): IChromeWindow => {
+  ): ChromeWindow => {
     return {
       ...chromeWindow,
       tabSpaceTabId,
@@ -77,16 +79,16 @@ export const ChromeWindow = {
   },
 
   setTabSpaceId: (
-    chromeWindow: IChromeWindow,
+    chromeWindow: ChromeWindow,
     tabSpaceId: string,
-  ): IChromeWindow => {
+  ): ChromeWindow => {
     return {
       ...chromeWindow,
       tabSpaceId,
     };
   },
 
-  getSavePayload: (chromeWindow: IChromeWindow): IChromeWindowSavePayload => {
+  getSavePayload: (chromeWindow: ChromeWindow): ChromeWindowSavePayload => {
     return {
       windowId: chromeWindow.windowId,
       tabIds: chromeWindow.tabIds.toArray(),
@@ -95,7 +97,7 @@ export const ChromeWindow = {
     };
   },
 
-  fromSavePayload: (savedPayload: IChromeWindowSavePayload): IChromeWindow => {
+  fromSavePayload: (savedPayload: ChromeWindowSavePayload): ChromeWindow => {
     return {
       windowId: savedPayload.windowId,
       tabIds: List(savedPayload.tabIds),
@@ -105,92 +107,151 @@ export const ChromeWindow = {
   },
 };
 
-export class ChromeSession extends Base implements IChromeSession {
-  tag: string;
-  tabs: List<IChromeTab>;
-  windows: List<IChromeWindow>;
+export function newEmptyChromeSession(): ChromeSession {
+  return {
+    ...newEmptyBase(),
+    createdAt: Date.now(),
+    tag: '',
+    tabs: List(),
+    windows: List(),
+  };
+}
 
-  static DB_TABLE_NAME = 'ChromeSession';
-  static DB_SCHEMA = 'id, tag, createdAt, updatedAt';
+export function cloneChromeSession(
+  targetChromeSession: ChromeSession,
+): ChromeSession {
+  return {
+    ...targetChromeSession,
+    tabs: List(targetChromeSession.tabs),
+    windows: List(targetChromeSession.windows),
+  };
+}
 
-  constructor(id?: string) {
-    super(id);
-    this.createdAt = Date.now();
-    this.tag = '';
-    this.tabs = List();
-    this.windows = List();
-  }
+export function findWindow(
+  windowId: number,
+  targetChromeSession: ChromeSession,
+): ChromeWindow {
+  return targetChromeSession.windows.find(
+    (window) => window.windowId === windowId,
+  );
+}
 
-  findWindow(windowId: number) {
-    return this.windows.find((window) => window.windowId === windowId);
-  }
-
-  replaceWindowTabIds(windowId: number, tabIds: number[]) {
-    const window = this.findWindow(windowId);
-    if (window) {
-      window.tabIds = List(
-        tabIds.filter((tabId) => tabId !== window.tabSpaceTabId),
-      );
-    }
-    return this;
-  }
-
-  addTab(tab: IChromeTab) {
-    const index = this.tabs.findIndex((t) => t.tabId === tab.tabId);
-    if (index < 0) {
-      this.tabs = this.tabs.push(Object.freeze(tab));
-    }
-    return this;
-  }
-
-  addWindow(windowId) {
-    this.windows = this.windows.push(ChromeWindow.new(windowId));
-    return this;
-  }
-
-  setWindowTabSpaceTabId(
-    windowId: number,
-    tabSpaceTabId: number,
-    tabSpaceId: string,
-  ) {
-    const index = this.windows.findIndex((t) => t.windowId === windowId);
-    if (index >= 0) {
-      const window = this.windows.get(index);
-      let updatedWindow = ChromeWindow.setTabSpaceTabId(window, tabSpaceTabId);
-      updatedWindow = ChromeWindow.setTabSpaceId(updatedWindow, tabSpaceId);
-      this.windows = this.windows.set(index, updatedWindow);
-    }
-    return this;
-  }
-
-  getSavePayload(): IChromeSessionSavePayload {
-    this.convertToSaved();
-    return merge(super.toJSON(), {
-      tag: this.tag,
-      tabs: this.tabs.toArray(),
-      windows: this.windows
-        .map((window) => ChromeWindow.getSavePayload(window))
-        .toArray(),
-    });
-  }
-
-  static fromSavePayload(
-    savedPayload: IChromeSessionSavePayload,
-  ): ChromeSession {
-    const cs = new ChromeSession(savedPayload.id);
-    cs.cloneAttributes(savedPayload);
-    cs.tag = savedPayload.tag;
-    cs.tabs = List(savedPayload.tabs);
-    cs.windows = List(
-      savedPayload.windows.map((window) =>
-        ChromeWindow.fromSavePayload(window),
-      ),
-    );
-    return cs;
+export function replaceWindowTabIds(
+  windowId: number,
+  tabIds: number[],
+  targetChromeSession: ChromeSession,
+): ChromeSession {
+  const windowIndex = targetChromeSession.windows.findIndex(
+    (window) => window.windowId === windowId,
+  );
+  const window = findWindow(windowId, targetChromeSession);
+  if (windowIndex >= 0) {
+    const window = targetChromeSession.windows.get(windowIndex);
+    const newWindow = {
+      ...window,
+      tabIds: List(tabIds.filter((tabId) => tabId !== window.tabSpaceTabId)),
+    };
+    return {
+      ...targetChromeSession,
+      windows: targetChromeSession.windows.set(windowIndex, newWindow),
+    };
+  } else {
+    return cloneChromeSession(targetChromeSession);
   }
 }
 
-function isTabsChanged(tabs1: IChromeTab[], tabs2: IChromeTab[]): boolean {
+export function addTab(
+  tab: ChromeTab,
+  targetChromeSession: ChromeSession,
+): ChromeSession {
+  const index = targetChromeSession.tabs.findIndex(
+    (t) => t.tabId === tab.tabId,
+  );
+  if (index < 0) {
+    return {
+      ...targetChromeSession,
+      tabs: targetChromeSession.tabs.push(tab),
+    };
+  } else {
+    return cloneChromeSession(targetChromeSession);
+  }
+}
+
+export function addWindow(
+  windowId: number,
+  targetChromeSession: ChromeSession,
+): ChromeSession {
+  return {
+    ...targetChromeSession,
+    windows: targetChromeSession.windows.push(ChromeWindow.new(windowId)),
+  };
+}
+
+export function setWindowTabSpaceTabId(
+  windowId: number,
+  tabSpaceTabId: number,
+  tabSpaceId: string,
+  targetChromeSession: ChromeSession,
+): ChromeSession {
+  const index = targetChromeSession.windows.findIndex(
+    (t) => t.windowId === windowId,
+  );
+  if (index >= 0) {
+    const window = targetChromeSession.windows.get(index);
+    let updatedWindow = ChromeWindow.setTabSpaceTabId(window, tabSpaceTabId);
+    updatedWindow = ChromeWindow.setTabSpaceId(updatedWindow, tabSpaceId);
+    return {
+      ...targetChromeSession,
+      windows: targetChromeSession.windows.set(index, updatedWindow),
+    };
+  } else {
+    return cloneChromeSession(targetChromeSession);
+  }
+}
+
+export function convertAndGetSavePayload(targetChromeSession: ChromeSession): {
+  chromeSession: ChromeSession;
+  savePayload: ChromeSessionSavePayload;
+} {
+  const updatedChromeSession = {
+    ...targetChromeSession,
+    ...convertToSavedBase(targetChromeSession),
+  };
+  const savePayload = {
+    ...convertToSavedBase(targetChromeSession),
+    tag: updatedChromeSession.tag,
+    tabs: updatedChromeSession.tabs.toArray(),
+    windows: updatedChromeSession.windows
+      .map((window) => ChromeWindow.getSavePayload(window))
+      .toArray(),
+  };
+  return { chromeSession: updatedChromeSession, savePayload };
+}
+
+export function fromSavePayload(
+  savedPayload: ChromeSessionSavePayload,
+): ChromeSession {
+  let chromeSession = updateFromSaved(savedPayload, newEmptyChromeSession());
+  chromeSession = setAttrForObject('tag', savedPayload.tag, chromeSession);
+  chromeSession = setAttrForObject(
+    'tabs',
+    List(savedPayload.tabs),
+    chromeSession,
+  );
+  chromeSession = setAttrForObject(
+    'windows',
+    List(
+      savedPayload.windows.map((window) =>
+        ChromeWindow.fromSavePayload(window),
+      ),
+    ),
+    chromeSession,
+  );
+
+  return chromeSession;
+}
+
+function isTabsChanged(tabs1: ChromeTab[], tabs2: ChromeTab[]): boolean {
   if (tabs1.length !== tabs2.length) {
     return true;
   }
@@ -200,8 +261,8 @@ function isTabsChanged(tabs1: IChromeTab[], tabs2: IChromeTab[]): boolean {
 }
 
 export function isChromeSessionChanged(
-  s1: IChromeSessionSavePayload,
-  s2: IChromeSessionSavePayload,
+  s1: ChromeSessionSavePayload,
+  s2: ChromeSessionSavePayload,
 ) {
   if (s1.tag !== s2.tag) {
     return true;

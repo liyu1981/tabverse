@@ -1,10 +1,4 @@
-import {
-  getTabSpaceData,
-  bootstrap as tabSpaceBootstrap,
-} from '../../tabSpace/bootstrap';
-
 import { newEmptyBookmark, setName, setUrl } from '../Bookmark';
-import { initTabSpaceData } from '../../tabSpace/__tests__/SavedTabSpaceStore.test';
 import {
   loadAllBookmarkByTabSpaceId,
   queryAllBookmark,
@@ -12,11 +6,12 @@ import {
 } from '../util';
 import { $allBookmark, bookmarkStoreApi } from '../store';
 import { omit } from 'lodash';
+import { initTabSpaceData } from '../../tabSpace/__tests__/store.test';
+import { $tabSpace } from '../../tabSpace/store';
 
 async function bootstrapAllBookmark() {
-  const { tst1 } = await initTabSpaceData();
-  await tabSpaceBootstrap(tst1.id, tst1.windowId);
-  const tabSpaceId = getTabSpaceData().tabSpace.id;
+  await initTabSpaceData();
+  const tabSpaceId = $tabSpace.getState().id;
   await loadAllBookmarkByTabSpaceId(tabSpaceId);
   return { tabSpaceId };
 }

@@ -13,11 +13,12 @@ import {
 import {
   addPagingToQueryParams,
   DEFAULT_SAVE_DEBOUNCE,
-} from '../../store/store';
+} from '../../store/storage';
 import { updateFromSaved } from '../Base';
 import { isIdNotSaved } from '../common';
 import { InSavingStatus } from '../storage/Storage';
-import { getTabSpaceData } from '../tabSpace/bootstrap';
+import { $tabSpace } from '../tabSpace/store';
+import { needAutoSave } from '../tabSpace/TabSpace';
 import {
   addNote,
   AllNote,
@@ -84,7 +85,7 @@ export function monitorAllNoteChanges() {
     if ($noteStorage.getState().inSaving === InSavingStatus.InSaving) {
       logger.log('note in saving, skip');
     } else {
-      if (getTabSpaceData().tabSpace.needAutoSave()) {
+      if (needAutoSave($tabSpace.getState())) {
         logger.log(
           'current tabSpace need autoSave, will then saveCurrentAllNote',
         );

@@ -14,6 +14,7 @@ import {
   stopMonitorLocalStorageChanges,
 } from '../../data/note/util';
 import { isIdNotSaved } from '../../data/common';
+import { logger } from '../../global';
 
 export interface NotebookViewProps {
   tabSpaceId: string;
@@ -23,17 +24,17 @@ export function NotebookView({ tabSpaceId }: NotebookViewProps) {
   const allNote = useStore($allNote);
 
   useEffect(() => {
-    console.log('notebook start monitor tabspace, alltodo changes');
+    logger.info('notebook start monitor tabspace, alltodo changes');
     monitorTabSpaceChanges();
     monitorAllNoteChanges();
   }, []);
 
   useEffect(() => {
     if (tabSpaceId && isIdNotSaved(tabSpaceId)) {
-      console.log('notebook start monitor localstorage changes');
+      logger.info('notebook start monitor localstorage changes');
       startMonitorLocalStorageChanges();
       return () => {
-        console.log('notebook stop monitor localstorage changes');
+        logger.info('notebook stop monitor localstorage changes');
         stopMonitorLocalStorageChanges();
       };
     }

@@ -1,11 +1,17 @@
-import { bootstrap, getTabSpaceData } from '../data/tabSpace/bootstrap';
-
 import React from 'react';
 import ReactJson from 'react-json-view';
-import { observer } from 'mobx-react-lite';
 import { render } from 'react-dom';
+import { tabSpaceBootstrap } from '../data/tabSpaceBootstrap';
+import { useStore } from 'effector-react';
+import { $tabSpace } from '../data/tabSpace/store';
 
-const DataView = observer(({ tabSpace }: { tabSpace: any }) => {
+function DataView() {
+  const tabSpace = useStore($tabSpace);
+  const tabSpaceJSON = {
+    ...tabSpace,
+    tabs: null,
+    tabIds: tabSpace.tabs.map((tab) => tab.id).toArray(),
+  };
   return (
     <div style={{ fontSize: '18px' }}>
       <table style={{ width: '100%', height: '100%' }}>
@@ -14,21 +20,19 @@ const DataView = observer(({ tabSpace }: { tabSpace: any }) => {
         </tr>
         <tr style={{ verticalAlign: 'top' }}>
           <td width="33%">
-            <ReactJson src={tabSpace.toJSON()} />
+            <ReactJson src={tabSpaceJSON} />
           </td>
         </tr>
       </table>
     </div>
   );
-});
+}
 
 async function start() {
   const tab = await chrome.tabs.getCurrent();
   const window = await chrome.windows.getCurrent();
-  await bootstrap(tab.id, window.id);
-  const { tabSpace } = getTabSpaceData();
-
-  render(<DataView tabSpace={tabSpace} />, document.getElementById('root'));
+  tabSpaceBootstrap(tab.id, window.id);
+  render(<DataView />, document.getElementById('root'));
 }
 
 start();

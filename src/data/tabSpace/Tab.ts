@@ -1,8 +1,9 @@
-import { Base, IBase, getSavedId, getUnsavedNewId } from '../common';
+import { IBase } from '../common';
 
-import { extend } from 'lodash';
+import { convertToSavedBase, newEmptyBase, toBase } from '../Base';
+import { NotTabSpaceId } from '../chromeSession/ChromeSession';
 
-export interface ISavedTab extends IBase {
+export interface TabCore extends IBase {
   tabSpaceId: string;
   title: string;
   url: string;
@@ -11,107 +12,117 @@ export interface ISavedTab extends IBase {
   suspended: boolean;
 }
 
-export interface ILiveTab {
-  chromeTabId?: number;
-  chromeWindowId?: number;
+export interface LiveTab {
+  chromeTabId: number;
+  chromeWindowId: number;
 }
 
-export type TabJSON = ISavedTab & ILiveTab;
+export type Tab = TabCore & LiveTab;
+export type TabSavePayload = TabCore;
 
-export class Tab extends Base implements ISavedTab, ILiveTab {
-  tabSpaceId: string;
-  title: string;
-  url: string;
-  favIconUrl: string;
-  pinned: boolean;
-  suspended: boolean;
-  chromeTabId?: number;
-  chromeWindowId?: number;
+export const TAB_DB_TABLE_NAME = 'SavedTab';
+export const TAB_DB_SCHEMA = 'id, title, url, createdAt';
 
-  static DB_TABLE_NAME = 'SavedTab';
-  static DB_SCHEMA = 'id, title, url, createdAt';
+export function newEmptyTab(): Tab {
+  return {
+    ...newEmptyBase(),
+    tabSpaceId: NotTabSpaceId,
+    title: '',
+    url: '',
+    favIconUrl: '',
+    pinned: false,
+    suspended: false,
+    chromeTabId: -1,
+    chromeWindowId: -1,
+  };
+}
 
-  constructor(newId?: string) {
-    super(newId ?? getUnsavedNewId());
+export function cloneTab(targetTab: Tab): Tab {
+  return { ...targetTab };
+}
 
-    this.favIconUrl = '';
-    this.pinned = false;
-    this.suspended = false;
-  }
+export function setId(newId: string, targetTab: Tab): Tab {
+  return {
+    ...targetTab,
+    id: newId,
+  };
+}
 
-  clone() {
-    const newTab = new Tab(this.id);
-    newTab.cloneAttributes(this);
-    newTab.tabSpaceId = this.tabSpaceId;
-    newTab.title = this.title;
-    newTab.url = this.url;
-    newTab.favIconUrl = this.favIconUrl;
-    newTab.pinned = this.pinned;
-    newTab.suspended = this.suspended;
-    newTab.chromeTabId = this.chromeTabId;
-    newTab.chromeWindowId = this.chromeWindowId;
-    return newTab;
-  }
+export function setTabSpaceId(tabSpaceId: string, targetTab: Tab): Tab {
+  return { ...targetTab, tabSpaceId };
+}
 
-  toJSON(): TabJSON {
-    return extend(super.toJSON(), {
-      tabSpaceId: this.tabSpaceId,
-      title: this.title,
-      url: this.url,
-      favIconUrl: this.favIconUrl,
-      pinned: this.pinned,
-      suspended: this.suspended,
-      chromeTabId: this.chromeTabId ?? -1,
-      chromeWindowId: this.chromeWindowId ?? -1,
-    });
-  }
+export function setTitle(title: string, targetTab: Tab): Tab {
+  return { ...targetTab, title };
+}
 
-  static fromJSON(tJSON: TabJSON) {
-    const t = new Tab();
-    t.cloneAttributes(tJSON);
-    t.tabSpaceId = tJSON.tabSpaceId;
-    t.title = tJSON.title;
-    t.url = tJSON.url;
-    t.favIconUrl = tJSON.favIconUrl;
-    t.pinned = tJSON.pinned;
-    t.suspended = tJSON.suspended;
-    t.chromeTabId = tJSON.chromeTabId;
-    t.chromeWindowId = tJSON.chromeWindowId;
-    return t;
-  }
+export function setUrl(url: string, targetTab: Tab): Tab {
+  return { ...targetTab, url };
+}
 
-  static fromSavedData(ist: ISavedTab): Tab {
-    const t = new Tab();
-    t.cloneAttributes(ist);
-    t.tabSpaceId = ist.tabSpaceId;
-    t.title = ist.title;
-    t.url = ist.url;
-    t.favIconUrl = ist.favIconUrl;
-    t.pinned = ist.pinned;
-    t.suspended = ist.suspended;
-    return t;
-  }
+export function setFavIconUrl(favIconUrl: string, targetTab: Tab): Tab {
+  return { ...targetTab, favIconUrl };
+}
 
-  convertAndGetSavePayload(): [Tab, ISavedTab] {
-    const savedTab = this.clone();
-    savedTab.convertToSaved();
-    return [
-      savedTab,
-      extend(savedTab.toJSON(), {
-        tabSpaceId: getSavedId(savedTab.tabSpaceId),
-        title: savedTab.title,
-        url: savedTab.url,
-        favIconUrl: savedTab.favIconUrl,
-        pinned: savedTab.pinned,
-        suspended: savedTab.suspended,
-      }),
-    ];
-  }
+export function setPinned(pinned: boolean, targetTab: Tab): Tab {
+  return { ...targetTab, pinned };
+}
 
-  static fromILiveTab(ilt: ILiveTab): Tab {
-    const t = new Tab();
-    t.chromeTabId = ilt.chromeTabId;
-    t.chromeWindowId = ilt.chromeWindowId;
-    return t;
-  }
+export function setSuspended(suspended: boolean, targetTab: Tab): Tab {
+  return { ...targetTab, suspended };
+}
+
+export function setChromeTabId(chromeTabId: number, targetTab: Tab): Tab {
+  return { ...targetTab, chromeTabId };
+}
+
+export function setChromeWindowId(chromeWindowId: number, targetTab: Tab): Tab {
+  return { ...targetTab, chromeWindowId };
+}
+
+export function fromSavedTab(savedTab: TabSavePayload): Tab {
+  return { ...newEmptyTab(), ...savedTab };
+}
+
+export function fromLiveTab(liveTab: LiveTab): Tab {
+  return { ...newEmptyTab(), ...liveTab };
+}
+
+export function toTabCore(targetTab: Tab): TabCore {
+  return {
+    ...toBase(targetTab),
+    tabSpaceId: targetTab.tabSpaceId,
+    title: targetTab.title,
+    url: targetTab.url,
+    favIconUrl: targetTab.favIconUrl,
+    pinned: targetTab.pinned,
+    suspended: targetTab.suspended,
+  };
+}
+
+export function toLiveTab(targetTab: Tab): LiveTab {
+  return {
+    chromeTabId: targetTab.chromeTabId,
+    chromeWindowId: targetTab.chromeWindowId,
+  };
+}
+
+export function convertAndGetTabSavePayload(
+  targetTab: Tab,
+  savedTabSpaceId: string,
+): {
+  tab: Tab;
+  savedTab: TabSavePayload;
+} {
+  const tab = {
+    ...targetTab,
+    ...convertToSavedBase(targetTab),
+    tabSpaceId: savedTabSpaceId,
+  };
+  const savedTab = {
+    ...toTabCore(targetTab),
+    ...convertToSavedBase(targetTab),
+    tabSpaceId: savedTabSpaceId,
+  };
+  return { tab, savedTab };
 }

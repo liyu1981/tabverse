@@ -1,19 +1,21 @@
 import { Button, Icon, Tree, TreeNodeInfo } from '@blueprintjs/core';
 import {
   ChromeSession,
-  IChromeSessionSavePayload,
-  IChromeWindow,
+  ChromeSessionSavePayload,
+  ChromeWindow,
+  fromSavePayload,
   NotTabSpaceTabId,
 } from '../../../data/chromeSession/ChromeSession';
 import React, { useEffect, useState } from 'react';
 import { clone, reduce } from 'lodash';
 import { restoreTab, restoreWindow } from './util';
 
-import { ITabSpaceMap } from '../../../data/chromeSession/sessionStore';
+import { TabSpaceMap } from '../../../data/chromeSession/sessionStore';
 import { IndicatorLine } from '../../common/IndicatorLine';
 import Moment from 'moment';
 import classes from './SessionDetail.module.scss';
 import clsx from 'clsx';
+import { logger } from '../../../global';
 
 function getDomainFromUrl(urlString: string) {
   try {
@@ -25,8 +27,8 @@ function getDomainFromUrl(urlString: string) {
 }
 
 interface SessionDetailProps {
-  session: IChromeSessionSavePayload;
-  tabSpaceMap: ITabSpaceMap;
+  session: ChromeSessionSavePayload;
+  tabSpaceMap: TabSpaceMap;
 }
 
 export const SessionDetail = ({ session, tabSpaceMap }: SessionDetailProps) => {
@@ -35,10 +37,8 @@ export const SessionDetail = ({ session, tabSpaceMap }: SessionDetailProps) => {
 
   useEffect(() => {
     if (session) {
-      const chromeSession =
-        session instanceof ChromeSession
-          ? session
-          : ChromeSession.fromSavePayload(session);
+      const chromeSession = fromSavePayload(session);
+      logger.info('chromesession is:', chromeSession);
       setChromeSession(chromeSession);
       setExpandedMap(
         reduce(
@@ -53,7 +53,7 @@ export const SessionDetail = ({ session, tabSpaceMap }: SessionDetailProps) => {
     }
   }, [session]);
 
-  const getWindowChildNodes = (window: IChromeWindow): TreeNodeInfo[] => {
+  const getWindowChildNodes = (window: ChromeWindow): TreeNodeInfo[] => {
     return window.tabIds
       .map((tabId, index): TreeNodeInfo => {
         const chromeTab = chromeSession.tabs.find((t) => t.tabId === tabId);

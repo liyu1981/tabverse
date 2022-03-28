@@ -7,7 +7,6 @@ import React from 'react';
 import { Tab } from '../../../data/tabSpace/Tab';
 import classes from './TabCard.module.scss';
 import clsx from 'clsx';
-import { observer } from 'mobx-react-lite';
 
 const TabDetailPreviewPanel = (props) => {
   return props.tab ? (
@@ -37,21 +36,23 @@ interface TabBookmarkBtnProps {
   onBookmark: (tab: Tab) => void;
 }
 
-const TabBookmarkBtn = observer(
-  ({ tab, isBookmarked, onBookmark }: TabBookmarkBtnProps) => {
-    return isBookmarked ? (
-      <div></div>
-    ) : (
-      <Button
-        icon="bookmark"
-        minimal={true}
-        onClick={() => {
-          onBookmark(tab);
-        }}
-      />
-    );
-  },
-);
+function TabBookmarkBtn({
+  tab,
+  isBookmarked,
+  onBookmark,
+}: TabBookmarkBtnProps) {
+  return isBookmarked ? (
+    <div></div>
+  ) : (
+    <Button
+      icon="bookmark"
+      minimal={true}
+      onClick={() => {
+        onBookmark(tab);
+      }}
+    />
+  );
+}
 
 interface ITabCardProps {
   tab: Tab;
@@ -63,7 +64,7 @@ interface ITabCardProps {
   onSelect?: (tabId: string, selected: boolean) => void;
 }
 
-export const TabCard = observer((props: ITabCardProps) => {
+export function TabCard(props: ITabCardProps) {
   const needPreview = props.needPreview ?? false;
   const needSelector = props.needSelector ?? false;
 
@@ -156,4 +157,4 @@ export const TabCard = observer((props: ITabCardProps) => {
   ) : (
     card
   );
-});
+}

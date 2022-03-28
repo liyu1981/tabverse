@@ -16,10 +16,10 @@ export function newEmptyBase(): IBase {
 export function convertToSavedBase(targetBase: IBase): IBase {
   const datenow = Date.now();
   return {
-    ...targetBase,
-    id: getSavedId(targetBase.id),
+    version: targetBase.version,
     createdAt: targetBase.createdAt < 0 ? datenow : targetBase.createdAt,
     updatedAt: datenow,
+    id: getSavedId(targetBase.id),
   };
 }
 
@@ -33,5 +33,14 @@ export function updateFromSaved<T1 extends IBase, T2 extends IBase>(
     createdAt: saved.createdAt,
     updatedAt: saved.updatedAt,
     id: saved.id,
+  };
+}
+
+export function toBase<T extends IBase>(target: T): IBase {
+  return {
+    version: target.version,
+    createdAt: target.createdAt,
+    updatedAt: target.updatedAt,
+    id: target.id,
   };
 }

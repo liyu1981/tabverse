@@ -13,6 +13,7 @@ import {
   stopMonitorLocalStorageChanges,
 } from '../../data/todo/util';
 import { isIdNotSaved } from '../../data/common';
+import { logger } from '../../global';
 
 const RETURN_KEY = 13;
 const FILTER_ACTIVE = 'active';
@@ -93,17 +94,17 @@ export function TodoView({ tabSpaceId }: TodoViewProps) {
   );
 
   useEffect(() => {
-    console.log('todo start monitor tabspace, alltodo changes');
+    logger.info('todo start monitor tabspace, alltodo changes');
     monitorTabSpaceChanges();
     monitorAllTodoChanges();
   }, []);
 
   useEffect(() => {
     if (tabSpaceId && isIdNotSaved(tabSpaceId)) {
-      console.log('todo start monitor localstorage changes');
+      logger.info('todo start monitor localstorage changes');
       startMonitorLocalStorageChanges();
       return () => {
-        console.log('todo stop monitor localstorage changes');
+        logger.info('todo stop monitor localstorage changes');
         stopMonitorLocalStorageChanges();
       };
     }

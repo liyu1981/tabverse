@@ -46,4 +46,4 @@ export type TodoStorageStore = typeof $todoStorageStoreImpl;
 export const todoStoreApi = merge(allTodoApi, todoStorageApi);
 export type TodoStoreApi = typeof todoStoreApi;
 
-exposeDebugData('todo', { $allTodo, $todoStorageStore });
+exposeDebugData('todo', { $allTodo, $todoStorageStore, todoStoreApi });

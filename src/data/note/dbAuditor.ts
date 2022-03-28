@@ -1,9 +1,9 @@
 import { Note, NOTE_DB_TABLE_NAME } from './Note';
 
 import { db } from '../../store/db';
-import { getLogger } from '../../store/store';
 import { map } from 'lodash';
 import { ALLNOTE_DB_TABLE_NAME } from './AllNote';
+import { getLogger } from '../../store/dbAuditorManager';
 
 export async function dbAuditor(logs: string[]): Promise<void> {
   const logger = getLogger(logs);

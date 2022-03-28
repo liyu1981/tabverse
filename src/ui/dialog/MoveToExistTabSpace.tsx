@@ -3,12 +3,12 @@ import { EmptyQuery, Query, calcCursorBegin } from '../../fullTextSearch';
 import {
   QUERY_PAGE_LIMIT_DEFAULT,
   addPagingToQueryParams,
-} from '../../store/store';
+} from '../../store/storage';
 import React, { useContext, useEffect, useState } from 'react';
 import {
   moveTabsToTabSpace,
   querySavedTabSpace,
-} from '../../data/tabSpace/SavedTabSpaceStore';
+} from '../../data/tabSpace/util';
 
 import { SearchInput as FullTextSearchInput } from '../../fullTextSearch/SearchInput';
 import { IconName } from '@blueprintjs/icons';

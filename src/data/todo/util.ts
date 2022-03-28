@@ -9,11 +9,6 @@ import {
   updateTabSpaceId,
 } from './AllTodo';
 import { $allTodo, $todoStorageStore, todoStoreApi } from './store';
-import {
-  addPagingToQueryParams,
-  DEFAULT_SAVE_DEBOUNCE,
-  InSavingStatus,
-} from '../../store/store';
 import { TabSpaceMsg, subscribePubSubMessage } from '../../message/message';
 import { debounce, logger } from '../../global';
 import {
@@ -26,11 +21,17 @@ import {
 
 import { Todo, TodoLocalStorage, TODO_DB_TABLE_NAME } from './Todo';
 import { db } from '../../store/db';
-import { getTabSpaceData } from '../tabSpace/bootstrap';
 import { isIdNotSaved } from '../common';
 import { isJestTest } from '../../debug';
 import { updateFromSaved } from '../Base';
 import { isArray } from 'lodash';
+import { needAutoSave } from '../tabSpace/TabSpace';
+import { $tabSpace } from '../tabSpace/store';
+import {
+  addPagingToQueryParams,
+  DEFAULT_SAVE_DEBOUNCE,
+  InSavingStatus,
+} from '../../store/storage';
 
 export const LOCALSTORAGE_TODO_KEY = getLocalStorageKey('todo');
 
@@ -86,7 +87,7 @@ export function monitorAllTodoChanges() {
     if ($todoStorageStore.getState().inSaving === InSavingStatus.InSaving) {
       logger.log('todo inSaving, skip');
     } else {
-      if (getTabSpaceData().tabSpace.needAutoSave()) {
+      if (needAutoSave($tabSpace.getState())) {
         logger.log(
           'current tabSpace need autoSave, will then saveCurrentAllTodo',
         );

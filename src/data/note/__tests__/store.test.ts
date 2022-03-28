@@ -1,10 +1,4 @@
-import {
-  getTabSpaceData,
-  bootstrap as tabSpaceBootstrap,
-} from '../../tabSpace/bootstrap';
-
 import { newEmptyNote, setData, setName } from '../Note';
-import { initTabSpaceData } from '../../tabSpace/__tests__/SavedTabSpaceStore.test';
 import {
   loadAllNoteByTabSpaceId,
   queryAllNote,
@@ -12,11 +6,12 @@ import {
 } from '../util';
 import { $allNote, noteStoreApi } from '../store';
 import { omit } from 'lodash';
+import { initTabSpaceData } from '../../tabSpace/__tests__/store.test';
+import { $tabSpace } from '../../tabSpace/store';
 
 async function bootstrapAllNote() {
-  const { tst1 } = await initTabSpaceData();
-  await tabSpaceBootstrap(tst1.id, tst1.windowId);
-  const tabSpaceId = getTabSpaceData().tabSpace.id;
+  await initTabSpaceData();
+  const tabSpaceId = $tabSpace.getState().id;
   await loadAllNoteByTabSpaceId(tabSpaceId);
   return { tabSpaceId };
 }

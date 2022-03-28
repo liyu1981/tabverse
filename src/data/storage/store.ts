@@ -5,6 +5,7 @@ import {
   markInSaving,
   newEmptyGeneralStorage,
   updateLastSavedTime,
+  updateTotalSavedCount,
 } from './Storage';
 
 export function createGeneralStorageStoreAndApi() {
@@ -16,6 +17,8 @@ export function createGeneralStorageStoreAndApi() {
       markInSaving(inSaving, lastStorage),
     updateLastSavedTime: (lastStorage, lastSavedTime: number) =>
       updateLastSavedTime(lastSavedTime, lastStorage),
+    updateTotalSavedCount: (lastStorage, totalSavedCount: number) =>
+      updateTotalSavedCount(totalSavedCount, lastStorage),
   });
   return { $store, api };
 }

@@ -14,6 +14,7 @@ import {
   startMonitorLocalStorageChanges,
 } from '../../data/bookmark/util';
 import { isIdNotSaved } from '../../data/common';
+import { logger } from '../../global';
 
 interface IBookmarkItem {
   bookmark: Bookmark;
@@ -86,17 +87,17 @@ export function BookmarkView({ tabSpaceId }: IBookmarkViewProps) {
   const allBookmark = useStore($allBookmark);
 
   useEffect(() => {
-    console.log('bookmark start monitor tabspace, alltodo changes');
+    logger.info('bookmark start monitor tabspace, alltodo changes');
     monitorTabSpaceChanges();
     monitorAllBookmarkChanges();
   }, []);
 
   useEffect(() => {
     if (tabSpaceId && isIdNotSaved(tabSpaceId)) {
-      console.log('bookmark start monitor localstorage changes');
+      logger.info('bookmark start monitor localstorage changes');
       startMonitorLocalStorageChanges();
       return () => {
-        console.log('todo stop monitor localstorage changes');
+        logger.info('todo stop monitor localstorage changes');
         stopMonitorLocalStorageChanges();
       };
     }

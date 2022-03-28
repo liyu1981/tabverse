@@ -2,10 +2,7 @@ import '../common/reactdev';
 import './manager.scss';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import {
-  getTabSpaceRegistry,
-  addTabSpace as tabSpaceRegistryAddTabSpace,
-} from '../../tabSpaceRegistry';
+import { addTabSpace as tabSpaceRegistryAddTabSpace } from '../../data/tabSpaceRegistry';
 
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { ManagerViewContextSupport } from './ManagerViewContext';
@@ -15,8 +12,8 @@ import { Sidebar } from './Sidebar/Sidebar';
 import { SidebarContainer } from '../common/SidebarContainer';
 import { TabSpaceView } from './TabSpace/TabSpaceView';
 import { WebtoolView } from './Webtool/WebtoolView';
-import { getAllChromeSessionData } from '../../data/chromeSession/bootstrap';
-import { getTabSpaceData } from '../../data/tabSpace/bootstrap';
+import { toTabSpaceStub } from '../../data/tabSpace/TabSpace';
+import { $tabSpace } from '../../data/tabSpace/store';
 
 export interface IManagerQueryParams {
   op: string;
@@ -59,37 +56,17 @@ export const ManagerView = (props: IManagerContainerProps) => {
     // it will be captured by current leader so that current tabspace will be
     // deleted from tabSpaceRegistry. Below we manually issue an message to
     // add it back.
-    tabSpaceRegistryAddTabSpace(getTabSpaceData().tabSpace.toTabSpaceStub());
+    tabSpaceRegistryAddTabSpace(toTabSpaceStub($tabSpace.getState()));
   }, [currentRoute]);
 
   const renderView = (route: ManagerViewRoute) => {
     switch (route) {
       case ManagerViewRoute.Opened:
-        return (
-          <TabSpaceView
-            tabSpace={getTabSpaceData().tabSpace}
-            tabSpaceRegistry={getTabSpaceRegistry()}
-            tabPreview={getTabSpaceData().tabPreview}
-            savedTabSpaceStore={getTabSpaceData().savedTabSpaceStore}
-          />
-        );
+        return <TabSpaceView />;
       case ManagerViewRoute.Saved:
-        return (
-          <SavedTabSpaceView
-            tabSpace={getTabSpaceData().tabSpace}
-            tabSpaceRegistry={getTabSpaceRegistry()}
-            savedTabSpaceStore={getTabSpaceData().savedTabSpaceStore}
-            savedTabSpaceCollection={getTabSpaceData().savedTabSpaceCollection}
-          />
-        );
+        return <SavedTabSpaceView />;
       case ManagerViewRoute.Session:
-        return (
-          <SessionBrowserView
-            savedChromeSessionCollection={
-              getAllChromeSessionData().savedChromeSessionCollection
-            }
-          />
-        );
+        return <SessionBrowserView />;
       case ManagerViewRoute.Webtool:
         return <WebtoolView></WebtoolView>;
       // case ManagerViewRoute.Search:
