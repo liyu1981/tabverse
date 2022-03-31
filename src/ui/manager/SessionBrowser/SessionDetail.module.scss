@@ -29,8 +29,19 @@
   margin-right: 8px;
 }
 
-.indicatorLine {
-  padding: 0px 40px;
+.indicator {
+  padding: 40px 0px;
+  padding-bottom: 0px;
+  margin-bottom: -10px;
+  text-align: center;
+}
+
+.indicatorInner {
+  background-color: global.$color-main-brand;
+  color: global.$color-background;
+  display: inline-block;
+  padding: 8px;
+  border-radius: 18px;
 }
 
 .indicatorLineSpan {

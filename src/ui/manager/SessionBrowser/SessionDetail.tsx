@@ -11,7 +11,6 @@ import { clone, reduce } from 'lodash';
 import { restoreTab, restoreWindow } from './util';
 
 import { TabSpaceMap } from '../../../data/chromeSession/sessionStore';
-import { IndicatorLine } from '../../common/IndicatorLine';
 import Moment from 'moment';
 import classes from './SessionDetail.module.scss';
 import clsx from 'clsx';
@@ -131,16 +130,18 @@ export const SessionDetail = ({ session, tabSpaceMap }: SessionDetailProps) => {
   return (
     <div className={classes.container}>
       {session ? (
-        <IndicatorLine className={classes.indicatorLine}>
-          <span className={classes.indicatorLineSpan}>
-            <b>created: </b>
-            {`${Moment(session.createdAt).calendar()}`}
-          </span>
-          <span className={classes.indicatorLineSpan}>
-            <b>saved: </b>
-            {`${Moment(session.updatedAt).calendar()}`}
-          </span>
-        </IndicatorLine>
+        <div className={classes.indicator}>
+          <div className={classes.indicatorInner}>
+            <span className={classes.indicatorLineSpan}>
+              <b>created: </b>
+              {`${Moment(session.createdAt).calendar()}`}
+            </span>
+            <span className={classes.indicatorLineSpan}>
+              <b>saved: </b>
+              {`${Moment(session.updatedAt).calendar()}`}
+            </span>
+          </div>
+        </div>
       ) : (
         ''
       )}
