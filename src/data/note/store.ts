@@ -7,11 +7,12 @@ import {
   updateNote,
   updateTabSpaceId,
 } from './AllNote';
-import { createApi, createStore } from 'effector';
+import { createApi, createStore, forward } from 'effector';
 import { merge } from 'lodash';
 import { Note, NoteLocalStorage } from './Note';
-import { createGeneralStorageStoreAndApi } from '../storage/store';
 import { exposeDebugData } from '../../debug';
+import { createGeneralStorageStoreAndApi } from '../../storage/GeneralStorage';
+import { storageOverviewApi } from '../../storage/StorageOverview';
 
 export const $allNote = createStore<AllNote>(newEmptyAllNote());
 export type AllNoteStore = typeof $allNote;
@@ -34,6 +35,11 @@ const { $store: $noteStorageStore, api: noteStorageApi } =
   createGeneralStorageStoreAndApi();
 export const $noteStorage = $noteStorageStore;
 export type NoteStorageStore = typeof $noteStorageStore;
+
+forward({
+  from: $noteStorage,
+  to: storageOverviewApi.updateNoteStorage,
+});
 
 export const noteStoreApi = merge(allNoteApi, noteStorageApi);
 export type NoteStoreApi = typeof noteStorageApi;

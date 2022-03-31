@@ -1,4 +1,4 @@
-import { getSettingItem } from './store/localSetting';
+import { getSettingItem } from './storage/localSetting';
 import { merge } from 'lodash';
 
 export enum TabSpaceLogLevel {

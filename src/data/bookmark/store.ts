@@ -1,7 +1,8 @@
-import { createApi, createStore } from 'effector';
+import { createApi, createStore, forward } from 'effector';
 import { merge } from 'lodash';
 import { exposeDebugData } from '../../debug';
-import { createGeneralStorageStoreAndApi } from '../storage/store';
+import { createGeneralStorageStoreAndApi } from '../../storage/GeneralStorage';
+import { storageOverviewApi } from '../../storage/StorageOverview';
 import {
   addBookmark,
   AllBookmark,
@@ -39,6 +40,11 @@ const { $store: $bookmarkStorageStore, api: bookmarkStorageApi } =
   createGeneralStorageStoreAndApi();
 export const $bookmarkStorage = $bookmarkStorageStore;
 export type BookmarkStorage = typeof $bookmarkStorageStore;
+
+forward({
+  from: $bookmarkStorage,
+  to: storageOverviewApi.updateBookmarkStorage,
+});
 
 export const bookmarkStoreApi = merge(allBookmarkApi, bookmarkStorageApi);
 

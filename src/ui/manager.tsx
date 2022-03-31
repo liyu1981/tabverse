@@ -12,9 +12,8 @@ import { strict as assert } from 'assert';
 import { find } from 'lodash';
 import { bootstrap as fullTextSearchBootstrap } from '../fullTextSearch';
 import { getQueryParameters } from './common/queryAndHashParameter';
-import { localStorageInit } from '../store/localStorageWrapper';
+import { localStorageInit } from '../storage/localStorageWrapper';
 import { renderPage } from './common/base';
-import { bootstrap as storeBootstrap } from '../store/bootstrap';
 import { bootstrap as tabSpaceRegistryServiceBootstrap } from '../data/tabSpaceRegistry';
 import { tabSpaceBootstrap } from '../data/tabSpaceBootstrap';
 import { loadTabSpaceByTabSpaceId } from '../data/tabSpace/util';
@@ -41,7 +40,6 @@ async function bootstrap() {
 
     tabSpaceRegistryServiceBootstrap();
 
-    storeBootstrap();
     fullTextSearchBootstrap();
     localStorageInit();
 

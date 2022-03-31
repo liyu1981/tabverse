@@ -1,6 +1,6 @@
 import { addToIndex, getDb } from '../../fullTextSearch';
 
-import { db } from '../../store/db';
+import { db } from '../../storage/db';
 import { logger } from '../../global';
 import { TabCore, TAB_DB_TABLE_NAME } from '../../data/tabSpace/Tab';
 import { querySavedTabSpaceById } from '../../data/tabSpace/util';

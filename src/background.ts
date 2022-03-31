@@ -12,7 +12,7 @@ import { setDebugLogLevel, TabSpaceLogLevel } from './debug';
 import {
   dbAuditAndClearance,
   registerDbAuditor,
-} from './store/dbAuditorManager';
+} from './storage/dbAuditorManager';
 
 setDebugLogLevel(TabSpaceLogLevel.LOG);
 

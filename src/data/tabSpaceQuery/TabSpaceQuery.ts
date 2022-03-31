@@ -5,11 +5,11 @@ import {
   Query,
 } from '../../fullTextSearch';
 import { LoadStatus } from '../../global';
-import { QUERY_PAGE_LIMIT_DEFAULT } from '../../store/storage';
 
 import Moment from 'moment';
 import { TabSpace } from '../tabSpace/TabSpace';
 import { TabSpaceStub } from '../tabSpaceRegistry/TabSpaceRegistry';
+import { QUERY_PAGE_LIMIT_DEFAULT } from '../../storage/db';
 
 export enum SortMethods {
   CREATED = 0,

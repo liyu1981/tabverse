@@ -40,7 +40,7 @@ export function SavedTabSpaceView() {
 
   useAsyncEffect(async () => {
     await tabSpaceQueryStoreApi.reload();
-  }, [tabSpaceRegistry, tabStorage.savedDataVersion]);
+  }, [tabSpaceRegistry, tabStorage]);
 
   const switchToTabSpace = (tabSpace: TabSpace) => {
     const tabSpaceStub = tabSpaceRegistry.get(tabSpace.id);

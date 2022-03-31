@@ -1,7 +1,5 @@
-import { QUERY_PAGE_LIMIT_DEFAULT } from '../../../store/storage';
 import { resetTestDb } from '../../../dev/dbImplTest';
 import { startMonitorTabChanges } from '../chromeTab';
-import { bootstrap as storageManagerBootstrap } from '../../../store/bootstrap';
 import { initMockChrome, tsTabData1 } from './common.test';
 import { $tabSpace, tabSpaceStoreApi } from '../store';
 import {
@@ -12,9 +10,9 @@ import {
 } from '../util';
 import { findTabByChromeTabId } from '../TabSpace';
 import { pick } from 'lodash';
+import { QUERY_PAGE_LIMIT_DEFAULT } from '../../../storage/db';
 
 export async function initTabSpaceData() {
-  storageManagerBootstrap();
   const { mockChrome, w1, w2, t1, t2, t3, t4 } = initMockChrome();
   const tst1 = mockChrome.insertTabFromData(tsTabData1, w1.id, 0);
   await mockChrome.flushMessages();

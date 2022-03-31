@@ -2,21 +2,18 @@ import { isArray } from 'lodash';
 import { isJestTest } from '../../debug';
 import { debounce, logger } from '../../global';
 import { subscribePubSubMessage, TabSpaceMsg } from '../../message/message';
-import { db } from '../../store/db';
+import { addPagingToQueryParams, db } from '../../storage/db';
 import {
   getLocalStorageKey,
   localStorageAddListener,
   localStorageGetItem,
   localStoragePutItem,
   localStorageRemoveListener,
-} from '../../store/localStorageWrapper';
-import {
-  addPagingToQueryParams,
-  DEFAULT_SAVE_DEBOUNCE,
-} from '../../store/storage';
+} from '../../storage/localStorageWrapper';
+import { DEFAULT_SAVE_DEBOUNCE } from '../../storage/StorageOverview';
 import { updateFromSaved } from '../Base';
 import { isIdNotSaved } from '../common';
-import { InSavingStatus } from '../storage/Storage';
+import { InSavingStatus } from '../../storage/GeneralStorage';
 import { $tabSpace } from '../tabSpace/store';
 import { needAutoSave } from '../tabSpace/TabSpace';
 import {

@@ -1,7 +1,8 @@
-import { createApi, createStore } from 'effector';
+import { createApi, createStore, forward } from 'effector';
 import { merge } from 'lodash';
 import { exposeDebugData } from '../../debug';
-import { createGeneralStorageStoreAndApi } from '../storage/store';
+import { createGeneralStorageStoreAndApi } from '../../storage/GeneralStorage';
+import { storageOverviewApi } from '../../storage/StorageOverview';
 import { Tab } from './Tab';
 import {
   newEmptyTabPreviewCache,
@@ -65,6 +66,11 @@ const { $store: $tabSpaceStorageStore, api: tabSpaceStorageApi } =
   createGeneralStorageStoreAndApi();
 export const $tabSpaceStorage = $tabSpaceStorageStore;
 export type TabSpaceStorage = typeof $tabSpaceStorageStore;
+
+forward({
+  from: $tabSpaceStorage,
+  to: storageOverviewApi.updateTabSpaceStorage,
+});
 
 async function reQuerySavedTabSpaceCount() {
   const count = await querySavedTabSpaceCount();

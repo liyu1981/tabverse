@@ -3,7 +3,7 @@ import {
   CHROMESESSION_DB_TABLE_NAME,
 } from '../ChromeSession';
 
-import { db } from '../../../store/db';
+import { db } from '../../../storage/db';
 import { getMockChrome } from '../../../dev/chromeMock';
 import { getNewId } from '../../common';
 import { saveSession } from '../sessionSaver';

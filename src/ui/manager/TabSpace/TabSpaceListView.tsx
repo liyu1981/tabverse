@@ -15,7 +15,6 @@ import { Popover2 } from '@blueprintjs/popover2';
 import { SaveIndicator } from './SaveIndicator';
 import { TabCard } from './TabCard';
 import classes from './TabSpaceListView.module.scss';
-import { getStorageManager } from '../../../store/bootstrap';
 import { isIdNotSaved } from '../../../data/common';
 import { $allBookmark, bookmarkStoreApi } from '../../../data/bookmark/store';
 import {
@@ -196,11 +195,7 @@ export function TabSpaceListView() {
         </div>
       ) : null}
       <div className={classes.toolbarRightContainer}>
-        {needAutoSave(tabSpace) ? (
-          <SaveIndicator {...getStorageManager().storages} />
-        ) : (
-          'Auto Saving Off'
-        )}
+        {needAutoSave(tabSpace) ? <SaveIndicator /> : 'Auto Saving Off'}
       </div>
     </div>
   );

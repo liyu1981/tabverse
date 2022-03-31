@@ -9,12 +9,13 @@ import {
   updateTabSpaceId,
   updateTodo,
 } from './AllTodo';
-import { createApi, createStore } from 'effector';
+import { createApi, createStore, forward } from 'effector';
 
 import { Todo, TodoLocalStorage } from './Todo';
 import { merge } from 'lodash';
-import { createGeneralStorageStoreAndApi } from '../storage/store';
 import { exposeDebugData } from '../../debug';
+import { createGeneralStorageStoreAndApi } from '../../storage/GeneralStorage';
+import { storageOverviewApi } from '../../storage/StorageOverview';
 
 export const $allTodo = createStore<AllTodo>(newEmptyAllTodo());
 export type AllTodoStore = typeof $allTodo;
@@ -42,6 +43,11 @@ const { $store: $todoStorageStoreImpl, api: todoStorageApi } =
   createGeneralStorageStoreAndApi();
 export const $todoStorage = $todoStorageStoreImpl;
 export type TodoStorageStore = typeof $todoStorageStoreImpl;
+
+forward({
+  from: $todoStorage,
+  to: storageOverviewApi.updateTodoStorage,
+});
 
 export const todoStoreApi = merge(allTodoApi, todoStorageApi);
 export type TodoStoreApi = typeof todoStoreApi;

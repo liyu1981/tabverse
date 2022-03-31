@@ -1,8 +1,8 @@
 import { Tab, TAB_DB_TABLE_NAME } from './Tab';
 import { TABSPACE_DB_TABLE_NAME } from './TabSpace';
-import { db } from '../../store/db';
+import { db } from '../../storage/db';
 import { map } from 'lodash';
-import { getLogger } from '../../store/dbAuditorManager';
+import { getLogger } from '../../storage/dbAuditorManager';
 
 export async function dbAuditor(logs: string[]): Promise<void> {
   const logger = getLogger(logs);

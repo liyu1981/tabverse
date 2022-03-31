@@ -8,7 +8,7 @@ import {
   convertAndGetSavePayload,
 } from './ChromeSession';
 
-import { db } from '../../store/db';
+import { db } from '../../storage/db';
 import { isJestTest } from '../../debug';
 import { logger } from '../../global';
 import { scanCurrentTabsForBackground } from './chromeScan';

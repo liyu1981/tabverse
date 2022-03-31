@@ -14,7 +14,7 @@ import {
 } from '../../tabSpace/util';
 import { $tabSpace } from '../../tabSpace/store';
 import { findTabByChromeTabId } from '../../tabSpace/TabSpace';
-import { QUERY_PAGE_LIMIT_DEFAULT } from '../../../store/storage';
+import { QUERY_PAGE_LIMIT_DEFAULT } from '../../../storage/db';
 
 export async function initTabSpaceData() {
   // storeManagerBootstrap();

@@ -17,21 +17,18 @@ import {
   localStorageGetItem,
   localStoragePutItem,
   localStorageRemoveListener,
-} from '../../store/localStorageWrapper';
+} from '../../storage/localStorageWrapper';
 
 import { Todo, TodoLocalStorage, TODO_DB_TABLE_NAME } from './Todo';
-import { db } from '../../store/db';
+import { addPagingToQueryParams, db } from '../../storage/db';
 import { isIdNotSaved } from '../common';
 import { isJestTest } from '../../debug';
 import { updateFromSaved } from '../Base';
 import { isArray } from 'lodash';
 import { needAutoSave } from '../tabSpace/TabSpace';
 import { $tabSpace } from '../tabSpace/store';
-import {
-  addPagingToQueryParams,
-  DEFAULT_SAVE_DEBOUNCE,
-  InSavingStatus,
-} from '../../store/storage';
+import { DEFAULT_SAVE_DEBOUNCE } from '../../storage/StorageOverview';
+import { InSavingStatus } from '../../storage/GeneralStorage';
 
 export const LOCALSTORAGE_TODO_KEY = getLocalStorageKey('todo');
 

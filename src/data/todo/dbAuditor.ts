@@ -1,9 +1,9 @@
 import { Todo, TODO_DB_TABLE_NAME } from './Todo';
 
-import { db } from '../../store/db';
+import { db } from '../../storage/db';
 import { map } from 'lodash';
 import { AllTodoSavePayload, ALLTODO_DB_TABLE_NAME } from './AllTodo';
-import { getLogger } from '../../store/dbAuditorManager';
+import { getLogger } from '../../storage/dbAuditorManager';
 
 export async function dbAuditor(logs: string[]): Promise<void> {
   const logger = getLogger(logs);

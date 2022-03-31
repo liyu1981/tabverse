@@ -4,8 +4,8 @@ import {
 } from '../ui/dialog/DropboxDialog';
 
 import { Dropbox } from 'dropbox';
-import { dumpDb } from '../store/dump';
-import { getSettingItem } from '../store/localSetting';
+import { dumpDb } from '../storage/dump';
+import { getSettingItem } from '../storage/localSetting';
 import { listDropboxFiles } from './list';
 import { logger } from '../global';
 import md5sum from 'crypto-js/md5';

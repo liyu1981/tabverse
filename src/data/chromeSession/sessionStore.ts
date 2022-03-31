@@ -4,7 +4,7 @@ import {
   CHROMESESSION_DB_TABLE_NAME,
 } from './ChromeSession';
 
-import { db } from '../../store/db';
+import { db } from '../../storage/db';
 import { filter } from 'lodash';
 import { isIdNotSaved } from '../common';
 import { subscribePubSubMessage, TabSpaceDBMsg } from '../../message/message';

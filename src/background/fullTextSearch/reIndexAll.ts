@@ -1,7 +1,7 @@
 import { addTabSpaceToIndex, addTabToIndex } from './addToIndex';
 
 import { TaskQueue } from '../TaskQueue';
-import { db } from '../../store/db';
+import { db } from '../../storage/db';
 import { logger } from '../../global';
 import {
   TabSpaceSavePayload,

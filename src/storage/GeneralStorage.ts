@@ -1,3 +1,5 @@
+import { createApi, createStore } from 'effector';
+
 export enum InSavingStatus {
   InSaving = 0,
   Idle = 1,
@@ -50,4 +52,19 @@ export function updateLastSavedTime(
   targetStorage: GeneralStorage,
 ): GeneralStorage {
   return { ...targetStorage, lastSavedTime };
+}
+
+export function createGeneralStorageStoreAndApi() {
+  const $store = createStore<GeneralStorage>(newEmptyGeneralStorage());
+  const api = createApi($store, {
+    increaseSavedDataVersion: (lastStorage) =>
+      increaseSavedDataVersion(lastStorage),
+    markInSaving: (lastStorage, inSaving: boolean) =>
+      markInSaving(inSaving, lastStorage),
+    updateLastSavedTime: (lastStorage, lastSavedTime: number) =>
+      updateLastSavedTime(lastSavedTime, lastStorage),
+    updateTotalSavedCount: (lastStorage, totalSavedCount: number) =>
+      updateTotalSavedCount(totalSavedCount, lastStorage),
+  });
+  return { $store, api };
 }

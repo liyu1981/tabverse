@@ -15,7 +15,7 @@ import {
   SortMethods,
   TabSpaceQuery,
 } from './TabSpaceQuery';
-import { addPagingToQueryParams } from '../../store/storage';
+import { addPagingToQueryParams } from '../../storage/db';
 
 export const $tabSpaceQuery = createStore(newEmptyTabSpaceQuery());
 

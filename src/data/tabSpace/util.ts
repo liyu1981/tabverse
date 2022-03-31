@@ -14,12 +14,9 @@ import {
   TabSpaceDBMsg,
   TabSpaceMsg,
 } from '../../message/message';
-import { db } from '../../store/db';
-import {
-  DEFAULT_SAVE_DEBOUNCE,
-  QUERY_PAGE_LIMIT_DEFAULT,
-} from '../../store/storage';
-import { InSavingStatus } from '../storage/Storage';
+import { db, QUERY_PAGE_LIMIT_DEFAULT } from '../../storage/db';
+import { DEFAULT_SAVE_DEBOUNCE } from '../../storage/StorageOverview';
+import { InSavingStatus } from '../../storage/GeneralStorage';
 import { $tabSpace, $tabSpaceStorage, tabSpaceStoreApi } from './store';
 import { fromSavedTab, Tab, TabSavePayload, TAB_DB_TABLE_NAME } from './Tab';
 import {

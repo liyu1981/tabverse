@@ -1,9 +1,5 @@
 import { Button, Checkbox, Dialog, Intent } from '@blueprintjs/core';
 import { EmptyQuery, Query, calcCursorBegin } from '../../fullTextSearch';
-import {
-  QUERY_PAGE_LIMIT_DEFAULT,
-  addPagingToQueryParams,
-} from '../../store/storage';
 import React, { useContext, useEffect, useState } from 'react';
 import {
   moveTabsToTabSpace,
@@ -23,6 +19,10 @@ import clsx from 'clsx';
 import { merge } from 'lodash';
 import { scopeMap } from '../manager/SavedTabSpace/Search';
 import { searchSavedTabSpace } from '../../background/fullTextSearch/search';
+import {
+  addPagingToQueryParams,
+  QUERY_PAGE_LIMIT_DEFAULT,
+} from '../../storage/db';
 
 export interface MoveToExistTabverseDialogProps {
   tabsForMoving: Tab[];

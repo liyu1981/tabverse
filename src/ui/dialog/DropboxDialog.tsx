@@ -24,7 +24,7 @@ import React, { useEffect, useState } from 'react';
 import Moment from 'moment';
 import classes from './DropboxDialog.module.scss';
 import clsx from 'clsx';
-import { useSettingItem } from '../../store/localSetting';
+import { useSettingItem } from '../../storage/localSetting';
 
 export const SETTING_KEY_DROPBOX_ACCESSTOKEN = 'tabverse_dropboxAccessToken';
 export const SETTING_KEY_DROPBOX_AUTOBACKUP = 'tabverse_dropboxAutobackup';

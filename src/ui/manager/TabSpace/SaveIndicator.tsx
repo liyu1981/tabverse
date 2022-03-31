@@ -1,15 +1,14 @@
 import Moment from 'moment';
 import React from 'react';
 import { Tooltip2 } from '@blueprintjs/popover2';
-import { getStorageManager } from '../../../store/bootstrap';
+import { useStore } from 'effector-react';
+import { $storageOverview } from '../../../storage/StorageOverview';
 
 export function SaveIndicator() {
-  // here we do observe whatever given to us in props but also ignore of that
-  // because just want it to notify us for an update
-  const storageManager = getStorageManager();
-  const [anyInSaving, whoIsInSaving] = storageManager.anyStorageInSaving();
-  const lastSavedTime = storageManager.getLastSavedStorage().lastSavedTime;
-  const allSavedTimes = storageManager.getAllLastSavedTime();
+  const storageOverview = useStore($storageOverview);
+  const [anyInSaving, whoIsInSaving] = storageOverview.anyStorageInSaving();
+  const lastSavedTime = storageOverview.getLastSavedStorage().lastSavedTime;
+  const allSavedTimes = storageOverview.getAllLastSavedTime();
   const allSavedTimesContent = (
     <div>
       {allSavedTimes.map(([key, savedTime]) => (
