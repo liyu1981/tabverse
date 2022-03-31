@@ -98,5 +98,6 @@ export function retryIfStateNotReady(
 }
 
 exposeDebugData('tabSpaceRegistry', {
-  store: $tabSpaceRegistryState,
+  $tabSpaceRegistryState,
+  tabSpaceRegistryStateApi,
 });

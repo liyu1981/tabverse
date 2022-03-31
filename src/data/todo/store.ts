@@ -40,10 +40,14 @@ const allTodoApi = createApi($allTodo, {
 
 const { $store: $todoStorageStoreImpl, api: todoStorageApi } =
   createGeneralStorageStoreAndApi();
-export const $todoStorageStore = $todoStorageStoreImpl;
+export const $todoStorage = $todoStorageStoreImpl;
 export type TodoStorageStore = typeof $todoStorageStoreImpl;
 
 export const todoStoreApi = merge(allTodoApi, todoStorageApi);
 export type TodoStoreApi = typeof todoStoreApi;
 
-exposeDebugData('todo', { $allTodo, $todoStorageStore, todoStoreApi });
+exposeDebugData('todo', {
+  $allTodo,
+  $todoStorage,
+  todoStoreApi,
+});

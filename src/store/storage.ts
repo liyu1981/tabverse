@@ -1,3 +1,4 @@
+import { Store } from 'effector';
 import { forEach, map, merge } from 'lodash';
 
 import { GeneralStorage } from '../data/storage/Storage';
@@ -11,13 +12,13 @@ export enum InSavingStatus {
 }
 
 export class StorageManager {
-  storages: { [k: string]: GeneralStorage };
+  storages: { [k: string]: Store<GeneralStorage> };
 
   constructor() {
     this.storages = {};
   }
 
-  addSavedStorage(k: string, ss: GeneralStorage) {
+  addStorage(k: string, ss: Store<GeneralStorage>) {
     this.storages[k] = ss;
   }
 
@@ -25,7 +26,7 @@ export class StorageManager {
     let anyInSaving = false;
     const whoIsInSaving = [];
     for (const key of Object.keys(this.storages)) {
-      if (this.storages[key].inSaving === InSavingStatus.InSaving) {
+      if (this.storages[key].getState().inSaving === InSavingStatus.InSaving) {
         anyInSaving = true;
         whoIsInSaving.push(key);
       }
@@ -35,12 +36,12 @@ export class StorageManager {
 
   getLastSavedStorage(): GeneralStorage {
     let last = null;
-    forEach(this.storages, (savedStore) => {
+    forEach(this.storages, (storage) => {
       if (!last) {
-        last = savedStore;
+        last = storage;
       } else {
-        if (savedStore.lastSavedTime >= last.lastSavedTime) {
-          last = savedStore;
+        if (storage.getState().lastSavedTime >= last.lastSavedTime) {
+          last = storage;
         }
       }
     });
@@ -48,9 +49,9 @@ export class StorageManager {
   }
 
   getAllLastSavedTime(): [string, number][] {
-    return map(this.storages, (savedStore, key) => [
+    return map(this.storages, (storage, key) => [
       key,
-      savedStore.lastSavedTime,
+      storage.getState().lastSavedTime,
     ]);
   }
 }

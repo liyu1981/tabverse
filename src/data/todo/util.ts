@@ -8,7 +8,7 @@ import {
   newEmptyAllTodo,
   updateTabSpaceId,
 } from './AllTodo';
-import { $allTodo, $todoStorageStore, todoStoreApi } from './store';
+import { $allTodo, $todoStorage, todoStoreApi } from './store';
 import { TabSpaceMsg, subscribePubSubMessage } from '../../message/message';
 import { debounce, logger } from '../../global';
 import {
@@ -84,7 +84,7 @@ export function stopMonitorLocalStorageChanges() {
 export function monitorAllTodoChanges() {
   $allTodo.watch((currentAllTodo) => {
     logger.log('allTodo changed:', currentAllTodo);
-    if ($todoStorageStore.getState().inSaving === InSavingStatus.InSaving) {
+    if ($todoStorage.getState().inSaving === InSavingStatus.InSaving) {
       logger.log('todo inSaving, skip');
     } else {
       if (needAutoSave($tabSpace.getState())) {

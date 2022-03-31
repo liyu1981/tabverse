@@ -3,7 +3,7 @@ import {
   LeaderElector,
   createLeaderElection,
 } from 'broadcast-channel';
-import { hasOwnProperty, logger } from '../../global';
+import { logger } from '../../global';
 import {
   getBroadcastChannelListener,
   TabSpaceRegistryBroadcastMsg,
@@ -36,10 +36,9 @@ function getLeaderOnMessage(leaderTabId: number) {
       });
     } else {
       if (
-        hasOwnProperty(
-          $tabSpaceRegistryState.getState().broadcastChannelMessageHandlers,
-          type,
-        )
+        $tabSpaceRegistryState
+          .getState()
+          .broadcastChannelMessageHandlers.has(type)
       ) {
         getBroadcastChannelListener(type, $tabSpaceRegistryState.getState())(
           ev,
@@ -71,10 +70,9 @@ function getAttendeeOnMessage(callback: AttendeeCallback) {
       callback(payload, false, _channel);
     } else {
       if (
-        hasOwnProperty(
-          $tabSpaceRegistryState.getState().broadcastChannelMessageHandlers,
-          type,
-        )
+        $tabSpaceRegistryState
+          .getState()
+          .broadcastChannelMessageHandlers.has(type)
       ) {
         getBroadcastChannelListener(type, $tabSpaceRegistryState.getState())(
           ev,
