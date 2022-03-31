@@ -1,5 +1,7 @@
 import { BackgroundMsg, TabSpaceMsg } from '../message';
 
+test('dummy', () => {});
+
 // test('TabSpaceMsg.Focus', async () => {
 //   const { mockChrome, w1, w2, t1, t2, t3, t4, tst1, d1, tst2, d2 } =
 //     await setupMockChromeAnd2TabSpacesWithMonitoring();

@@ -1,11 +1,11 @@
 import {
+  CHROMESESSION_DB_TABLE_NAME,
   ChromeSession,
   ChromeSessionSavePayload,
   NotTabSpaceTabId,
+  convertAndGetSavePayload,
   isChromeSessionChanged,
   newEmptyChromeSession,
-  CHROMESESSION_DB_TABLE_NAME,
-  convertAndGetSavePayload,
 } from './ChromeSession';
 
 import { db } from '../../storage/db';
@@ -117,12 +117,12 @@ export async function saveSession(
     const r = convertAndGetSavePayload(session);
     session = r.chromeSession;
     sessionSavePayload = r.savePayload;
-    console.log(
-      'want to save session:',
-      lastSavedSession,
-      sessionSavePayload,
-      isChromeSessionChanged(lastSavedSession, sessionSavePayload),
-    );
+    // console.log(
+    //   'want to save session:',
+    //   lastSavedSession,
+    //   sessionSavePayload,
+    //   isChromeSessionChanged(lastSavedSession, sessionSavePayload),
+    // );
     if (isChromeSessionChanged(lastSavedSession, sessionSavePayload)) {
       if (lastSavedSessions.length + 1 > MAX_SAVED_SESSIONS) {
         const toDeleteSavedSession = findSessionToDelete(
