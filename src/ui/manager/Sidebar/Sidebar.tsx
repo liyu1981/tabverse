@@ -1,15 +1,16 @@
 import { IManagerQueryParams, ManagerViewRoute } from '../ManagerView';
-import React from 'react';
 
 import { BottomNav } from '../BottomNav/BottomNav';
 import { BrowserSession } from './BrowserSession';
 import { ErrorBoundary } from '../../common/ErrorBoundary';
 import { Icon } from '@blueprintjs/core';
 import { LiveTabSpace } from './LiveTabSpace';
+import React from 'react';
 import { SavedTabSpace } from './SavedTabSpace';
 import { TabSpaceLogo } from '../../common/TabSpaceLogo';
 import classes from './Sidebar.module.scss';
 import clsx from 'clsx';
+import { isDebug } from '../../../debug';
 
 export interface SidebarComponentProps {
   active: boolean;
@@ -102,16 +103,18 @@ export const Sidebar = (props: ISidebarProps) => {
         >
           <SavedTabSpace active={props.route === ManagerViewRoute.Opened} />
         </SidebarComponent>
-        <SidebarComponent
-          active={props.route === ManagerViewRoute.Webtool}
-          route={ManagerViewRoute.Webtool}
-          onSwitch={props.switchRoute}
-          header={
-            <div className={classes.sidebarHeaderContainer}>
-              <Icon icon="build" size={ICON_SIZE} /> My WebTools{' '}
-            </div>
-          }
-        ></SidebarComponent>
+        {isDebug() ? (
+          <SidebarComponent
+            active={props.route === ManagerViewRoute.Webtool}
+            route={ManagerViewRoute.Webtool}
+            onSwitch={props.switchRoute}
+            header={
+              <div className={classes.sidebarHeaderContainer}>
+                <Icon icon="build" size={ICON_SIZE} /> My WebTools{' '}
+              </div>
+            }
+          ></SidebarComponent>
+        ) : null}
         <BottomNav />
       </div>
     </>
