@@ -1,8 +1,8 @@
 .container {
   background: #fff;
   position: relative;
-  border: 1px solid #ddd;
   color: #111111;
+  border-radius: 18px;
 }
 
 .listContainer {
@@ -27,13 +27,17 @@
   word-break: break-all;
 }
 
+.label :global(.bp3-editable-text) {
+  width: 100%;
+}
+
 .noticeContainer {
   background: #fff;
-  border: 1px solid #ddd;
   color: #999;
   padding: 8px 18px;
   font-style: italic;
   font-weight: 500;
+  border-radius: 18px;
 }
 
 .pageControlContainer {

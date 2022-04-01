@@ -6,7 +6,7 @@ Dexie.dependencies.IDBKeyRange = require('fake-indexeddb/lib/FDBKeyRange');
 
 // console.log('will use dbImplTest');
 
-const { TabSpaceDatabase } = require('../store/TabSpaceDatabase');
+const { TabSpaceDatabase } = require('../storage/TabSpaceDatabase');
 export const dbImpl = new TabSpaceDatabase(getNewId());
 
 export async function resetTestDb() {

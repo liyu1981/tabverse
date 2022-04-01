@@ -1,20 +1,19 @@
 import '../common/reactdev';
 import './manager.scss';
 
-import * as React from 'react';
-
-import { getTabSpaceData } from '../../data/tabSpace/bootstrap';
-import { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { addTabSpace as tabSpaceRegistryAddTabSpace } from '../../data/tabSpaceRegistry';
 
 import { ErrorBoundary } from '../common/ErrorBoundary';
-import { SavedTabSpace } from './SavedTabSpace/SavedTabSpace';
-import { SessionBrowser } from './BrowserSession/SessionBrowser';
+import { ManagerViewContextSupport } from './ManagerViewContext';
+import { SavedTabSpaceView } from './SavedTabSpace/SavedTabSpaceView';
+import { SessionBrowserView } from './SessionBrowser/SessionBrowserView';
 import { Sidebar } from './Sidebar/Sidebar';
 import { SidebarContainer } from '../common/SidebarContainer';
 import { TabSpaceView } from './TabSpace/TabSpaceView';
-import { getAllBookmarkData } from '../../data/bookmark/bootstrap';
-import { getAllChromeSessionData } from '../../data/chromeSession/bootstrap';
-import { getTabSpaceRegistry } from '../../tabSpaceRegistry';
+import { WebtoolView } from './Webtool/WebtoolView';
+import { toTabSpaceStub } from '../../data/tabSpace/TabSpace';
+import { $tabSpace } from '../../data/tabSpace/store';
 
 export interface IManagerQueryParams {
   op: string;
@@ -27,10 +26,11 @@ interface IManagerContainerProps {
 }
 
 export enum ManagerViewRoute {
-  New = 'new',
   Session = 'session',
   Opened = 'live',
   Saved = 'saved',
+  Search = 'search',
+  Webtool = 'webtool',
 }
 
 export const ManagerView = (props: IManagerContainerProps) => {
@@ -51,48 +51,42 @@ export const ManagerView = (props: IManagerContainerProps) => {
     };
   }, []);
 
+  useEffect(() => {
+    // after we history.pushState, chrome will issue chrome.tabs.onRemove and
+    // it will be captured by current leader so that current tabspace will be
+    // deleted from tabSpaceRegistry. Below we manually issue an message to
+    // add it back.
+    tabSpaceRegistryAddTabSpace(toTabSpaceStub($tabSpace.getState()));
+  }, [currentRoute]);
+
   const renderView = (route: ManagerViewRoute) => {
     switch (route) {
       case ManagerViewRoute.Opened:
-        return (
-          <TabSpaceView
-            tabSpace={getTabSpaceData().tabSpace}
-            tabSpaceRegistry={getTabSpaceRegistry()}
-            tabPreview={getTabSpaceData().tabPreview}
-            savedTabSpaceStore={getTabSpaceData().savedTabSpaceStore}
-            allBookmark={getAllBookmarkData().allBookmark}
-          />
-        );
+        return <TabSpaceView />;
       case ManagerViewRoute.Saved:
-        return (
-          <SavedTabSpace
-            tabSpace={getTabSpaceData().tabSpace}
-            tabSpaceRegistry={getTabSpaceRegistry()}
-            savedTabSpaceStore={getTabSpaceData().savedTabSpaceStore}
-            savedTabSpaceCollection={getTabSpaceData().savedTabSpaceCollection}
-          />
-        );
+        return <SavedTabSpaceView />;
       case ManagerViewRoute.Session:
-        return (
-          <SessionBrowser
-            savedChromeSessionCollection={
-              getAllChromeSessionData().savedChromeSessionCollection
-            }
-          />
-        );
+        return <SessionBrowserView />;
+      case ManagerViewRoute.Webtool:
+        return <WebtoolView></WebtoolView>;
+      // case ManagerViewRoute.Search:
+      //   return <OmniSearch />;
     }
   };
 
   return (
     <ErrorBoundary>
-      <SidebarContainer>
-        <Sidebar
-          route={currentRoute}
-          switchRoute={(value) => setRouteAndPushHistoryState(value)}
-          queryParams={props.queryParams}
-        />
-        {renderView(currentRoute)}
-      </SidebarContainer>
+      <div>
+        <SidebarContainer>
+          <Sidebar
+            route={currentRoute}
+            switchRoute={(value) => setRouteAndPushHistoryState(value)}
+            queryParams={props.queryParams}
+          />
+          {renderView(currentRoute)}
+        </SidebarContainer>
+        <ManagerViewContextSupport />
+      </div>
     </ErrorBoundary>
   );
 };

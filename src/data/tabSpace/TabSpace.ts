@@ -1,271 +1,273 @@
-import { Base, IBase, getUnsavedNewId, isIdNotSaved } from '../common';
-import { ISavedTab, Tab, TabJSON } from './Tab';
-import { action, computed, makeObservable, observable } from 'mobx';
-import { assign, extend, isEqual, omit } from 'lodash';
+import {
+  IBase,
+  getSavedId,
+  getUnsavedNewId,
+  isIdNotSaved,
+  setAttrForObject2,
+} from '../common';
+import {
+  Tab,
+  TabCore,
+  convertAndGetTabSavePayload,
+  setTabSpaceId,
+} from './Tab';
+import {
+  convertToSavedBase,
+  inPlaceConvertToSaved,
+  inPlaceCopyFromOtherBase,
+  newEmptyBase,
+  toBase,
+} from '../Base';
+import { eq, omit } from 'lodash';
 
 import { List } from 'immutable';
-import { TabSpaceStub } from '../../tabSpaceRegistry/TabSpaceRegistry';
-import { strict as assert } from 'assert';
+import { TabSpaceStub } from '../tabSpaceRegistry/TabSpaceRegistry';
+import { produce } from 'immer';
 
-export interface ISavedTabSpace extends IBase {
+export interface LiveTabSpace {
+  chromeTabId: number;
+  chromeWindowId: number;
+}
+
+export interface TabSpaceCore extends IBase {
+  name: string;
+  tabs: List<Tab>;
+}
+
+export type TabSpace = TabSpaceCore & LiveTabSpace;
+
+export interface TabSpaceSavePayload extends IBase {
   name: string;
   tabIds: string[];
 }
 
-export interface ILiveTabSpace {
-  chromeTabId: number;
-  chromeWindowId: number;
+export const TABSPACE_DB_TABLE_NAME = 'SavedTabSpace';
+export const TABSPACE_DB_SCHEMA = 'id, name, *tabIds, windowId, createdAt';
+
+export function newEmptyTabSpace(): TabSpace {
+  return {
+    ...newEmptyBase(),
+    name: '',
+    tabs: List<Tab>(),
+    chromeTabId: -1,
+    chromeWindowId: -1,
+  };
 }
 
-export type TabSpaceJSON = Omit<ISavedTabSpace, 'tabIds'> & {
-  tabs: TabJSON[];
-} & ILiveTabSpace;
+export function cloneTabSpace(targetTabSpace: TabSpace): TabSpace {
+  return produce(targetTabSpace, (draft) => {});
+}
 
-export class TabSpace extends Base implements ILiveTabSpace {
-  name: string;
-  tabs: List<Tab>;
-  chromeTabId: number;
-  chromeWindowId: number;
-
-  static DB_TABLE_NAME = 'SavedTabSpace';
-  static DB_SCHEMA = 'id, name, *tabIds, windowId, createdAt';
-
-  constructor(chromeTabId?: number, chromeWindowId?: number, newId?: string) {
-    super(newId ?? getUnsavedNewId());
-
-    makeObservable(
-      this,
-      extend(Base.getMakeObservableDef(), {
-        name: observable,
-        tabs: observable,
-        chromeTabId: observable,
-        chromeWindowId: observable,
-
-        tabIds: computed,
-
-        setName: action,
-        setChromeTabAndWindowId: action,
-        reset: action,
-        addTab: action,
-        addTabs: action,
-        updateTab: action,
-        removeTab: action,
-        removeTabById: action,
-        removeTabByChromeTabId: action,
-        replaceTab: action,
-        replaceTabs: action,
-        update: action,
-        convertAndGetSavePayload: action,
-      }),
-    );
-
-    this.name =
-      chromeWindowId && chromeWindowId >= 0 ? `Window-${chromeWindowId}` : '';
-    this.tabs = List();
-    this.chromeTabId = chromeTabId ?? -1;
-    this.chromeWindowId = chromeWindowId ?? -1;
-  }
-
-  get tabIds(): string[] {
-    return this.tabs.map((tab) => tab.id).toArray();
-  }
-
-  needAutoSave() {
-    return !isIdNotSaved(this.id);
-  }
-
-  clone(): TabSpace {
-    const newts = new TabSpace(this.chromeTabId, this.chromeWindowId);
-    newts.cloneAttributes(this);
-    newts.name = this.name;
-    newts.chromeTabId = this.chromeTabId;
-    newts.chromeWindowId = this.chromeWindowId;
-    newts.tabs = List(this.tabs);
-    return newts;
-  }
-
-  isEqual(other: TabSpace): boolean {
-    return isEqual(this.toJSON(), other.toJSON());
-  }
-
-  toJSON(): TabSpaceJSON {
-    return extend(super.toJSON(), {
-      name: this.name,
-      tabs: this.tabs.map((tab) => tab.toJSON()).toArray(),
-      chromeTabId: this.chromeTabId,
-      chromeWindowId: this.chromeWindowId,
+export function updateTabSpace(
+  changes: Partial<Omit<TabSpace, 'tabIds'>>,
+  targetTabSpace: TabSpace,
+): TabSpace {
+  return produce(targetTabSpace, (draft) => {
+    Object.keys(changes).forEach((key) => {
+      draft[key] = changes[key];
     });
-  }
+  });
+}
 
-  static fromJSON(tsJSON: TabSpaceJSON) {
-    const ts = new TabSpace();
-    ts.cloneAttributes(tsJSON);
-    ts.name = tsJSON.name;
-    ts.tabs = List(tsJSON.tabs.map((tabJson) => Tab.fromJSON(tabJson)));
-    ts.chromeTabId = tsJSON.chromeTabId;
-    ts.chromeWindowId = tsJSON.chromeWindowId;
-    return ts;
-  }
+export const setId = setAttrForObject2<string, TabSpace>('id');
+export const setName = setAttrForObject2<string, TabSpace>('name');
+export const setChromeTabId = setAttrForObject2<number, TabSpace>(
+  'chromeTabId',
+);
+export const setChromeWindowId = setAttrForObject2<number, TabSpace>(
+  'chromeWindowId',
+);
 
-  static fromSavedDataWithoutTabs(d: ISavedTabSpace) {
-    const ts = new TabSpace();
-    ts.cloneAttributes(d);
-    ts.name = d.name;
-    return ts;
-  }
+export function getTabIds(targetTabSpace: TabSpace): string[] {
+  return targetTabSpace.tabs.map((tab) => tab.id).toArray();
+}
 
-  reset(chromeTabId?: number, chromeWindowId?: number, newId?: string) {
-    this.chromeTabId = chromeTabId ?? -1;
-    this.chromeWindowId = chromeWindowId ?? -1;
-    this.id = newId ?? getUnsavedNewId();
-    this.tabs = List();
-    return this;
-  }
+export function needAutoSave(targetTabSpace: TabSpace): boolean {
+  return !isIdNotSaved(targetTabSpace.id);
+}
 
-  setName(value: string) {
-    this.name = value;
-  }
+export function isEqual(t1: TabSpace, t2: TabSpace): boolean {
+  return (
+    eq(omit(t1, 'tabs'), omit(t2, 'tabs')) &&
+    eq(t1.tabs.toArray(), t2.tabs.toArray())
+  );
+}
 
-  setChromeTabAndWindowId(
-    tabId: number,
-    windowId: number,
-    autoSetName = false,
-  ) {
-    this.chromeTabId = tabId;
-    this.chromeWindowId = windowId;
-    if (autoSetName) {
-      this.name = `tabverse-${windowId}`;
-    }
-  }
+export function fromSavedDataWithoutTabs(d: TabSpaceSavePayload): TabSpace {
+  return { ...newEmptyTabSpace(), ...omit(d, 'tabIds') };
+}
 
-  _findTabIndexById(id: string): number {
-    return this.tabs.findIndex((tab) => tab.id === id);
-  }
+export function reset(
+  {
+    chromeTabId,
+    chromeWindowId,
+    newId,
+  }: { chromeTabId?: number; chromeWindowId?: number; newId?: string },
+  targetTabSpace: TabSpace,
+): TabSpace {
+  return produce(targetTabSpace, (draft) => {
+    draft.chromeTabId = chromeTabId ?? -1;
+    draft.chromeWindowId = chromeWindowId ?? -1;
+    draft.id = newId ?? getUnsavedNewId();
+    draft.tabs = List();
+  });
+}
 
-  findTabById(id: string): Tab | undefined {
-    return this.tabs.find((tab) => tab.id === id);
-  }
+export function findTabById(
+  id: string,
+  targetTabSpace: TabSpace,
+): Tab | undefined {
+  return targetTabSpace.tabs.find((tab) => tab.id === id);
+}
 
-  findTabByChromeTabId(id: number): Tab | undefined {
-    return this.tabs.find((tab) => tab.chromeTabId === id);
-  }
+export function findTabByChromeTabId(
+  id: number,
+  targetTabSpace: TabSpace,
+): Tab | undefined {
+  return targetTabSpace.tabs.find((tab) => tab.chromeTabId === id);
+}
 
-  addTab(t: Tab, index?: number) {
-    const newTab = t.clone();
-    newTab.tabSpaceId = this.id;
-    if (index && index >= 0 && index < this.tabs.size) {
-      this.tabs = this.tabs.insert(index, newTab.makeImmutable());
+export function insertTab(
+  { tab, index }: { tab: Tab; index?: number },
+  targetTabSpace: TabSpace,
+): TabSpace {
+  return produce(targetTabSpace, (draft) => {
+    const newTab = setTabSpaceId(draft.id, tab);
+    if (index && index >= 0 && index < draft.tabs.size) {
+      draft.tabs = draft.tabs.insert(index, newTab);
     } else if (index && index < 0) {
-      this.tabs = this.tabs.insert(0, newTab.makeImmutable());
-    } else if (index && index >= this.tabs.size) {
-      this.tabs = this.tabs.push(newTab.makeImmutable());
+      draft.tabs = draft.tabs.insert(0, newTab);
     } else {
-      this.tabs = this.tabs.push(newTab.makeImmutable());
+      // index && index >= targetTabSpace.tabs.size
+      // or no index provided
+      draft.tabs = draft.tabs.push(newTab);
     }
-    return this;
-  }
+  });
+}
 
-  addTabs(tabs: Tab[]) {
-    tabs.forEach((tab) => this.addTab(tab));
-    return this;
-  }
+export function addTabs(tabs: Tab[], targetTabSpace: TabSpace): TabSpace {
+  let newTabSpace: TabSpace = targetTabSpace;
+  tabs.forEach((tab) => {
+    newTabSpace = insertTab({ tab }, newTabSpace);
+  });
+  return newTabSpace;
+}
 
-  updateTab(t: Tab): boolean {
-    const index = this._findTabIndexById(t.id);
-    const oldTab = this.tabs.get(index);
-    if (!isEqual(oldTab.toJSON(), t.toJSON())) {
-      this.tabs = this.tabs.set(index, t.clone().makeImmutable());
-      return true;
+export function updateTab(
+  { tid, changes }: { tid: string; changes: Partial<Tab> },
+  targetTabSpace: TabSpace,
+): TabSpace {
+  return produce(targetTabSpace, (draft) => {
+    const tIndex = draft.tabs.findIndex((tab) => tab.id === tid);
+    if (tIndex >= 0) {
+      const existTab = draft.tabs.get(tIndex);
+      const newTab = { ...existTab, ...changes };
+      draft.tabs = draft.tabs.set(tIndex, newTab);
     }
-    return false;
-  }
+  });
+}
 
-  _removeTabByIndex(index: number): Tab | null {
-    if (index >= 0) {
-      const oldTab = this.tabs.get(index);
-      this.tabs = this.tabs.remove(index);
-      return oldTab;
+export function removeTabByIndex(
+  index: number,
+  targetTabSpace: TabSpace,
+): TabSpace {
+  return produce(targetTabSpace, (draft) => {
+    if (index >= 0 && index < draft.tabs.size) {
+      draft.tabs = draft.tabs.remove(index);
     }
-    return null;
-  }
+  });
+}
 
-  removeTab(t: Tab): Tab | null {
-    const index = this._findTabIndexById(t.id);
-    return this._removeTabByIndex(index);
-  }
+export function removeTab(tab: Tab, targetTabSpace: TabSpace): TabSpace {
+  const tIndex = targetTabSpace.tabs.findIndex((t) => t.id === tab.id);
+  return removeTabByIndex(tIndex, targetTabSpace);
+}
 
-  removeTabById(id: string): Tab | null {
-    const index = this._findTabIndexById(id);
-    return this._removeTabByIndex(index);
-  }
+export function removeTabById(tid: string, targetTabSpace: TabSpace): TabSpace {
+  const tIndex = targetTabSpace.tabs.findIndex((t) => t.id === tid);
+  return removeTabByIndex(tIndex, targetTabSpace);
+}
 
-  removeTabByChromeTabId(chromeTabId: number): Tab | null {
-    const index = this.tabs.findIndex((tab) => tab.chromeTabId === chromeTabId);
-    return this._removeTabByIndex(index);
-  }
+export function removeTabByChromeTabId(
+  chromeTabId: number,
+  targetTabSpace: TabSpace,
+): TabSpace {
+  const tIndex = targetTabSpace.tabs.findIndex(
+    (tab) => tab.chromeTabId === chromeTabId,
+  );
+  return removeTabByIndex(tIndex, targetTabSpace);
+}
 
-  replaceTab(fromTid: string, toTid: string, tab: Tab) {
-    const index = this._findTabIndexById(fromTid);
-    if (index >= 0) {
-      const t = tab.clone();
-      t.id = toTid;
-      this.tabs = this.tabs.set(index, t.makeImmutable());
-    } else {
-      this.tabs = this.tabs.push(tab.clone().makeImmutable());
+export function replaceTab(
+  { tid, tab }: { tid: string; tab: Tab },
+  targetTabSpace: TabSpace,
+): TabSpace {
+  return produce(targetTabSpace, (draft) => {
+    const tIndex = draft.tabs.findIndex((t) => t.id === tid);
+    if (tIndex >= 0 && tIndex < draft.tabs.size) {
+      draft.tabs = draft.tabs.set(tIndex, tab);
     }
-    return this;
-  }
+  });
+}
 
-  replaceTabs(tabs: Tab[]) {
-    this.tabs = List();
-    tabs.forEach((tab) => this.addTab(tab));
-    return this;
-  }
+export function replaceAllTabs(
+  tabs: Tab[],
+  targetTabSpace: TabSpace,
+): TabSpace {
+  return produce(targetTabSpace, (draft) => {
+    draft.tabs = List(tabs);
+  });
+}
 
-  convertAndGetSavePayload(): {
-    tabSpaceSavePayload: ISavedTabSpace;
-    isNewTabSpace: boolean;
-    newTabSavePayloads: ISavedTab[];
-    existTabSavePayloads: ISavedTab[];
-  } {
-    const isNewTabSpace = isIdNotSaved(this.id);
-    const existTabSavePayloads: ISavedTab[] = [];
-    const newTabSavePayloads: ISavedTab[] = [];
-    this.tabs = List(
-      this.tabs.map((tab: Tab) => {
-        const isNewTab = isIdNotSaved(tab.id);
-        const [savedTab, tabPayload] = tab.convertAndGetSavePayload();
-        if (isNewTab) {
-          newTabSavePayloads.push(tabPayload);
-        } else {
-          existTabSavePayloads.push(tabPayload);
-        }
-        return savedTab;
-      }),
-    );
-    this.convertToSaved();
-    return {
-      tabSpaceSavePayload: extend(super.toJSON(), {
-        name: this.name,
-        tabIds: this.tabIds,
-      }),
-      isNewTabSpace,
-      newTabSavePayloads,
-      existTabSavePayloads,
-    };
-  }
+export function convertAndGetTabSpaceSavePayload(targetTabSpace: TabSpace): {
+  tabSpace: TabSpace;
+  tabSpaceSavePayload: TabSpaceSavePayload;
+  isNewTabSpace: boolean;
+  newTabSavePayloads: TabCore[];
+  existTabSavePayloads: TabCore[];
+} {
+  const isNewTabSpace = isIdNotSaved(targetTabSpace.id);
+  const existTabSavePayloads: TabCore[] = [];
+  const newTabSavePayloads: TabCore[] = [];
+  const savedTabs = targetTabSpace.tabs
+    .map((tab: Tab) => {
+      const isNewTab = isIdNotSaved(tab.id);
+      const { tab: updatedTab, savedTab } = convertAndGetTabSavePayload(
+        tab,
+        getSavedId(targetTabSpace.id),
+      );
+      if (isNewTab) {
+        newTabSavePayloads.push(savedTab);
+      } else {
+        existTabSavePayloads.push(savedTab);
+      }
+      return updatedTab;
+    })
+    .toList();
+  const savedBase = convertToSavedBase(targetTabSpace);
+  const tabSpace = produce(targetTabSpace, (draft) => {
+    inPlaceCopyFromOtherBase(draft, savedBase);
+    draft.tabs = savedTabs;
+  });
+  const tabSpaceSavePayload = {
+    ...savedBase,
+    name: targetTabSpace.name,
+    tabIds: savedTabs.map((tab) => tab.id).toArray(),
+  };
+  return {
+    tabSpace,
+    tabSpaceSavePayload,
+    isNewTabSpace,
+    newTabSavePayloads,
+    existTabSavePayloads,
+  };
+}
 
-  update(params: Partial<Omit<ISavedTabSpace, 'tabIds'>>) {
-    assert(!('tabIds' in params), 'update tabIds with updateTabIds');
-    assign(this, omit(params, 'tabIds'));
-    return this;
-  }
-
-  toTabSpaceStub(): TabSpaceStub {
-    return extend(super.toJSON(), {
-      name: this.name,
-      chromeTabId: this.chromeTabId,
-      chromeWindowId: this.chromeWindowId,
-    });
-  }
+export function toTabSpaceStub(targetTabSpace: TabSpace): TabSpaceStub {
+  return {
+    ...toBase(targetTabSpace),
+    name: targetTabSpace.name,
+    chromeTabId: targetTabSpace.chromeTabId,
+    chromeWindowId: targetTabSpace.chromeWindowId,
+  };
 }

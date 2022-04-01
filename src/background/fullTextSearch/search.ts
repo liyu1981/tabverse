@@ -1,7 +1,7 @@
 import { getDb, IFullTextSearchCursor, search } from '../../fullTextSearch';
 
 import { Query } from '../../fullTextSearch';
-import { querySavedTabSpace } from '../../data/tabSpace/SavedTabSpaceStore';
+import { querySavedTabSpace } from '../../data/tabSpace/util';
 import { uniq } from 'lodash';
 import { TabSpace } from '../../data/tabSpace/TabSpace';
 

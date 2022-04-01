@@ -1,5 +1,5 @@
 import { Dropbox } from 'dropbox';
-import { importDb } from '../store/dump';
+import { importDb } from '../storage/dump';
 import { logger } from '../global';
 
 export async function importFromDropbox(accessToken: string, path: string) {

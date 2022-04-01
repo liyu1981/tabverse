@@ -1,18 +1,21 @@
-import { ChromeSession, IChromeSessionSavePayload } from '../ChromeSession';
+import {
+  ChromeSessionSavePayload,
+  CHROMESESSION_DB_TABLE_NAME,
+} from '../ChromeSession';
+
+import { db } from '../../../storage/db';
+import { getMockChrome } from '../../../dev/chromeMock';
+import { getNewId } from '../../common';
+import { saveSession } from '../sessionSaver';
 import {
   tabData1,
   tabData2,
   tabData3,
 } from '../../tabSpace/__tests__/common.test';
 
-import { db } from '../../../store/db';
-import { getMockChrome } from '../../../dev/chromeMock';
-import { getNewId } from '../../common';
-import { saveSession } from '../sessionSaver';
-
 async function getSavedSessions() {
   return await db
-    .table<IChromeSessionSavePayload>(ChromeSession.DB_TABLE_NAME)
+    .table<ChromeSessionSavePayload>(CHROMESESSION_DB_TABLE_NAME)
     .orderBy('updatedAt')
     .reverse()
     .toArray();

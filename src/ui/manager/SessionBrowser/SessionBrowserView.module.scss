@@ -1,0 +1,49 @@
+@use '../../../global.scss';
+
+$right-bar-width: 350px;
+
+.sessionBrowserContainer {
+  display: flex;
+}
+
+.sessionBrowserRightContainer {
+  min-width: $right-bar-width;
+  height: 100vh;
+  padding: 18px;
+  background-color: global.$color-light-shade;
+  box-shadow: inset 0px 0px 1px 0px global.$color-dark-shade;
+  overflow-y: auto;
+  right: 0px;
+  position: fixed;
+}
+
+.sessionBrowserLeftContainer {
+  padding: 0px 8px;
+  width: calc(100% - $right-bar-width);
+  height: 100vh;
+}
+
+.chromeTabContainer {
+  display: flex;
+  min-height: 36px;
+}
+
+.chromeTabInfoContainer {
+  width: 100%;
+}
+
+.chromeTabTitle {
+  padding-left: 4px;
+  word-break: break-all;
+  cursor: pointer;
+  width: 640px;
+}
+
+.chromeTabUrl {
+  word-break: break-all;
+}
+
+.loadingContainer {
+  margin-top: 48px;
+  margin-bottom: 48px;
+}

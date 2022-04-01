@@ -1,0 +1,53 @@
+@use '../../global.scss';
+
+.contentContainer {
+  padding: 18px 18px 0px 18px;
+}
+
+.searchInputContainer :global(.bp3-tag-input) {
+  border-radius: 28px;
+}
+
+.searchResultContainer {
+  min-height: 400px;
+}
+
+.optionContainer,
+.buttonContainer {
+  display: flex;
+  justify-content: center;
+}
+
+.buttonContainer :global(.tv-primary-button) {
+  min-width: 8em;
+}
+
+.candidateTopContainer {
+  padding: 18px 0px;
+}
+
+.candidateContainer {
+  background-color: global.$color-c;
+  color: global.$color-d;
+  border-radius: 28px;
+  line-height: 32px;
+  margin-bottom: 8px;
+  padding: 8px 18px;
+  display: flex;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+.candidateContainer:hover,
+.candidateContainerSelected {
+  background-color: global.$color-d;
+  color: global.$color-c;
+}
+
+.candidateName {
+  font-weight: bold;
+}
+
+.candidateInfo {
+  font-size: 0.8;
+}

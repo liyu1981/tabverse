@@ -1,5 +1,4 @@
-import * as React from 'react';
-
+import React from 'react';
 import { ReactElement } from 'react';
 import { defaults } from 'lodash';
 import { render } from 'react-dom';

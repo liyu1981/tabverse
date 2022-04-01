@@ -1,24 +1,31 @@
-import * as React from 'react';
+import React, { useEffect, useState } from 'react';
 
-import { AllTodoData } from '../../data/todo/bootstrap';
-import { List } from 'immutable';
-import { Todo } from '../../data/todo/Todo';
-import { observer } from 'mobx-react-lite';
-import { useState } from 'react';
+import { setCompleted, Todo } from '../../data/todo/Todo';
 import classes from './TodoView.module.scss';
 import clsx from 'clsx';
+import { useStore } from 'effector-react';
+import { $allTodo, todoStoreApi } from '../../data/todo/store';
+import { newEmptyTodo, setContent } from '../../data/todo/Todo';
+import {
+  monitorAllTodoChanges,
+  monitorTabSpaceChanges,
+  startMonitorLocalStorageChanges,
+  stopMonitorLocalStorageChanges,
+} from '../../data/todo/util';
+import { isIdNotSaved } from '../../data/common';
+import { logger } from '../../global';
 
 const RETURN_KEY = 13;
 const FILTER_ACTIVE = 'active';
 const FILTER_COMPLETED = 'completed';
 
-interface ITodoItemProps {
+interface TodoItemViewProps {
   todo: Todo;
   changeFunc: (id: string, t: Todo) => void;
   removeFunc: (id: string) => void;
 }
 
-const TodoItem = (props: ITodoItemProps) => {
+const TodoItemView = (props: TodoItemViewProps) => {
   const [editing, setEditing] = useState(false);
   const [currentEditValue, setCurrentEditValue] = useState(props.todo.content);
   return (
@@ -34,9 +41,10 @@ const TodoItem = (props: ITodoItemProps) => {
           type="checkbox"
           checked={props.todo.completed}
           onClick={() => {
-            const t = props.todo.clone();
-            t.completed = !t.completed;
-            props.changeFunc(props.todo.id, t);
+            props.changeFunc(
+              props.todo.id,
+              setCompleted(!props.todo.completed, props.todo),
+            );
           }}
           onChange={() => {}}
         />
@@ -52,17 +60,19 @@ const TodoItem = (props: ITodoItemProps) => {
         className={classes.edit}
         defaultValue={currentEditValue}
         onBlur={() => {
-          const t = props.todo.clone();
-          t.content = currentEditValue;
-          props.changeFunc(props.todo.id, t);
+          props.changeFunc(
+            props.todo.id,
+            setContent(currentEditValue, props.todo),
+          );
           setEditing(false);
         }}
         onChange={(event) => setCurrentEditValue(event.target.value)}
         onKeyDown={(event) => {
           if (event.keyCode === RETURN_KEY) {
-            const t = props.todo.clone();
-            t.content = currentEditValue;
-            props.changeFunc(props.todo.id, t);
+            props.changeFunc(
+              props.todo.id,
+              setContent(currentEditValue, props.todo),
+            );
             setEditing(false);
           }
         }}
@@ -71,26 +81,45 @@ const TodoItem = (props: ITodoItemProps) => {
   );
 };
 
-interface ITodoViewProps {
-  allTodoData: AllTodoData;
+export interface TodoViewProps {
+  tabSpaceId: string;
 }
 
-export const TodoView = observer((props: ITodoViewProps) => {
+export function TodoView({ tabSpaceId }: TodoViewProps) {
+  const allTodo = useStore($allTodo);
+
   const [filter, setFilter] = useState<string | null>(null);
   const [currentInputValue, setCurrentInputValue] = useState<string | null>(
     null,
   );
 
+  useEffect(() => {
+    logger.info('todo start monitor tabspace, alltodo changes');
+    monitorTabSpaceChanges();
+    monitorAllTodoChanges();
+  }, []);
+
+  useEffect(() => {
+    if (tabSpaceId && isIdNotSaved(tabSpaceId)) {
+      logger.info('todo start monitor localstorage changes');
+      startMonitorLocalStorageChanges();
+      return () => {
+        logger.info('todo stop monitor localstorage changes');
+        stopMonitorLocalStorageChanges();
+      };
+    }
+  }, [tabSpaceId]);
+
   const changeTodo = (id: string, t: Todo) => {
-    props.allTodoData.allTodo.updateTodo(id, t);
+    todoStoreApi.updateTodo({ tid: id, changes: t });
   };
 
   const removeTodo = (id: string) => {
-    props.allTodoData.allTodo.removeTodo(id);
+    todoStoreApi.removeTodo(id);
   };
 
-  const filteredTodos = List<Todo>(
-    props.allTodoData.allTodo.todos.filter((todo) => {
+  const filteredTodos = allTodo.todos
+    .filter((todo) => {
       switch (filter) {
         case FILTER_ACTIVE:
           return !todo.completed;
@@ -99,27 +128,26 @@ export const TodoView = observer((props: ITodoViewProps) => {
         default:
           return true;
       }
-    }),
-  );
+    })
+    .toList();
 
-  const todoItems = List(
-    List<Todo>(
-      filteredTodos.sort((ta: Todo, tb: Todo) => {
-        return ta.completed > tb.completed
-          ? 1
-          : ta.completed === tb.completed
-          ? 0
-          : -1;
-      }),
-    ).map((todo) => (
-      <TodoItem
+  const todoItems = filteredTodos
+    .sort((ta: Todo, tb: Todo) => {
+      return ta.completed > tb.completed
+        ? 1
+        : ta.completed === tb.completed
+        ? 0
+        : -1;
+    })
+    .toArray()
+    .map((todo) => (
+      <TodoItemView
         key={todo.id}
         todo={todo}
         changeFunc={changeTodo}
         removeFunc={removeTodo}
       />
-    )),
-  ).toArray();
+    ));
 
   const main = (
     <section className={classes.main}>
@@ -144,9 +172,8 @@ export const TodoView = observer((props: ITodoViewProps) => {
         autoFocus={true}
         onKeyDown={(event) => {
           if (event.keyCode === RETURN_KEY) {
-            const t = new Todo();
-            t.content = currentInputValue;
-            props.allTodoData.allTodo.addTodo(t);
+            const t = setContent(currentInputValue, newEmptyTodo());
+            todoStoreApi.addTodo(t);
             setCurrentInputValue(null);
           }
         }}
@@ -157,10 +184,9 @@ export const TodoView = observer((props: ITodoViewProps) => {
     </header>
   );
 
-  const hasCompleted =
-    props.allTodoData.allTodo.todos.findIndex((todo) => todo.completed) >= 0;
+  const hasCompleted = allTodo.todos.findIndex((todo) => todo.completed) >= 0;
 
-  const activeCount = props.allTodoData.allTodo.todos.count((todo) => {
+  const activeCount = allTodo.todos.count((todo) => {
     return !todo.completed;
   });
 
@@ -190,7 +216,7 @@ export const TodoView = observer((props: ITodoViewProps) => {
         <button
           className={classes.clearCompleted}
           onClick={() => {
-            props.allTodoData.allTodo.clearCompleted();
+            todoStoreApi.clearCompleted();
           }}
         >
           Clear completed
@@ -208,4 +234,4 @@ export const TodoView = observer((props: ITodoViewProps) => {
       {footer}
     </div>
   );
-});
+}

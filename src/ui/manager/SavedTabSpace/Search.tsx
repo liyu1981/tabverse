@@ -1,20 +1,18 @@
-import * as React from 'react';
-
 import { FIELD_ALL, Query, TYPE_ALL } from '../../../fullTextSearch';
+import React, { useMemo } from 'react';
 import {
   SearchableField,
   SearchableType,
 } from '../../../background/fullTextSearch/addToIndex';
 
 import { SearchInput as FullTextSearchInput } from '../../../fullTextSearch/SearchInput';
-import { useMemo } from 'react';
 
 export interface SearchInputProps {
   query: Query;
   onChange: (query: Query) => void;
 }
 
-const scopeMap = {
+export const scopeMap = {
   anywhere: { type: TYPE_ALL, field: FIELD_ALL },
   'any tabverse data': { type: SearchableType.TabSpace },
   'any tabverse name': {
@@ -37,7 +35,7 @@ export function SearchInput({ query, onChange }: SearchInputProps) {
       large={true}
       leftIcon={'search'}
       tagProps={{ minimal: true }}
-      placeholder={'input keywords, press enter to search...'}
+      placeholder={'input keywords,  then ↵ enter to search...'}
       query={query}
       onChangeQuery={onChangeQuery}
       scopeDefault={scopeMap['anywhere']}

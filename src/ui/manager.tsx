@@ -1,5 +1,3 @@
-import * as React from 'react';
-
 import { IManagerQueryParams, ManagerView } from './manager/ManagerView';
 import {
   TabSpaceOp,
@@ -7,35 +5,27 @@ import {
   isTabSpaceManagerPage,
   logger,
 } from '../global';
-import {
-  bootstrap as dataBootstrap,
-  bootstrapFromTabSpaceId as dataBootstrapFromTabSpaceId,
-  getTabSpaceData,
-} from '../data/tabSpace/bootstrap';
 
 import { CountExit } from './common/CountExit';
+import React from 'react';
 import { strict as assert } from 'assert';
-import { bootstrap as bookmarkBootstrap } from '../data/bookmark/bootstrap';
 import { find } from 'lodash';
 import { bootstrap as fullTextSearchBootstrap } from '../fullTextSearch';
 import { getQueryParameters } from './common/queryAndHashParameter';
-import { bootstrap as noteBootstrap } from '../data/note/bootstrap';
+import { localStorageInit } from '../storage/localStorageWrapper';
 import { renderPage } from './common/base';
-import { bootstrap as savedChromeSessionBootstrap } from '../data/chromeSession/bootstrap';
-import { bootstrap as storeBootstrap } from '../store/bootstrap';
-import {
-  addTabSpace as tabSpaceRegistryAddTabSpace,
-  bootstrap as tabSpaceRegistryServiceBootstrap,
-} from '../tabSpaceRegistry';
-import { bootstrap as todoBootstrap } from '../data/todo/bootstrap';
+import { bootstrap as tabSpaceRegistryServiceBootstrap } from '../data/tabSpaceRegistry';
+import { tabSpaceBootstrap } from '../data/tabSpaceBootstrap';
+import { loadTabSpaceByTabSpaceId } from '../data/tabSpace/util';
+import { tabSpaceStoreApi } from '../data/tabSpace/store';
 
 async function bootstrap() {
-  const thisTab = await chrome.tabs.getCurrent();
-  const tabs = await chrome.tabs.query({ currentWindow: true });
-  const tsTab = find(tabs, (tab: chrome.tabs.Tab) =>
-    isTabSpaceManagerPage(tab),
+  const thisChromeTab = await chrome.tabs.getCurrent();
+  const tsChromeTab = find(
+    await chrome.tabs.query({ currentWindow: true }),
+    (tab: chrome.tabs.Tab) => isTabSpaceManagerPage(tab),
   );
-  if (tsTab && tsTab.id !== thisTab.id) {
+  if (tsChromeTab && tsChromeTab.id !== thisChromeTab.id) {
     renderPage({
       pageComponent: (
         <CountExit message={'Found another Tabverse Manager page!'} />
@@ -50,29 +40,23 @@ async function bootstrap() {
 
     tabSpaceRegistryServiceBootstrap();
 
-    storeBootstrap();
-    bookmarkBootstrap();
-    noteBootstrap();
-    todoBootstrap();
-    savedChromeSessionBootstrap();
     fullTextSearchBootstrap();
+    localStorageInit();
 
     switch (queryParams.op) {
       case TabSpaceOp.LoadSaved:
-        await dataBootstrapFromTabSpaceId(
+        await tabSpaceBootstrap(tsChromeTab.id, tsChromeTab.windowId);
+        await loadTabSpaceByTabSpaceId(
           queryParams.stsid,
-          tsTab.id,
-          tsTab.windowId,
-        );
-        getTabSpaceData().savedTabSpaceStore.updateLastSavedTime(
-          getTabSpaceData().tabSpace.updatedAt,
+          tsChromeTab.id,
+          tsChromeTab.windowId,
         );
         break;
       default:
-        await dataBootstrap(tsTab.id, tsTab.windowId);
+        await tabSpaceBootstrap(tsChromeTab.id, tsChromeTab.windowId);
     }
 
-    await getTabSpaceData().savedTabSpaceStore.querySavedTabSpaceCount();
+    await tabSpaceStoreApi.reQuerySavedTabSpaceCount();
 
     renderPage({
       pageComponent: (
@@ -81,12 +65,10 @@ async function bootstrap() {
         </div>
       ),
     });
-
-    tabSpaceRegistryAddTabSpace(getTabSpaceData().tabSpace.toTabSpaceStub());
   }
 
   chrome.tabs.getCurrent((tab) => {
-    chrome.tabs.update(tab.id, { pinned: true });
+    chrome.tabs.update(tab.id, { pinned: true, autoDiscardable: false });
   });
 }
 

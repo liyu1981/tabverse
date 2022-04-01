@@ -1,7 +1,5 @@
-import * as React from 'react';
-
 import { Classes, Intent, Keys, Tag } from '@blueprintjs/core';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import classes from './TermPlusView.module.scss';
 import clsx from 'clsx';

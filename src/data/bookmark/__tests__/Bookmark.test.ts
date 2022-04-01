@@ -1,18 +1,28 @@
-import { AllBookmark, Bookmark } from '../Bookmark';
-
+/* eslint-disable prefer-const */
 import { isIdNotSaved } from '../../common';
+import {
+  addBookmark,
+  convertAndGetAllBookmarkSavePayload,
+  newEmptyAllBookmark,
+  removeBookmark,
+  updateBookmark,
+  updateTabSpaceId,
+} from '../AllBookmark';
+import { newEmptyBookmark, setName, setUrl } from '../Bookmark';
 
 function initAllBookmark() {
   const tabSpaceId = 'hello';
-  const allBookmark = new AllBookmark(tabSpaceId);
-  const b1 = new Bookmark();
-  b1.name = 'bookmark 1';
-  b1.url = 'https://www.test1.com';
-  const b2 = new Bookmark();
-  b2.name = 'bookmark 2';
-  b2.url = 'https://www.test2.com';
-  allBookmark.addBookmark(b1);
-  allBookmark.addBookmark(b2);
+  let allBookmark = updateTabSpaceId(tabSpaceId, newEmptyAllBookmark());
+  allBookmark = addBookmark(
+    setUrl('https://www.test1.com', setName('bookmark 1', newEmptyBookmark())),
+    allBookmark,
+  );
+  allBookmark = addBookmark(
+    setUrl('https://www.test2.com', setName('bookmark 2', newEmptyBookmark())),
+    allBookmark,
+  );
+  const b1 = allBookmark.bookmarks.get(0);
+  const b2 = allBookmark.bookmarks.get(1);
   return { tabSpaceId, allBookmark, b1, b2 };
 }
 
@@ -26,28 +36,29 @@ test('init', () => {
 });
 
 test('updateBookmark', () => {
-  const { tabSpaceId, allBookmark, b1, b2 } = initAllBookmark();
-  const b3 = b2.clone();
-  b3.name = b2.name + 'changed';
-  expect(allBookmark.updateBookmark('888', b3)).toBeNull();
-  allBookmark.updateBookmark(b2.id, b3);
+  let { tabSpaceId, allBookmark, b1, b2 } = initAllBookmark();
+  const changedName = b2.name + 'changed';
+  allBookmark = updateBookmark('888', { name: changedName }, allBookmark);
+  expect(allBookmark.bookmarks.toArray()).toEqual([b1, b2]);
+  allBookmark = updateBookmark(b2.id, { name: changedName }, allBookmark);
   const i = allBookmark.bookmarks.findIndex(
     (bookmark) => bookmark.id === b2.id,
   );
-  expect(allBookmark.bookmarks.get(i).name).toEqual(b3.name);
+  expect(allBookmark.bookmarks.get(i).name).toEqual(changedName);
 });
 
 test('removeBookmark', () => {
-  const { tabSpaceId, allBookmark, b1, b2 } = initAllBookmark();
-  expect(allBookmark.removeBookmark('888')).toBeNull();
-  allBookmark.removeBookmark(b2.id);
+  let { tabSpaceId, allBookmark, b1, b2 } = initAllBookmark();
+  allBookmark = removeBookmark('888', allBookmark);
+  expect(allBookmark.bookmarks.size).toEqual(2);
+  allBookmark = removeBookmark(b2.id, allBookmark);
   expect(allBookmark.bookmarks.size).toEqual(1);
 });
 
 test('updateTabSpaceId', () => {
-  const { tabSpaceId, allBookmark, b1, b2 } = initAllBookmark();
+  let { tabSpaceId, allBookmark, b1, b2 } = initAllBookmark();
   const newTabSpaceId = tabSpaceId + 'changed';
-  allBookmark.updateTabSpaceId(newTabSpaceId);
+  allBookmark = updateTabSpaceId(newTabSpaceId, allBookmark);
   expect(allBookmark.tabSpaceId).toEqual(newTabSpaceId);
   allBookmark.bookmarks.forEach((bookmark) =>
     expect(bookmark.tabSpaceId).toEqual(newTabSpaceId),
@@ -55,13 +66,15 @@ test('updateTabSpaceId', () => {
 });
 
 test('misc', () => {
-  const { tabSpaceId, allBookmark, b1, b2 } = initAllBookmark();
+  let { tabSpaceId, allBookmark, b1, b2 } = initAllBookmark();
   const {
+    allBookmark: savedAllBookmark,
     allBookmarkSavePayload,
     isNewAllBookmark,
     newBookmarkSavePayloads,
     existBookmarkSavePayloads,
-  } = allBookmark.convertAndGetSavePayload();
+  } = convertAndGetAllBookmarkSavePayload(allBookmark);
+  expect(savedAllBookmark.bookmarks.toArray()).toEqual(newBookmarkSavePayloads);
   allBookmarkSavePayload.bookmarkIds.forEach((bookmarkId) =>
     expect(isIdNotSaved(bookmarkId)).toBeFalsy(),
   );

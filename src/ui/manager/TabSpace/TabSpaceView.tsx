@@ -1,36 +1,22 @@
-import * as React from 'react';
-
-import { AllBookmark } from '../../../data/bookmark/Bookmark';
-import { SavedTabSpaceStore } from '../../../data/tabSpace/SavedTabSpaceStore';
-import { TabPreview } from '../../../data/tabSpace/TabPreview';
-import { TabSpace } from '../../../data/tabSpace/TabSpace';
+import React from 'react';
+import SimpleBarReact from 'simplebar-react';
 import { TabSpaceListView } from './TabSpaceListView';
-import { TabSpaceRegistry } from '../../../tabSpaceRegistry/TabSpaceRegistry';
 import { TabSpaceRightSideView } from '../TabSpaceRightSide/TabSpaceRightSideView';
-import { observer } from 'mobx-react-lite';
 import classes from './TabSpaceView.module.scss';
 
-interface ITabSpaceViewProps {
-  tabSpace: TabSpace;
-  tabSpaceRegistry: TabSpaceRegistry;
-  tabPreview: TabPreview;
-  savedTabSpaceStore: SavedTabSpaceStore;
-  allBookmark: AllBookmark;
-}
-
-export const TabSpaceView = observer(
-  ({ tabSpace, tabPreview, allBookmark }: ITabSpaceViewProps) => {
-    return (
-      <div className={classes.container}>
-        <TabSpaceListView
-          tabSpace={tabSpace}
-          tabPreview={tabPreview}
-          allBookmark={allBookmark}
-        />
-        <div className={classes.rightSideContainer}>
-          <TabSpaceRightSideView tabSpace={tabSpace} />
-        </div>
+export function TabSpaceView() {
+  return (
+    <div className={classes.container}>
+      <div className={classes.mainContainer}>
+        <SimpleBarReact autoHide={true} style={{ maxHeight: '100vh' }}>
+          <TabSpaceListView />
+        </SimpleBarReact>
       </div>
-    );
-  },
-);
+      <div className={classes.rightSideContainer}>
+        <SimpleBarReact autoHide={true} style={{ maxHeight: '100vh' }}>
+          <TabSpaceRightSideView />
+        </SimpleBarReact>
+      </div>
+    </div>
+  );
+}

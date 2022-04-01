@@ -1,8 +1,7 @@
-import * as React from 'react';
+import React, { useState } from 'react';
 
 import { LoadStatus } from '../../global';
 import { useAsyncEffect } from './useAsyncEffect';
-import { useState } from 'react';
 
 export function getLoadingComponent(
   component: React.FC<any>,
@@ -26,6 +25,30 @@ export function getLoadingComponent(
 
     return loadStatus === LoadStatus.Done ? (
       <div>{React.createElement(component, propsData)}</div>
+    ) : (
+      <div>Loading...</div>
+    );
+  }
+  return wrappedComponent;
+}
+
+export function getLoadingComponent2<T extends React.VFC>(
+  component: T,
+  loader: () => Promise<void>,
+) {
+  function wrappedComponent(props) {
+    const [loadStatus, setLoadStatus] = useState<LoadStatus>(
+      LoadStatus.Loading,
+    );
+
+    useAsyncEffect(async () => {
+      setLoadStatus(LoadStatus.Loading);
+      const result = await loader();
+      setLoadStatus(LoadStatus.Done);
+    }, []);
+
+    return loadStatus === LoadStatus.Done ? (
+      <div>{React.createElement(component, props)}</div>
     ) : (
       <div>Loading...</div>
     );

@@ -3,18 +3,18 @@
 .sidebarComponent {
   position: relative;
   background-color: global.$color-light-shade;
-  border-radius: 3px;
+  border-radius: 20px;
   margin-bottom: 18px;
-  padding: 3px;
+  padding: 8px 18px;
   box-shadow: 0px 0px 5px -1px global.$color-dark-shade;
 }
 
 .sidebarComponent .edge {
   position: absolute;
-  left: calc(100% - 2px);
-  top: -14px;
-  min-width: 14px;
-  height: calc(100% + 28px);
+  left: calc(100% - 18px);
+  top: -30px;
+  min-width: 30px;
+  height: calc(100% + 60px);
   background-image: linear-gradient(
     90deg,
     global.$color-light-shade,
@@ -24,24 +24,24 @@
 
 .sidebarComponent .edge::before {
   content: '';
-  width: 14px;
-  height: 14px;
+  width: 30px;
+  height: 30px;
   background-color: global.$color-main-brand;
   position: absolute;
   top: 0px;
   left: 0px;
-  border-bottom-right-radius: 12px;
+  border-bottom-right-radius: 30px;
 }
 
 .sidebarComponent .edge::after {
   content: '';
   position: absolute;
-  width: 14px;
-  height: 14px;
+  width: 30px;
+  height: 30px;
   background-color: global.$color-main-brand;
-  top: calc(100% - 14px);
+  top: calc(100% - 30px);
   left: 0px;
-  border-top-right-radius: 12px;
+  border-top-right-radius: 30px;
 }
 
 .sidebarComponent.active .edge {
@@ -60,10 +60,8 @@
 }
 
 .sidebarComponent.active .header {
-  background-color: #fafafa;
-  background-image: linear-gradient(180deg, hsla(0, 0%, 100%, 0), #ced9e0);
-  box-shadow: inset 0 0 0 1px rgb(16 22 26 / 20%),
-    inset 0 -1px 0 rgb(16 22 26 / 10%);
+  // background-image: linear-gradient(270deg, #ced9e0, global.$color-b);
+  // background-image: linear-gradient(270deg, hsla(0, 0%, 100%, 0), #ced9e0);
   border-radius: 3px;
 }
 
@@ -71,6 +69,7 @@
   opacity: 0.65;
   cursor: pointer;
   transition: opacity 150ms ease-in-out;
+  z-index: 5;
 }
 
 .sidebarComponent.inactive:hover {
@@ -79,4 +78,8 @@
 
 .sidebarComponent .content {
   transition: all 150ms ease-in-out;
+}
+
+.sidebarHeaderContainer :global(.bp3-icon) {
+  margin-right: 12px;
 }

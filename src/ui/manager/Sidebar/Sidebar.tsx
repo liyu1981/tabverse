@@ -1,28 +1,18 @@
-import * as React from 'react';
-
 import { IManagerQueryParams, ManagerViewRoute } from '../ManagerView';
-import { getTabSpaceData } from '../../../data/tabSpace/bootstrap';
 
 import { BottomNav } from '../BottomNav/BottomNav';
 import { BrowserSession } from './BrowserSession';
 import { ErrorBoundary } from '../../common/ErrorBoundary';
 import { Icon } from '@blueprintjs/core';
 import { LiveTabSpace } from './LiveTabSpace';
+import React from 'react';
 import { SavedTabSpace } from './SavedTabSpace';
 import { TabSpaceLogo } from '../../common/TabSpaceLogo';
 import classes from './Sidebar.module.scss';
 import clsx from 'clsx';
-import { getAllChromeSessionData } from '../../../data/chromeSession/bootstrap';
-import { getTabSpaceRegistry } from '../../../tabSpaceRegistry';
+import { isDebug } from '../../../debug';
 
-enum Route {
-  New = 'new',
-  Session = 'session',
-  Opened = 'live',
-  Saved = 'saved',
-}
-
-export interface ISidebarComponentProps {
+export interface SidebarComponentProps {
   active: boolean;
 }
 
@@ -32,10 +22,10 @@ export function SidebarComponent({
   header,
   onSwitch,
   children,
-}: ISidebarComponentProps & {
-  route: Route;
+}: SidebarComponentProps & {
+  route: ManagerViewRoute;
   header: JSX.Element | React.ReactFragment;
-  onSwitch: (value) => void;
+  onSwitch: (value: ManagerViewRoute) => void;
   children?: JSX.Element | JSX.Element[];
 }) {
   return (
@@ -73,58 +63,58 @@ export const Sidebar = (props: ISidebarProps) => {
       </div>
       <br />
       <div>
+        {/* <SidebarSearch
+          active={props.route === ManagerViewRoute.Search}
+          onSwitch={(value) => props.switchRoute(value)}
+        /> */}
         <SidebarComponent
           active={props.route === ManagerViewRoute.Session}
-          route={Route.Session}
-          onSwitch={(value) => props.switchRoute(value)}
+          route={ManagerViewRoute.Session}
+          onSwitch={props.switchRoute}
           header={
-            <>
+            <div className={classes.sidebarHeaderContainer}>
               <Icon icon="git-repo" size={ICON_SIZE} /> Browser Session
-            </>
+            </div>
           }
         >
-          <BrowserSession
-            active={props.route === ManagerViewRoute.Session}
-            savedChromeSessionCollection={
-              getAllChromeSessionData().savedChromeSessionCollection
-            }
-          />
+          <BrowserSession active={props.route === ManagerViewRoute.Session} />
         </SidebarComponent>
         <SidebarComponent
           active={props.route === ManagerViewRoute.Opened}
-          route={Route.Opened}
-          onSwitch={(value) => props.switchRoute(value)}
+          route={ManagerViewRoute.Opened}
+          onSwitch={props.switchRoute}
           header={
-            <>
+            <div className={classes.sidebarHeaderContainer}>
               <Icon icon="panel-table" size={ICON_SIZE} /> Live Tabverses
-            </>
+            </div>
           }
         >
-          <LiveTabSpace
-            active={props.route === ManagerViewRoute.Opened}
-            tabSpace={getTabSpaceData().tabSpace}
-            // tabSpaceRegistry={getTabSpaceData().tabSpaceRegistry}
-            tabSpaceRegistry={getTabSpaceRegistry()}
-          />
+          <LiveTabSpace active={props.route === ManagerViewRoute.Opened} />
         </SidebarComponent>
         <SidebarComponent
           active={props.route === ManagerViewRoute.Saved}
-          route={Route.Saved}
-          onSwitch={(value) => props.switchRoute(value)}
+          route={ManagerViewRoute.Saved}
+          onSwitch={props.switchRoute}
           header={
-            <>
+            <div className={classes.sidebarHeaderContainer}>
               <Icon icon="git-repo" size={ICON_SIZE} /> Saved Tabverses
-            </>
+            </div>
           }
         >
-          <SavedTabSpace
-            active={props.route === ManagerViewRoute.Opened}
-            tabSpace={getTabSpaceData().tabSpace}
-            tabSpaceRegistry={getTabSpaceRegistry()}
-            savedTabSpaceStore={getTabSpaceData().savedTabSpaceStore}
-            savedTabSpaceCollection={getTabSpaceData().savedTabSpaceCollection}
-          />
+          <SavedTabSpace active={props.route === ManagerViewRoute.Opened} />
         </SidebarComponent>
+        {isDebug() ? (
+          <SidebarComponent
+            active={props.route === ManagerViewRoute.Webtool}
+            route={ManagerViewRoute.Webtool}
+            onSwitch={props.switchRoute}
+            header={
+              <div className={classes.sidebarHeaderContainer}>
+                <Icon icon="build" size={ICON_SIZE} /> My WebTools{' '}
+              </div>
+            }
+          ></SidebarComponent>
+        ) : null}
         <BottomNav />
       </div>
     </>

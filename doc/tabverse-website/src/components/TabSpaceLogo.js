@@ -1,8 +1,7 @@
 import './TabSpaceLogo.module.css';
 
-import * as React from 'react';
-
 import { GITHUB_URL_PREFIX } from '../tabverse';
+import React from 'react';
 import styles from './TabSpaceLogo.module.css';
 
 export const TabSpaceLogo = () => {

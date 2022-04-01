@@ -1,31 +1,41 @@
 @use '@blueprintjs/colors/src/colors.scss';
+@use '../../global.scss';
 
 body {
-  background-color: colors.$light-gray5;
+  color: global.$color-text;
+  background-color: global.$color-background;
+  overflow: hidden;
 }
 
-.bp3-editable-text-fullwidth {
-  min-width: 100%;
+:focus {
+  outline: none;
 }
 
-.bp3-intent-danger {
-  background-color: desaturate(#db3737, 35%) !important;
+:global(.bp3-button) {
+  border-radius: 18px;
 }
 
-.bp3-tab-panel-dialog {
-  width: 100%;
-  margin-top: -16px !important;
-  margin-left: 8px;
+:global(.bp3-card):global(.bp3-interactive):hover {
+  box-shadow: 0 2px 4px rgb(16 22 26 / 20%), 0 8px 24px rgb(16 22 26 / 20%);
 }
 
-.saved-tabspace-tree-node {
-  min-height: 56px;
+:global(.bp3-control):global(.bp3-checkbox) :global(.bp3-control-indicator) {
+  border-radius: 8px;
 }
 
-.tabverse-session-tree-node {
-  min-height: 48px;
+:global(.tv-primary-button):global(.bp3-button) {
+  background-color: global.$color-d;
+  color: global.$color-c;
+  background-image: none;
+  box-shadow: none;
 }
 
-.tabverse-session-tree-node .bp3-tree-node-content {
-  min-height: 48px;
+:global(.tv-primary-button):global(.bp3-button) :global(.bp3-icon) {
+  color: global.$color-c;
+}
+
+:global(.tv-primary-button):global(.bp3-button):hover {
+  background-color: global.$color-d;
+  color: global.$color-c;
+  box-shadow: 0px 0px 4px 4px rgb(16 22 26 / 20%);
 }

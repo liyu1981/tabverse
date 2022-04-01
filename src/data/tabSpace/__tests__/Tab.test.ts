@@ -1,10 +1,16 @@
-import { getUnsavedNewId, isIdNotSaved } from '../../common';
+import { getSavedId, getUnsavedNewId, isIdNotSaved } from '../../common';
 
 import { TABSPACE_DB_VERSION } from '../../../global';
-import { Tab } from '../Tab';
+import {
+  newEmptyTab,
+  fromLiveTab,
+  setTabSpaceId,
+  convertAndGetTabSavePayload,
+  fromSavedTab,
+} from '../Tab';
 
 test('constructor', () => {
-  const t = new Tab();
+  const t = newEmptyTab();
   expect(isIdNotSaved(t.id)).toBeTruthy();
   expect(t.createdAt).toBe(-1);
   expect(t.updatedAt).toBe(-1);
@@ -12,14 +18,21 @@ test('constructor', () => {
 });
 
 test('convertAndGetSavePayload', () => {
-  const t = Tab.fromILiveTab({ chromeTabId: 1000, chromeWindowId: 1001 });
-  t.tabSpaceId = getUnsavedNewId();
+  const t = setTabSpaceId(
+    getUnsavedNewId(),
+    fromLiveTab({ chromeTabId: 1000, chromeWindowId: 1001 }),
+  );
   expect(t.chromeTabId).toBe(1000);
   expect(t.chromeWindowId).toBe(1001);
-  const [savedTab, savePayload] = t.convertAndGetSavePayload();
-  expect(isIdNotSaved(savePayload.id)).toBeFalsy();
-  expect(savePayload.createdAt).toBeGreaterThan(0);
-  expect(savePayload.updatedAt).toBeGreaterThan(0);
+  const { tab, savedTab } = convertAndGetTabSavePayload(t, getSavedId(t.id));
+  expect(isIdNotSaved(savedTab.id)).toBeFalsy();
+  expect(isIdNotSaved(tab.id)).toBeFalsy();
+  expect(isIdNotSaved(tab.tabSpaceId)).toBeFalsy();
+  expect(savedTab.createdAt).toBeGreaterThan(0);
+  expect(savedTab.updatedAt).toBeGreaterThan(0);
+  expect(tab.createdAt).toEqual(savedTab.createdAt);
+  expect(tab.updatedAt).toEqual(savedTab.updatedAt);
+  expect(tab.id).toEqual(savedTab.id);
 });
 
 test('fromSavedData', () => {
@@ -35,7 +48,7 @@ test('fromSavedData', () => {
     suspended: false,
     pinned: false,
   };
-  const t = Tab.fromSavedData(savedData);
+  const t = fromSavedTab(savedData);
   Object.keys(savedData).forEach((key) => {
     expect(t[key]).toEqual(savedData[key]);
   });

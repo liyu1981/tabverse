@@ -1,10 +1,8 @@
-import * as React from 'react';
-
 import { Dialog } from '@blueprintjs/core';
-
+import React from 'react';
+import { TABSPACE_VERSION } from '../../global';
 import { TabSpaceLogo } from '../common/TabSpaceLogo';
 import classes from './AboutDialog.module.scss';
-import { TABSPACE_VERSION } from '../../global';
 
 export const AboutDialog = (props) => {
   return (

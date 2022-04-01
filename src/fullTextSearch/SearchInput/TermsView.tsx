@@ -1,7 +1,6 @@
-import * as React from 'react';
-
 import { EditableTag } from './EditableTag';
 import { Intent } from '@blueprintjs/core';
+import React from 'react';
 
 export interface TermsViewProps {
   values: string[];

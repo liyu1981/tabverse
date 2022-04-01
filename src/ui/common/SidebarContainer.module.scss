@@ -3,22 +3,24 @@
 $sidebar-width: 320px;
 $transition-time: 0.5s;
 
-.sidebarBase {
+.topContainer {
+  display: flex;
+}
+
+.leftContainer {
   height: 100vh;
   position: fixed;
   z-index: 1;
   top: 0;
-  left: -1;
+  left: 0;
   background-color: global.$color-main-brand;
   overflow-x: hidden;
   padding: 12px;
-}
-
-.sidebarNormal {
   width: $sidebar-width;
 }
 
-.contentContainerShift {
+.rightContainer {
   margin-left: $sidebar-width;
   padding-left: 20px;
+  width: 100%;
 }

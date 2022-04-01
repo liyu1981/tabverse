@@ -15,3 +15,6 @@ cp -v node_modules/@fortawesome/fontawesome-free/css/all.min.css dist/static/fon
 # font files needs to be inside webfonts in same level of fontawesome css
 mkdir -p dist/static/fontawesome/webfonts
 cp -v node_modules/@fortawesome/fontawesome-free/webfonts/* dist/static/fontawesome/webfonts/
+
+mkdir -p dist/static/simplebar
+cp -v node_modules/simplebar/dist/simplebar.min.css dist/static/simplebar/

@@ -1,7 +1,5 @@
 // borrowed quite a lot of code from blueprintjs v3 Tag implementation
 
-import * as React from 'react';
-
 import {
   Classes,
   IElementRefProps,
@@ -15,6 +13,7 @@ import {
   Utils,
 } from '@blueprintjs/core';
 
+import React from 'react';
 import classNames from 'classnames';
 import { isReactNodeEmpty } from './util';
 

@@ -1,13 +1,9 @@
-import classes from './DraftRichEditor.module.scss';
-
-import * as React from 'react';
-
 import { Editor, RichUtils, getDefaultKeyBinding } from 'draft-js';
+import React, { useCallback, useRef } from 'react';
 
 import { Icon } from '@blueprintjs/core';
+import classes from './DraftRichEditor.module.scss';
 import clsx from 'clsx';
-
-const { useRef, useCallback } = React;
 
 function getBlockStyle(block) {
   switch (block.getType()) {

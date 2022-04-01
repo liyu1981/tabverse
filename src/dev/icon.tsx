@@ -1,6 +1,5 @@
-import * as React from 'react';
-
 import { Colors } from '@blueprintjs/core';
+import React from 'react';
 import { TabSpaceLogo } from '../ui/common/TabSpaceLogo';
 import { render } from 'react-dom';
 

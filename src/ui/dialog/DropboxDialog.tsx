@@ -1,6 +1,3 @@
-import * as Moment from 'moment';
-import * as React from 'react';
-
 import {
   Tab as BPTab,
   Tabs as BPTabs,
@@ -22,11 +19,12 @@ import {
   reloadBackupFiles,
   verifyDropboxAccessToken,
 } from '../../dropbox/index';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
-import { useSettingItem } from '../../store/localSetting';
+import Moment from 'moment';
 import classes from './DropboxDialog.module.scss';
 import clsx from 'clsx';
+import { useSettingItem } from '../../storage/localSetting';
 
 export const SETTING_KEY_DROPBOX_ACCESSTOKEN = 'tabverse_dropboxAccessToken';
 export const SETTING_KEY_DROPBOX_AUTOBACKUP = 'tabverse_dropboxAutobackup';

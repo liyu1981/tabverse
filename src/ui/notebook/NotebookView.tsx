@@ -1,54 +1,65 @@
-import * as React from 'react';
+import { newEmptyNote, Note, setName } from '../../data/note/Note';
+import React, { useEffect } from 'react';
 
-import { INote, Note } from '../../data/note/Note';
-
-import { AllNoteData } from '../../data/note/bootstrap';
 import { Button } from '@blueprintjs/core';
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { NoteView } from './Note';
-import { observer } from 'mobx-react-lite';
-import { usePageControl } from '../common/usePageControl';
 import classes from './NotebookView.module.scss';
+import { useStore } from 'effector-react';
+import { $allNote, noteStoreApi } from '../../data/note/store';
+import {
+  monitorAllNoteChanges,
+  monitorTabSpaceChanges,
+  startMonitorLocalStorageChanges,
+  stopMonitorLocalStorageChanges,
+} from '../../data/note/util';
+import { isIdNotSaved } from '../../data/common';
+import { logger } from '../../global';
 
 export interface NotebookViewProps {
-  allNoteData: AllNoteData;
+  tabSpaceId: string;
 }
 
-const NOTE_PAGE_LIMIT = 2;
+export function NotebookView({ tabSpaceId }: NotebookViewProps) {
+  const allNote = useStore($allNote);
 
-export const NotebookView = observer((props: NotebookViewProps) => {
-  const updateNote = (id: string, params: Partial<INote>) => {
-    const nIndex = props.allNoteData.allNote.findNoteIndex(id);
-    if (nIndex < 0) {
-      return;
+  useEffect(() => {
+    logger.info('notebook start monitor tabspace, alltodo changes');
+    monitorTabSpaceChanges();
+    monitorAllNoteChanges();
+  }, []);
+
+  useEffect(() => {
+    if (tabSpaceId && isIdNotSaved(tabSpaceId)) {
+      logger.info('notebook start monitor localstorage changes');
+      startMonitorLocalStorageChanges();
+      return () => {
+        logger.info('notebook stop monitor localstorage changes');
+        stopMonitorLocalStorageChanges();
+      };
     }
-    const oldNote = props.allNoteData.allNote.notes.get(nIndex);
-    const n = oldNote.clone();
-    let changed = false;
-    if ('name' in params) {
-      n.name = params.name;
-      changed = true;
-    }
-    if ('data' in params) {
-      n.data = params.data;
-      changed = true;
-    }
-    if (changed) {
-      props.allNoteData.allNote.updateNote(n.id, n);
-    }
+  }, [tabSpaceId]);
+
+  const updateNote = (nid: string, changes: Partial<Note>) => {
+    noteStoreApi.updateNote({ nid, changes });
   };
 
-  const [getCurrentPageNotes, renderPageControl] = usePageControl(
-    props.allNoteData.allNote.notes.reverse().toArray(),
-    NOTE_PAGE_LIMIT,
-  );
+  const removeNote = (nid: string) => {
+    noteStoreApi.removeNote(nid);
+  };
+
+  const newNote = () => {
+    noteStoreApi.addNote(setName(`Note ${Date.now()}`, newEmptyNote()));
+  };
+
+  const currentNotes = allNote.notes.reverse().toArray();
 
   const renderNotes = () => {
-    return getCurrentPageNotes().map((note) => (
+    return currentNotes.map((note) => (
       <NoteView
         key={note.id}
         note={note}
-        removeFunc={() => props.allNoteData.allNote.removeNote(note.id)}
+        removeFunc={removeNote}
         updateFunc={updateNote}
       />
     ));
@@ -57,7 +68,7 @@ export const NotebookView = observer((props: NotebookViewProps) => {
   return (
     <ErrorBoundary>
       <div className={classes.container}>
-        {getCurrentPageNotes().length <= 0 ? (
+        {currentNotes.length <= 0 ? (
           <div className={classes.noticeContainer}>
             No notes found! You can create new note with New Note button.
           </div>
@@ -66,22 +77,13 @@ export const NotebookView = observer((props: NotebookViewProps) => {
         )}
         <div className={classes.noteToolContainer}>
           <div>
-            <Button
-              icon="draw"
-              minimal={true}
-              onClick={() => {
-                props.allNoteData.allNote.addNote(new Note());
-              }}
-            >
+            <Button icon="draw" minimal={true} onClick={newNote}>
               New Note
             </Button>
-          </div>
-          <div>
-            <span>{renderPageControl()}</span>
           </div>
         </div>
         {renderNotes()}
       </div>
     </ErrorBoundary>
   );
-});
+}

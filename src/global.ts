@@ -3,7 +3,7 @@ import { TabSpaceLogLevel, isJestTest, loglevel } from './debug';
 import { debounce as lodashDebounce } from 'lodash';
 
 // Do not manual edit it, use tools/version_update to update it.
-export const TABSPACE_VERSION = 'v0.3.0';
+export const TABSPACE_VERSION = 'v0.4.0';
 
 export const TABSPACE_DB_VERSION = 7;
 
@@ -62,8 +62,10 @@ export function typeGuard<T>(x: any): x is T {
 }
 
 export const debounce = isJestTest()
-  ? (f: any, t: any) => f
-  : (f: any, t: any) =>
+  ? // eslint-disable-next-line @typescript-eslint/ban-types
+    <T extends Function>(f: T, t: any) => f
+  : // eslint-disable-next-line @typescript-eslint/ban-types
+    <T extends Function>(f: T, t: any) =>
       lodashDebounce(() => {
         f();
       }, t);

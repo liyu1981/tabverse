@@ -1,7 +1,7 @@
 import { AuditLogs, BackgroundMsg, ChromeTabId, TabSpaceMsg } from './message';
 
-import { getTabSpaceData } from '../data/tabSpace/bootstrap';
 import { logger } from '../global';
+import { $tabSpace } from '../data/tabSpace/store';
 
 const handlers = {};
 
@@ -42,8 +42,8 @@ handlers[BackgroundMsg.GetTabSpace] = function (
   sendResponse: (response?: any) => void,
 ) {
   logger.info(`${BackgroundMsg.GetTabSpace}, ${message.payload}`);
-  if (message.payload === getTabSpaceData().tabSpace.chromeTabId) {
-    sendResponse(getTabSpaceData().tabSpace);
+  if (message.payload === $tabSpace.getState().chromeTabId) {
+    sendResponse($tabSpace.getState());
   }
 };
 

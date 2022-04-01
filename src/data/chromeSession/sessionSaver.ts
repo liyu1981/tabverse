@@ -1,14 +1,18 @@
 import {
+  CHROMESESSION_DB_TABLE_NAME,
   ChromeSession,
-  IChromeSessionSavePayload,
+  ChromeSessionSavePayload,
   NotTabSpaceTabId,
+  convertAndGetSavePayload,
   isChromeSessionChanged,
+  newEmptyChromeSession,
 } from './ChromeSession';
 
-import { db } from '../../store/db';
+import { db } from '../../storage/db';
 import { isJestTest } from '../../debug';
 import { logger } from '../../global';
 import { scanCurrentTabsForBackground } from './chromeScan';
+import { setAttrForObject } from '../common';
 
 const MAX_SAVED_SESSIONS = isJestTest() ? 3 : 64;
 
@@ -29,10 +33,10 @@ function countSessionNonTabverseTabs(session: ChromeSession): number {
 //   2. otherwise if we can not find a session as above from tags different than
 //      current tag (means previous day's sessions), we delete the last session.
 function findSessionToDelete(
-  lastSavedSessions: IChromeSessionSavePayload[],
+  lastSavedSessions: ChromeSessionSavePayload[],
   tag: string,
-): IChromeSessionSavePayload {
-  let toDeleteSession: IChromeSessionSavePayload | null = null;
+): ChromeSessionSavePayload {
+  let toDeleteSession: ChromeSessionSavePayload | null = null;
   let toDeleteSessionGroupSize = 0;
 
   for (let i = lastSavedSessions.length - 1; i >= 0; i--) {
@@ -69,14 +73,14 @@ function findSessionToDelete(
 export async function saveSession(
   tag: string,
   sessionCreatedTime: number,
-): Promise<IChromeSessionSavePayload | null> {
-  const session = new ChromeSession();
+): Promise<ChromeSessionSavePayload | null> {
+  let session = newEmptyChromeSession();
 
-  session.tag = tag;
-  session.createdAt = sessionCreatedTime;
-  session.updatedAt = Date.now();
+  session = setAttrForObject('tag', tag, session);
+  session = setAttrForObject('createdAt', sessionCreatedTime, session);
+  session = setAttrForObject('updatedAt', Date.now(), session);
 
-  await scanCurrentTabsForBackground(session);
+  session = await scanCurrentTabsForBackground(session);
 
   if (session.tabs.size <= 0) {
     // if there is actually no tab (will happen when the browser relaunch
@@ -93,22 +97,32 @@ export async function saveSession(
   logger.log('try to save session:', session);
 
   const lastSavedSessions = await db
-    .table<IChromeSessionSavePayload>(ChromeSession.DB_TABLE_NAME)
+    .table<ChromeSessionSavePayload>(CHROMESESSION_DB_TABLE_NAME)
     .orderBy('updatedAt')
     .reverse()
     // .filter((savedSession) => savedSession.tag === session.tag)
     .toArray();
 
-  let sessionSavePayload: IChromeSessionSavePayload = null;
+  let sessionSavePayload: ChromeSessionSavePayload = null;
 
   if (lastSavedSessions.length <= 0) {
-    sessionSavePayload = session.getSavePayload();
     logger.log('save session as lastSavedSessions.length <= 0');
-    await db.table(ChromeSession.DB_TABLE_NAME).add(sessionSavePayload);
+    const r = convertAndGetSavePayload(session);
+    session = r.chromeSession;
+    sessionSavePayload = r.savePayload;
+    await db.table(CHROMESESSION_DB_TABLE_NAME).add(sessionSavePayload);
     return sessionSavePayload;
   } else {
     const lastSavedSession = lastSavedSessions[0];
-    sessionSavePayload = session.getSavePayload();
+    const r = convertAndGetSavePayload(session);
+    session = r.chromeSession;
+    sessionSavePayload = r.savePayload;
+    // console.log(
+    //   'want to save session:',
+    //   lastSavedSession,
+    //   sessionSavePayload,
+    //   isChromeSessionChanged(lastSavedSession, sessionSavePayload),
+    // );
     if (isChromeSessionChanged(lastSavedSession, sessionSavePayload)) {
       if (lastSavedSessions.length + 1 > MAX_SAVED_SESSIONS) {
         const toDeleteSavedSession = findSessionToDelete(
@@ -116,7 +130,7 @@ export async function saveSession(
           tag,
         );
         await db
-          .table(ChromeSession.DB_TABLE_NAME)
+          .table(CHROMESESSION_DB_TABLE_NAME)
           .delete(toDeleteSavedSession.id);
       }
       logger.log(
@@ -124,7 +138,7 @@ export async function saveSession(
         JSON.stringify(lastSavedSession),
         JSON.stringify(sessionSavePayload),
       );
-      await db.table(ChromeSession.DB_TABLE_NAME).add(sessionSavePayload);
+      await db.table(CHROMESESSION_DB_TABLE_NAME).add(sessionSavePayload);
       return sessionSavePayload;
     } else {
       return null;

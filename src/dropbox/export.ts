@@ -1,15 +1,14 @@
-import * as md5sum from 'crypto-js/md5';
-
 import {
   SETTING_KEY_DROPBOX_ACCESSTOKEN,
   SETTING_KEY_DROPBOX_AUTOBACKUP,
 } from '../ui/dialog/DropboxDialog';
 
 import { Dropbox } from 'dropbox';
-import { dumpDb } from '../store/dump';
-import { getSettingItem } from '../store/localSetting';
+import { dumpDb } from '../storage/dump';
+import { getSettingItem } from '../storage/localSetting';
 import { listDropboxFiles } from './list';
 import { logger } from '../global';
+import md5sum from 'crypto-js/md5';
 
 export function generateNewDropboxBackupFileName(tag?: string) {
   return `/tabverse-backup-${tag ? tag + '-' : ''}${Date.now()}.json`;

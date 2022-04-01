@@ -6,7 +6,8 @@
     "jsx": "react",
     "skipLibCheck": true,
     "useDefineForClassFields": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "esModuleInterop": true
   },
   "exclude": ["node_modules"]
 }

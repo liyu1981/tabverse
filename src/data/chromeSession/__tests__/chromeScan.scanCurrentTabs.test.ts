@@ -1,8 +1,4 @@
-import { ChromeSession, NotTabSpaceTabId } from '../ChromeSession';
-import {
-  getTabSpaceData,
-  bootstrap as tabSpaceBootstrap,
-} from '../../tabSpace/bootstrap';
+import { newEmptyChromeSession, NotTabSpaceTabId } from '../ChromeSession';
 import {
   tabData1,
   tabData2,
@@ -13,7 +9,7 @@ import {
 import { List } from 'immutable';
 import { getMockChrome } from '../../../dev/chromeMock';
 import { scanCurrentTabsForTabSpaceManager } from '../chromeScan';
-import { bootstrap as storeBootstrap } from '../../../store/bootstrap';
+import { tabSpaceBootstrap } from '../../tabSpaceBootstrap';
 
 test('scanCurrentTabs', async () => {
   const mockChrome = getMockChrome();
@@ -25,10 +21,9 @@ test('scanCurrentTabs', async () => {
   const tst1 = mockChrome.insertTabFromData(tsTabData1);
   const tab3 = mockChrome.insertTabFromData(tabData1);
   const tab4 = mockChrome.insertTabFromData(tabData3);
-  const session = new ChromeSession();
-  storeBootstrap();
+  let session = newEmptyChromeSession();
   await tabSpaceBootstrap(tst1.id, tst1.windowId);
-  await scanCurrentTabsForTabSpaceManager(session);
+  session = await scanCurrentTabsForTabSpaceManager(session);
   expect(session.tabs.map((t) => t.tabId).toArray()).toEqual([
     tab1.id,
     tab2.id,

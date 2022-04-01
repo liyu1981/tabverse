@@ -1,6 +1,5 @@
-import * as React from 'react';
-
 import { Dialog } from '@blueprintjs/core';
+import React from 'react';
 
 function createdStyles(): { [k: string]: React.CSSProperties } {
   return {

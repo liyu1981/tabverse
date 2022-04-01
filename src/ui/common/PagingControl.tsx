@@ -1,5 +1,6 @@
 import { Button, ButtonGroup } from '@blueprintjs/core';
-import * as React from 'react';
+
+import React from 'react';
 
 export interface PagingControlProps {
   current: number;

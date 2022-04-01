@@ -1,35 +1,39 @@
-import { ChromeSession, IChromeSessionSavePayload } from './ChromeSession';
-import { ISavedTabSpace, TabSpace } from '../tabSpace/TabSpace';
+import {
+  ChromeSessionSavePayload,
+  CHROMESESSION_DB_SCHEMA,
+  CHROMESESSION_DB_TABLE_NAME,
+} from './ChromeSession';
 
-import { db } from '../../store/db';
+import { db } from '../../storage/db';
 import { filter } from 'lodash';
 import { isIdNotSaved } from '../common';
-import { getAllChromeSessionData } from './bootstrap';
-import { SavedChromeSessionCollection } from './SavedChromeSessionCollection';
 import { subscribePubSubMessage, TabSpaceDBMsg } from '../../message/message';
 import { IDatabaseChange } from 'dexie-observable/api';
 import { logger } from '../../global';
+import {
+  TabSpaceSavePayload,
+  TABSPACE_DB_TABLE_NAME,
+} from '../tabSpace/TabSpace';
+import { reloadSavedChromeSessionCollection } from './store';
 
-export type ISavedSessionGroup = {
+export type SavedSessionGroup = {
   tag: string;
-  sessions: IChromeSessionSavePayload[];
+  sessions: ChromeSessionSavePayload[];
 };
 
-export type ITabSpaceMap = { [k: string]: ISavedTabSpace };
-export type IDisplaySavedSessionGroup = ISavedSessionGroup & {
-  tabSpaceMap: ITabSpaceMap;
+export type TabSpaceMap = { [k: string]: TabSpaceSavePayload };
+export type DisplaySavedSessionGroup = SavedSessionGroup & {
+  tabSpaceMap: TabSpaceMap;
 };
 
-export function monitorDbChanges(
-  savedChromeSessionCollection: SavedChromeSessionCollection,
-) {
+export function monitorDbChanges() {
   subscribePubSubMessage(
     TabSpaceDBMsg.Changed,
     (message, data: IDatabaseChange[]) => {
       logger.log('pubsub:', message, data);
       data.forEach((d) => {
-        if (d.table === ChromeSession.DB_TABLE_NAME) {
-          savedChromeSessionCollection.load();
+        if (d.table === CHROMESESSION_DB_SCHEMA) {
+          reloadSavedChromeSessionCollection();
         }
       });
     },
@@ -37,15 +41,15 @@ export function monitorDbChanges(
 }
 
 export async function loadSavedSessionsAsGroups(): Promise<
-  ISavedSessionGroup[]
+  SavedSessionGroup[]
 > {
   const savedSessions = await db
-    .table<IChromeSessionSavePayload>(ChromeSession.DB_TABLE_NAME)
+    .table<ChromeSessionSavePayload>(CHROMESESSION_DB_TABLE_NAME)
     .orderBy('createdAt')
     .reverse()
     .toArray();
-  const savedSessionGroups: ISavedSessionGroup[] = [];
-  let lastGroup: ISavedSessionGroup | null = null;
+  const savedSessionGroups: SavedSessionGroup[] = [];
+  let lastGroup: SavedSessionGroup | null = null;
   savedSessions.forEach((savedSession) => {
     if (lastGroup === null) {
       lastGroup = { tag: savedSession.tag, sessions: [savedSession] };
@@ -66,19 +70,19 @@ export async function loadSavedSessionsAsGroups(): Promise<
 }
 
 export async function loadSavedSessionsForDisplay(): Promise<
-  IDisplaySavedSessionGroup[]
+  DisplaySavedSessionGroup[]
 > {
   const savedSessionGroups = await loadSavedSessionsAsGroups();
   if (savedSessionGroups.length <= 0) {
     return [];
   }
 
-  const forDisplaySavedSessionGroups: IDisplaySavedSessionGroup[] = [];
+  const forDisplaySavedSessionGroups: DisplaySavedSessionGroup[] = [];
 
   const generateTabSpaceMap = async (
-    sessions: IChromeSessionSavePayload[],
-  ): Promise<ITabSpaceMap> => {
-    const map: ITabSpaceMap = {};
+    sessions: ChromeSessionSavePayload[],
+  ): Promise<TabSpaceMap> => {
+    const map: TabSpaceMap = {};
     await Promise.all(
       sessions.map(async (session) => {
         const toLoadTabSpaceIds = filter(
@@ -87,7 +91,7 @@ export async function loadSavedSessionsForDisplay(): Promise<
         );
         const savedTabSpaces = (
           await db
-            .table<ISavedTabSpace>(TabSpace.DB_TABLE_NAME)
+            .table<TabSpaceSavePayload>(TABSPACE_DB_TABLE_NAME)
             .bulkGet(toLoadTabSpaceIds)
         ).filter((x) => x);
         savedTabSpaces.forEach(
@@ -121,6 +125,6 @@ export async function loadSavedSessionsForDisplay(): Promise<
 }
 
 export async function deleteSavedSession(sessionId: string) {
-  await db.table(ChromeSession.DB_TABLE_NAME).delete(sessionId);
-  getAllChromeSessionData().savedChromeSessionCollection.load();
+  await db.table(CHROMESESSION_DB_TABLE_NAME).delete(sessionId);
+  reloadSavedChromeSessionCollection();
 }

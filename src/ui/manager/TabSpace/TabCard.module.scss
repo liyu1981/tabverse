@@ -1,7 +1,9 @@
 .card {
   margin-top: 6px;
   padding: 8px 12px;
-  min-height: 53px;
+  min-height: 54px;
+  border-radius: 12px;
+  box-shadow: none;
 }
 
 .leftSide {
@@ -47,7 +49,7 @@
   padding: 8px;
   border-bottom: 1px solid #ccc;
   background-color: rgb(249, 249, 249);
-  border-radius: 6px 6px 0px 0px;
+  border-radius: 38px 38px 0px 0px;
 }
 
 .previewFavIconContainer {
@@ -58,6 +60,7 @@
 .previewCard {
   padding: 0px;
   max-width: 524px;
+  border-radius: 38px;
 }
 
 .previewTitleH {
@@ -79,15 +82,29 @@
 
 .previewImageContainer {
   padding: 12px;
+  border-radius: 0px 0px 38px 38px;
 }
 
 .previewImage {
-  box-shadow: 0 2.8px 2.2px rgba(0, 0, 0, 0.034),
-    0 6.7px 5.3px rgba(0, 0, 0, 0.048), 0 12.5px 10px rgba(0, 0, 0, 0.06),
-    0 22.3px 17.9px rgba(0, 0, 0, 0.072), 0 41.8px 33.4px rgba(0, 0, 0, 0.086),
-    0 100px 80px rgba(0, 0, 0, 0.12);
   border-radius: 8px;
   max-width: 500px;
   max-height: 500px;
-  border: 1px solid #ccc;
+  border: 1px solid #f1f1f1;
+}
+
+.tabCardPopover :global(.bp3-popover2) {
+  border-radius: 38px;
+  box-shadow: 0 8px 24px rgb(16 22 26 / 20%);
+}
+
+.tabCardPopover :global(.bp3-popover2-arrow) {
+  display: none;
+}
+
+.tabCardPopover :global(.bp3-card) {
+  box-shadow: none;
+}
+
+.tabCardPopover :global(.bp3-popover2) :global(.bp3-popover2-content) {
+  border-radius: 38px;
 }

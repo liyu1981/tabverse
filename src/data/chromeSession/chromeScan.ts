@@ -1,55 +1,76 @@
 import { BackgroundMsg, sendChromeMessage } from '../../message/message';
-import { ChromeSession, ChromeTab } from './ChromeSession';
+import {
+  addTab,
+  addWindow,
+  ChromeSession,
+  ChromeTab,
+  cloneChromeSession,
+  findWindow,
+  replaceWindowTabIds,
+  setWindowTabSpaceTabId,
+} from './ChromeSession';
 
-import { TabSpace } from '../tabSpace/TabSpace';
 import { strict as assert } from 'assert';
-import { getTabSpaceData } from '../tabSpace/bootstrap';
 import { isJestTest } from '../../debug';
 import { isTabSpaceManagerPage } from '../../global';
-import { getTabSpaceRegistry } from '../../tabSpaceRegistry';
+import { TabSpace } from '../tabSpace/TabSpace';
+import { getStateTabSpaceRegistry } from '../tabSpaceRegistry/store';
 
-async function updateWindowTabIds(session: ChromeSession, windowId: number) {
+async function updateWindowTabIds(
+  windowId: number,
+  targetChromeSession: ChromeSession,
+): Promise<ChromeSession> {
   const windowTabIds = (await chrome.tabs.query({ windowId: windowId })).map(
     (tab) => tab.id,
   );
-  session.replaceWindowTabIds(windowId, windowTabIds);
+  return replaceWindowTabIds(windowId, windowTabIds, targetChromeSession);
 }
 
 async function scanCurrentTabsImpl(
-  session: ChromeSession,
   tabSpaceIdResolver: (tabId: number) => Promise<string>,
-) {
+  targetChromeSession: ChromeSession,
+): Promise<ChromeSession> {
+  let newChromeSession = cloneChromeSession(targetChromeSession);
   const tabs = await chrome.tabs.query({});
   for (let i = 0; i < tabs.length; i++) {
     const tab = tabs[i];
-    let window = session.findWindow(tab.windowId);
+    let window = findWindow(tab.windowId, newChromeSession);
     if (!window) {
-      session.addWindow(tab.windowId);
-      window = session.findWindow(tab.windowId);
+      newChromeSession = addWindow(tab.windowId, newChromeSession);
+      window = findWindow(tab.windowId, newChromeSession);
     }
     if (isTabSpaceManagerPage(tab)) {
       const tabSpaceId = await tabSpaceIdResolver(tab.id);
-      session.setWindowTabSpaceTabId(window.windowId, tab.id, tabSpaceId);
+      newChromeSession = setWindowTabSpaceTabId(
+        window.windowId,
+        tab.id,
+        tabSpaceId,
+        newChromeSession,
+      );
     } else {
-      session.addTab(
+      newChromeSession = addTab(
         ChromeTab.new(tab.id, tab.windowId, tab.title, tab.url, tab.favIconUrl),
+        newChromeSession,
       );
     }
   }
 
   const windows = await chrome.windows.getAll();
-  await Promise.all(
-    windows.map((window) => {
-      updateWindowTabIds(session, window.id);
-    }),
-  );
+  for (let i = 0; i < windows.length; i++) {
+    newChromeSession = await updateWindowTabIds(
+      windows[i].id,
+      newChromeSession,
+    );
+  }
+
+  return newChromeSession;
 }
 
 export async function scanCurrentTabsForTabSpaceManager(
-  session: ChromeSession,
-) {
-  await scanCurrentTabsImpl(session, async (tabId: number): Promise<string> => {
-    const result = getTabSpaceRegistry().registry.find(
+  targetChromeSession: ChromeSession,
+): Promise<ChromeSession> {
+  return await scanCurrentTabsImpl(async (tabId: number): Promise<string> => {
+    const result = getStateTabSpaceRegistry().find(
       (stub) => stub.chromeTabId === tabId,
     );
     if (isJestTest()) {
@@ -58,11 +79,13 @@ export async function scanCurrentTabsForTabSpaceManager(
       assert(result, `must find an entry for chrome tab ${tabId}, but not!`);
       return Promise.resolve(result.id);
     }
-  });
+  }, targetChromeSession);
 }
 
-export async function scanCurrentTabsForBackground(session: ChromeSession) {
-  await scanCurrentTabsImpl(session, async (tabId: number): Promise<string> => {
+export async function scanCurrentTabsForBackground(
+  targetChromeSession: ChromeSession,
+): Promise<ChromeSession> {
+  return await scanCurrentTabsImpl(async (tabId: number): Promise<string> => {
     if (isJestTest()) {
       // when in jest test mode, tabSpaceId will be fake
       return Promise.resolve('jest-test');
@@ -73,5 +96,5 @@ export async function scanCurrentTabsForBackground(session: ChromeSession) {
       });
       return tabSpace.id;
     }
-  });
+  }, targetChromeSession);
 }

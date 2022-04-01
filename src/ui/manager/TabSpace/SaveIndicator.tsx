@@ -1,17 +1,14 @@
-import * as Moment from 'moment';
-import * as React from 'react';
-
+import Moment from 'moment';
+import React from 'react';
 import { Tooltip2 } from '@blueprintjs/popover2';
-import { getSavedStoreManager } from '../../../store/bootstrap';
-import { observer } from 'mobx-react-lite';
+import { useStore } from 'effector-react';
+import { $storageOverview } from '../../../storage/StorageOverview';
 
-export const SaveIndicator = observer((props) => {
-  // here we do observe whatever given to us in props but also ignore of that
-  // because just want it to notify us for an update
-  const savedStoreManager = getSavedStoreManager();
-  const [anyInSaving, whoIsInSaving] = savedStoreManager.anyStoreInSaving();
-  const lastSavedTime = savedStoreManager.getLastSavedStore().lastSavedTime;
-  const allSavedTimes = savedStoreManager.getAllLastSavedTime();
+export function SaveIndicator() {
+  const storageOverview = useStore($storageOverview);
+  const [anyInSaving, whoIsInSaving] = storageOverview.anyStorageInSaving();
+  const lastSavedTime = storageOverview.getLastSavedStorage().lastSavedTime;
+  const allSavedTimes = storageOverview.getAllLastSavedTime();
   const allSavedTimesContent = (
     <div>
       {allSavedTimes.map(([key, savedTime]) => (
@@ -35,4 +32,4 @@ export const SaveIndicator = observer((props) => {
   );
   const saving = <Tooltip2 content={allSavingContent}>...saving</Tooltip2>;
   return <span>{anyInSaving ? saving : savedFromNow}</span>;
-});
+}

@@ -1,7 +1,16 @@
+$color-a: #797a7a;
+$color-b: #adc7fb;
+$color-c: #f6f7f9;
+$color-d: #54617a;
+$color-e: #c5c6c7;
+
 $color-light-shade: #f0f1f2;
 $color-light-accent: #858a8b;
-$color-main-brand: #5c7080;
+$color-main-brand: $color-d;
 $color-dark-accent: #6b6977;
 $color-dark-shade: #1d191f;
+
+$color-text: darken($color-d, 15%);
+$color-background: $color-c;
 
 $sidebar-background-color: $color-main-brand;

@@ -1,0 +1,77 @@
+@use '../../../global.scss';
+
+.container {
+  margin-bottom: 100px;
+}
+
+.sessionTitle {
+  font-size: 1.1em;
+  min-height: 48px;
+  line-height: 48px;
+  margin-left: 8px;
+  font-weight: bold;
+}
+
+.chromeTabTitle {
+  font-size: 1.2em;
+  padding-left: 4px;
+  word-break: break-all;
+  cursor: pointer;
+}
+
+.domainLabel {
+  color: global.$color-light-accent;
+}
+
+.tabFavIcon {
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+}
+
+.indicator {
+  padding: 40px 0px;
+  padding-bottom: 0px;
+  margin-bottom: -10px;
+  text-align: center;
+}
+
+.indicatorInner {
+  background-color: global.$color-main-brand;
+  color: global.$color-background;
+  display: inline-block;
+  padding: 8px;
+  border-radius: 18px;
+}
+
+.indicatorLineSpan {
+  margin-left: 6px;
+  margin-right: 6px;
+}
+
+.windowTreeContainer {
+  background-color: white;
+  border-radius: 18px;
+  padding: 18px 18px;
+  margin: 0px 18px;
+}
+
+.windowNode :global(.bp3-tree-node-content-0) {
+  margin-top: 28px;
+  margin-bottom: 18px;
+  font-size: 1.2em;
+}
+
+.windowNode.windowNodeFirst :global(.bp3-tree-node-content-0) {
+  margin-top: 0px;
+}
+
+.windowNode :global(.bp3-tree-node-content-0):hover {
+  background-color: inherit;
+}
+
+.windowChildNode :global(.bp3-tree-node-content-1) {
+  border-radius: 18px;
+  margin-bottom: 8px;
+  padding: 20px 10px;
+}
