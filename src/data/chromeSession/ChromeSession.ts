@@ -1,8 +1,8 @@
 import { IBase, setAttrForObject } from '../common';
-import { isEqual } from 'lodash';
+import { convertToSavedBase, newEmptyBase, updateFromSaved } from '../Base';
 
 import { List } from 'immutable';
-import { convertToSavedBase, newEmptyBase, updateFromSaved } from '../Base';
+import { isEqual } from 'lodash';
 
 export const NotTabSpaceTabId = -1;
 export const NotTabSpaceId = '';
@@ -213,12 +213,13 @@ export function convertAndGetSavePayload(targetChromeSession: ChromeSession): {
   chromeSession: ChromeSession;
   savePayload: ChromeSessionSavePayload;
 } {
+  const savedBase = convertToSavedBase(targetChromeSession);
   const updatedChromeSession = {
     ...targetChromeSession,
-    ...convertToSavedBase(targetChromeSession),
+    ...savedBase,
   };
   const savePayload = {
-    ...convertToSavedBase(targetChromeSession),
+    ...savedBase,
     tag: updatedChromeSession.tag,
     tabs: updatedChromeSession.tabs.toArray(),
     windows: updatedChromeSession.windows

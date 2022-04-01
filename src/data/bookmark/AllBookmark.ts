@@ -9,6 +9,7 @@ import { IBase, isIdNotSaved } from '../common';
 import {
   convertToSavedBase,
   inPlaceConvertToSaved,
+  inPlaceCopyFromOtherBase,
   newEmptyBase,
 } from '../Base';
 
@@ -153,12 +154,13 @@ export function convertAndGetAllBookmarkSavePayload(
       return savedBookmark;
     })
     .toList();
+  const savedBase = convertToSavedBase(targetAllBookmark);
   const savedAllBookmark = produce(targetAllBookmark, (draft) => {
-    inPlaceConvertToSaved(draft);
+    inPlaceCopyFromOtherBase(draft, savedBase);
     draft.bookmarks = savedBookmarks;
   });
   const allBookmarkSavePayload = {
-    ...convertToSavedBase(targetAllBookmark),
+    ...savedBase,
     tabSpaceId: targetAllBookmark.tabSpaceId,
     bookmarkIds: savedBookmarks.map((bookmark) => bookmark.id).toArray(),
   };

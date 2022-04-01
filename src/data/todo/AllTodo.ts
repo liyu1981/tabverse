@@ -3,6 +3,7 @@ import {
   NotId,
   convertToSavedBase,
   inPlaceConvertToSaved,
+  inPlaceCopyFromOtherBase,
   newEmptyBase,
 } from '../Base';
 import {
@@ -151,12 +152,13 @@ export function convertAndGetAllTodoSavePayload(targetAllTodo: AllTodo): {
       return savedTodo;
     })
     .toList();
+  const savedBase = convertToSavedBase(targetAllTodo);
   const savedAllTodo = produce(targetAllTodo, (draft) => {
-    inPlaceConvertToSaved(draft);
+    inPlaceCopyFromOtherBase(draft, savedBase);
     draft.todos = savedTodos;
   });
   const allTodoSavePayload = {
-    ...convertToSavedBase(targetAllTodo),
+    ...savedBase,
     tabSpaceId: targetAllTodo.tabSpaceId,
     todoIds: savedTodos.map((todo) => todo.id).toArray(),
   };

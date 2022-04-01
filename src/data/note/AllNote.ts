@@ -9,6 +9,7 @@ import {
 import {
   convertToSavedBase,
   inPlaceConvertToSaved,
+  inPlaceCopyFromOtherBase,
   newEmptyBase,
 } from '../Base';
 
@@ -134,12 +135,13 @@ export function convertAndGetAllNoteSavePayload(targetAllNote: AllNote): {
       return savedNote;
     })
     .toList();
+  const savedBase = convertToSavedBase(targetAllNote);
   const savedAllNote = produce(targetAllNote, (draft) => {
-    inPlaceConvertToSaved(draft);
+    inPlaceCopyFromOtherBase(draft, savedBase);
     draft.notes = savedNotes;
   });
   const allNoteSavePayload = {
-    ...convertToSavedBase(targetAllNote),
+    ...savedBase,
     tabSpaceId: targetAllNote.tabSpaceId,
     noteIds: savedNotes.map((note) => note.id).toArray(),
   };

@@ -87,14 +87,15 @@ export function convertAndGetTabSavePayload(
   tab: Tab;
   savedTab: TabSavePayload;
 } {
+  const savedBase = convertToSavedBase(targetTab);
   const tab = {
     ...targetTab,
-    ...convertToSavedBase(targetTab),
+    ...savedBase,
     tabSpaceId: savedTabSpaceId,
   };
   const savedTab = {
     ...toTabCore(targetTab),
-    ...convertToSavedBase(targetTab),
+    ...savedBase,
     tabSpaceId: savedTabSpaceId,
   };
   return { tab, savedTab };

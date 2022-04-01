@@ -14,6 +14,7 @@ import {
 import {
   convertToSavedBase,
   inPlaceConvertToSaved,
+  inPlaceCopyFromOtherBase,
   newEmptyBase,
   toBase,
 } from '../Base';
@@ -243,12 +244,13 @@ export function convertAndGetTabSpaceSavePayload(targetTabSpace: TabSpace): {
       return updatedTab;
     })
     .toList();
+  const savedBase = convertToSavedBase(targetTabSpace);
   const tabSpace = produce(targetTabSpace, (draft) => {
-    inPlaceConvertToSaved(draft);
+    inPlaceCopyFromOtherBase(draft, savedBase);
     draft.tabs = savedTabs;
   });
   const tabSpaceSavePayload = {
-    ...convertToSavedBase(targetTabSpace),
+    ...savedBase,
     name: targetTabSpace.name,
     tabIds: savedTabs.map((tab) => tab.id).toArray(),
   };

@@ -32,6 +32,16 @@ export function convertToSavedBase(targetBase: IBase): IBase {
   });
 }
 
+export function inPlaceCopyFromOtherBase<T extends IBase>(
+  target: T,
+  otherBase: IBase,
+) {
+  target.version = otherBase.version;
+  target.createdAt = otherBase.createdAt;
+  target.updatedAt = otherBase.updatedAt;
+  target.id = otherBase.id;
+}
+
 export function inPlaceConvertToSaved<T extends IBase>(target: T) {
   const datenow = Date.now();
   target.createdAt = target.createdAt < 0 ? datenow : target.createdAt;
