@@ -1,15 +1,17 @@
+import { $allTodo, $todoStorage, todoStoreApi } from './store';
 import {
-  addTodo,
+  ALLTODO_DB_TABLE_NAME,
   AllTodo,
   AllTodoSavePayload,
-  ALLTODO_DB_TABLE_NAME,
+  addTodo,
   convertAndGetAllTodoSavePayload,
   getLocalStorageJSON,
   newEmptyAllTodo,
   updateTabSpaceId,
 } from './AllTodo';
-import { $allTodo, $todoStorage, todoStoreApi } from './store';
+import { TODO_DB_TABLE_NAME, Todo, TodoLocalStorage } from './Todo';
 import { TabSpaceMsg, subscribePubSubMessage } from '../../message/message';
+import { addPagingToQueryParams, db } from '../../storage/db';
 import { debounce, logger } from '../../global';
 import {
   getLocalStorageKey,
@@ -19,16 +21,14 @@ import {
   localStorageRemoveListener,
 } from '../../storage/localStorageWrapper';
 
-import { Todo, TodoLocalStorage, TODO_DB_TABLE_NAME } from './Todo';
-import { addPagingToQueryParams, db } from '../../storage/db';
-import { isIdNotSaved } from '../common';
-import { isJestTest } from '../../debug';
-import { updateFromSaved } from '../Base';
-import { isArray } from 'lodash';
-import { needAutoSave } from '../tabSpace/TabSpace';
 import { $tabSpace } from '../tabSpace/store';
 import { DEFAULT_SAVE_DEBOUNCE } from '../../storage/StorageOverview';
 import { InSavingStatus } from '../../storage/GeneralStorage';
+import { isArray } from 'lodash';
+import { isIdNotSaved } from '../common';
+import { isJestTest } from '../../debug';
+import { needAutoSave } from '../tabSpace/TabSpace';
+import { updateFromSaved } from '../Base';
 
 export const LOCALSTORAGE_TODO_KEY = getLocalStorageKey('todo');
 
@@ -112,6 +112,7 @@ async function saveAllTodo(): Promise<number> {
         newTodoSavePayloads,
         existTodoSavePayloads,
       } = convertAndGetAllTodoSavePayload($allTodo.getState());
+      // console.log('allTodoSavePayload:', allTodoSavePayload);
       await db.table(TODO_DB_TABLE_NAME).bulkAdd(newTodoSavePayloads);
       await db.table(TODO_DB_TABLE_NAME).bulkPut(existTodoSavePayloads);
       if (isNewAllTodo) {

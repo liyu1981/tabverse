@@ -1,13 +1,14 @@
-import { newEmptyNote, setData, setName } from '../Note';
+import { $allNote, noteStoreApi } from '../store';
 import {
   loadAllNoteByTabSpaceId,
   queryAllNote,
   saveCurrentAllNote,
 } from '../util';
-import { $allNote, noteStoreApi } from '../store';
-import { omit } from 'lodash';
-import { initTabSpaceData } from '../../tabSpace/__tests__/store.test';
+import { newEmptyNote, setData, setName } from '../Note';
+
 import { $tabSpace } from '../../tabSpace/store';
+import { initTabSpaceData } from '../../tabSpace/__tests__/store.test';
+import { omit } from 'lodash';
 
 async function bootstrapAllNote() {
   await initTabSpaceData();
@@ -42,7 +43,7 @@ test('all', async () => {
   const n2 = $allNote.getState().notes.get(1);
   const changedData = n1.data + 'changed';
   noteStoreApi.updateNote({ nid: n1.id, changes: { data: changedData } });
-  const changedName = (n2.name = 'changed');
+  const changedName = n2.name + 'changed';
   noteStoreApi.updateNote({ nid: n2.id, changes: { name: changedName } });
   await saveCurrentAllNote();
 

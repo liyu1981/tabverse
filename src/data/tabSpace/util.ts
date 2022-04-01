@@ -1,6 +1,26 @@
-import { IDatabaseChange } from 'dexie-observable/api';
-import { addTabSpaceToIndex } from '../../background/fullTextSearch/addToIndex';
-import { removeTabSpaceFromIndex } from '../../background/fullTextSearch/api';
+import { $tabSpace, $tabSpaceStorage, tabSpaceStoreApi } from './store';
+import { QUERY_PAGE_LIMIT_DEFAULT, db } from '../../storage/db';
+import {
+  TABSPACE_DB_TABLE_NAME,
+  TabSpace,
+  TabSpaceSavePayload,
+  addTabs,
+  cloneTabSpace,
+  convertAndGetTabSpaceSavePayload,
+  fromSavedDataWithoutTabs,
+  insertTab,
+  needAutoSave,
+  toTabSpaceStub,
+  updateTab,
+  updateTabSpace,
+} from './TabSpace';
+import { TAB_DB_TABLE_NAME, Tab, TabSavePayload, fromSavedTab } from './Tab';
+import {
+  TabSpaceDBMsg,
+  TabSpaceMsg,
+  sendPubSubMessage,
+  subscribePubSubMessage,
+} from '../../message/message';
 import {
   debounce,
   hasOwnProperty,
@@ -8,33 +28,14 @@ import {
   perfEnd,
   perfStart,
 } from '../../global';
-import {
-  sendPubSubMessage,
-  subscribePubSubMessage,
-  TabSpaceDBMsg,
-  TabSpaceMsg,
-} from '../../message/message';
-import { db, QUERY_PAGE_LIMIT_DEFAULT } from '../../storage/db';
+
 import { DEFAULT_SAVE_DEBOUNCE } from '../../storage/StorageOverview';
+import { IDatabaseChange } from 'dexie-observable/api';
 import { InSavingStatus } from '../../storage/GeneralStorage';
-import { $tabSpace, $tabSpaceStorage, tabSpaceStoreApi } from './store';
-import { fromSavedTab, Tab, TabSavePayload, TAB_DB_TABLE_NAME } from './Tab';
-import {
-  needAutoSave,
-  TabSpace,
-  TABSPACE_DB_TABLE_NAME,
-  TabSpaceSavePayload,
-  fromSavedDataWithoutTabs,
-  insertTab,
-  convertAndGetTabSpaceSavePayload,
-  cloneTabSpace,
-  addTabs,
-  toTabSpaceStub,
-  updateTabSpace,
-  updateTab,
-} from './TabSpace';
-import { updateTabSpace as tabSpaceRegistryUpdateTabSpace } from '../tabSpaceRegistry';
+import { addTabSpaceToIndex } from '../../background/fullTextSearch/addToIndex';
 import { filter } from 'lodash';
+import { removeTabSpaceFromIndex } from '../../background/fullTextSearch/api';
+import { updateTabSpace as tabSpaceRegistryUpdateTabSpace } from '../tabSpaceRegistry';
 
 export function monitorDbChanges() {
   const querySavedTabSpaceCount = () => {

@@ -1,6 +1,8 @@
-import { convertToSavedBase, newEmptyBase } from '../Base';
+import { IBase, setAttrForObject2 } from '../common';
+import { inPlaceConvertToSaved, newEmptyBase } from '../Base';
+
 import { NotTabSpaceId } from '../chromeSession/ChromeSession';
-import { IBase } from '../common';
+import { produce } from 'immer';
 
 export interface Note extends IBase {
   tabSpaceId: string;
@@ -23,26 +25,19 @@ export function newEmptyNote(): Note {
 }
 
 export function cloneNote(targetNote: Note): Note {
-  return { ...targetNote };
+  return produce(targetNote, (_draft) => {});
 }
 
-export function setTabSpaceId(tabSpaceId: string, targetNote: Note): Note {
-  return { ...targetNote, tabSpaceId };
-}
+export const setTabSpaceId = setAttrForObject2<string, Note>('tabSpaceId');
 
-export function setName(name: string, targetNote: Note): Note {
-  return { ...targetNote, name };
-}
+export const setName = setAttrForObject2<string, Note>('name');
 
-export function setData(data: string, targetNote: Note): Note {
-  return { ...targetNote, data };
-}
+export const setData = setAttrForObject2<string, Note>('data');
 
 export function convertToSavedNote(targetNote: Note): Note {
-  return {
-    ...targetNote,
-    ...convertToSavedBase(targetNote),
-  };
+  return produce(targetNote, (draft) => {
+    inPlaceConvertToSaved(draft);
+  });
 }
 
 export function isEqualContent(

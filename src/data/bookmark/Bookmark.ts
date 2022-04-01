@@ -1,6 +1,8 @@
-import { convertToSavedBase, newEmptyBase } from '../Base';
+import { IBase, setAttrForObject2 } from '../common';
+import { inPlaceConvertToSaved, newEmptyBase } from '../Base';
+
 import { NotTabSpaceId } from '../chromeSession/ChromeSession';
-import { IBase } from '../common';
+import produce from 'immer';
 
 export interface Bookmark extends IBase {
   tabSpaceId: string;
@@ -27,31 +29,13 @@ export function newEmptyBookmark(): Bookmark {
   };
 }
 
-export function setTabSpaceId(
-  tabSpaceId: string,
-  targetBookmark: Bookmark,
-): Bookmark {
-  return { ...targetBookmark, tabSpaceId };
-}
-
-export function setName(name: string, targetBookmark: Bookmark): Bookmark {
-  return { ...targetBookmark, name };
-}
-
-export function setUrl(url: string, targetBookmark: Bookmark): Bookmark {
-  return { ...targetBookmark, url };
-}
-
-export function setFavIconUrl(
-  favIconUrl: string,
-  targetBookmark: Bookmark,
-): Bookmark {
-  return { ...targetBookmark, favIconUrl };
-}
+export const setTabSpaceId = setAttrForObject2<string, Bookmark>('tabSpaceId');
+export const setName = setAttrForObject2<string, Bookmark>('name');
+export const setUrl = setAttrForObject2<string, Bookmark>('url');
+export const setFavIconUrl = setAttrForObject2<string, Bookmark>('favIconUrl');
 
 export function convertToSavedBookmark(targetBookmark: Bookmark): Bookmark {
-  return {
-    ...targetBookmark,
-    ...convertToSavedBase(targetBookmark),
-  };
+  return produce(targetBookmark, (draft) => {
+    inPlaceConvertToSaved(draft);
+  });
 }

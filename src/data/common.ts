@@ -1,4 +1,5 @@
 import { nanoid } from 'nanoid';
+import { produce } from 'immer';
 
 export function getUnsavedNewId() {
   // use 11 chars, as calculated by the estimator
@@ -34,10 +35,22 @@ export interface IBase {
   updatedAt: number;
 }
 
+export function setAttrForObject2<T1 = any, T2 = any>(
+  attrName: string,
+): (value: T1, target: T2) => T2 {
+  return (value: T1, target: T2) => {
+    return produce(target, (draft) => {
+      draft[attrName] = value;
+    });
+  };
+}
+
 export function setAttrForObject<T1, T2>(
   attrName: string,
   value: T1,
   target: T2,
 ): T2 {
-  return { ...target, [attrName]: value };
+  return produce(target, (draft) => {
+    draft[attrName] = value;
+  });
 }

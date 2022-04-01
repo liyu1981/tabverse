@@ -1,4 +1,5 @@
 import { Map } from 'immutable';
+import produce from 'immer';
 
 export interface TabPreviewCache {
   previews: Map<number, string>;
@@ -15,20 +16,18 @@ export function setPreview(
   previewData: string,
   targetTabPreviewCache: TabPreviewCache,
 ): TabPreviewCache {
-  return {
-    ...targetTabPreviewCache,
-    previews: targetTabPreviewCache.previews.set(chromeTabId, previewData),
-  };
+  return produce(targetTabPreviewCache, (draft) => {
+    draft.previews = draft.previews.set(chromeTabId, previewData);
+  });
 }
 
 export function removePreview(
   chromeTabId: number,
   targetTabPreviewCache: TabPreviewCache,
 ): TabPreviewCache {
-  return {
-    ...targetTabPreviewCache,
-    previews: targetTabPreviewCache.previews.remove(chromeTabId),
-  };
+  return produce(targetTabPreviewCache, (draft) => {
+    draft.previews = draft.previews.remove(chromeTabId);
+  });
 }
 
 export function getPreview(

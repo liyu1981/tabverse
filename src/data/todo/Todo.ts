@@ -1,6 +1,12 @@
-import { NotId, convertToSavedBase, newEmptyBase } from '../Base';
+import { IBase, setAttrForObject2 } from '../common';
+import {
+  NotId,
+  convertToSavedBase,
+  inPlaceConvertToSaved,
+  newEmptyBase,
+} from '../Base';
 
-import { IBase } from '../common';
+import { produce } from 'immer';
 
 export interface Todo extends IBase {
   tabSpaceId: string;
@@ -23,24 +29,15 @@ export function newEmptyTodo(): Todo {
 }
 
 export function cloneTodo(targetTodo: Todo): Todo {
-  return { ...targetTodo };
+  return produce(targetTodo, (draft) => {});
 }
 
-export function setTabSpaceId(tabSpaceId: string, targetTodo): Todo {
-  return { ...targetTodo, tabSpaceId };
-}
-
-export function setContent(content: string, targetTodo: Todo): Todo {
-  return { ...targetTodo, content };
-}
-
-export function setCompleted(completed: boolean, targetTodo: Todo): Todo {
-  return { ...targetTodo, completed };
-}
+export const setTabSpaceId = setAttrForObject2<string, Todo>('tabSpaceId');
+export const setContent = setAttrForObject2<string, Todo>('content');
+export const setCompleted = setAttrForObject2<boolean, Todo>('completed');
 
 export function convertToSavedTodo(targetTodo: Todo): Todo {
-  return {
-    ...targetTodo,
-    ...convertToSavedBase(targetTodo),
-  };
+  return produce(targetTodo, (draft) => {
+    inPlaceConvertToSaved(draft);
+  });
 }

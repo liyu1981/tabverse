@@ -1,15 +1,16 @@
 import {
-  calcCursorBegin,
   EmptyQuery,
   IFullTextSearchCursor,
   Query,
+  calcCursorBegin,
 } from '../../fullTextSearch';
-import { LoadStatus } from '../../global';
 
+import { LoadStatus } from '../../global';
 import Moment from 'moment';
+import { QUERY_PAGE_LIMIT_DEFAULT } from '../../storage/db';
 import { TabSpace } from '../tabSpace/TabSpace';
 import { TabSpaceStub } from '../tabSpaceRegistry/TabSpaceRegistry';
-import { QUERY_PAGE_LIMIT_DEFAULT } from '../../storage/db';
+import produce from 'immer';
 
 export enum SortMethods {
   CREATED = 0,
@@ -53,10 +54,9 @@ export function newEmptyTabSpaceQuery(): TabSpaceQuery {
 export function cloneTabSpaceQuery(
   targetTabSpaceQuery: TabSpaceQuery,
 ): TabSpaceQuery {
-  return {
-    ...targetTabSpaceQuery,
-    query: new Query(targetTabSpaceQuery.query.toJSON()),
-  };
+  return produce(targetTabSpaceQuery, (draft) => {
+    draft.query = new Query(draft.query.toJSON());
+  });
 }
 
 export function isEmpty(targetTabSpaceQuery: TabSpaceQuery): boolean {
@@ -182,18 +182,15 @@ export function setQuery(
   query: Query,
   targetTabSpaceQuery: TabSpaceQuery,
 ): TabSpaceQuery {
-  let changes = {};
-  if (query.isEmpty()) {
-    changes = {
-      queryPageStart: 0,
-      queryPageLimit: QUERY_PAGE_LIMIT_DEFAULT,
-    };
-  } else {
-    changes = {
-      queryCursors: [calcCursorBegin(query, QUERY_PAGE_LIMIT_DEFAULT)],
-      queryCursorCurrentIndex: 0,
-      queryCursorsVisited: {},
-    };
-  }
-  return { ...targetTabSpaceQuery, query, ...changes };
+  return produce(targetTabSpaceQuery, (draft) => {
+    if (query.isEmpty()) {
+      draft.queryPageStart = 0;
+      draft.queryPageLimit = QUERY_PAGE_LIMIT_DEFAULT;
+    } else {
+      draft.queryCursors = [calcCursorBegin(query, QUERY_PAGE_LIMIT_DEFAULT)];
+      draft.queryCursorCurrentIndex = 0;
+      draft.queryCursorsVisited = {};
+    }
+    draft.query = query;
+  });
 }

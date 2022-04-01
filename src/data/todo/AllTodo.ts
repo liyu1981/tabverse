@@ -1,8 +1,12 @@
 import { IBase, isIdNotSaved } from '../common';
-import { NotId, convertToSavedBase, newEmptyBase } from '../Base';
+import {
+  NotId,
+  convertToSavedBase,
+  inPlaceConvertToSaved,
+  newEmptyBase,
+} from '../Base';
 import {
   TodoLocalStorage,
-  cloneTodo,
   convertToSavedTodo,
   newEmptyTodo,
   setTabSpaceId,
@@ -10,6 +14,7 @@ import {
 
 import { List } from 'immutable';
 import { Todo } from './Todo';
+import produce from 'immer';
 
 export interface AllTodo extends IBase {
   tabSpaceId: string;
@@ -33,19 +38,17 @@ export function newEmptyAllTodo(): AllTodo {
 }
 
 export function cloneAllTodo(targetAllTodo: AllTodo): AllTodo {
-  return {
-    ...targetAllTodo,
-    todos: List(targetAllTodo.todos),
-  };
+  return produce(targetAllTodo, (draft) => {
+    draft.todos = List(targetAllTodo.todos);
+  });
 }
 
 export function addTodo(todo: Todo, targetAllTodo: AllTodo): AllTodo {
-  return {
-    ...targetAllTodo,
-    todos: targetAllTodo.todos.push(
+  return produce(targetAllTodo, (draft) => {
+    draft.todos = draft.todos.push(
       setTabSpaceId(targetAllTodo.tabSpaceId, todo),
-    ),
-  };
+    );
+  });
 }
 
 export function updateTodo(
@@ -53,17 +56,14 @@ export function updateTodo(
   changes: Partial<Todo>,
   targetAllTodo: AllTodo,
 ): AllTodo {
-  const tIndex = targetAllTodo.todos.findIndex((todo) => todo.id === tid);
-  if (tIndex >= 0) {
-    const existTodo = targetAllTodo.todos.get(tIndex);
-    const newTodo = { ...existTodo, ...changes };
-    return {
-      ...targetAllTodo,
-      todos: targetAllTodo.todos.set(tIndex, newTodo),
-    };
-  } else {
-    return cloneAllTodo(targetAllTodo);
-  }
+  return produce(targetAllTodo, (draft) => {
+    const tIndex = draft.todos.findIndex((todo) => todo.id === tid);
+    if (tIndex >= 0) {
+      const existTodo = draft.todos.get(tIndex);
+      const newTodo = { ...existTodo, ...changes };
+      draft.todos = draft.todos.set(tIndex, newTodo);
+    }
+  });
 }
 
 export function toggle(
@@ -75,35 +75,30 @@ export function toggle(
 }
 
 export function removeTodo(tid: string, targetAllTodo: AllTodo): AllTodo {
-  const tIndex = targetAllTodo.todos.findIndex((todo) => todo.id === tid);
-  if (tIndex < 0) {
-    return cloneAllTodo(targetAllTodo);
-  } else {
-    return {
-      ...targetAllTodo,
-      todos: targetAllTodo.todos.remove(tIndex),
-    };
-  }
+  return produce(targetAllTodo, (draft) => {
+    const tIndex = draft.todos.findIndex((todo) => todo.id === tid);
+    if (tIndex >= 0) {
+      draft.todos = draft.todos.remove(tIndex);
+    }
+  });
 }
 
 export function clearCompleted(targetAllTodo: AllTodo): AllTodo {
-  return {
-    ...targetAllTodo,
-    todos: targetAllTodo.todos.filter((todo) => !todo.completed).toList(),
-  };
+  return produce(targetAllTodo, (draft) => {
+    draft.todos = draft.todos.filter((todo) => !todo.completed).toList();
+  });
 }
 
 export function updateTabSpaceId(
   newTabSpaceId: string,
   targetAllTodo: AllTodo,
 ): AllTodo {
-  return {
-    ...targetAllTodo,
-    tabSpaceId: newTabSpaceId,
-    todos: targetAllTodo.todos
+  return produce(targetAllTodo, (draft) => {
+    draft.tabSpaceId = newTabSpaceId;
+    draft.todos = draft.todos
       .map((todo) => setTabSpaceId(newTabSpaceId, todo))
-      .toList(),
-  };
+      .toList();
+  });
 }
 
 export function getLocalStorageJSON(
@@ -120,9 +115,8 @@ export function restoreFromLocalStorageJSON(
   todoJSONs: TodoLocalStorage[],
   targetAllTodo: AllTodo,
 ): AllTodo {
-  return {
-    ...targetAllTodo,
-    todos: List(
+  return produce(targetAllTodo, (draft) => {
+    draft.todos = List(
       todoJSONs.map((todoJSON) => ({
         ...newEmptyTodo(),
         createdAt: Date.now(),
@@ -131,8 +125,8 @@ export function restoreFromLocalStorageJSON(
         content: todoJSON.content,
         completed: todoJSON.completed,
       })),
-    ),
-  };
+    );
+  });
 }
 
 export function convertAndGetAllTodoSavePayload(targetAllTodo: AllTodo): {
@@ -157,11 +151,10 @@ export function convertAndGetAllTodoSavePayload(targetAllTodo: AllTodo): {
       return savedTodo;
     })
     .toList();
-  const savedAllTodo = {
-    ...targetAllTodo,
-    ...convertToSavedBase(targetAllTodo),
-    todos: savedTodos,
-  };
+  const savedAllTodo = produce(targetAllTodo, (draft) => {
+    inPlaceConvertToSaved(draft);
+    draft.todos = savedTodos;
+  });
   const allTodoSavePayload = {
     ...convertToSavedBase(targetAllTodo),
     tabSpaceId: targetAllTodo.tabSpaceId,

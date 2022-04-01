@@ -57,6 +57,7 @@
     "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-react": "^7.26.1",
     "fake-indexeddb": "^3.1.7",
+    "immer": "^9.0.12",
     "immutable": "~3.7.4",
     "jest": "^27.3.1",
     "lodash": "^4.17.21",

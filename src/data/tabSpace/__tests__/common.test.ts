@@ -1,12 +1,12 @@
+import { $tabSpace, tabSpaceStoreApi } from '../store';
 import {
   TABSPACE_MANAGER_TAB_TITLE_PREFIX,
   TABSPACE_MANAGER_TAB_URL_PREFIX,
 } from '../../../global';
 import { scanCurrentTabs, startMonitorTabChanges } from '../chromeTab';
 
-import { startMonitorChromeMessage } from '../../../message/chromeMessage';
-import { $tabSpace, tabSpaceStoreApi } from '../store';
 import { getMockChrome } from '../../../dev/chromeMock';
+import { startMonitorChromeMessage } from '../../../message/chromeMessage';
 
 export const flushPromises = () => new Promise(setImmediate);
 

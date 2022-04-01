@@ -1,13 +1,14 @@
-import { newEmptyBookmark, setName, setUrl } from '../Bookmark';
+import { $allBookmark, bookmarkStoreApi } from '../store';
 import {
   loadAllBookmarkByTabSpaceId,
   queryAllBookmark,
   saveCurrentAllBookmark,
 } from '../util';
-import { $allBookmark, bookmarkStoreApi } from '../store';
-import { omit } from 'lodash';
-import { initTabSpaceData } from '../../tabSpace/__tests__/store.test';
+import { newEmptyBookmark, setName, setUrl } from '../Bookmark';
+
 import { $tabSpace } from '../../tabSpace/store';
+import { initTabSpaceData } from '../../tabSpace/__tests__/store.test';
+import { omit } from 'lodash';
 
 async function bootstrapAllBookmark() {
   await initTabSpaceData();
@@ -45,7 +46,7 @@ test('all', async () => {
   const b1 = $allBookmark.getState().bookmarks.get(0);
   const changedUrl = b1.url + 'changed';
   const b2 = $allBookmark.getState().bookmarks.get(1);
-  const changedName = (b2.name = 'changed');
+  const changedName = b2.name + 'changed';
   bookmarkStoreApi.updateBookmark({ bid: b1.id, changes: { url: changedUrl } });
   bookmarkStoreApi.updateBookmark({
     bid: b2.id,

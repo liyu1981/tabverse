@@ -1,7 +1,3 @@
-import { List } from 'immutable';
-import { convertToSavedBase, newEmptyBase } from '../Base';
-import { NotTabSpaceId } from '../chromeSession/ChromeSession';
-import { IBase, isIdNotSaved } from '../common';
 import {
   Bookmark,
   BookmarkLocalStorage,
@@ -9,6 +5,16 @@ import {
   newEmptyBookmark,
   setTabSpaceId,
 } from './Bookmark';
+import { IBase, isIdNotSaved } from '../common';
+import {
+  convertToSavedBase,
+  inPlaceConvertToSaved,
+  newEmptyBase,
+} from '../Base';
+
+import { List } from 'immutable';
+import { NotTabSpaceId } from '../chromeSession/ChromeSession';
+import produce from 'immer';
 
 export interface AllBookmark extends IBase {
   tabSpaceId: string;
@@ -32,22 +38,20 @@ export function newEmptyAllBookmark(): AllBookmark {
 }
 
 export function cloneAllBookmark(targetAllBookmark: AllBookmark): AllBookmark {
-  return {
-    ...targetAllBookmark,
-    bookmarks: List(targetAllBookmark.bookmarks),
-  };
+  return produce(targetAllBookmark, (draft) => {
+    draft.bookmarks = List(draft.bookmarks);
+  });
 }
 
 export function addBookmark(
   bookmark: Bookmark,
   targetAllBookmark: AllBookmark,
 ): AllBookmark {
-  return {
-    ...targetAllBookmark,
-    bookmarks: targetAllBookmark.bookmarks.push(
-      setTabSpaceId(targetAllBookmark.tabSpaceId, bookmark),
-    ),
-  };
+  return produce(targetAllBookmark, (draft) => {
+    draft.bookmarks = draft.bookmarks.push(
+      setTabSpaceId(draft.tabSpaceId, bookmark),
+    );
+  });
 }
 
 export function updateBookmark(
@@ -55,52 +59,41 @@ export function updateBookmark(
   changes: Partial<Bookmark>,
   targetAllBookmark: AllBookmark,
 ): AllBookmark {
-  const bIndex = targetAllBookmark.bookmarks.findIndex(
-    (bookmark) => bookmark.id === bid,
-  );
-  if (bIndex >= 0) {
-    const existBookmark = targetAllBookmark.bookmarks.get(bIndex);
-    const newBookmark = {
-      ...existBookmark,
-      ...changes,
-    };
-    return {
-      ...targetAllBookmark,
-      bookmarks: targetAllBookmark.bookmarks.set(bIndex, newBookmark),
-    };
-  } else {
-    return cloneAllBookmark(targetAllBookmark);
-  }
+  return produce(targetAllBookmark, (draft) => {
+    const bIndex = draft.bookmarks.findIndex((bookmark) => bookmark.id === bid);
+    if (bIndex >= 0) {
+      const existBookmark = draft.bookmarks.get(bIndex);
+      const newBookmark = {
+        ...existBookmark,
+        ...changes,
+      };
+      draft.bookmarks = draft.bookmarks.set(bIndex, newBookmark);
+    }
+  });
 }
 
 export function removeBookmark(
   bid: string,
   targetAllBookmark: AllBookmark,
 ): AllBookmark {
-  const bIndex = targetAllBookmark.bookmarks.findIndex(
-    (bookmark) => bookmark.id === bid,
-  );
-  if (bIndex >= 0) {
-    return {
-      ...targetAllBookmark,
-      bookmarks: targetAllBookmark.bookmarks.remove(bIndex),
-    };
-  } else {
-    return cloneAllBookmark(targetAllBookmark);
-  }
+  return produce(targetAllBookmark, (draft) => {
+    const bIndex = draft.bookmarks.findIndex((bookmark) => bookmark.id === bid);
+    if (bIndex >= 0) {
+      draft.bookmarks = draft.bookmarks.remove(bIndex);
+    }
+  });
 }
 
 export function updateTabSpaceId(
   tabSpaceId: string,
   targetAllBookmark: AllBookmark,
 ): AllBookmark {
-  return {
-    ...targetAllBookmark,
-    tabSpaceId,
-    bookmarks: targetAllBookmark.bookmarks
+  return produce(targetAllBookmark, (draft) => {
+    draft.tabSpaceId = tabSpaceId;
+    draft.bookmarks = draft.bookmarks
       .map((bookmark) => setTabSpaceId(tabSpaceId, bookmark))
-      .toList(),
-  };
+      .toList();
+  });
 }
 
 export function getLocalStorageJSON(
@@ -121,9 +114,8 @@ export function restoreFromLocalStorageJSON(
   bookmarkJSONs: BookmarkLocalStorage[],
   targetAllBookmark: AllBookmark,
 ): AllBookmark {
-  return {
-    ...targetAllBookmark,
-    bookmarks: List(
+  return produce(targetAllBookmark, (draft) => {
+    draft.bookmarks = List(
       bookmarkJSONs.map((bookmarkJSON) => ({
         ...newEmptyBookmark(),
         createdAt: Date.now(),
@@ -133,8 +125,8 @@ export function restoreFromLocalStorageJSON(
         url: bookmarkJSON.url,
         favIconUrl: bookmarkJSON.favIconUrl,
       })),
-    ),
-  };
+    );
+  });
 }
 
 export function convertAndGetAllBookmarkSavePayload(
@@ -161,11 +153,10 @@ export function convertAndGetAllBookmarkSavePayload(
       return savedBookmark;
     })
     .toList();
-  const savedAllBookmark = {
-    ...targetAllBookmark,
-    ...convertToSavedBase(targetAllBookmark),
-    bookmarks: savedBookmarks,
-  };
+  const savedAllBookmark = produce(targetAllBookmark, (draft) => {
+    inPlaceConvertToSaved(draft);
+    draft.bookmarks = savedBookmarks;
+  });
   const allBookmarkSavePayload = {
     ...convertToSavedBase(targetAllBookmark),
     tabSpaceId: targetAllBookmark.tabSpaceId,

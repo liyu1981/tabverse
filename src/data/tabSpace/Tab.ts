@@ -1,6 +1,6 @@
-import { IBase } from '../common';
-
+import { IBase, setAttrForObject2 } from '../common';
 import { convertToSavedBase, newEmptyBase, toBase } from '../Base';
+
 import { NotTabSpaceId } from '../chromeSession/ChromeSession';
 
 export interface TabCore extends IBase {
@@ -41,44 +41,17 @@ export function cloneTab(targetTab: Tab): Tab {
   return { ...targetTab };
 }
 
-export function setId(newId: string, targetTab: Tab): Tab {
-  return {
-    ...targetTab,
-    id: newId,
-  };
-}
-
-export function setTabSpaceId(tabSpaceId: string, targetTab: Tab): Tab {
-  return { ...targetTab, tabSpaceId };
-}
-
-export function setTitle(title: string, targetTab: Tab): Tab {
-  return { ...targetTab, title };
-}
-
-export function setUrl(url: string, targetTab: Tab): Tab {
-  return { ...targetTab, url };
-}
-
-export function setFavIconUrl(favIconUrl: string, targetTab: Tab): Tab {
-  return { ...targetTab, favIconUrl };
-}
-
-export function setPinned(pinned: boolean, targetTab: Tab): Tab {
-  return { ...targetTab, pinned };
-}
-
-export function setSuspended(suspended: boolean, targetTab: Tab): Tab {
-  return { ...targetTab, suspended };
-}
-
-export function setChromeTabId(chromeTabId: number, targetTab: Tab): Tab {
-  return { ...targetTab, chromeTabId };
-}
-
-export function setChromeWindowId(chromeWindowId: number, targetTab: Tab): Tab {
-  return { ...targetTab, chromeWindowId };
-}
+export const setId = setAttrForObject2<string, Tab>('id');
+export const setTabSpaceId = setAttrForObject2<string, Tab>('tabSpaceId');
+export const setTitle = setAttrForObject2<string, Tab>('title');
+export const setUrl = setAttrForObject2<string, Tab>('url');
+export const setFavIconUrl = setAttrForObject2<string, Tab>('favIconUrl');
+export const setPinned = setAttrForObject2<boolean, Tab>('pinned');
+export const setSuspended = setAttrForObject2<boolean, Tab>('suspended');
+export const setChromeTabId = setAttrForObject2<number, Tab>('chromeTabId');
+export const setChromeWindowId = setAttrForObject2<number, Tab>(
+  'chromeWindowId',
+);
 
 export function fromSavedTab(savedTab: TabSavePayload): Tab {
   return { ...newEmptyTab(), ...savedTab };

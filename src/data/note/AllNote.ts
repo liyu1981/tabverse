@@ -1,14 +1,20 @@
-import { List } from 'immutable';
-import { convertToSavedBase, newEmptyBase } from '../Base';
-import { NotTabSpaceId } from '../chromeSession/ChromeSession';
 import { IBase, isIdNotSaved } from '../common';
 import {
-  convertToSavedNote,
-  newEmptyNote,
   Note,
   NoteLocalStorage,
+  convertToSavedNote,
+  newEmptyNote,
   setTabSpaceId,
 } from './Note';
+import {
+  convertToSavedBase,
+  inPlaceConvertToSaved,
+  newEmptyBase,
+} from '../Base';
+
+import { List } from 'immutable';
+import { NotTabSpaceId } from '../chromeSession/ChromeSession';
+import { produce } from 'immer';
 
 export interface AllNote extends IBase {
   tabSpaceId: string;
@@ -32,19 +38,15 @@ export function newEmptyAllNote(): AllNote {
 }
 
 export function cloneAllNote(targetAllNote: AllNote): AllNote {
-  return {
-    ...targetAllNote,
-    notes: List(targetAllNote.notes),
-  };
+  return produce(targetAllNote, (_draft) => {});
 }
 
 export function addNote(note: Note, targetAllNote: AllNote): AllNote {
-  return {
-    ...targetAllNote,
-    notes: targetAllNote.notes.push(
+  return produce(targetAllNote, (draft) => {
+    draft.notes = draft.notes.push(
       setTabSpaceId(targetAllNote.tabSpaceId, note),
-    ),
-  };
+    );
+  });
 }
 
 export function updateNote(
@@ -52,42 +54,35 @@ export function updateNote(
   changes: Partial<Note>,
   targetAllNote: AllNote,
 ): AllNote {
-  const nIndex = targetAllNote.notes.findIndex((note) => note.id === id);
-  if (nIndex >= 0) {
-    const existNote = targetAllNote.notes.get(nIndex);
-    const newNote = { ...existNote, ...changes };
-    return {
-      ...targetAllNote,
-      notes: targetAllNote.notes.set(nIndex, newNote),
-    };
-  } else {
-    return cloneAllNote(targetAllNote);
-  }
+  return produce(targetAllNote, (draft) => {
+    const nIndex = draft.notes.findIndex((note) => note.id === id);
+    if (nIndex >= 0) {
+      const existNote = targetAllNote.notes.get(nIndex);
+      const newNote = { ...existNote, ...changes };
+      draft.notes = draft.notes.set(nIndex, newNote);
+    }
+  });
 }
 
 export function removeNote(id: string, targetAllNote: AllNote): AllNote {
-  const nIndex = targetAllNote.notes.findIndex((note) => note.id === id);
-  if (nIndex >= 0) {
-    return {
-      ...targetAllNote,
-      notes: targetAllNote.notes.remove(nIndex),
-    };
-  } else {
-    return cloneAllNote(targetAllNote);
-  }
+  return produce(targetAllNote, (draft) => {
+    const nIndex = draft.notes.findIndex((note) => note.id === id);
+    if (nIndex >= 0) {
+      draft.notes = draft.notes.remove(nIndex);
+    }
+  });
 }
 
 export function updateTabSpaceId(
   tabSpaceId: string,
   targetAllNote: AllNote,
 ): AllNote {
-  return {
-    ...targetAllNote,
-    tabSpaceId,
-    notes: targetAllNote.notes
+  return produce(targetAllNote, (draft) => {
+    draft.tabSpaceId = tabSpaceId;
+    draft.notes = draft.notes
       .map((note) => setTabSpaceId(tabSpaceId, note))
-      .toList(),
-  };
+      .toList();
+  });
 }
 
 export function getLocalStorageJSON(
@@ -104,9 +99,8 @@ export function restoreFromLocalStorageJSON(
   noteJSONs: NoteLocalStorage[],
   targetAllNote: AllNote,
 ): AllNote {
-  return {
-    ...targetAllNote,
-    notes: List(
+  return produce(targetAllNote, (draft) => {
+    draft.notes = List(
       noteJSONs.map((noteJSON) => ({
         ...newEmptyNote(),
         createdAt: Date.now(),
@@ -114,8 +108,8 @@ export function restoreFromLocalStorageJSON(
         name: noteJSON.name,
         data: noteJSON.data,
       })),
-    ),
-  };
+    );
+  });
 }
 
 export function convertAndGetAllNoteSavePayload(targetAllNote: AllNote): {
@@ -140,11 +134,10 @@ export function convertAndGetAllNoteSavePayload(targetAllNote: AllNote): {
       return savedNote;
     })
     .toList();
-  const savedAllNote = {
-    ...targetAllNote,
-    ...convertToSavedBase(targetAllNote),
-    notes: savedNotes,
-  };
+  const savedAllNote = produce(targetAllNote, (draft) => {
+    inPlaceConvertToSaved(draft);
+    draft.notes = savedNotes;
+  });
   const allNoteSavePayload = {
     ...convertToSavedBase(targetAllNote),
     tabSpaceId: targetAllNote.tabSpaceId,

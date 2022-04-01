@@ -1,15 +1,27 @@
-import { List } from 'immutable';
-import { eq, omit } from 'lodash';
-import { convertToSavedBase, newEmptyBase, toBase } from '../Base';
-import { getSavedId, getUnsavedNewId, IBase, isIdNotSaved } from '../common';
 import {
-  convertAndGetTabSavePayload,
-  TabCore,
-  setTabSpaceId,
+  IBase,
+  getSavedId,
+  getUnsavedNewId,
+  isIdNotSaved,
+  setAttrForObject2,
+} from '../common';
+import {
   Tab,
+  TabCore,
+  convertAndGetTabSavePayload,
+  setTabSpaceId,
 } from './Tab';
+import {
+  convertToSavedBase,
+  inPlaceConvertToSaved,
+  newEmptyBase,
+  toBase,
+} from '../Base';
+import { eq, omit } from 'lodash';
+
+import { List } from 'immutable';
 import { TabSpaceStub } from '../tabSpaceRegistry/TabSpaceRegistry';
-import { hasOwnProperty } from '../../global';
+import { produce } from 'immer';
 
 export interface LiveTabSpace {
   chromeTabId: number;
@@ -42,41 +54,28 @@ export function newEmptyTabSpace(): TabSpace {
 }
 
 export function cloneTabSpace(targetTabSpace: TabSpace): TabSpace {
-  return { ...targetTabSpace, tabs: List(targetTabSpace.tabs) };
+  return produce(targetTabSpace, (draft) => {});
 }
 
 export function updateTabSpace(
   changes: Partial<Omit<TabSpace, 'tabIds'>>,
   targetTabSpace: TabSpace,
 ): TabSpace {
-  if (hasOwnProperty(changes, 'tabIds')) {
-    return cloneTabSpace(targetTabSpace);
-  } else {
-    return { ...targetTabSpace, ...changes };
-  }
+  return produce(targetTabSpace, (draft) => {
+    Object.keys(changes).forEach((key) => {
+      draft[key] = changes[key];
+    });
+  });
 }
 
-export function setId(id: string, targetTabSpace: TabSpace): TabSpace {
-  return { ...targetTabSpace, id };
-}
-
-export function setName(name: string, targetTabSpace: TabSpace): TabSpace {
-  return { ...targetTabSpace, name };
-}
-
-export function setChromeTabId(
-  chromeTabId: number,
-  targetTabSpace: TabSpace,
-): TabSpace {
-  return { ...targetTabSpace, chromeTabId };
-}
-
-export function setChromeWindowId(
-  chromeWindowId: number,
-  targetTabSpace: TabSpace,
-): TabSpace {
-  return { ...targetTabSpace, chromeWindowId };
-}
+export const setId = setAttrForObject2<string, TabSpace>('id');
+export const setName = setAttrForObject2<string, TabSpace>('name');
+export const setChromeTabId = setAttrForObject2<number, TabSpace>(
+  'chromeTabId',
+);
+export const setChromeWindowId = setAttrForObject2<number, TabSpace>(
+  'chromeWindowId',
+);
 
 export function getTabIds(targetTabSpace: TabSpace): string[] {
   return targetTabSpace.tabs.map((tab) => tab.id).toArray();
@@ -105,13 +104,12 @@ export function reset(
   }: { chromeTabId?: number; chromeWindowId?: number; newId?: string },
   targetTabSpace: TabSpace,
 ): TabSpace {
-  return {
-    ...targetTabSpace,
-    chromeTabId: chromeTabId ?? -1,
-    chromeWindowId: chromeWindowId ?? -1,
-    id: newId ?? getUnsavedNewId(),
-    tabs: List(),
-  };
+  return produce(targetTabSpace, (draft) => {
+    draft.chromeTabId = chromeTabId ?? -1;
+    draft.chromeWindowId = chromeWindowId ?? -1;
+    draft.id = newId ?? getUnsavedNewId();
+    draft.tabs = List();
+  });
 }
 
 export function findTabById(
@@ -132,49 +130,51 @@ export function insertTab(
   { tab, index }: { tab: Tab; index?: number },
   targetTabSpace: TabSpace,
 ): TabSpace {
-  const newTab = setTabSpaceId(targetTabSpace.id, tab);
-  let newTabs = List<Tab>();
-  if (index && index >= 0 && index < targetTabSpace.tabs.size) {
-    newTabs = targetTabSpace.tabs.insert(index, newTab);
-  } else if (index && index < 0) {
-    newTabs = targetTabSpace.tabs.insert(0, newTab);
-  } else if (index && index >= targetTabSpace.tabs.size) {
-    newTabs = targetTabSpace.tabs.push(newTab);
-  } else {
-    newTabs = targetTabSpace.tabs.push(newTab);
-  }
-  return { ...targetTabSpace, tabs: newTabs };
+  return produce(targetTabSpace, (draft) => {
+    const newTab = setTabSpaceId(draft.id, tab);
+    if (index && index >= 0 && index < draft.tabs.size) {
+      draft.tabs = draft.tabs.insert(index, newTab);
+    } else if (index && index < 0) {
+      draft.tabs = draft.tabs.insert(0, newTab);
+    } else {
+      // index && index >= targetTabSpace.tabs.size
+      // or no index provided
+      draft.tabs = draft.tabs.push(newTab);
+    }
+  });
 }
 
 export function addTabs(tabs: Tab[], targetTabSpace: TabSpace): TabSpace {
-  let tabSpace = cloneTabSpace(targetTabSpace);
-  tabs.forEach((tab) => (tabSpace = insertTab({ tab }, tabSpace)));
-  return tabSpace;
+  let newTabSpace: TabSpace = targetTabSpace;
+  tabs.forEach((tab) => {
+    newTabSpace = insertTab({ tab }, newTabSpace);
+  });
+  return newTabSpace;
 }
 
 export function updateTab(
   { tid, changes }: { tid: string; changes: Partial<Tab> },
   targetTabSpace: TabSpace,
 ): TabSpace {
-  const tIndex = targetTabSpace.tabs.findIndex((tab) => tab.id === tid);
-  if (tIndex >= 0) {
-    const existTab = targetTabSpace.tabs.get(tIndex);
-    const newTab = { ...existTab, ...changes };
-    return { ...targetTabSpace, tabs: targetTabSpace.tabs.set(tIndex, newTab) };
-  } else {
-    return cloneTabSpace(targetTabSpace);
-  }
+  return produce(targetTabSpace, (draft) => {
+    const tIndex = draft.tabs.findIndex((tab) => tab.id === tid);
+    if (tIndex >= 0) {
+      const existTab = draft.tabs.get(tIndex);
+      const newTab = { ...existTab, ...changes };
+      draft.tabs = draft.tabs.set(tIndex, newTab);
+    }
+  });
 }
 
 export function removeTabByIndex(
   index: number,
   targetTabSpace: TabSpace,
 ): TabSpace {
-  if (index >= 0 && index < targetTabSpace.tabs.size) {
-    return { ...targetTabSpace, tabs: targetTabSpace.tabs.remove(index) };
-  } else {
-    return cloneTabSpace(targetTabSpace);
-  }
+  return produce(targetTabSpace, (draft) => {
+    if (index >= 0 && index < draft.tabs.size) {
+      draft.tabs = draft.tabs.remove(index);
+    }
+  });
 }
 
 export function removeTab(tab: Tab, targetTabSpace: TabSpace): TabSpace {
@@ -201,19 +201,21 @@ export function replaceTab(
   { tid, tab }: { tid: string; tab: Tab },
   targetTabSpace: TabSpace,
 ): TabSpace {
-  const tIndex = targetTabSpace.tabs.findIndex((t) => t.id === tid);
-  if (tIndex >= 0 && tIndex < targetTabSpace.tabs.size) {
-    return { ...targetTabSpace, tabs: targetTabSpace.tabs.set(tIndex, tab) };
-  } else {
-    return cloneTabSpace(targetTabSpace);
-  }
+  return produce(targetTabSpace, (draft) => {
+    const tIndex = draft.tabs.findIndex((t) => t.id === tid);
+    if (tIndex >= 0 && tIndex < draft.tabs.size) {
+      draft.tabs = draft.tabs.set(tIndex, tab);
+    }
+  });
 }
 
 export function replaceAllTabs(
   tabs: Tab[],
   targetTabSpace: TabSpace,
 ): TabSpace {
-  return { ...targetTabSpace, tabs: List(tabs) };
+  return produce(targetTabSpace, (draft) => {
+    draft.tabs = List(tabs);
+  });
 }
 
 export function convertAndGetTabSpaceSavePayload(targetTabSpace: TabSpace): {
@@ -241,11 +243,10 @@ export function convertAndGetTabSpaceSavePayload(targetTabSpace: TabSpace): {
       return updatedTab;
     })
     .toList();
-  const tabSpace = {
-    ...targetTabSpace,
-    ...convertToSavedBase(targetTabSpace),
-    tabs: savedTabs,
-  };
+  const tabSpace = produce(targetTabSpace, (draft) => {
+    inPlaceConvertToSaved(draft);
+    draft.tabs = savedTabs;
+  });
   const tabSpaceSavePayload = {
     ...convertToSavedBase(targetTabSpace),
     name: targetTabSpace.name,

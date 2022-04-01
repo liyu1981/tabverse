@@ -1,17 +1,17 @@
+import { $tabSpace, tabSpaceStoreApi } from './store';
+import { Tab, cloneTab, fromLiveTab, setTabSpaceId } from './Tab';
+import { TabSpace, findTabByChromeTabId, toTabSpaceStub } from './TabSpace';
 import { debounce, isTabSpaceManagerPage, logger } from '../../global';
 import {
   removeTabSpace as tabSpaceRegistryRemoveTabSpace,
   updateTabSpace as tabSpaceRegistryUpdateTabSpace,
 } from '../tabSpaceRegistry';
 
-import { cloneTab, fromLiveTab, setTabSpaceId, Tab } from './Tab';
-import { findTabByChromeTabId, TabSpace, toTabSpaceStub } from './TabSpace';
+import { eq } from 'lodash';
+import { findTabSpaceIdByChromeTabId } from '../tabSpaceRegistry/TabSpaceRegistry';
+import { getStateTabSpaceRegistry } from '../tabSpaceRegistry/store';
 import { getUnsavedNewId } from '../common';
 import { isJestTest } from '../../debug';
-import { $tabSpace, tabSpaceStoreApi } from './store';
-import { eq } from 'lodash';
-import { getStateTabSpaceRegistry } from '../tabSpaceRegistry/store';
-import { findTabSpaceIdByChromeTabId } from '../tabSpaceRegistry/TabSpaceRegistry';
 
 const CHROME_TAB_DEBOUNCE_TIME = 500;
 
