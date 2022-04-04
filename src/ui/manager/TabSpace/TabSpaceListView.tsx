@@ -1,3 +1,5 @@
+import { $allBookmark, bookmarkStoreApi } from '../../../data/bookmark/store';
+import { $tabSpace, $tabSpacePreviewCache } from '../../../data/tabSpace/store';
 import {
   Button,
   ButtonGroup,
@@ -7,33 +9,31 @@ import {
   MenuItem,
 } from '@blueprintjs/core';
 import React, { useEffect, useState } from 'react';
+import {
+  findTabById,
+  getTabIds,
+  needAutoSave,
+} from '../../../data/tabSpace/TabSpace';
+import {
+  newEmptyBookmark,
+  setFavIconUrl,
+  setName,
+  setUrl,
+} from '../../../data/bookmark/Bookmark';
 
 import { ErrorBoundary } from '../../common/ErrorBoundary';
 import { List } from 'immutable';
 import { MoveToExistTabSpaceDialog } from '../../dialog/MoveToExistTabSpace';
 import { Popover2 } from '@blueprintjs/popover2';
 import { SaveIndicator } from './SaveIndicator';
+import { Tab } from '../../../data/tabSpace/Tab';
 import { TabCard } from './TabCard';
 import classes from './TabSpaceListView.module.scss';
-import { isIdNotSaved } from '../../../data/common';
-import { $allBookmark, bookmarkStoreApi } from '../../../data/bookmark/store';
-import {
-  setName,
-  setUrl,
-  setFavIconUrl,
-  newEmptyBookmark,
-} from '../../../data/bookmark/Bookmark';
-import { useStore } from 'effector-react';
-import { $tabSpace, $tabSpacePreviewCache } from '../../../data/tabSpace/store';
-import {
-  findTabById,
-  getTabIds,
-  needAutoSave,
-} from '../../../data/tabSpace/TabSpace';
 import { getPreview } from '../../../data/tabSpace/TabPreviewCache';
+import { isIdNotSaved } from '../../../data/common';
 import { saveCurrentTabSpace } from '../../../data/tabSpace/util';
 import { updateTabSpaceName } from '../../../data/tabSpace/chromeTab';
-import { Tab } from '../../../data/tabSpace/Tab';
+import { useStore } from 'effector-react';
 
 enum SelectedTabTool {
   MoveToExistTabverse = 'Move to Exist Tabverse',
@@ -96,10 +96,6 @@ export function TabSpaceListView() {
         .toList();
     });
   }, [tabSpace.tabs]);
-
-  const onSaveCurrentTabSpace = () => {
-    saveCurrentTabSpace();
-  };
 
   const tabEntries = getTabIds(tabSpace).map((tabId) => {
     const tab = findTabById(tabId, tabSpace);
@@ -166,7 +162,7 @@ export function TabSpaceListView() {
           icon="floppy-disk"
           intent={Intent.NONE}
           minimal={isIdNotSaved(tabSpace.id) ? false : true}
-          onClick={onSaveCurrentTabSpace}
+          onClick={saveCurrentTabSpace}
         />
       </div>
     </div>
