@@ -3,6 +3,7 @@ import { convertToSavedBase, newEmptyBase, updateFromSaved } from '../Base';
 
 import { List } from 'immutable';
 import { isEqual } from 'lodash';
+import { produce } from 'immer';
 
 export const NotTabSpaceTabId = -1;
 export const NotTabSpaceId = '';
@@ -72,20 +73,18 @@ export const ChromeWindow = {
     chromeWindow: ChromeWindow,
     tabSpaceTabId: number,
   ): ChromeWindow => {
-    return {
-      ...chromeWindow,
-      tabSpaceTabId,
-    };
+    return produce(chromeWindow, (draft) => {
+      draft.tabSpaceTabId = tabSpaceTabId;
+    });
   },
 
   setTabSpaceId: (
     chromeWindow: ChromeWindow,
     tabSpaceId: string,
   ): ChromeWindow => {
-    return {
-      ...chromeWindow,
-      tabSpaceId,
-    };
+    return produce(chromeWindow, (draft) => {
+      draft.tabSpaceId = tabSpaceId;
+    });
   },
 
   getSavePayload: (chromeWindow: ChromeWindow): ChromeWindowSavePayload => {
