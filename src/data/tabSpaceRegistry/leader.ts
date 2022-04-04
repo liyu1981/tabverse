@@ -18,25 +18,25 @@ accept changes send by other attendees or itself.
 */
 
 import {
+  $tabSpaceRegistryState,
+  getStateTabSpaceRegistry,
+  mergeTabRegistryChanges,
+  tabSpaceRegistryStateApi,
+} from './store';
+import {
   TabSpaceRegistryBroadcastChannel,
   TabSpaceRegistryBroadcastMsg,
   TabSpaceRegistryBroadcastMsgType,
 } from './state';
-
 import {
   TabSpaceRegistryChange,
   TabSpaceRegistryInArray,
   TabSpaceStub,
   toTabSpaceRegistryInArray,
 } from './TabSpaceRegistry';
+
 import { NotNeedPayload } from '../../message/message';
 import { logger } from '../../global';
-import {
-  $tabSpaceRegistryState,
-  getStateTabSpaceRegistry,
-  mergeTabRegistryChanges,
-  tabSpaceRegistryStateApi,
-} from './store';
 
 function leaderOnMessageAddTabSpace(
   message: TabSpaceRegistryBroadcastMsg,
@@ -51,8 +51,8 @@ function leaderOnMessageUpdateTabSpace(
   message: TabSpaceRegistryBroadcastMsg,
   channel: TabSpaceRegistryBroadcastChannel,
 ) {
-  const { payload: tabSpaceRegistryChanges } = message;
-  mergeTabRegistryChanges(tabSpaceRegistryChanges);
+  const { payload: tabSpaceRegistryChange } = message;
+  mergeTabRegistryChanges([tabSpaceRegistryChange]);
   broadcast(toTabSpaceRegistryInArray(getStateTabSpaceRegistry()));
 }
 

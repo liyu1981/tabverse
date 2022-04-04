@@ -1,5 +1,6 @@
 import { nanoid } from 'nanoid';
 import { produce } from 'immer';
+import { tabData1 } from './tabSpace/__tests__/common.test';
 
 export function getUnsavedNewId() {
   // use 11 chars, as calculated by the estimator
@@ -50,7 +51,5 @@ export function setAttrForObject<T1, T2>(
   value: T1,
   target: T2,
 ): T2 {
-  return produce(target, (draft) => {
-    draft[attrName] = value;
-  });
+  return setAttrForObject2(attrName)(value, target);
 }
