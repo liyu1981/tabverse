@@ -1,6 +1,7 @@
+import { TabSpaceRegistry, newEmptyTabSpaceRegistry } from './TabSpaceRegistry';
+
 import { BroadcastChannel } from 'broadcast-channel';
 import { Map } from 'immutable';
-import { newEmptyTabSpaceRegistry, TabSpaceRegistry } from './TabSpaceRegistry';
 
 export enum TabSpaceRegistryBroadcastMsgType {
   QueryForLeader = 'tsrb_queryforleader',
@@ -86,63 +87,3 @@ export function isLeader(
       targetTabSpaceRegistryState.leaderTabId
   );
 }
-
-// export class InternServiceState {
-//   tabId: number | null;
-//   leaderTabId: number | null;
-//   broadcastChannel: TabSpaceRegistryBroadcastChannel | null;
-//   broadcastChannelMessageHandlers: {
-//     [k: string]: BroadcastChannelMessageHandler;
-//   };
-//   tabSpaceRegistry: TabSpaceRegistry;
-//   ready: boolean;
-
-//   constructor() {
-//     this.reset();
-//   }
-
-//   reset() {
-//     this.tabId = null;
-//     this.leaderTabId = null;
-//     this.broadcastChannel = null;
-//     this.broadcastChannelMessageHandlers = {};
-//     this.tabSpaceRegistry = new TabSpaceRegistry();
-//     this.ready = false;
-//   }
-
-//   setTabId(id: number) {
-//     this.tabId = id;
-//   }
-
-//   setLeaderTabId(id: number) {
-//     this.leaderTabId = id;
-//   }
-
-//   setBroadcastChannel(channel: TabSpaceRegistryBroadcastChannel) {
-//     this.broadcastChannel = channel;
-//   }
-
-//   setReady(value: boolean) {
-//     this.ready = value;
-//   }
-// }
-
-// export function retryIfStateNotReady(
-//   state: InternServiceState,
-//   userAction: () => void | Promise<void>,
-//   maxRetry = 5,
-//   waitInterval = 500,
-// ) {
-//   let retryCount = 0;
-//   function action() {
-//     if (state !== null && state.ready) {
-//       userAction();
-//     } else {
-//       if (retryCount < maxRetry) {
-//         retryCount += 1;
-//         setTimeout(action, waitInterval);
-//       }
-//     }
-//   }
-//   action();
-// }
