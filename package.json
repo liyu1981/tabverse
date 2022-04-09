@@ -62,7 +62,7 @@
     "jest": "^27.3.1",
     "lodash": "^4.17.21",
     "mini-css-extract-plugin": "^2.4.1",
-    "moment": "^2.29.1",
+    "moment": "^2.29.2",
     "nanoid": "^3.1.31",
     "node-polyfill-webpack-plugin": "^1.1.4",
     "normalize.css": "^8.0.1",
