@@ -13,7 +13,6 @@ import {
 } from './Tab';
 import {
   convertToSavedBase,
-  inPlaceConvertToSaved,
   inPlaceCopyFromOtherBase,
   newEmptyBase,
   toBase,

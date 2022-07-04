@@ -244,12 +244,12 @@ export async function loadTabSpaceByTabSpaceId(
   let tabSpace = await querySavedTabSpaceById(savedTabSpaceId);
   tabSpace = updateTabSpace({ chromeTabId, chromeWindowId }, tabSpace);
 
-  const otherTabs = filter(
-    await chrome.tabs.query({ currentWindow: true }),
-    (tab) => tab.id !== chromeTabId,
-  );
+  // remove any other tabs before loading our tabs
   await Promise.all(
-    otherTabs.map((otherTab) => chrome.tabs.remove(otherTab.id)),
+    filter(
+      await chrome.tabs.query({ currentWindow: true }),
+      (tab) => tab.id !== chromeTabId,
+    ).map((otherTab) => chrome.tabs.remove(otherTab.id)),
   );
 
   // here we do not use map but use for loop to ensure that we restore tabs in
@@ -257,16 +257,6 @@ export async function loadTabSpaceByTabSpaceId(
   for (let i = 0; i < tabSpace.tabs.size; i++) {
     const savedTab = tabSpace.tabs.get(i);
     const chromeTab = await chrome.tabs.create({ url: savedTab.url });
-    tabSpace = updateTab(
-      {
-        tid: savedTab.id,
-        changes: {
-          chromeTabId: chromeTab.id,
-          chromeWindowId: chromeTab.windowId,
-        },
-      },
-      tabSpace,
-    );
   }
 
   tabSpaceStoreApi.update(tabSpace);
