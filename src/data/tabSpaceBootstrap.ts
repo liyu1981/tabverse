@@ -1,7 +1,8 @@
-import { startMonitorChromeMessage } from '../message/chromeMessage';
-import { scanCurrentTabs, startMonitorTabChanges } from './tabSpace/chromeTab';
-import { tabSpaceStoreApi } from './tabSpace/store';
 import { monitorDbChanges, monitorTabSpaceChanges } from './tabSpace/util';
+import { scanCurrentTabs, startMonitorTabChanges } from './tabSpace/chromeTab';
+
+import { startMonitorChromeMessage } from '../message/chromeMessage';
+import { tabSpaceStoreApi } from './tabSpace/store';
 
 export async function tabSpaceBootstrap(
   chromeTabId: number,
@@ -12,8 +13,6 @@ export async function tabSpaceBootstrap(
     chromeWindowId,
     name: `Window-${chromeWindowId}`,
   });
-
-  // getSavedStoreManager().addSavedStore('tabverse', );
 
   await scanCurrentTabs();
   startMonitorTabChanges();

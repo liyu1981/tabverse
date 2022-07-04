@@ -1,5 +1,5 @@
 import { $tabSpace, tabSpaceStoreApi } from './store';
-import { Tab, cloneTab, fromLiveTab, setTabSpaceId } from './Tab';
+import { Tab, fromLiveTab, setTabSpaceId } from './Tab';
 import { TabSpace, findTabByChromeTabId, toTabSpaceStub } from './TabSpace';
 import { debounce, isTabSpaceManagerPage, logger } from '../../global';
 import {
@@ -12,6 +12,7 @@ import { findTabSpaceIdByChromeTabId } from '../tabSpaceRegistry/TabSpaceRegistr
 import { getStateTabSpaceRegistry } from '../tabSpaceRegistry/store';
 import { getUnsavedNewId } from '../common';
 import { isJestTest } from '../../debug';
+import { produce } from 'immer';
 
 const CHROME_TAB_DEBOUNCE_TIME = 500;
 
@@ -20,26 +21,42 @@ function inCurrentTabSpace(windowId: number, tabSpace: TabSpace) {
 }
 
 function copyChromeTabFields(
-  tab: chrome.tabs.Tab | chrome.tabs.TabChangeInfo,
+  chromeTab: chrome.tabs.Tab | chrome.tabs.TabChangeInfo,
   targetTab: Tab,
 ): Tab {
-  let changes = {};
-  if (tab.title && targetTab.title !== tab.title) {
-    changes = { ...changes, title: tab.title };
-  }
-  if (tab.url && targetTab.url !== tab.url) {
-    changes = { ...changes, url: tab.url };
-  }
-  if (tab.favIconUrl && targetTab.favIconUrl !== tab.favIconUrl) {
-    changes = { ...changes, favIconUrl: tab.favIconUrl };
-  }
-  if (tab.pinned && targetTab.pinned !== tab.pinned) {
-    changes = { ...changes, pinned: tab.pinned };
-  }
-  if (tab.discarded && targetTab.suspended !== tab.discarded) {
-    changes = { ...changes, suspended: tab.discarded };
-  }
-  return { ...targetTab, ...changes };
+  return produce(targetTab, (draft) => {
+    console.log(
+      'debug: before copyChromeTabFields:',
+      draft.title,
+      draft.url,
+      draft.favIconUrl,
+      draft.pinned,
+      draft.suspended,
+    );
+    if (chromeTab.title && targetTab.title !== chromeTab.title) {
+      draft.title = chromeTab.title;
+    }
+    if (chromeTab.url && targetTab.url !== chromeTab.url) {
+      draft.url = chromeTab.url;
+    }
+    if (chromeTab.favIconUrl && targetTab.favIconUrl !== chromeTab.favIconUrl) {
+      draft.favIconUrl = chromeTab.favIconUrl;
+    }
+    if (chromeTab.pinned && targetTab.pinned !== chromeTab.pinned) {
+      draft.pinned = chromeTab.pinned;
+    }
+    if (chromeTab.discarded && targetTab.suspended !== chromeTab.discarded) {
+      draft.suspended = chromeTab.discarded;
+    }
+    console.log(
+      'debug: after copyChromeTabFields:',
+      draft.title,
+      draft.url,
+      draft.favIconUrl,
+      draft.pinned,
+      draft.suspended,
+    );
+  });
 }
 
 export async function scanCurrentTabs() {
@@ -335,7 +352,7 @@ function getOnChromeTabUpdated() {
 
   async function normalTabAction(
     chromeTabId: number,
-    changeInfo: chrome.tabs.TabChangeInfo,
+    _changeInfo: chrome.tabs.TabChangeInfo,
   ) {
     const tab = await chrome.tabs.get(chromeTabId);
     if (!inCurrentTabSpace(tab.windowId, $tabSpace.getState())) {
@@ -343,8 +360,7 @@ function getOnChromeTabUpdated() {
     }
     const oldT = findTabByChromeTabId(chromeTabId, $tabSpace.getState());
     if (oldT) {
-      let newT = cloneTab(oldT);
-      newT = copyChromeTabFields(changeInfo, newT);
+      const newT = copyChromeTabFields(tab, oldT);
       if (!eq(newT, oldT)) {
         tabSpaceStoreApi.updateTab({ tid: newT.id, changes: newT });
       }
