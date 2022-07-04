@@ -20,36 +20,35 @@ function inCurrentTabSpace(windowId: number, tabSpace: TabSpace) {
   return windowId === tabSpace.chromeWindowId;
 }
 
-function copyChromeTabFields(
-  chromeTab: chrome.tabs.Tab | chrome.tabs.TabChangeInfo,
-  targetTab: Tab,
-): Tab {
+function copyChromeTabFields(chromeTab: chrome.tabs.Tab, targetTab: Tab): Tab {
   return produce(targetTab, (draft) => {
     console.log(
       'debug: before copyChromeTabFields:',
+      targetTab.id,
       draft.title,
       draft.url,
       draft.favIconUrl,
       draft.pinned,
       draft.suspended,
     );
-    if (chromeTab.title && targetTab.title !== chromeTab.title) {
+    if (chromeTab.title) {
       draft.title = chromeTab.title;
     }
-    if (chromeTab.url && targetTab.url !== chromeTab.url) {
+    if (chromeTab.url) {
       draft.url = chromeTab.url;
     }
-    if (chromeTab.favIconUrl && targetTab.favIconUrl !== chromeTab.favIconUrl) {
+    if (chromeTab.favIconUrl) {
       draft.favIconUrl = chromeTab.favIconUrl;
     }
-    if (chromeTab.pinned && targetTab.pinned !== chromeTab.pinned) {
+    if (chromeTab.pinned) {
       draft.pinned = chromeTab.pinned;
     }
-    if (chromeTab.discarded && targetTab.suspended !== chromeTab.discarded) {
+    if (chromeTab.discarded) {
       draft.suspended = chromeTab.discarded;
     }
     console.log(
       'debug: after copyChromeTabFields:',
+      targetTab.id,
       draft.title,
       draft.url,
       draft.favIconUrl,
