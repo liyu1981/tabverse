@@ -158,24 +158,25 @@ export async function querySavedTabSpaceById(
   return savedTabSpaces[0];
 }
 
-export async function saveTabSpace(targetTabSpace: TabSpace): Promise<number> {
-  const {
-    tabSpace: updatedTabSpace,
-    tabSpaceSavePayload,
-    isNewTabSpace,
-    newTabSavePayloads,
-    existTabSavePayloads,
-  } = convertAndGetTabSpaceSavePayload(targetTabSpace);
-  console.log(
-    'save tabSpaceSavePayload is:',
-    JSON.stringify(tabSpaceSavePayload),
-    JSON.stringify(newTabSavePayloads),
-    JSON.stringify(existTabSavePayloads),
-  );
-  const updatedAt = await db.transaction(
+export async function saveTabSpace(): Promise<number> {
+  const updatedTabSpace = await db.transaction(
     'rw',
     [db.table(TAB_DB_TABLE_NAME), db.table(TABSPACE_DB_TABLE_NAME)],
     async (tx) => {
+      const targetTabSpace = $tabSpace.getState();
+      const {
+        tabSpace: updatedTabSpace,
+        tabSpaceSavePayload,
+        isNewTabSpace,
+        newTabSavePayloads,
+        existTabSavePayloads,
+      } = convertAndGetTabSpaceSavePayload(targetTabSpace);
+      console.log(
+        'save tabSpaceSavePayload is:',
+        JSON.stringify(tabSpaceSavePayload),
+        JSON.stringify(newTabSavePayloads),
+        JSON.stringify(existTabSavePayloads),
+      );
       if (isNewTabSpace) {
         await db.table(TABSPACE_DB_TABLE_NAME).add(tabSpaceSavePayload);
       } else {
@@ -183,12 +184,13 @@ export async function saveTabSpace(targetTabSpace: TabSpace): Promise<number> {
       }
       await db.table(TAB_DB_TABLE_NAME).bulkAdd(newTabSavePayloads);
       await db.table(TAB_DB_TABLE_NAME).bulkPut(existTabSavePayloads);
-      return tabSpaceSavePayload.updatedAt;
+      return updatedTabSpace;
+      // return tabSpaceSavePayload.updatedAt;
     },
   );
   tabSpaceStoreApi.update(updatedTabSpace);
-  addTabSpaceToIndex(tabSpaceSavePayload.id);
-  return updatedAt;
+  addTabSpaceToIndex(updatedTabSpace.id);
+  return updatedTabSpace.updatedAt;
 }
 
 export async function deleteSavedTabSpace(
@@ -212,7 +214,7 @@ const saveCurrentTabSpaceImpl = async () => {
   const oldId = $tabSpace.getState().id;
 
   tabSpaceStoreApi.markInSaving(true);
-  const savedTime = await saveTabSpace($tabSpace.getState());
+  const savedTime = await saveTabSpace();
   tabSpaceStoreApi.updateLastSavedTime(savedTime);
   tabSpaceStoreApi.markInSaving(false);
 
@@ -238,7 +240,7 @@ export async function moveTabsToTabSpace(
 ) {
   let newTabSpace = cloneTabSpace(targetTabSpace);
   newTabSpace = addTabs(toMoveTabs, newTabSpace);
-  await saveTabSpace(newTabSpace);
+  await saveTabSpace();
 }
 
 export async function loadTabSpaceByTabSpaceId(

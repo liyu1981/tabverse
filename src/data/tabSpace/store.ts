@@ -1,15 +1,5 @@
-import { createApi, createStore, forward } from 'effector';
-import { merge } from 'lodash';
-import { exposeDebugData } from '../../debug';
-import { createGeneralStorageStoreAndApi } from '../../storage/GeneralStorage';
-import { storageOverviewApi } from '../../storage/StorageOverview';
-import { Tab } from './Tab';
 import {
-  newEmptyTabPreviewCache,
-  removePreview,
-  setPreview,
-} from './TabPreviewCache';
-import {
+  TabSpace,
   addTabs,
   insertTab,
   newEmptyTabSpace,
@@ -18,11 +8,22 @@ import {
   replaceTab,
   reset,
   setName,
-  TabSpace,
   updateTab,
   updateTabSpace,
 } from './TabSpace';
+import { createApi, createStore, forward } from 'effector';
+import {
+  newEmptyTabPreviewCache,
+  removePreview,
+  setPreview,
+} from './TabPreviewCache';
+
+import { Tab } from './Tab';
+import { createGeneralStorageStoreAndApi } from '../../storage/GeneralStorage';
+import { exposeDebugData } from '../../debug';
+import { merge } from 'lodash';
 import { querySavedTabSpaceCount } from './util';
+import { storageOverviewApi } from '../../storage/StorageOverview';
 
 export const $tabSpace = createStore(newEmptyTabSpace());
 export type TabSpaceStore = typeof $tabSpace;
