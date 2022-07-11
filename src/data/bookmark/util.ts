@@ -55,7 +55,7 @@ export async function loadAllBookmarkByTabSpaceId(tabSpaceId: string) {
 }
 
 export async function loadCurrentAllBookmarkFromLocalStorage() {
-  return new Promise<void>((resolve, reject) =>
+  return new Promise<void>((resolve, _reject) =>
     localStorageGetItem(LOCALSTORAGE_BOOKMARK_KEY, (value: string) => {
       const bookmarkJSONs = JSON.parse(value) as BookmarkLocalStorage[];
       if (isArray(bookmarkJSONs)) {
@@ -69,7 +69,7 @@ export async function loadCurrentAllBookmarkFromLocalStorage() {
 export function startMonitorLocalStorageChanges() {
   localStorageAddListener(
     LOCALSTORAGE_BOOKMARK_KEY,
-    (key, newValue, oldValue) => {
+    (key, newValue, _oldValue) => {
       const bookmarkJSONs = JSON.parse(newValue) as BookmarkLocalStorage[];
       if (isArray(bookmarkJSONs)) {
         bookmarkStoreApi.restoreFromLocalStorageJSON(bookmarkJSONs);
@@ -86,7 +86,7 @@ export function stopMonitorLocalStorageChanges() {
 
 export async function queryAllBookmark(
   tabSpaceId: string,
-  params?: any,
+  _params?: any,
 ): Promise<AllBookmark> {
   const allBookmarksData = await db
     .table<AllBookmarkSavePayload>(ALLBOOKMARK_DB_TABLE_NAME)
@@ -116,7 +116,7 @@ export async function saveAllBookmark(): Promise<number> {
   const updatedAt = await db.transaction(
     'rw',
     [db.table(BOOKMARK_DB_TABLE_NAME), db.table(ALLBOOKMARK_DB_TABLE_NAME)],
-    async (tx) => {
+    async (_tx) => {
       const {
         allBookmark,
         allBookmarkSavePayload,
