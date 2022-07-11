@@ -31,6 +31,7 @@ import { TabCard } from './TabCard';
 import classes from './TabSpaceListView.module.scss';
 import { getPreview } from '../../../data/tabSpace/TabPreviewCache';
 import { isIdNotSaved } from '../../../data/common';
+import { saveCurrentAllBookmarkIfNeeded } from '../../../data/bookmark/util';
 import { saveCurrentTabSpace } from '../../../data/tabSpace/util';
 import { updateTabSpaceName } from '../../../data/tabSpace/chromeTab';
 import { useStore } from 'effector-react';
@@ -115,6 +116,7 @@ export function TabSpaceListView() {
                   setName(tab.title, setUrl(tab.url, newEmptyBookmark())),
                 ),
               );
+              saveCurrentAllBookmarkIfNeeded();
             }}
             onSelect={(tabId, selected) => {
               if (selected) {

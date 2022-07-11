@@ -1,8 +1,21 @@
-import { isArray } from 'lodash';
-import { isJestTest } from '../../debug';
-import { debounce, logger } from '../../global';
-import { subscribePubSubMessage, TabSpaceMsg } from '../../message/message';
+import { $allBookmark, bookmarkStoreApi } from './store';
+import {
+  ALLBOOKMARK_DB_TABLE_NAME,
+  AllBookmark,
+  AllBookmarkSavePayload,
+  addBookmark,
+  convertAndGetAllBookmarkSavePayload,
+  newEmptyAllBookmark,
+  updateTabSpaceId,
+} from './AllBookmark';
+import {
+  BOOKMARK_DB_TABLE_NAME,
+  Bookmark,
+  BookmarkLocalStorage,
+} from './Bookmark';
+import { TabSpaceMsg, subscribePubSubMessage } from '../../message/message';
 import { addPagingToQueryParams, db } from '../../storage/db';
+import { debounce, logger } from '../../global';
 import {
   getLocalStorageKey,
   localStorageAddListener,
@@ -10,27 +23,14 @@ import {
   localStoragePutItem,
   localStorageRemoveListener,
 } from '../../storage/localStorageWrapper';
-import { DEFAULT_SAVE_DEBOUNCE } from '../../storage/StorageOverview';
-import { updateFromSaved } from '../Base';
-import { isIdNotSaved } from '../common';
-import { InSavingStatus } from '../../storage/GeneralStorage';
+
 import { $tabSpace } from '../tabSpace/store';
+import { DEFAULT_SAVE_DEBOUNCE } from '../../storage/StorageOverview';
+import { isArray } from 'lodash';
+import { isIdNotSaved } from '../common';
+import { isJestTest } from '../../debug';
 import { needAutoSave } from '../tabSpace/TabSpace';
-import {
-  addBookmark,
-  AllBookmark,
-  AllBookmarkSavePayload,
-  ALLBOOKMARK_DB_TABLE_NAME,
-  convertAndGetAllBookmarkSavePayload,
-  newEmptyAllBookmark,
-  updateTabSpaceId,
-} from './AllBookmark';
-import {
-  Bookmark,
-  BookmarkLocalStorage,
-  BOOKMARK_DB_TABLE_NAME,
-} from './Bookmark';
-import { $allBookmark, $bookmarkStorage, bookmarkStoreApi } from './store';
+import { updateFromSaved } from '../Base';
 
 export const LOCALSTORAGE_BOOKMARK_KEY = getLocalStorageKey('bookmark');
 
@@ -82,27 +82,6 @@ export function startMonitorLocalStorageChanges() {
 
 export function stopMonitorLocalStorageChanges() {
   localStorageRemoveListener(LOCALSTORAGE_BOOKMARK_KEY);
-}
-
-export function monitorAllBookmarkChanges() {
-  $allBookmark.watch((currentAllBookmark) => {
-    logger.log('allBookmark changed:', currentAllBookmark);
-    if ($bookmarkStorage.getState().inSaving === InSavingStatus.InSaving) {
-      logger.log('bookmark in saving, skip');
-    } else {
-      if (needAutoSave($tabSpace.getState())) {
-        logger.log(
-          'current tabSpace need autoSave, will then saveCurrentAllBookmark',
-        );
-        saveCurrentAllBookmark();
-      } else {
-        logger.log(
-          'current tabSpace is not on autoSave, will then save bookmarks to localStorage',
-        );
-        saveCurrentAllBookmarkToLocalStorage();
-      }
-    }
-  });
 }
 
 export async function queryAllBookmark(
@@ -170,6 +149,20 @@ export const saveCurrentAllBookmark = debounce(
   saveCurrentAllBookmarkImpl,
   DEFAULT_SAVE_DEBOUNCE,
 );
+
+export const saveCurrentAllBookmarkIfNeeded = () => {
+  if (needAutoSave($tabSpace.getState())) {
+    logger.log(
+      'current tabSpace need autoSave, will then saveCurrentAllBookmark',
+    );
+    saveCurrentAllBookmark();
+  } else {
+    logger.log(
+      'current tabSpace is not on autoSave, will then save bookmarks to localStorage',
+    );
+    saveCurrentAllBookmarkToLocalStorage();
+  }
+};
 
 export function saveCurrentAllBookmarkToLocalStorage() {
   localStoragePutItem(
