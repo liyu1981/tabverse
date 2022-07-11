@@ -59,14 +59,14 @@ const SessionLabel = ({ session, selected, onDelete }: SessionLabelProps) => {
 interface SessionSelectorProps {
   selectedSession: ChromeSessionSavePayload;
   sessions: DisplaySavedSessionGroup[];
-  onDeleteSession: (sessionId: string) => void;
+  onDeleteSessions: (sessionId: string[]) => void;
   onSetSelectedSession: (session: ChromeSessionSavePayload) => void;
 }
 
 export const SessionSelector = ({
   selectedSession,
   sessions,
-  onDeleteSession,
+  onDeleteSessions,
   onSetSelectedSession,
 }: SessionSelectorProps) => {
   const groupTags = uniq(
@@ -92,6 +92,12 @@ export const SessionSelector = ({
         );
       }),
     );
+  };
+
+  const deleteCurrentSelectedSessions = () => {
+    const selectedSessions = calcSelectedSessions(selectedGroupTag);
+    const sessionIds = selectedSessions.map((s) => s.id);
+    onDeleteSessions(sessionIds);
   };
 
   const selectGroup = (groupTag: number) => {
@@ -140,7 +146,7 @@ export const SessionSelector = ({
             <SessionLabel
               session={session}
               selected={session.id === (selectedSession?.id ?? NotSessionId)}
-              onDelete={onDeleteSession}
+              onDelete={(sessionId: string) => onDeleteSessions([sessionId])}
             />
           }
           onClick={() => onSetSelectedSession(session)}
@@ -155,6 +161,15 @@ export const SessionSelector = ({
       <Menu className={classes.sessionSelectorMenu}>
         {renderSessionMenus()}
       </Menu>
+      <div className={classes.sessionSelectorTools}>
+        <Button
+          minimal={true}
+          icon="social-media"
+          onClick={deleteCurrentSelectedSessions}
+        >
+          Remove All
+        </Button>
+      </div>
     </div>
   );
 };

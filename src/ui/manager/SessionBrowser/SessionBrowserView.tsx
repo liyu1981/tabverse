@@ -1,6 +1,10 @@
 import {
+  $savedChromeSessionCollection,
+  reloadSavedChromeSessionCollection,
+} from '../../../data/chromeSession/store';
+import {
   DisplaySavedSessionGroup,
-  deleteSavedSession,
+  deleteSavedSessions,
 } from '../../../data/chromeSession/sessionStore';
 import React, { useEffect, useState } from 'react';
 
@@ -12,10 +16,6 @@ import { SessionSelector } from './SessionSelector';
 import SimpleBar from 'simplebar-react';
 import classes from './SessionBrowserView.module.scss';
 import { useAsyncEffect } from '../../common/useAsyncEffect';
-import {
-  $savedChromeSessionCollection,
-  reloadSavedChromeSessionCollection,
-} from '../../../data/chromeSession/store';
 import { useStore } from 'effector-react';
 
 function selectFirstSession(savedSessionGroups: DisplaySavedSessionGroup[]) {
@@ -65,8 +65,8 @@ export function SessionBrowserView() {
     return sessionGroup ? sessionGroup.tabSpaceMap : {};
   };
 
-  const deleteSession = async (sessionId: string) => {
-    await deleteSavedSession(sessionId);
+  const deleteSessions = async (sessionIds: string[]) => {
+    await deleteSavedSessions(sessionIds);
   };
 
   return (
@@ -91,7 +91,7 @@ export function SessionBrowserView() {
               <SessionSelector
                 sessions={savedChromeSessionCollection.savedSessionGroups}
                 selectedSession={selectedSession}
-                onDeleteSession={deleteSession}
+                onDeleteSessions={deleteSessions}
                 onSetSelectedSession={setSelectedSession}
               />
             </div>
