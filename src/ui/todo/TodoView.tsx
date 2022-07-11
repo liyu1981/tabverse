@@ -1,19 +1,19 @@
-import React, { useEffect, useState } from 'react';
-
-import { setCompleted, Todo } from '../../data/todo/Todo';
-import classes from './TodoView.module.scss';
-import clsx from 'clsx';
-import { useStore } from 'effector-react';
 import { $allTodo, todoStoreApi } from '../../data/todo/store';
-import { newEmptyTodo, setContent } from '../../data/todo/Todo';
+import React, { useEffect, useState } from 'react';
+import { Todo, setCompleted } from '../../data/todo/Todo';
 import {
-  monitorAllTodoChanges,
   monitorTabSpaceChanges,
+  saveCurrentAllTodoIfNeeded,
   startMonitorLocalStorageChanges,
   stopMonitorLocalStorageChanges,
 } from '../../data/todo/util';
+import { newEmptyTodo, setContent } from '../../data/todo/Todo';
+
+import classes from './TodoView.module.scss';
+import clsx from 'clsx';
 import { isIdNotSaved } from '../../data/common';
 import { logger } from '../../global';
+import { useStore } from 'effector-react';
 
 const RETURN_KEY = 13;
 const FILTER_ACTIVE = 'active';
@@ -31,8 +31,8 @@ const TodoItemView = (props: TodoItemViewProps) => {
   return (
     <li
       className={clsx(
-        props.todo.completed ? 'completed' : '',
-        editing ? 'editing' : '',
+        props.todo.completed ? classes.completed : '',
+        editing ? classes.editing : '',
       )}
     >
       <div className={classes.view}>
@@ -96,7 +96,6 @@ export function TodoView({ tabSpaceId }: TodoViewProps) {
   useEffect(() => {
     logger.info('todo start monitor tabspace, alltodo changes');
     monitorTabSpaceChanges();
-    monitorAllTodoChanges();
   }, []);
 
   useEffect(() => {
@@ -112,10 +111,12 @@ export function TodoView({ tabSpaceId }: TodoViewProps) {
 
   const changeTodo = (id: string, t: Todo) => {
     todoStoreApi.updateTodo({ tid: id, changes: t });
+    saveCurrentAllTodoIfNeeded();
   };
 
   const removeTodo = (id: string) => {
     todoStoreApi.removeTodo(id);
+    saveCurrentAllTodoIfNeeded();
   };
 
   const filteredTodos = allTodo.todos

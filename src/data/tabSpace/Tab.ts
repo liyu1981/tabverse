@@ -1,5 +1,6 @@
 import { IBase, setAttrForObject2 } from '../common';
 import { convertToSavedBase, newEmptyBase, toBase } from '../Base';
+import { eq, omit } from 'lodash';
 
 import { NotTabSpaceId } from '../chromeSession/ChromeSession';
 
@@ -99,4 +100,11 @@ export function convertAndGetTabSavePayload(
     tabSpaceId: savedTabSpaceId,
   };
   return { tab, savedTab };
+}
+
+export function isEqualWithoutCreatedAtUpdatedAt(t1: Tab, t2: Tab): boolean {
+  return eq(
+    omit(t1, ['createdAt', 'updatedAt']),
+    omit(t2, ['createdAt', 'updatedAt']),
+  );
 }

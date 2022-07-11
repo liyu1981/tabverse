@@ -8,7 +8,6 @@ import {
 import { IBase, isIdNotSaved } from '../common';
 import {
   convertToSavedBase,
-  inPlaceConvertToSaved,
   inPlaceCopyFromOtherBase,
   newEmptyBase,
 } from '../Base';

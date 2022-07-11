@@ -1,7 +1,7 @@
 const path = require('path');
 const { merge } = require('webpack-merge');
 const { baseConfig, getCustomRules } = require('./webpack.base.config.js');
-const webpack = require('webpack');
+const ESLintPlugin = require('eslint-webpack-plugin');
 
 module.exports = merge(baseConfig, {
   output: {
@@ -22,15 +22,8 @@ module.exports = merge(baseConfig, {
           includePaths: [path.resolve(__dirname, 'node_modules')],
         },
       },
-      'extra-rules': [
-        {
-          test: /\.(j|t)s$/,
-          exclude: /node_modules/,
-          use: ['eslint-loader'],
-        },
-      ],
     }),
   },
 
-  plugins: [new webpack.HotModuleReplacementPlugin()],
+  plugins: [new ESLintPlugin()],
 });

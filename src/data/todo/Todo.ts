@@ -1,10 +1,5 @@
 import { IBase, setAttrForObject2 } from '../common';
-import {
-  NotId,
-  convertToSavedBase,
-  inPlaceConvertToSaved,
-  newEmptyBase,
-} from '../Base';
+import { NotId, inPlaceConvertToSaved, newEmptyBase } from '../Base';
 
 import { produce } from 'immer';
 
@@ -29,7 +24,7 @@ export function newEmptyTodo(): Todo {
 }
 
 export function cloneTodo(targetTodo: Todo): Todo {
-  return produce(targetTodo, (draft) => {});
+  return produce(targetTodo, (_draft) => {});
 }
 
 export const setTabSpaceId = setAttrForObject2<string, Todo>('tabSpaceId');

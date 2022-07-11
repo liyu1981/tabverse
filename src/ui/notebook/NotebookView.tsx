@@ -1,20 +1,20 @@
-import { newEmptyNote, Note, setName } from '../../data/note/Note';
+import { $allNote, noteStoreApi } from '../../data/note/store';
+import { Note, newEmptyNote, setName } from '../../data/note/Note';
 import React, { useEffect } from 'react';
+import {
+  monitorTabSpaceChanges,
+  saveCurrentAllNoteIfNeeded,
+  startMonitorLocalStorageChanges,
+  stopMonitorLocalStorageChanges,
+} from '../../data/note/util';
 
 import { Button } from '@blueprintjs/core';
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { NoteView } from './Note';
 import classes from './NotebookView.module.scss';
-import { useStore } from 'effector-react';
-import { $allNote, noteStoreApi } from '../../data/note/store';
-import {
-  monitorAllNoteChanges,
-  monitorTabSpaceChanges,
-  startMonitorLocalStorageChanges,
-  stopMonitorLocalStorageChanges,
-} from '../../data/note/util';
 import { isIdNotSaved } from '../../data/common';
 import { logger } from '../../global';
+import { useStore } from 'effector-react';
 
 export interface NotebookViewProps {
   tabSpaceId: string;
@@ -26,7 +26,6 @@ export function NotebookView({ tabSpaceId }: NotebookViewProps) {
   useEffect(() => {
     logger.info('notebook start monitor tabspace, alltodo changes');
     monitorTabSpaceChanges();
-    monitorAllNoteChanges();
   }, []);
 
   useEffect(() => {
@@ -42,14 +41,17 @@ export function NotebookView({ tabSpaceId }: NotebookViewProps) {
 
   const updateNote = (nid: string, changes: Partial<Note>) => {
     noteStoreApi.updateNote({ nid, changes });
+    saveCurrentAllNoteIfNeeded();
   };
 
   const removeNote = (nid: string) => {
     noteStoreApi.removeNote(nid);
+    saveCurrentAllNoteIfNeeded();
   };
 
   const newNote = () => {
     noteStoreApi.addNote(setName(`Note ${Date.now()}`, newEmptyNote()));
+    saveCurrentAllNoteIfNeeded();
   };
 
   const currentNotes = allNote.notes.reverse().toArray();

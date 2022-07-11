@@ -1,20 +1,20 @@
-import { omit } from 'lodash';
-import { resetTestDb } from '../../../dev/dbImplTest';
-import {
-  initMockChrome,
-  tsTabData1,
-} from '../../tabSpace/__tests__/common.test';
-import { tabSpaceBootstrap } from '../../tabSpaceBootstrap';
 import {
   deleteSavedTabSpace,
-  monitorTabSpaceChanges,
   querySavedTabSpace,
   querySavedTabSpaceById,
   saveCurrentTabSpace,
 } from '../../tabSpace/util';
+import {
+  initMockChrome,
+  tsTabData1,
+} from '../../tabSpace/__tests__/common.test';
+
 import { $tabSpace } from '../../tabSpace/store';
-import { findTabByChromeTabId } from '../../tabSpace/TabSpace';
 import { QUERY_PAGE_LIMIT_DEFAULT } from '../../../storage/db';
+import { findTabByChromeTabId } from '../../tabSpace/TabSpace';
+import { omit } from 'lodash';
+import { resetTestDb } from '../../../dev/dbImplTest';
+import { tabSpaceBootstrap } from '../../tabSpaceBootstrap';
 
 export async function initTabSpaceData() {
   // storeManagerBootstrap();

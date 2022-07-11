@@ -26,18 +26,6 @@
   border-radius: 18px;
 }
 
-.todoapp input::-webkit-input-placeholder {
-  font-style: italic;
-  font-weight: 400;
-  color: rgba(0, 0, 0, 0.4);
-}
-
-.todoapp input::-moz-placeholder {
-  font-style: italic;
-  font-weight: 400;
-  color: rgba(0, 0, 0, 0.4);
-}
-
 .todoapp input::input-placeholder {
   font-style: italic;
   font-weight: 400;

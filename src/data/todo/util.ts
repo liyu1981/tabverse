@@ -1,4 +1,4 @@
-import { $allTodo, $todoStorage, todoStoreApi } from './store';
+import { $allTodo, todoStoreApi } from './store';
 import {
   ALLTODO_DB_TABLE_NAME,
   AllTodo,
@@ -23,7 +23,6 @@ import {
 
 import { $tabSpace } from '../tabSpace/store';
 import { DEFAULT_SAVE_DEBOUNCE } from '../../storage/StorageOverview';
-import { InSavingStatus } from '../../storage/GeneralStorage';
 import { isArray } from 'lodash';
 import { isIdNotSaved } from '../common';
 import { isJestTest } from '../../debug';
@@ -66,7 +65,7 @@ export async function loadAllTodoByTabSpaceId(tabSpaceId: string) {
 }
 
 export function startMonitorLocalStorageChanges() {
-  localStorageAddListener(LOCALSTORAGE_TODO_KEY, (key, newValue, oldValue) => {
+  localStorageAddListener(LOCALSTORAGE_TODO_KEY, (key, newValue, _oldValue) => {
     const todoJSONs = JSON.parse(newValue) as TodoLocalStorage[];
     todoStoreApi.restoreFromLocalStorageJSON(todoJSONs);
   });
@@ -78,33 +77,12 @@ export function stopMonitorLocalStorageChanges() {
   localStorageRemoveListener(LOCALSTORAGE_TODO_KEY);
 }
 
-export function monitorAllTodoChanges() {
-  $allTodo.watch((currentAllTodo) => {
-    logger.log('allTodo changed:', currentAllTodo);
-    if ($todoStorage.getState().inSaving === InSavingStatus.InSaving) {
-      logger.log('todo inSaving, skip');
-    } else {
-      if (needAutoSave($tabSpace.getState())) {
-        logger.log(
-          'current tabSpace need autoSave, will then saveCurrentAllTodo',
-        );
-        saveCurrentAllTodo();
-      } else {
-        logger.log(
-          'current tabSpace is not on autoSave, will then save todos to localStorage',
-        );
-        saveCurrentAllTodoToLocalStorage();
-      }
-    }
-  });
-}
-
 async function saveAllTodo(): Promise<number> {
   // super stupid saving strategy: save them all when needed
   const updatedAt = await db.transaction(
     'rw',
     [db.table(TODO_DB_TABLE_NAME), db.table(ALLTODO_DB_TABLE_NAME)],
-    async (tx) => {
+    async (_tx) => {
       const {
         allTodo,
         allTodoSavePayload,
@@ -139,6 +117,18 @@ export const saveCurrentAllTodo = debounce(
   DEFAULT_SAVE_DEBOUNCE,
 );
 
+export const saveCurrentAllTodoIfNeeded = () => {
+  if (needAutoSave($tabSpace.getState())) {
+    logger.log('current tabSpace need autoSave, will then saveCurrentAllTodo');
+    saveCurrentAllTodo();
+  } else {
+    logger.log(
+      'current tabSpace is not on autoSave, will then save todos to localStorage',
+    );
+    saveCurrentAllTodoToLocalStorage();
+  }
+};
+
 export function saveCurrentAllTodoToLocalStorage() {
   localStoragePutItem(
     LOCALSTORAGE_TODO_KEY,
@@ -148,7 +138,7 @@ export function saveCurrentAllTodoToLocalStorage() {
 
 export async function queryAllTodo(
   tabSpaceId: string,
-  params?: any,
+  _params?: any,
 ): Promise<AllTodo> {
   const allTodosData = await db
     .table<AllTodoSavePayload>(ALLTODO_DB_TABLE_NAME)

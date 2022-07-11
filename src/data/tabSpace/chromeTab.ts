@@ -13,6 +13,7 @@ import { getStateTabSpaceRegistry } from '../tabSpaceRegistry/store';
 import { getUnsavedNewId } from '../common';
 import { isJestTest } from '../../debug';
 import { produce } from 'immer';
+import { saveCurrentTabSpaceIfNeeded } from './util';
 
 const CHROME_TAB_DEBOUNCE_TIME = 500;
 
@@ -22,15 +23,15 @@ function inCurrentTabSpace(windowId: number, tabSpace: TabSpace) {
 
 function copyChromeTabFields(chromeTab: chrome.tabs.Tab, targetTab: Tab): Tab {
   return produce(targetTab, (draft) => {
-    console.log(
-      'debug: before copyChromeTabFields:',
-      targetTab.id,
-      draft.title,
-      draft.url,
-      draft.favIconUrl,
-      draft.pinned,
-      draft.suspended,
-    );
+    // console.log(
+    //   'debug: before copyChromeTabFields:',
+    //   targetTab.id,
+    //   draft.title,
+    //   draft.url,
+    //   draft.favIconUrl,
+    //   draft.pinned,
+    //   draft.suspended,
+    // );
     if (chromeTab.title) {
       draft.title = chromeTab.title;
     }
@@ -46,15 +47,15 @@ function copyChromeTabFields(chromeTab: chrome.tabs.Tab, targetTab: Tab): Tab {
     if (chromeTab.discarded) {
       draft.suspended = chromeTab.discarded;
     }
-    console.log(
-      'debug: after copyChromeTabFields:',
-      targetTab.id,
-      draft.title,
-      draft.url,
-      draft.favIconUrl,
-      draft.pinned,
-      draft.suspended,
-    );
+    // console.log(
+    //   'debug: after copyChromeTabFields:',
+    //   targetTab.id,
+    //   draft.title,
+    //   draft.url,
+    //   draft.favIconUrl,
+    //   draft.pinned,
+    //   draft.suspended,
+    // );
   });
 }
 
@@ -167,11 +168,13 @@ async function maintainTabOrder() {
 
 export function updateTabSpaceName(newName: string) {
   tabSpaceStoreApi.setName(newName);
+  const currentTabSpace = $tabSpace.getState();
   tabSpaceRegistryUpdateTabSpace({
-    from: $tabSpace.getState().id,
-    to: $tabSpace.getState().id,
-    entry: toTabSpaceStub($tabSpace.getState()),
+    from: currentTabSpace.id,
+    to: currentTabSpace.id,
+    entry: toTabSpaceStub(currentTabSpace),
   });
+  saveCurrentTabSpaceIfNeeded();
 }
 
 export function getOnChromeTabAttached() {
@@ -187,6 +190,7 @@ export function getOnChromeTabAttached() {
       newId: getUnsavedNewId(),
     });
     await scanCurrentTabs();
+    saveCurrentTabSpaceIfNeeded();
 
     tabSpaceRegistryUpdateTabSpace({
       from: oldId,
@@ -214,6 +218,7 @@ export function getOnChromeTabAttached() {
       t = copyChromeTabFields(chromeTab, t);
       tabSpaceStoreApi.addTab(t);
       await maintainTabOrder();
+      saveCurrentTabSpaceIfNeeded();
     }
   }
 
@@ -239,6 +244,7 @@ export function getOnChromeTabCreated() {
     t = copyChromeTabFields(chromeTab, t);
     tabSpaceStoreApi.addTab(t);
     await maintainTabOrder();
+    saveCurrentTabSpaceIfNeeded();
   }
   return (chromeTab: chrome.tabs.Tab) => {
     if (!inCurrentTabSpace(chromeTab.windowId, $tabSpace.getState())) {
@@ -255,6 +261,7 @@ export function getOnChromeTabDetached() {
   ) {
     tabSpaceStoreApi.removeTabByChromeTabId(chromeTabId);
     tabSpaceStoreApi.removePreview(chromeTabId);
+    saveCurrentTabSpaceIfNeeded();
   }
 
   return (chromeTabId: number, detachInfo: chrome.tabs.TabDetachInfo) => {
@@ -289,6 +296,7 @@ export function getOnChromeTabRemoved() {
   ) => {
     tabSpaceStoreApi.removeTabByChromeTabId(chromeTabId);
     tabSpaceStoreApi.removePreview(chromeTabId);
+    saveCurrentTabSpaceIfNeeded();
   };
 
   return (chromeTabId: number, removeInfo: chrome.tabs.TabRemoveInfo) => {
@@ -329,6 +337,7 @@ function getOnChromeTabReplaced() {
     } else {
       tabSpaceStoreApi.addTab(newT);
       await maintainTabOrder();
+      saveCurrentTabSpaceIfNeeded();
     }
   }
 
@@ -362,6 +371,7 @@ function getOnChromeTabUpdated() {
       const newT = copyChromeTabFields(tab, oldT);
       if (!eq(newT, oldT)) {
         tabSpaceStoreApi.updateTab({ tid: newT.id, changes: newT });
+        saveCurrentTabSpaceIfNeeded();
       }
     }
     if (tab.active) {
@@ -396,6 +406,7 @@ function getOnChromeTabMoved() {
     moveInfo: chrome.tabs.TabMoveInfo,
   ) {
     await maintainTabOrder();
+    saveCurrentTabSpaceIfNeeded();
   }
 
   return (chromeTabId: number, moveInfo: chrome.tabs.TabMoveInfo) => {
