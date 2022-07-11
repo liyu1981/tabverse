@@ -1,19 +1,19 @@
 import {
-  ChromeSessionSavePayload,
   CHROMESESSION_DB_SCHEMA,
   CHROMESESSION_DB_TABLE_NAME,
+  ChromeSessionSavePayload,
 } from './ChromeSession';
+import {
+  TABSPACE_DB_TABLE_NAME,
+  TabSpaceSavePayload,
+} from '../tabSpace/TabSpace';
+import { TabSpaceDBMsg, subscribePubSubMessage } from '../../message/message';
 
+import { IDatabaseChange } from 'dexie-observable/api';
 import { db } from '../../storage/db';
 import { filter } from 'lodash';
 import { isIdNotSaved } from '../common';
-import { subscribePubSubMessage, TabSpaceDBMsg } from '../../message/message';
-import { IDatabaseChange } from 'dexie-observable/api';
 import { logger } from '../../global';
-import {
-  TabSpaceSavePayload,
-  TABSPACE_DB_TABLE_NAME,
-} from '../tabSpace/TabSpace';
 import { reloadSavedChromeSessionCollection } from './store';
 
 export type SavedSessionGroup = {
@@ -126,5 +126,10 @@ export async function loadSavedSessionsForDisplay(): Promise<
 
 export async function deleteSavedSession(sessionId: string) {
   await db.table(CHROMESESSION_DB_TABLE_NAME).delete(sessionId);
+  reloadSavedChromeSessionCollection();
+}
+
+export async function deleteSavedSessions(sessionIds: string[]) {
+  await db.table(CHROMESESSION_DB_TABLE_NAME).bulkDelete(sessionIds);
   reloadSavedChromeSessionCollection();
 }

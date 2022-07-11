@@ -14,7 +14,8 @@ import { logger } from '../../global';
 import { scanCurrentTabsForBackground } from './chromeScan';
 import { setAttrForObject } from '../common';
 
-const MAX_SAVED_SESSIONS = isJestTest() ? 3 : 64;
+const MAX_SAVED_SESSIONS_PER_DAY = isJestTest() ? 2 : 64;
+const MAX_SESSION_DAYS = isJestTest() ? 2 : 14;
 
 function countSessionNonTabverseTabs(session: ChromeSession): number {
   // calculate how many real tabs we have, excluding tabverse manager tabs
@@ -28,46 +29,42 @@ function countSessionNonTabverseTabs(session: ChromeSession): number {
 }
 
 // our strategy to delete a session
-//   1. start from the last session, if it has at least one session before it
-//      with the same tag id (means they are from the same day), delete it.
-//   2. otherwise if we can not find a session as above from tags different than
-//      current tag (means previous day's sessions), we delete the last session.
-function findSessionToDelete(
+//   1. for each tag (day), keep MAX_SAVED_SESSIONS_PER_DAY
+//   2. keep MAX_SESSION_DAYS of days
+function findSessionIdsToDelete(
+  currentSavedSession: ChromeSessionSavePayload,
   lastSavedSessions: ChromeSessionSavePayload[],
-  tag: string,
-): ChromeSessionSavePayload {
-  let toDeleteSession: ChromeSessionSavePayload | null = null;
-  let toDeleteSessionGroupSize = 0;
+): string[] {
+  const toDeleteSessionIds: string[] = [];
 
-  for (let i = lastSavedSessions.length - 1; i >= 0; i--) {
-    if (lastSavedSessions[i].tag === tag) {
+  const groups: ChromeSessionSavePayload[][] = [];
+  let currentGroup = [currentSavedSession];
+  for (let i = 0; i < lastSavedSessions.length; i++) {
+    if (lastSavedSessions[i].tag !== currentGroup[0].tag) {
+      groups.push(currentGroup);
+      currentGroup = [lastSavedSessions[i]];
       continue;
-    }
-
-    if (toDeleteSession === null) {
-      toDeleteSession = lastSavedSessions[i];
-      toDeleteSessionGroupSize = 1;
-      continue;
-    }
-
-    if (toDeleteSession.tag === lastSavedSessions[i].tag) {
-      toDeleteSessionGroupSize += 1;
     } else {
-      if (toDeleteSessionGroupSize === 1) {
-        toDeleteSession = lastSavedSessions[i];
-        toDeleteSessionGroupSize = 1;
+      currentGroup.push(lastSavedSessions[i]);
+    }
+  }
+  if (currentGroup.length > 0) {
+    groups.push(currentGroup);
+  }
+
+  for (let i = MAX_SESSION_DAYS; i < groups.length; i++) {
+    groups[i].forEach((s) => toDeleteSessionIds.push(s.id));
+  }
+
+  for (let i = 0; i < MAX_SESSION_DAYS && i < groups.length; i++) {
+    if (groups[i].length >= MAX_SAVED_SESSIONS_PER_DAY) {
+      for (let j = MAX_SAVED_SESSIONS_PER_DAY; j < groups[i].length; j++) {
+        toDeleteSessionIds.push(groups[i][j].id);
       }
     }
   }
 
-  if (
-    toDeleteSession === null ||
-    (toDeleteSession !== null && toDeleteSessionGroupSize === 1)
-  ) {
-    toDeleteSession = lastSavedSessions[lastSavedSessions.length - 1];
-  }
-
-  return toDeleteSession;
+  return toDeleteSessionIds;
 }
 
 export async function saveSession(
@@ -98,9 +95,8 @@ export async function saveSession(
 
   const lastSavedSessions = await db
     .table<ChromeSessionSavePayload>(CHROMESESSION_DB_TABLE_NAME)
-    .orderBy('updatedAt')
+    .orderBy('createdAt')
     .reverse()
-    // .filter((savedSession) => savedSession.tag === session.tag)
     .toArray();
 
   let sessionSavePayload: ChromeSessionSavePayload = null;
@@ -117,21 +113,16 @@ export async function saveSession(
     const r = convertAndGetSavePayload(session);
     session = r.chromeSession;
     sessionSavePayload = r.savePayload;
-    // console.log(
-    //   'want to save session:',
-    //   lastSavedSession,
-    //   sessionSavePayload,
-    //   isChromeSessionChanged(lastSavedSession, sessionSavePayload),
-    // );
     if (isChromeSessionChanged(lastSavedSession, sessionSavePayload)) {
-      if (lastSavedSessions.length + 1 > MAX_SAVED_SESSIONS) {
-        const toDeleteSavedSession = findSessionToDelete(
-          lastSavedSessions,
-          tag,
-        );
+      const toDeleteSavedSessionIds = findSessionIdsToDelete(
+        sessionSavePayload,
+        lastSavedSessions,
+      );
+      if (toDeleteSavedSessionIds.length > 0) {
+        logger.log('will reap stale sessions', toDeleteSavedSessionIds);
         await db
           .table(CHROMESESSION_DB_TABLE_NAME)
-          .delete(toDeleteSavedSession.id);
+          .bulkDelete(toDeleteSavedSessionIds);
       }
       logger.log(
         'save session as changed from lastSavedSession',

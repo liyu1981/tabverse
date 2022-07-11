@@ -1,7 +1,7 @@
 @use '../../../global.scss';
 
 .sessionSelectorMenu {
-  margin-bottom: 40px;
+  margin-bottom: 20px;
   border-radius: 40px;
   padding: 14px 8px;
   // box-shadow: 0 0 0 1px rgb(16 22 26 / 10%), 0 0 0 rgb(16 22 26 / 0%),
@@ -73,4 +73,10 @@
 .sessionMenuGroupSelector :global(.bp3-html-select) select:hover {
   box-shadow: 0 0 0 1px rgb(16 22 26 / 10%), 0 0 0 rgb(16 22 26 / 0%),
     0 1px 1px rgb(16 22 26 / 20%);
+}
+
+.sessionSelectorTools {
+  margin-bottom: 40px;
+  display: flex;
+  justify-content: center;
 }
