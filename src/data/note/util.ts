@@ -1,8 +1,17 @@
-import { isArray } from 'lodash';
-import { isJestTest } from '../../debug';
-import { debounce, logger } from '../../global';
-import { subscribePubSubMessage, TabSpaceMsg } from '../../message/message';
+import { $allNote, noteStoreApi } from './store';
+import {
+  ALLNOTE_DB_TABLE_NAME,
+  AllNote,
+  AllNoteSavePayload,
+  addNote,
+  convertAndGetAllNoteSavePayload,
+  newEmptyAllNote,
+  updateTabSpaceId,
+} from './AllNote';
+import { NOTE_DB_TABLE_NAME, Note, NoteLocalStorage } from './Note';
+import { TabSpaceMsg, subscribePubSubMessage } from '../../message/message';
 import { addPagingToQueryParams, db } from '../../storage/db';
+import { debounce, logger } from '../../global';
 import {
   getLocalStorageKey,
   localStorageAddListener,
@@ -10,23 +19,14 @@ import {
   localStoragePutItem,
   localStorageRemoveListener,
 } from '../../storage/localStorageWrapper';
-import { DEFAULT_SAVE_DEBOUNCE } from '../../storage/StorageOverview';
-import { updateFromSaved } from '../Base';
-import { isIdNotSaved } from '../common';
-import { InSavingStatus } from '../../storage/GeneralStorage';
+
 import { $tabSpace } from '../tabSpace/store';
+import { DEFAULT_SAVE_DEBOUNCE } from '../../storage/StorageOverview';
+import { isArray } from 'lodash';
+import { isIdNotSaved } from '../common';
+import { isJestTest } from '../../debug';
 import { needAutoSave } from '../tabSpace/TabSpace';
-import {
-  addNote,
-  AllNote,
-  AllNoteSavePayload,
-  ALLNOTE_DB_TABLE_NAME,
-  convertAndGetAllNoteSavePayload,
-  newEmptyAllNote,
-  updateTabSpaceId,
-} from './AllNote';
-import { Note, NoteLocalStorage, NOTE_DB_TABLE_NAME } from './Note';
-import { $allNote, $noteStorage, noteStoreApi } from './store';
+import { updateFromSaved } from '../Base';
 
 export const LOCALSTORAGE_NOTE_KEY = getLocalStorageKey('note');
 
@@ -64,7 +64,7 @@ export async function loadAllNoteByTabSpaceId(tabSpaceId: string) {
 }
 
 export function startMonitorLocalStorageChanges() {
-  localStorageAddListener(LOCALSTORAGE_NOTE_KEY, (key, newValue, oldValue) => {
+  localStorageAddListener(LOCALSTORAGE_NOTE_KEY, (key, newValue, _oldValue) => {
     const noteJSONs = JSON.parse(newValue) as NoteLocalStorage[];
     noteStoreApi.restoreFromLocalStorageJSON(noteJSONs);
   });
@@ -74,27 +74,6 @@ export function startMonitorLocalStorageChanges() {
 
 export function stopMonitorLocalStorageChanges() {
   localStorageRemoveListener(LOCALSTORAGE_NOTE_KEY);
-}
-
-export function monitorAllNoteChanges() {
-  $allNote.watch((currentAllNote) => {
-    logger.log('allNote changed:', currentAllNote);
-    if ($noteStorage.getState().inSaving === InSavingStatus.InSaving) {
-      logger.log('note in saving, skip');
-    } else {
-      if (needAutoSave($tabSpace.getState())) {
-        logger.log(
-          'current tabSpace need autoSave, will then saveCurrentAllNote',
-        );
-        saveCurrentAllNote();
-      } else {
-        logger.log(
-          'current tabSpace is not on autoSave, will then save notes to localStorage',
-        );
-        saveCurrentAllNoteToLocalStorage();
-      }
-    }
-  });
 }
 
 export async function saveAllNote(): Promise<number> {
@@ -136,6 +115,18 @@ export const saveCurrentAllNote = debounce(
   DEFAULT_SAVE_DEBOUNCE,
 );
 
+export const saveCurrentAllNoteIfNeeded = () => {
+  if (needAutoSave($tabSpace.getState())) {
+    logger.log('current tabSpace need autoSave, will then saveCurrentAllNote');
+    saveCurrentAllNote();
+  } else {
+    logger.log(
+      'current tabSpace is not on autoSave, will then save notes to localStorage',
+    );
+    saveCurrentAllNoteToLocalStorage();
+  }
+};
+
 function saveCurrentAllNoteToLocalStorage() {
   localStoragePutItem(
     LOCALSTORAGE_NOTE_KEY,
@@ -145,7 +136,7 @@ function saveCurrentAllNoteToLocalStorage() {
 
 export async function queryAllNote(
   tabSpaceId: string,
-  params?: any,
+  _params?: any,
 ): Promise<AllNote> {
   const allNotesData = await db
     .table<AllNoteSavePayload>(ALLNOTE_DB_TABLE_NAME)

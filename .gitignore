@@ -4,6 +4,8 @@ dist/assets
 dist/static/*.css
 dist/static/*.css.map
 dist/static/*/*.min.css
+dist/static/fontawesome/webfonts/fa-v4compatibility.ttf
+dist/static/fontawesome/webfonts/fa-v4compatibility.woff2
 node_modules/
 .cache/
 .parcel-cache/
