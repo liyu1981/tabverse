@@ -1,6 +1,6 @@
-import { monitorDbChanges, monitorTabSpaceChanges } from './tabSpace/util';
 import { scanCurrentTabs, startMonitorTabChanges } from './tabSpace/chromeTab';
 
+import { monitorDbChanges } from './tabSpace/util';
 import { startMonitorChromeMessage } from '../message/chromeMessage';
 import { tabSpaceStoreApi } from './tabSpace/store';
 
@@ -18,5 +18,4 @@ export async function tabSpaceBootstrap(
   startMonitorTabChanges();
   startMonitorChromeMessage();
   monitorDbChanges();
-  monitorTabSpaceChanges();
 }

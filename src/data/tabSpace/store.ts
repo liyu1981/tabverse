@@ -29,7 +29,7 @@ export const $tabSpace = createStore(newEmptyTabSpace());
 export type TabSpaceStore = typeof $tabSpace;
 
 const tabSpaceApi = createApi($tabSpace, {
-  update: (lastTabSpace, updatedTabSpace: TabSpace) => updatedTabSpace,
+  update: (_lastTabSpace, updatedTabSpace: TabSpace) => updatedTabSpace,
   addTab: (lastTabSpace, tab: Tab) => insertTab({ tab }, lastTabSpace),
   addTabs: (lastTabSpace, tabs: Tab[]) => addTabs(tabs, lastTabSpace),
   updateTab: (

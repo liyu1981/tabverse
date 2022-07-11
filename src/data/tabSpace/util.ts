@@ -1,4 +1,4 @@
-import { $tabSpace, $tabSpaceStorage, tabSpaceStoreApi } from './store';
+import { $tabSpace, tabSpaceStoreApi } from './store';
 import { QUERY_PAGE_LIMIT_DEFAULT, db } from '../../storage/db';
 import {
   TABSPACE_DB_TABLE_NAME,
@@ -11,7 +11,6 @@ import {
   insertTab,
   needAutoSave,
   toTabSpaceStub,
-  updateTab,
   updateTabSpace,
 } from './TabSpace';
 import { TAB_DB_TABLE_NAME, Tab, TabSavePayload, fromSavedTab } from './Tab';
@@ -31,7 +30,6 @@ import {
 
 import { DEFAULT_SAVE_DEBOUNCE } from '../../storage/StorageOverview';
 import { IDatabaseChange } from 'dexie-observable/api';
-import { InSavingStatus } from '../../storage/GeneralStorage';
 import { addTabSpaceToIndex } from '../../background/fullTextSearch/addToIndex';
 import { filter } from 'lodash';
 import { removeTabSpaceFromIndex } from '../../background/fullTextSearch/api';
@@ -59,23 +57,6 @@ export function monitorDbChanges() {
       });
     },
   );
-}
-
-export function monitorTabSpaceChanges() {
-  const watcher = $tabSpace.watch((updatedTabSpace) => {
-    logger.log('tabSpace changed:', updatedTabSpace);
-    if ($tabSpaceStorage.getState().inSaving === InSavingStatus.InSaving) {
-      logger.log('in saving, skip');
-    } else {
-      if (needAutoSave(updatedTabSpace)) {
-        logger.log(
-          'current tabSpace need autoSave, will then saveCurrentTabSpace',
-        );
-        saveCurrentTabSpace();
-      }
-    }
-  });
-  return watcher;
 }
 
 export interface QuerySavedTabSpaceParams {
@@ -171,11 +152,11 @@ export async function saveTabSpace(): Promise<number> {
         newTabSavePayloads,
         existTabSavePayloads,
       } = convertAndGetTabSpaceSavePayload(targetTabSpace);
-      console.log(
-        'save tabSpaceSavePayload is:',
-        JSON.stringify(tabSpaceSavePayload),
-        JSON.stringify(newTabSavePayloads),
-        JSON.stringify(existTabSavePayloads),
+      logger.log(
+        `save tabSpaceSavePayload is:,
+        ${JSON.stringify(tabSpaceSavePayload)},
+        ${JSON.stringify(newTabSavePayloads)},
+        ${JSON.stringify(existTabSavePayloads)}`,
       );
       if (isNewTabSpace) {
         await db.table(TABSPACE_DB_TABLE_NAME).add(tabSpaceSavePayload);
@@ -185,7 +166,6 @@ export async function saveTabSpace(): Promise<number> {
       await db.table(TAB_DB_TABLE_NAME).bulkAdd(newTabSavePayloads);
       await db.table(TAB_DB_TABLE_NAME).bulkPut(existTabSavePayloads);
       return updatedTabSpace;
-      // return tabSpaceSavePayload.updatedAt;
     },
   );
   tabSpaceStoreApi.update(updatedTabSpace);
@@ -233,6 +213,15 @@ export const saveCurrentTabSpace: () => void | Promise<void> = debounce(
   saveCurrentTabSpaceImpl,
   DEFAULT_SAVE_DEBOUNCE,
 );
+
+export const saveCurrentTabSpaceIfNeeded = () => {
+  const currentTabSpace = $tabSpace.getState();
+  const oldId = currentTabSpace.id;
+  if (!needAutoSave(currentTabSpace)) {
+    return;
+  }
+  return saveCurrentTabSpace();
+};
 
 export async function moveTabsToTabSpace(
   toMoveTabs: Tab[],
