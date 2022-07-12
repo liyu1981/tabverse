@@ -92,19 +92,19 @@
   border: 1px solid #f1f1f1;
 }
 
-.tabCardPopover :global(.bp3-popover2) {
+.tabCardPopover :global(.bp4-popover2) {
   border-radius: 38px;
   box-shadow: 0 8px 24px rgb(16 22 26 / 20%);
 }
 
-.tabCardPopover :global(.bp3-popover2-arrow) {
+.tabCardPopover :global(.bp4-popover2-arrow) {
   display: none;
 }
 
-.tabCardPopover :global(.bp3-card) {
+.tabCardPopover :global(.bp4-card) {
   box-shadow: none;
 }
 
-.tabCardPopover :global(.bp3-popover2) :global(.bp3-popover2-content) {
+.tabCardPopover :global(.bp4-popover2) :global(.bp4-popover2-content) {
   border-radius: 38px;
 }

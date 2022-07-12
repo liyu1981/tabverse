@@ -8,7 +8,7 @@
   //   0 1px 1px rgb(16 22 26 / 20%);
 }
 
-.sessionSelectorMenu :global(.bp3-menu-item):hover {
+.sessionSelectorMenu :global(.bp4-menu-item):hover {
   background-color: inherit;
 }
 
@@ -21,7 +21,7 @@
   color: darken(global.$color-c, 15%);
 }
 
-.sessionLabelActive :global(.bp3-button) :global(.bp3-icon) {
+.sessionLabelActive :global(.bp4-button) :global(.bp4-icon) {
   color: global.$color-c;
 }
 
@@ -60,17 +60,17 @@
   margin-bottom: 8px;
 }
 
-.sessionMenuGroupSelector :global(.bp3-html-select) {
+.sessionMenuGroupSelector :global(.bp4-html-select) {
   border-radius: 18px;
 }
 
-.sessionMenuGroupSelector :global(.bp3-html-select) select {
+.sessionMenuGroupSelector :global(.bp4-html-select) select {
   background-color: white;
   background-image: none;
   box-shadow: none;
 }
 
-.sessionMenuGroupSelector :global(.bp3-html-select) select:hover {
+.sessionMenuGroupSelector :global(.bp4-html-select) select:hover {
   box-shadow: 0 0 0 1px rgb(16 22 26 / 10%), 0 0 0 rgb(16 22 26 / 0%),
     0 1px 1px rgb(16 22 26 / 20%);
 }
