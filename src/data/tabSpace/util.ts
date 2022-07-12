@@ -7,10 +7,12 @@ import {
   addTabs,
   cloneTabSpace,
   convertAndGetTabSpaceSavePayload,
+  findTabByChromeTabId,
   fromSavedDataWithoutTabs,
   insertTab,
   needAutoSave,
   toTabSpaceStub,
+  updateTab,
   updateTabSpace,
 } from './TabSpace';
 import { TAB_DB_TABLE_NAME, Tab, TabSavePayload, fromSavedTab } from './Tab';
@@ -27,11 +29,11 @@ import {
   perfEnd,
   perfStart,
 } from '../../global';
+import { filter, isEqual, omit } from 'lodash';
 
 import { DEFAULT_SAVE_DEBOUNCE } from '../../storage/StorageOverview';
 import { IDatabaseChange } from 'dexie-observable/api';
 import { addTabSpaceToIndex } from '../../background/fullTextSearch/addToIndex';
-import { filter } from 'lodash';
 import { removeTabSpaceFromIndex } from '../../background/fullTextSearch/api';
 import { updateTabSpace as tabSpaceRegistryUpdateTabSpace } from '../tabSpaceRegistry';
 
@@ -139,12 +141,12 @@ export async function querySavedTabSpaceById(
   return savedTabSpaces[0];
 }
 
-export async function saveTabSpace(): Promise<number> {
+export async function saveTabSpace(targetTabSpace: TabSpace): Promise<number> {
+  const isCurrentTabSpace = targetTabSpace.id === $tabSpace.getState().id;
   const updatedTabSpace = await db.transaction(
     'rw',
     [db.table(TAB_DB_TABLE_NAME), db.table(TABSPACE_DB_TABLE_NAME)],
-    async (tx) => {
-      const targetTabSpace = $tabSpace.getState();
+    async (_tx) => {
       const {
         tabSpace: updatedTabSpace,
         tabSpaceSavePayload,
@@ -153,11 +155,16 @@ export async function saveTabSpace(): Promise<number> {
         existTabSavePayloads,
       } = convertAndGetTabSpaceSavePayload(targetTabSpace);
       logger.log(
-        `save tabSpaceSavePayload is:,
-        ${JSON.stringify(tabSpaceSavePayload)},
-        ${JSON.stringify(newTabSavePayloads)},
-        ${JSON.stringify(existTabSavePayloads)}`,
+        'save tabSpaceSavePayload is:',
+        targetTabSpace,
+        $tabSpace.getState(),
+        tabSpaceSavePayload,
+        newTabSavePayloads,
+        existTabSavePayloads,
       );
+      if (isCurrentTabSpace) {
+        tabSpaceStoreApi.update(updatedTabSpace);
+      }
       if (isNewTabSpace) {
         await db.table(TABSPACE_DB_TABLE_NAME).add(tabSpaceSavePayload);
       } else {
@@ -168,9 +175,62 @@ export async function saveTabSpace(): Promise<number> {
       return updatedTabSpace;
     },
   );
-  tabSpaceStoreApi.update(updatedTabSpace);
+  if (isCurrentTabSpace) {
+    mayBeSaveCurrentAgain(updatedTabSpace);
+  }
   addTabSpaceToIndex(updatedTabSpace.id);
   return updatedTabSpace.updatedAt;
+}
+
+function mayBeSaveCurrentAgain(updatedTabSpace: TabSpace) {
+  const currentTabSpace = $tabSpace.getState();
+  let mergedTabSpace = cloneTabSpace(updatedTabSpace);
+  let changed = false;
+  if (updatedTabSpace.name !== currentTabSpace.name) {
+    changed = true;
+    mergedTabSpace.name = currentTabSpace.name;
+  }
+  if (updatedTabSpace.chromeTabId !== currentTabSpace.chromeTabId) {
+    changed = true;
+    mergedTabSpace.chromeTabId = currentTabSpace.chromeTabId;
+  }
+  if (updatedTabSpace.chromeWindowId !== currentTabSpace.chromeWindowId) {
+    changed = true;
+    mergedTabSpace.chromeWindowId = currentTabSpace.chromeWindowId;
+  }
+  const noConsiderFields = [
+    'version',
+    'createdAt',
+    'updatedAt',
+    'id',
+    'tabSpaceId',
+  ];
+  currentTabSpace.tabs.forEach((ct) => {
+    const ut = findTabByChromeTabId(ct.chromeTabId, updatedTabSpace);
+    if (!ut) {
+      mergedTabSpace = addTabs([ut], mergedTabSpace);
+      changed = true;
+    } else {
+      if (!isEqual(omit(ct, noConsiderFields), omit(ut, noConsiderFields))) {
+        mergedTabSpace = updateTab(
+          { tid: ut.id, changes: omit(ct, noConsiderFields) },
+          mergedTabSpace,
+        );
+        changed = true;
+      }
+    }
+  });
+
+  if (changed) {
+    logger.log(
+      'detected changed after save, will merge and saveCurrentTabSpaceIfNeeded for next',
+      mergedTabSpace,
+    );
+    setTimeout(() => {
+      tabSpaceStoreApi.update(mergedTabSpace);
+      saveCurrentTabSpaceIfNeeded();
+    });
+  }
 }
 
 export async function deleteSavedTabSpace(
@@ -179,7 +239,7 @@ export async function deleteSavedTabSpace(
   await db.transaction(
     'rw',
     [db.table(TAB_DB_TABLE_NAME), db.table(TABSPACE_DB_TABLE_NAME)],
-    async (tx) => {
+    async (_tx) => {
       const savedTabSpace = await db
         .table<TabSpaceSavePayload>(TABSPACE_DB_TABLE_NAME)
         .get(savedTabSpaceId);
@@ -191,10 +251,10 @@ export async function deleteSavedTabSpace(
 }
 
 const saveCurrentTabSpaceImpl = async () => {
-  const oldId = $tabSpace.getState().id;
-
   tabSpaceStoreApi.markInSaving(true);
-  const savedTime = await saveTabSpace();
+  const currentTabSpace = $tabSpace.getState();
+  const oldId = currentTabSpace.id;
+  const savedTime = await saveTabSpace(currentTabSpace);
   tabSpaceStoreApi.updateLastSavedTime(savedTime);
   tabSpaceStoreApi.markInSaving(false);
 
@@ -216,7 +276,6 @@ export const saveCurrentTabSpace: () => void | Promise<void> = debounce(
 
 export const saveCurrentTabSpaceIfNeeded = () => {
   const currentTabSpace = $tabSpace.getState();
-  const oldId = currentTabSpace.id;
   if (!needAutoSave(currentTabSpace)) {
     return;
   }
@@ -229,7 +288,7 @@ export async function moveTabsToTabSpace(
 ) {
   let newTabSpace = cloneTabSpace(targetTabSpace);
   newTabSpace = addTabs(toMoveTabs, newTabSpace);
-  await saveTabSpace();
+  await saveTabSpace(newTabSpace);
 }
 
 export async function loadTabSpaceByTabSpaceId(
@@ -252,7 +311,7 @@ export async function loadTabSpaceByTabSpaceId(
   // the saved order
   for (let i = 0; i < tabSpace.tabs.size; i++) {
     const savedTab = tabSpace.tabs.get(i);
-    const chromeTab = await chrome.tabs.create({ url: savedTab.url });
+    await chrome.tabs.create({ url: savedTab.url });
   }
 
   tabSpaceStoreApi.update(tabSpace);

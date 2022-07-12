@@ -193,7 +193,7 @@ export function updateTab(
     const tIndex = draft.tabs.findIndex((tab) => tab.id === tid);
     if (tIndex >= 0) {
       const existTab = draft.tabs.get(tIndex);
-      const newTab = { ...existTab, ...changes };
+      const newTab = { ...existTab, ...changes, tabSpaceId: draft.id };
       draft.tabs = draft.tabs.set(tIndex, newTab);
     }
   });
