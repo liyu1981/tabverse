@@ -12,11 +12,11 @@ import { strict as assert } from 'assert';
 import { find } from 'lodash';
 import { bootstrap as fullTextSearchBootstrap } from '../fullTextSearch';
 import { getQueryParameters } from './common/queryAndHashParameter';
+import { loadTabSpaceByTabSpaceId } from '../data/tabSpace/util';
 import { localStorageInit } from '../storage/localStorageWrapper';
 import { renderPage } from './common/base';
-import { bootstrap as tabSpaceRegistryServiceBootstrap } from '../data/tabSpaceRegistry';
 import { tabSpaceBootstrap } from '../data/tabSpaceBootstrap';
-import { loadTabSpaceByTabSpaceId } from '../data/tabSpace/util';
+import { bootstrap as tabSpaceRegistryServiceBootstrap } from '../data/tabSpaceRegistry';
 import { tabSpaceStoreApi } from '../data/tabSpace/store';
 
 async function bootstrap() {
