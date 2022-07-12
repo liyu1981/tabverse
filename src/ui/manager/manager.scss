@@ -11,30 +11,30 @@ body {
   outline: none;
 }
 
-:global(.bp3-button) {
+:global(.bp4-button) {
   border-radius: 18px;
 }
 
-:global(.bp3-card):global(.bp3-interactive):hover {
+:global(.bp4-card):global(.bp4-interactive):hover {
   box-shadow: 0 2px 4px rgb(16 22 26 / 20%), 0 8px 24px rgb(16 22 26 / 20%);
 }
 
-:global(.bp3-control):global(.bp3-checkbox) :global(.bp3-control-indicator) {
+:global(.bp4-control):global(.bp4-checkbox) :global(.bp4-control-indicator) {
   border-radius: 8px;
 }
 
-:global(.tv-primary-button):global(.bp3-button) {
+:global(.tv-primary-button):global(.bp4-button) {
   background-color: global.$color-d;
   color: global.$color-c;
   background-image: none;
   box-shadow: none;
 }
 
-:global(.tv-primary-button):global(.bp3-button) :global(.bp3-icon) {
+:global(.tv-primary-button):global(.bp4-button) :global(.bp4-icon) {
   color: global.$color-c;
 }
 
-:global(.tv-primary-button):global(.bp3-button):hover {
+:global(.tv-primary-button):global(.bp4-button):hover {
   background-color: global.$color-d;
   color: global.$color-c;
   box-shadow: 0px 0px 4px 4px rgb(16 22 26 / 20%);

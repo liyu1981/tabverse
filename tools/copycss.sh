@@ -4,7 +4,7 @@ cp -v node_modules/normalize.css/normalize.css dist/static
 
 mkdir -p dist/static/blueprintjs
 cp -v node_modules/@blueprintjs/core/lib/css/blueprint.css* dist/static/blueprintjs/
-cp -v node_modules/@blueprintjs/icons/lib/css/blueprint-icons.css* dist/static/blueprintjs/
+cp -v node_modules/@blueprintjs/icons/lib/css/blueprint-icons* dist/static/blueprintjs/
 cp -v node_modules/@blueprintjs/popover2/lib/css/blueprint-popover2.css* dist/static/blueprintjs/
 
 mkdir -p dist/static/draftjs

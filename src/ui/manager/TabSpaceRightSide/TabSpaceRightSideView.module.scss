@@ -22,7 +22,7 @@
   float: right;
 }
 
-.bpTabs :global(.bp3-tab) {
+.bpTabs :global(.bp4-tab) {
   padding: 4px 12px;
   border-radius: 18px;
   font-weight: bold;
@@ -30,7 +30,7 @@
   transition: all 200ms ease-in;
 }
 
-.bpTabs :global(.bp3-tab)[aria-selected='true'] {
+.bpTabs :global(.bp4-tab)[aria-selected='true'] {
   background-color: global.$color-main-brand !important;
   color: global.$color-c;
   padding: 4px 12px;
@@ -38,12 +38,12 @@
   font-weight: bold;
 }
 
-.bpTabs :global(.bp3-tab-indicator-wrapper) {
+.bpTabs :global(.bp4-tab-indicator-wrapper) {
   display: none;
 }
 
 .bpTabs
-  :global(.bp3-tab):not([aria-selected='true']):not([aria-disabled='true']):hover {
+  :global(.bp4-tab):not([aria-selected='true']):not([aria-disabled='true']):hover {
   background-color: #ddd !important;
   color: inherit;
 }
