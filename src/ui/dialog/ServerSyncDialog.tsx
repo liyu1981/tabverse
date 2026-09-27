@@ -50,7 +50,7 @@ export const ServerSyncDialog = (props: {
 
   useEffect(() => {
     if (!isOpen) {
-      return;
+      return undefined;
     }
     let cancelled = false;
     setLoaded(false);

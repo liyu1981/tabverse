@@ -45,7 +45,7 @@ export async function addTabToIndex(id: string) {
       field: SearchableField.Url,
     });
   } catch (e) {
-    logger.error(e.message);
+    logger.error(e instanceof Error ? e.message : String(e));
   }
 }
 
@@ -63,7 +63,7 @@ export async function addTabSpaceToIndex(id: string) {
       field: SearchableField.Name,
     });
   } catch (e) {
-    logger.error(e.message);
+    logger.error(e instanceof Error ? e.message : String(e));
   }
 }
 

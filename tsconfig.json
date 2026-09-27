@@ -13,7 +13,22 @@
     "skipLibCheck": true,
     "useDefineForClassFields": true,
     "forceConsistentCasingInFileNames": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+
+    // Staged strictness: every flag below is enabled and clean today.
+    // The expensive members of `strict` - strictNullChecks (428 errors),
+    // noImplicitAny (227) and exactOptionalPropertyTypes (needs
+    // strictNullChecks) - are pending a dedicated pass, see adr/0004.
+    "alwaysStrict": true,
+    "strictBindCallApply": true,
+    "strictFunctionTypes": true,
+    "strictPropertyInitialization": false,
+    "noImplicitThis": true,
+    "noImplicitReturns": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "useUnknownInCatchVariables": true
   },
   "include": ["src", "*.d.ts", "*.mts"],
   "exclude": ["node_modules", "dist", "docs", "doc"]

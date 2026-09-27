@@ -48,8 +48,7 @@ export function isEqualContent(
   if (!otherNote) {
     return false;
   }
-  let r = false;
-  r =
+  let r =
     thisNote.tabSpaceId === otherNote.tabSpaceId &&
     thisNote.name === otherNote.name &&
     thisNote.data === otherNote.data;

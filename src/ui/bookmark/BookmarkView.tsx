@@ -100,6 +100,7 @@ export function BookmarkView({ tabSpaceId }: IBookmarkViewProps) {
         stopMonitorLocalStorageChanges();
       };
     }
+    return undefined;
   }, [tabSpaceId]);
 
   const [getCurrentPageItems, renderPageControl] = usePageControl<Bookmark>(

@@ -32,7 +32,7 @@ export function getLoadingComponent(
   return WrappedComponent;
 }
 
-export function getLoadingComponent2<T extends React.VFC>(
+export function getLoadingComponent2<T extends React.FC<any>>(
   component: T,
   loader: () => Promise<void>,
 ) {

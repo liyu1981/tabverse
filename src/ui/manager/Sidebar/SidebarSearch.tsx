@@ -12,7 +12,7 @@ export interface SidebarSearchProps {
 }
 
 export function SidebarSearch(props: SidebarSearchProps) {
-  const inputRef = useRef<HTMLInputElement>();
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   const onKeyDown = useMemo(
     () => (event: React.KeyboardEvent<HTMLInputElement>) => {

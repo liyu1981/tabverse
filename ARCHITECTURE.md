@@ -81,17 +81,28 @@ See `server/README.md` for configuration, deployment and protocol semantics.
 
 ## Status
 
-- [x] Go server: auth, delta sync, LWW, tombstones, WebSocket fan-out,
-      FTS5 search, retention, tests, cross-compile, Docker
+- [x] Go server (`tabversed`): auth, delta sync, LWW, tombstones, WebSocket
+      fan-out, FTS5 search, retention, tests (`-race`), cross-compile, Docker
 - [x] Wire contract (`api/openapi.yaml`)
-- [x] Client sync layer with 61 unit tests
-- [x] Integration: change feed + background runtime + pairing dialog
+- [x] Client sync layer: outbox, delta engine, realtime, Dexie bridge,
+      change feed, pairing dialog (8 test suites)
 - [x] MV3 hardening: `storage` permission, tightened CSP,
-      `minimum_chrome_version`, `action.default_icon`
-- [x] CI: format, lint, tests, prod build, Go vet/race/cross, store zip
+      `minimum_chrome_version`, `action.default_icon`, module service worker
+- [x] Toolchain revamp — Vite 8, React 19, Blueprint 6, Vitest 5, ESLint 10
+      flat config, Prettier 3, TypeScript 5.9 (`adr/0003`, `adr/0004`)
+- [x] draft-js -> TipTap with a tested legacy content converter
+- [x] TypeScript strict **subset** enabled (see the comments in
+      `tsconfig.json`); dead stores cleaned, ESLint's `no-useless-assignment`
+      stays on
+- [x] CI: typecheck, format, lint, tests, prod build, store zip + Go
+      vet/race/cross-compile
+- [x] Store disclosure notes (`doc/chrome-webstore/listing.md`) and the
+      privacy policy's "Optional server sync" section
 - [ ] Existing users' local data upload is a **manual, explicit** button
       (see ADR 0002 §3) — no silent migration
-- [ ] Toolchain revamp (webpack → Vite/WXT, React 18, TS 5 strict, ESLint 9
-      flat config, Jest → Vitest) — deliberately _after_ the sync layer, see
-      `adr/0001` follow-ups
-- [ ] Store disclosures / privacy policy text (blocked on ADR 0002 wording)
+- [ ] `strictNullChecks` (428 errors) + `noImplicitAny` (227) — staged pass,
+      count first with `npx tsc --noEmit --strict`
+- [ ] Re-evaluate the tabSpaceRegistry leader election: it tracks
+      browser-local presence, not synced data (`adr/0004`)
+- [ ] A real run in Chrome: load `dist/` unpacked, pair a server, exercise
+      capture -> sync -> search and the note editor

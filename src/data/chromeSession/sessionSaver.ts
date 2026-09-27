@@ -82,13 +82,13 @@ export async function saveSession(
   if (session.tabs.size <= 0) {
     // if there is actually no tab (will happen when the browser relaunch
     // between updating itself), skip saving
-    return;
+    return null;
   }
 
   if (countSessionNonTabverseTabs(session) <= 0) {
     // when the session is empty (will happen when the tabverse just loaded by
     // chrome), skip saving
-    return;
+    return null;
   }
 
   logger.log('try to save session:', session);
@@ -99,19 +99,17 @@ export async function saveSession(
     .reverse()
     .toArray();
 
-  let sessionSavePayload: ChromeSessionSavePayload = null;
+  let sessionSavePayload: ChromeSessionSavePayload;
 
   if (lastSavedSessions.length <= 0) {
     logger.log('save session as lastSavedSessions.length <= 0');
     const r = convertAndGetSavePayload(session);
-    session = r.chromeSession;
     sessionSavePayload = r.savePayload;
     await db.table(CHROMESESSION_DB_TABLE_NAME).add(sessionSavePayload);
     return sessionSavePayload;
   } else {
     const lastSavedSession = lastSavedSessions[0];
     const r = convertAndGetSavePayload(session);
-    session = r.chromeSession;
     sessionSavePayload = r.savePayload;
     if (isChromeSessionChanged(lastSavedSession, sessionSavePayload)) {
       const toDeleteSavedSessionIds = findSessionIdsToDelete(

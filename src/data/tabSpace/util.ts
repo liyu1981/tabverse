@@ -72,7 +72,7 @@ export async function querySavedTabSpace(
   params?: QuerySavedTabSpaceParams,
 ): Promise<TabSpace[]> {
   perfStart('query table space');
-  let savedData: TabSpaceSavePayload[] = [];
+  let savedData: TabSpaceSavePayload[];
   const pageStart = params?.pageStart ?? 0;
   const pageLimit = params?.pageLimit ?? QUERY_PAGE_LIMIT_DEFAULT;
 

@@ -71,6 +71,8 @@ export const ManagerView = (props: IManagerContainerProps) => {
         return <WebtoolView></WebtoolView>;
       // case ManagerViewRoute.Search:
       //   return <OmniSearch />;
+      default:
+        return null;
     }
   };
 

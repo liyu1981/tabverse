@@ -32,15 +32,17 @@ registerDbAuditor(bookmarkDbAuditor);
 //dbAuditAndClearance();
 
 logger.info('listen to idle state...');
-chrome.idle.onStateChanged.addListener((newState: chrome.idle.IdleState) => {
-  logger.info('chrome idle state change:', newState);
-  if (newState === 'idle' || newState === 'locked') {
-    logger.info(
-      'chrome is now idle or locked, will then perform db audit and clearance.',
-    );
-    dbAuditAndClearance();
-  }
-});
+chrome.idle.onStateChanged.addListener(
+  (newState: `${chrome.idle.IdleState}`) => {
+    logger.info('chrome idle state change:', newState);
+    if (newState === 'idle' || newState === 'locked') {
+      logger.info(
+        'chrome is now idle or locked, will then perform db audit and clearance.',
+      );
+      dbAuditAndClearance();
+    }
+  },
+);
 
 logger.info('monitor chrome tab changes...');
 // setupSessionSaver();

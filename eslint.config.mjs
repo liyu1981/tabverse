@@ -50,9 +50,6 @@ export default tseslint.config(
         { allowShortCircuit: true, allowTernary: true },
       ],
       'no-control-regex': 'off',
-      // New in ESLint 10 and full of dead-store cleanups that need manual
-      // review; deferred (see ARCHITECTURE.md follow-ups).
-      'no-useless-assignment': 'off',
 
       'unused-imports/no-unused-imports': 'error',
       'unused-imports/no-unused-vars': [

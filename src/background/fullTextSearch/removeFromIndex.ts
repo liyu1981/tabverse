@@ -9,7 +9,7 @@ async function removeTabFromIndex(tabId: string) {
   try {
     await removeFromIndex(getDb(), { owner: tabId });
   } catch (e) {
-    logger.error(e.message);
+    logger.error(e instanceof Error ? e.message : String(e));
   }
 }
 
@@ -19,7 +19,7 @@ async function removeTabSpaceFromIndex(tabSpaceId: string) {
   try {
     await removeFromIndex(getDb(), { ultimateOwner: tabSpaceId });
   } catch (e) {
-    logger.error(e.message);
+    logger.error(e instanceof Error ? e.message : String(e));
   }
 }
 

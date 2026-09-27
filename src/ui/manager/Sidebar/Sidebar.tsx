@@ -24,9 +24,9 @@ export function SidebarComponent({
   children,
 }: SidebarComponentProps & {
   route: ManagerViewRoute;
-  header: JSX.Element | React.ReactFragment;
+  header: React.JSX.Element | React.ReactNode;
   onSwitch: (value: ManagerViewRoute) => void;
-  children?: JSX.Element | JSX.Element[];
+  children?: React.JSX.Element | React.JSX.Element[];
 }) {
   return (
     <ErrorBoundary>

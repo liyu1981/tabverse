@@ -169,13 +169,10 @@ export async function startBackgroundSync(
   }
   const storage = deps.storage || new ChromeStorageArea();
 
-  let config: SyncConfig | null = null;
-  try {
-    config = await loadSyncConfig(storage);
-  } catch (err) {
+  const config = await loadSyncConfig(storage).catch((err) => {
     logger.log('repo: cannot read sync config:', err);
     return null;
-  }
+  });
   if (!config || !config.enabled) {
     logger.log('repo: sync not configured, running local only');
     return null;

@@ -102,7 +102,7 @@ class MockTabs {
   }
 
   async query(params: chrome.tabs.QueryInfo): Promise<any[]> {
-    let result = [];
+    let result: any[];
 
     if (params.active) {
       result = this.tabs.filter((t, index) => index === this.activeTabIndex);
@@ -149,7 +149,7 @@ class MockTabsApi {
   }
 
   async query(params: chrome.tabs.QueryInfo): Promise<any[]> {
-    let result = [];
+    let result: any[];
     if (params.currentWindow) {
       const w = this.chrome._getCurrentWindow();
       result = await w.tabs.query(params);

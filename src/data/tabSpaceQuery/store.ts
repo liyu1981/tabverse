@@ -51,7 +51,7 @@ async function reload() {
   const openedSavedTabSpaces = getStateTabSpaceRegistry()
     .filter((tabSpaceStub) => !isIdNotSaved(tabSpaceStub.id))
     .toArray();
-  let savedTabSpaces: TabSpace[] = [];
+  let savedTabSpaces: TabSpace[];
   let changes: Record<string, any> = {};
   if (!tabSpaceQuery.query.isEmpty()) {
     perfStart('load:search');
@@ -173,7 +173,7 @@ export const tabSpaceQueryStoreApi = merge(tabSpaceQueryApi, {
     const tabSpaceQuery = $tabSpaceQuery.getState();
     if (tabSpaceQuery.queryCursors.length >= 1) {
       tabSpaceQueryApi._setQueryCursorCurrentIndex(
-        this.queryCursors.length - 1,
+        tabSpaceQuery.queryCursors.length - 1,
       );
       reload();
     }

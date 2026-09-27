@@ -107,6 +107,7 @@ export function TodoView({ tabSpaceId }: TodoViewProps) {
         stopMonitorLocalStorageChanges();
       };
     }
+    return undefined;
   }, [tabSpaceId]);
 
   const changeTodo = (id: string, t: Todo) => {

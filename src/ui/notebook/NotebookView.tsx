@@ -37,6 +37,7 @@ export function NotebookView({ tabSpaceId }: NotebookViewProps) {
         stopMonitorLocalStorageChanges();
       };
     }
+    return undefined;
   }, [tabSpaceId]);
 
   const updateNote = (nid: string, changes: Partial<Note>) => {

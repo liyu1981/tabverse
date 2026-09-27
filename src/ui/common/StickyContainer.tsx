@@ -22,7 +22,7 @@ export interface StickyContainerProps {
 
 export const StickyContainer = (props: StickyContainerProps) => {
   const [scrollToY, setScrollToY] = useState(0);
-  const divRef = useRef<HTMLDivElement>();
+  const divRef = useRef<HTMLDivElement | null>(null);
 
   const handleScroll = debounce((event) => {
     setScrollToY(window.scrollY);

@@ -97,7 +97,7 @@ export async function search(
     createQueryForAndQuery(db, andQuery),
   );
 
-  let queryCursorNext: DecodedCursorNext = null;
+  let queryCursorNext: DecodedCursorNext;
   try {
     queryCursorNext = decodeCursorNext(query.cursor.next);
   } catch (e) {
@@ -112,8 +112,8 @@ export async function search(
   let nextCursor = NullCursor;
   let pageStart = queryCursorNext.pageStart;
   const pageLimit = queryCursorNext.pageLimit;
-  let qResults = [];
-  let qResultsLeftCount = 0;
+  let qResults: any[];
+  let qResultsLeftCount: number;
 
   for (let i = queryCursorNext.nextQueryIndex; i < queries.length; i++) {
     let q = queries[i];
@@ -171,6 +171,7 @@ function calcCursor(
       };
     }
   }
+  return NullCursor;
 }
 
 function calcCursorNext(

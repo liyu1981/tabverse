@@ -11,7 +11,7 @@ export interface TermPlusViewProps {
 
 export function TermPlusView(props: TermPlusViewProps) {
   const [activated, setActivated] = useState<boolean>(false);
-  const inputRef = useRef<HTMLInputElement>();
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   const onInputKeyDown = useMemo(
     () => (event: React.KeyboardEvent<HTMLInputElement>) => {

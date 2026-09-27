@@ -75,7 +75,7 @@ export function SearchInput(props: SearchInputProps) {
     inputValue: '',
     isInputFocused: false,
   });
-  const inputRef = useRef<HTMLInputElement>();
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   const invokeKeyPressCallback = (
     propCallbackName: 'onKeyDown' | 'onKeyUp',

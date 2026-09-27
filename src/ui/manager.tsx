@@ -5,7 +5,6 @@ import 'normalize.css';
 import '@blueprintjs/core/lib/css/blueprint.css';
 import '@blueprintjs/icons/lib/css/blueprint-icons.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
-import 'draft-js/dist/Draft.css';
 import 'simplebar-react/dist/simplebar.min.css';
 
 import { IManagerQueryParams, ManagerView } from './manager/ManagerView';

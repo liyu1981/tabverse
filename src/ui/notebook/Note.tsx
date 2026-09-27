@@ -1,9 +1,9 @@
 import { Button, Collapse, EditableText, Icon } from '@blueprintjs/core';
-import { EditorState, convertFromRaw, convertToRaw } from 'draft-js';
-import { Note } from '../../data/note/Note';
 import React, { useState } from 'react';
 
-import { DraftRichEditor } from './DraftRichEditor';
+import { Note } from '../../data/note/Note';
+import { normalizeNoteHtml } from './draftLegacy';
+import { RichTextEditor } from './RichTextEditor';
 import classes from './Note.module.scss';
 
 export interface INoteViewProps {
@@ -14,18 +14,12 @@ export interface INoteViewProps {
 
 export const NoteView = (props: INoteViewProps) => {
   const [name, setName] = useState(props.note.name);
-  const [editorState, setEditorState] = useState(
-    props.note.data.length > 0
-      ? EditorState.createWithContent(
-          convertFromRaw(JSON.parse(props.note.data)),
-        )
-      : EditorState.createEmpty(),
-  );
+  // note.data holds HTML; content written by the old draft-js editor is
+  // converted on read and stored as HTML on the next save
+  const [html, setHtml] = useState(() => normalizeNoteHtml(props.note.data));
 
   const updateCurrentNote = () => {
-    const currentContent = editorState.getCurrentContent();
-    const data = JSON.stringify(convertToRaw(currentContent));
-    props.updateFunc(props.note.id, { name, data });
+    props.updateFunc(props.note.id, { name, data: html });
   };
 
   const confirmName = () => {
@@ -55,7 +49,6 @@ export const NoteView = (props: INoteViewProps) => {
         </div>
         <div className={classes.titleContainer}>
           <EditableText
-            className="bp3-editable-text-fullwidth"
             alwaysRenderInput={true}
             maxLength={256}
             value={name}
@@ -75,12 +68,11 @@ export const NoteView = (props: INoteViewProps) => {
         </div>
       </div>
       <Collapse isOpen={editorOpen} keepChildrenMounted={false}>
-        <DraftRichEditor
-          editorState={editorState}
-          setEditorState={setEditorState}
-          onBlur={() => {
-            updateCurrentNote();
-          }}
+        <RichTextEditor
+          html={html}
+          onChange={setHtml}
+          onBlur={updateCurrentNote}
+          placeholder="Write your notes here ..."
         />
       </Collapse>
     </div>
