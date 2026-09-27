@@ -5,7 +5,6 @@ import { monitorChromeTabChanges } from './background/session';
 import { monitorFullTextSearchMsg } from './background/fullTextSearch/chromeMessage';
 import { dbAuditor as noteDbAuditor } from './data/note/dbAuditor';
 import { reIndexAll } from './background/fullTextSearch/reIndexAll';
-import { startAutoExportToDropbox } from './dropbox';
 import { dbAuditor as tabSpaceDbAuditor } from './data/tabSpace/dbAuditor';
 import { dbAuditor as todoDbAuditor } from './data/todo/dbAuditor';
 import { setDebugLogLevel, TabSpaceLogLevel } from './debug';
@@ -13,6 +12,7 @@ import {
   dbAuditAndClearance,
   registerDbAuditor,
 } from './storage/dbAuditorManager';
+import { startBackgroundSync } from './data/repo/backgroundSync';
 
 setDebugLogLevel(TabSpaceLogLevel.LOG);
 
@@ -46,6 +46,11 @@ logger.info('monitor chrome tab changes...');
 // setupSessionSaver();
 const BACKGROUND_DEBOUNCE_TIME = 2 * 1000;
 monitorChromeTabChanges(BACKGROUND_DEBOUNCE_TIME);
+
+// Server sync (server <-> local). No-op when the device has not been paired,
+// which keeps local-only usage intact.
+logger.info('start server sync runtime...');
+void startBackgroundSync();
 
 logger.info('bootstrap full text search service...');
 fullTextBootstrap();

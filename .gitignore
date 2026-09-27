@@ -15,3 +15,5 @@ node_modules/
 coverage/
 dist_crx/
 */.watchman-cookie*
+server/bin/
+server/dist/

@@ -18,6 +18,7 @@ import { renderPage } from './common/base';
 import { tabSpaceBootstrap } from '../data/tabSpaceBootstrap';
 import { bootstrap as tabSpaceRegistryServiceBootstrap } from '../data/tabSpaceRegistry';
 import { tabSpaceStoreApi } from '../data/tabSpace/store';
+import { startChangeFeed } from '../data/repo/changeFeed';
 
 async function bootstrap() {
   const thisChromeTab = await chrome.tabs.getCurrent();
@@ -42,6 +43,8 @@ async function bootstrap() {
 
     fullTextSearchBootstrap();
     localStorageInit();
+    // queue local database writes for the server sync engine
+    startChangeFeed();
 
     switch (queryParams.op) {
       case TabSpaceOp.LoadSaved:

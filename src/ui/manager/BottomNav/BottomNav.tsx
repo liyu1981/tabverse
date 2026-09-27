@@ -9,6 +9,7 @@ import React, { useState } from 'react';
 
 import { AboutDialog } from '../../dialog/AboutDialog';
 import { DropboxDialog } from '../../dialog/DropboxDialog';
+import { ServerSyncDialog } from '../../dialog/ServerSyncDialog';
 import { SettingDialog } from '../../dialog/SettingDialog';
 import { TABSPACE_VERSION } from '../../../global';
 import classes from './BottomNav.module.scss';
@@ -18,6 +19,7 @@ export const BottomNav = (props) => {
   const [settingOpened, setSettingOpened] = useState(false);
   const [aboutOpened, setAboutOpened] = useState(false);
   const [driveOpened, setDriveOpened] = useState(false);
+  const [syncOpened, setSyncOpened] = useState(false);
 
   return (
     <div className={classes.container}>
@@ -29,6 +31,11 @@ export const BottomNav = (props) => {
         </NavbarGroup>
         <NavbarGroup align={Alignment.RIGHT}>
           {/* <Button icon="cog" onClick={() => setSettingOpened(true)} /> */}
+          <Button
+            icon="refresh"
+            title="Server sync"
+            onClick={() => setSyncOpened(true)}
+          />
           <Button
             icon={<i className="fab fa-dropbox"></i>}
             onClick={() => setDriveOpened(true)}
@@ -43,6 +50,10 @@ export const BottomNav = (props) => {
       <DropboxDialog
         isOpen={driveOpened}
         onClose={() => setDriveOpened(false)}
+      />
+      <ServerSyncDialog
+        isOpen={syncOpened}
+        onClose={() => setSyncOpened(false)}
       />
     </div>
   );

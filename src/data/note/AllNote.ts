@@ -8,7 +8,6 @@ import {
 } from './Note';
 import {
   convertToSavedBase,
-  inPlaceConvertToSaved,
   inPlaceCopyFromOtherBase,
   newEmptyBase,
 } from '../Base';

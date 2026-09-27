@@ -1,5 +1,14 @@
 module.exports = {
-  ignorePatterns: ['.vscode/*'],
+  ignorePatterns: [
+    '.vscode/*',
+    // generated artifacts: build output, built docs site, test coverage
+    'dist/*',
+    'dist_crx/*',
+    'docs/*',
+    'doc/*',
+    'coverage/*',
+    'server/*',
+  ],
   env: {
     browser: true,
     amd: true,

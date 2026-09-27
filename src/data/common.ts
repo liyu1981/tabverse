@@ -1,6 +1,5 @@
 import { nanoid } from 'nanoid';
 import { produce } from 'immer';
-import { tabData1 } from './tabSpace/__tests__/common.test';
 
 export function getUnsavedNewId() {
   // use 11 chars, as calculated by the estimator

@@ -2,7 +2,6 @@ import {
   Tab as BPTab,
   Tabs as BPTabs,
   Button,
-  Checkbox,
   ControlGroup,
   Dialog,
   FormGroup,

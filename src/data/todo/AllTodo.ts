@@ -2,7 +2,6 @@ import { IBase, isIdNotSaved } from '../common';
 import {
   NotId,
   convertToSavedBase,
-  inPlaceConvertToSaved,
   inPlaceCopyFromOtherBase,
   newEmptyBase,
 } from '../Base';

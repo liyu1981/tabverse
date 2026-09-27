@@ -1,1 +1,7 @@
 ./.vscode/*
+coverage/
+dist/
+dist_crx/
+doc/
+docs/
+node_modules/
