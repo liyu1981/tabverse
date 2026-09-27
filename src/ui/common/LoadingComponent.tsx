@@ -8,7 +8,7 @@ export function getLoadingComponent(
   loader: () => Promise<any>,
   destProp: string,
 ): React.FC {
-  function wrappedComponent() {
+  function WrappedComponent() {
     const [loadStatus, setLoadStatus] = useState<LoadStatus>(
       LoadStatus.Loading,
     );
@@ -29,14 +29,14 @@ export function getLoadingComponent(
       <div>Loading...</div>
     );
   }
-  return wrappedComponent;
+  return WrappedComponent;
 }
 
 export function getLoadingComponent2<T extends React.VFC>(
   component: T,
   loader: () => Promise<void>,
 ) {
-  function wrappedComponent(props) {
+  function WrappedComponent(props) {
     const [loadStatus, setLoadStatus] = useState<LoadStatus>(
       LoadStatus.Loading,
     );
@@ -53,5 +53,5 @@ export function getLoadingComponent2<T extends React.VFC>(
       <div>Loading...</div>
     );
   }
-  return wrappedComponent;
+  return WrappedComponent;
 }

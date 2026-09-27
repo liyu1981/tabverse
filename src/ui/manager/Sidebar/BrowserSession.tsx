@@ -1,7 +1,7 @@
+import { dayGroupLabel } from '../../../time';
 import React, { useEffect, useState } from 'react';
 
 import { SidebarComponentProps } from './Sidebar';
-import Moment from 'moment';
 import { getGroupTags } from '../../../data/chromeSession/SavedChromeSessionCollection';
 import classes from './BrowserSession.module.scss';
 import { sum } from 'lodash';
@@ -26,14 +26,7 @@ export function BrowserSession(props: BrowserSessionProps) {
     );
     setFormattedGroupTags(
       getGroupTags(savedChromeSessionCollection).map((groupTag) => {
-        return Moment(groupTag).calendar({
-          sameDay: '[Today]',
-          nextDay: '[Tomorrow]',
-          nextWeek: 'dddd',
-          lastDay: '[Yesterday]',
-          lastWeek: '[Last] dddd',
-          sameElse: 'DD/MM/YYYY',
-        });
+        return dayGroupLabel(groupTag);
       }),
     );
   }, [savedChromeSessionCollection.savedSessionGroups]);

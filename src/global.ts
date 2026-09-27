@@ -48,7 +48,7 @@ export const logger = {
   },
 };
 
-// eslint-disable-next-line @typescript-eslint/ban-types
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type -- \`{}\` is the idiom for a hasOwnProperty constraint
 export function hasOwnProperty<X extends {}, Y extends PropertyKey>(
   obj: X,
   prop: Y,
@@ -62,10 +62,8 @@ export function typeGuard<T>(x: any): x is T {
 }
 
 export const debounce = isJestTest()
-  ? // eslint-disable-next-line @typescript-eslint/ban-types
-    <T extends Function>(f: T, t: any) => f
-  : // eslint-disable-next-line @typescript-eslint/ban-types
-    <T extends Function>(f: T, t: any) =>
+  ? <T extends (...args: any[]) => any>(f: T, t: any) => f
+  : <T extends (...args: any[]) => any>(f: T, t: any) =>
       lodashDebounce(() => {
         f();
       }, t);

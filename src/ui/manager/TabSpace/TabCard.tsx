@@ -1,8 +1,13 @@
-import { Button, ButtonGroup, Card, Checkbox } from '@blueprintjs/core';
+import {
+  Button,
+  ButtonGroup,
+  Card,
+  Checkbox,
+  Popover,
+} from '@blueprintjs/core';
 
 import { CollapsibleLabel } from '../../common/CollapsibleLabel';
 import { FavIcon } from '../../common/FavIcon';
-import { Popover2 } from '@blueprintjs/popover2';
 import React from 'react';
 import { Tab } from '../../../data/tabSpace/Tab';
 import classes from './TabCard.module.scss';
@@ -116,7 +121,9 @@ export function TabCard(props: ITabCardProps) {
       <div
         className={classes.content}
         onClick={() => {
-          props.tab.chromeTabId ? switchToTab(props.tab) : '';
+          if (props.tab.chromeTabId) {
+            switchToTab(props.tab);
+          }
         }}
       >
         <div className={clsx(classes.tabTitle, classes.wrapText)}>
@@ -141,7 +148,7 @@ export function TabCard(props: ITabCardProps) {
   ) : null;
 
   return needPreview ? (
-    <Popover2
+    <Popover
       autoFocus={false}
       placement="right"
       interactionKind="hover"
@@ -153,7 +160,7 @@ export function TabCard(props: ITabCardProps) {
       portalClassName={classes.tabCardPopover}
     >
       {card}
-    </Popover2>
+    </Popover>
   ) : (
     card
   );

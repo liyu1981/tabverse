@@ -5,7 +5,7 @@
     "dbaeumer.vscode-eslint",
     "samverschueren.final-newline",
     "mhutchie.git-graph",
-    "orta.vscode-jest",
+    "vitest.vscode",
     "esbenp.prettier-vscode",
     "stkb.rewrap",
     "mrmlnc.vscode-scss",

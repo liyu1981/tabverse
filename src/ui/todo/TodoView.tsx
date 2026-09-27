@@ -137,8 +137,8 @@ export function TodoView({ tabSpaceId }: TodoViewProps) {
       return ta.completed > tb.completed
         ? 1
         : ta.completed === tb.completed
-        ? 0
-        : -1;
+          ? 0
+          : -1;
     })
     .toArray()
     .map((todo) => (

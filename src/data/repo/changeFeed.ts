@@ -143,8 +143,8 @@ function toRecordInput(
       typeof change.key === 'string'
         ? change.key
         : change.oldObj && typeof change.oldObj.id === 'string'
-        ? change.oldObj.id
-        : null;
+          ? change.oldObj.id
+          : null;
     if (!id) {
       return null;
     }

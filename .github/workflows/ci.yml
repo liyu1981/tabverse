@@ -16,11 +16,15 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # ESLint 10 requires node >= 20.19; 22 is the active LTS
+          node-version: 22
           cache: npm
 
       - name: install dependencies
         run: npm ci
+
+      - name: typecheck
+        run: npm run typecheck
 
       - name: format check
         run: npm run format:check
@@ -83,7 +87,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: install dependencies

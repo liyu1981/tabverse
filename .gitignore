@@ -1,14 +1,5 @@
 .DS_Store
-dist/generated/*
-dist/assets
-dist/static/*.css
-dist/static/*.css.map
-dist/static/*/*.min.css
-dist/static/fontawesome/css/*
-dist/static/fontawesome/webfonts/*
-dist/static/blueprintjs/*
-dist/static/draftjs/*
-dist/static/simplebar/*
+dist/
 node_modules/
 .cache/
 .parcel-cache/

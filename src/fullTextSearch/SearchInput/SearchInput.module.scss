@@ -1,13 +1,13 @@
-.searchInputContainer :global(.bp4-tag-input) {
+.searchInputContainer :global(.bp6-tag-input) {
   border-radius: 28px;
   height: 50px;
   box-shadow: none;
 }
 
-.searchInputContainer :global(.bp4-tag-input):focus {
+.searchInputContainer :global(.bp6-tag-input):focus {
   box-shadow: none;
 }
 
-.searchInputContainer :global(.bp4-tag-input) > :global(.bp4-icon) {
+.searchInputContainer :global(.bp6-tag-input) > :global(.bp6-icon) {
   margin-top: 16px;
 }

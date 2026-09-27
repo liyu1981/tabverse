@@ -1,8 +1,8 @@
+import { startOfDayMs } from '../../time';
 import { DisplaySavedSessionGroup } from './sessionStore';
 import { flatten, uniq } from 'lodash';
 
 import { LoadStatus } from '../../global';
-import Moment from 'moment';
 
 export type SavedChromeSessionCollection = {
   loadStatus: LoadStatus;
@@ -24,7 +24,7 @@ export function getGroupTags(
       targetSavedChromeSessionCollection.savedSessionGroups.map(
         (sessionGroup) => {
           return sessionGroup.sessions.map((session) => {
-            return Moment(session.createdAt).startOf('day').valueOf();
+            return startOfDayMs(session.createdAt);
           });
         },
       ),

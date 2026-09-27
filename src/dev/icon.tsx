@@ -1,7 +1,7 @@
 import { Colors } from '@blueprintjs/core';
 import React from 'react';
 import { TabSpaceLogo } from '../ui/common/TabSpaceLogo';
-import { render } from 'react-dom';
+import { createRoot } from 'react-dom/client';
 
 const TabSpaceIcon = () => {
   return (
@@ -43,4 +43,4 @@ const TabSpaceIcon = () => {
   );
 };
 
-render(<TabSpaceIcon />, document.getElementById('root'));
+createRoot(document.getElementById('root')!).render(<TabSpaceIcon />);

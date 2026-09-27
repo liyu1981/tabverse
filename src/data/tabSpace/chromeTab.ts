@@ -180,7 +180,7 @@ export function updateTabSpaceName(newName: string) {
 export function getOnChromeTabAttached() {
   async function tabSpaceAction(
     chromeTabId: number,
-    _attachInfo: chrome.tabs.TabAttachInfo,
+    _attachInfo: chrome.tabs.OnAttachedInfo,
   ) {
     const chromeTab = await chrome.tabs.get(chromeTabId);
     const oldId = $tabSpace.getState().id;
@@ -203,7 +203,7 @@ export function getOnChromeTabAttached() {
 
   async function normalTabAction(
     tabId: number,
-    _attachInfo: chrome.tabs.TabAttachInfo,
+    _attachInfo: chrome.tabs.OnAttachedInfo,
   ) {
     const chromeTab = await chrome.tabs.get(tabId);
     if (isTabSpaceManagerPage(chromeTab)) {
@@ -222,7 +222,7 @@ export function getOnChromeTabAttached() {
     }
   }
 
-  return (chromeTabId: number, attachInfo: chrome.tabs.TabAttachInfo) => {
+  return (chromeTabId: number, attachInfo: chrome.tabs.OnAttachedInfo) => {
     logger.log('chrome attached tab:', chromeTabId, attachInfo);
     if (chromeTabId === $tabSpace.getState().chromeTabId) {
       tabSpaceAction(chromeTabId, attachInfo);
@@ -257,14 +257,14 @@ export function getOnChromeTabCreated() {
 export function getOnChromeTabDetached() {
   function normalTabAction(
     chromeTabId: number,
-    _detachInfo: chrome.tabs.TabDetachInfo,
+    _detachInfo: chrome.tabs.OnDetachedInfo,
   ) {
     tabSpaceStoreApi.removeTabByChromeTabId(chromeTabId);
     tabSpaceStoreApi.removePreview(chromeTabId);
     saveCurrentTabSpaceIfNeeded();
   }
 
-  return (chromeTabId: number, detachInfo: chrome.tabs.TabDetachInfo) => {
+  return (chromeTabId: number, detachInfo: chrome.tabs.OnDetachedInfo) => {
     logger.log('chrome detached tab:', chromeTabId, detachInfo);
     if (
       chromeTabId === $tabSpace.getState().chromeTabId &&
@@ -285,21 +285,21 @@ export function getOnChromeTabDetached() {
 export function getOnChromeTabRemoved() {
   const tabSpaceAction = (
     chromeTabId: number,
-    _removeInfo: chrome.tabs.TabRemoveInfo,
+    _removeInfo: chrome.tabs.OnRemovedInfo,
   ) => {
     tabSpaceRegistryRemoveTabSpace(chromeTabId);
   };
 
   const normalTabAction = (
     chromeTabId: number,
-    _removeInfo: chrome.tabs.TabRemoveInfo,
+    _removeInfo: chrome.tabs.OnRemovedInfo,
   ) => {
     tabSpaceStoreApi.removeTabByChromeTabId(chromeTabId);
     tabSpaceStoreApi.removePreview(chromeTabId);
     saveCurrentTabSpaceIfNeeded();
   };
 
-  return (chromeTabId: number, removeInfo: chrome.tabs.TabRemoveInfo) => {
+  return (chromeTabId: number, removeInfo: chrome.tabs.OnRemovedInfo) => {
     logger.log('chrome tab removed:', chromeTabId, removeInfo);
     if (findTabSpaceIdByChromeTabId(chromeTabId, getStateTabSpaceRegistry())) {
       // closing a window with tabspace manager need to process it specially
@@ -349,7 +349,7 @@ function getOnChromeTabReplaced() {
 function getOnChromeTabUpdated() {
   async function tabSpaceAction(
     chromeTabId: number,
-    _changeInfo: chrome.tabs.TabChangeInfo,
+    _changeInfo: chrome.tabs.OnUpdatedInfo,
   ) {
     if (chromeTabId === $tabSpace.getState().chromeTabId) {
       // do not do anything when this tabSpace tab is updating
@@ -360,7 +360,7 @@ function getOnChromeTabUpdated() {
 
   async function normalTabAction(
     chromeTabId: number,
-    _changeInfo: chrome.tabs.TabChangeInfo,
+    _changeInfo: chrome.tabs.OnUpdatedInfo,
   ) {
     const tab = await chrome.tabs.get(chromeTabId);
     if (!inCurrentTabSpace(tab.windowId, $tabSpace.getState())) {
@@ -379,7 +379,7 @@ function getOnChromeTabUpdated() {
     }
   }
 
-  return (chromeTabId: number, changeInfo: chrome.tabs.TabChangeInfo) => {
+  return (chromeTabId: number, changeInfo: chrome.tabs.OnUpdatedInfo) => {
     logger.log('chrome tab updated:', chromeTabId, changeInfo);
     if (
       findTabSpaceIdByChromeTabId(chromeTabId, getStateTabSpaceRegistry()) &&
@@ -403,13 +403,13 @@ function getOnChromeTabUpdated() {
 function getOnChromeTabMoved() {
   async function normalTabAction(
     tabId: number,
-    moveInfo: chrome.tabs.TabMoveInfo,
+    moveInfo: chrome.tabs.OnMovedInfo,
   ) {
     await maintainTabOrder();
     saveCurrentTabSpaceIfNeeded();
   }
 
-  return (chromeTabId: number, moveInfo: chrome.tabs.TabMoveInfo) => {
+  return (chromeTabId: number, moveInfo: chrome.tabs.OnMovedInfo) => {
     logger.log('chrome tab moved: ', chromeTabId, moveInfo);
     if (!inCurrentTabSpace(moveInfo.windowId, $tabSpace.getState())) {
       return;
@@ -419,11 +419,11 @@ function getOnChromeTabMoved() {
 }
 
 function getOnChromeTabActivated() {
-  async function normalTabAction(activeInfo: chrome.tabs.TabActiveInfo) {
+  async function normalTabAction(activeInfo: chrome.tabs.OnActivatedInfo) {
     doCapturePreview(activeInfo.tabId, activeInfo.windowId);
   }
 
-  return (activeInfo: chrome.tabs.TabActiveInfo) => {
+  return (activeInfo: chrome.tabs.OnActivatedInfo) => {
     logger.log('chrome tab activated:', activeInfo);
     if (!inCurrentTabSpace(activeInfo.windowId, $tabSpace.getState())) {
       return;

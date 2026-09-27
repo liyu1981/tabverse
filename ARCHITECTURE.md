@@ -55,6 +55,18 @@ remote edit ──WebSocket records_changed──► debounced syncOnce()
 per-tabspace ordered aggregates `allnote`, `alltodo`, `allbookmark` (they
 carry the display ordering, which cannot be rebuilt from entity rows).
 
+## Commands
+
+```sh
+npm run develop      # vite build --watch (development, includes dev pages)
+npm run build        # production bundle in dist/
+npm test             # vitest + coverage
+npm run typecheck    # tsc --noEmit
+npm run lint:check   # eslint 10 (flat config in eslint.config.mjs)
+npm run format:check # prettier 3
+npm run build-crx    # production bundle + dist_crx/tabverse.zip (store package)
+```
+
 ## Running the server
 
 ```sh

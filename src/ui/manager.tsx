@@ -1,3 +1,13 @@
+// Vendor styles first: everything below (manager.scss, css modules) has to
+// come after them in the emitted stylesheet. Vite bundles these instead of
+// the old copycss.sh -> dist/static + <link> dance.
+import 'normalize.css';
+import '@blueprintjs/core/lib/css/blueprint.css';
+import '@blueprintjs/icons/lib/css/blueprint-icons.css';
+import '@fortawesome/fontawesome-free/css/all.min.css';
+import 'draft-js/dist/Draft.css';
+import 'simplebar-react/dist/simplebar.min.css';
+
 import { IManagerQueryParams, ManagerView } from './manager/ManagerView';
 import {
   TabSpaceOp,

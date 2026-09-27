@@ -2,7 +2,6 @@
 
 import {
   Classes,
-  IElementRefProps,
   Icon,
   IconName,
   IconSize,
@@ -18,10 +17,9 @@ import classNames from 'classnames';
 import { isReactNodeEmpty } from './util';
 
 export interface EditableTagProps
-  extends Props,
-    IntentProps,
-    IElementRefProps<HTMLSpanElement>,
-    React.HTMLAttributes<HTMLSpanElement> {
+  extends Props, IntentProps, React.HTMLAttributes<HTMLSpanElement> {
+  /** Blueprint 6 dropped IElementRefProps; keep our own callback ref prop. */
+  elementRef?: (el: HTMLSpanElement | null) => void;
   /**
    * Whether the tag should appear in an active state.
    *

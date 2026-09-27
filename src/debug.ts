@@ -11,8 +11,17 @@ export function isDebug() {
   return getSettingItem<boolean>('debug', (v) => v !== undefined);
 }
 
-export function isJestTest() {
-  return process && process.env['JEST_WORKER_ID'];
+/**
+ * True while running inside the unit test runner (vitest sets VITEST,
+ * jest used JEST_WORKER_ID). The `typeof` guard keeps this safe inside the
+ * extension: there is no `process` global in a service worker or a page.
+ */
+export function isJestTest(): boolean {
+  return Boolean(
+    typeof process !== 'undefined' &&
+    process.env &&
+    (process.env['VITEST'] || process.env['JEST_WORKER_ID']),
+  );
 }
 
 export function exposeDebugData(name: string, value: any) {
@@ -52,8 +61,7 @@ export function setDebugLogLevelOn(isOn: boolean) {
   }
 }
 
-export const loglevel =
-  process && process.env['JEST_WORKER_ID']
-    ? getDebugLogLevel()
-    : getSettingItem<TabSpaceLogLevel>('loglevel', (v) => parseInt(v)) ||
-      TabSpaceLogLevel.INFO;
+export const loglevel = isJestTest()
+  ? getDebugLogLevel()
+  : getSettingItem<TabSpaceLogLevel>('loglevel', (v) => parseInt(v)) ||
+    TabSpaceLogLevel.INFO;

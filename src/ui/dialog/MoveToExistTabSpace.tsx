@@ -1,3 +1,4 @@
+import { fromNow } from '../../time';
 import { Button, Checkbox, Dialog, Intent } from '@blueprintjs/core';
 import { EmptyQuery, Query, calcCursorBegin } from '../../fullTextSearch';
 import React, { useContext, useEffect, useState } from 'react';
@@ -11,7 +12,6 @@ import { IconName } from '@blueprintjs/icons';
 import { LoadStatus } from '../../global';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 import { ManagerViewContext } from '../manager/ManagerViewContext';
-import Moment from 'moment';
 import { Tab } from '../../data/tabSpace/Tab';
 import { TabSpace } from '../../data/tabSpace/TabSpace';
 import classes from './MoveToExistTabSpace.module.scss';
@@ -89,8 +89,8 @@ export function MoveToExistTabSpaceDialog(
               >
                 <span className={classes.candidateName}>{tabSpace.name}</span>
                 <span className={classes.candidateInfo}>
-                  created: {Moment(tabSpace.createdAt).fromNow()}, saved:
-                  {Moment(tabSpace.updatedAt).fromNow()}
+                  created: {fromNow(tabSpace.createdAt)}, saved:
+                  {fromNow(tabSpace.updatedAt)}
                 </span>
               </div>
             );

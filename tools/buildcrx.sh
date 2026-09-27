@@ -1,27 +1,23 @@
 #!/bin/bash
+# Builds the store package: production bundle + zip (and a .crx on macOS
+# where a Chrome binary with the signing key is available).
+set -e
 
 npm run build || exit 1
 
-mkdir dist_crx
+mkdir -p dist_crx
 cd dist_crx
 
 rm -rf tabverse
 mkdir tabverse
-cp -rv ../dist/_locales tabverse/
-mkdir tabverse/assets
-cp -rv ../dist/generated/prod/* tabverse/assets/
-rm -rv tabverse/assets/*.map
-cp -rv ../dist/icons tabverse/
-cp -rv ../dist/static tabverse/
-cp -v ../dist/backgroundWrapper.js tabverse/
-cp -v ../dist/manager.html tabverse/
-cp -v ../dist/manifest.json tabverse/
-cp -v ../dist/popup.html tabverse/
 
-rm -v tabverse.zip
-rm -v tabverse.crx
+# copy the whole generated extension (manifest, pages, assets, icons, locales)
+cp -R ../dist/. tabverse/
+# source maps must never ship in the store package
+find tabverse -name '*.map' -delete
 
-zip -r tabverse.zip tabverse/*
+rm -f tabverse.zip tabverse.crx
+zip -qr tabverse.zip tabverse
 
 MACOS_CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 if [ -f "$MACOS_CHROME" ]; then

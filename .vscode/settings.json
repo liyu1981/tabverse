@@ -49,6 +49,5 @@
     "todos",
     "Webtool"
   ],
-  "files.autoSave": "onFocusChange",
-  "jest.showCoverageOnLoad": true
+  "files.autoSave": "onFocusChange"
 }

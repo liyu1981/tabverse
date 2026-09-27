@@ -130,8 +130,8 @@ export function createSyncRuntime(
     deps.autoSyncIntervalMs !== undefined
       ? deps.autoSyncIntervalMs
       : config.autoSyncIntervalMs !== undefined
-      ? config.autoSyncIntervalMs
-      : DEFAULT_SYNC_INTERVAL_MS;
+        ? config.autoSyncIntervalMs
+        : DEFAULT_SYNC_INTERVAL_MS;
 
   if (interval > 0) {
     engine.startAutoSync(interval);

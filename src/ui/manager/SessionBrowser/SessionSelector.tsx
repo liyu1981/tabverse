@@ -1,3 +1,4 @@
+import { calendarLabel, dayGroupLabel, startOfDayMs } from '../../../time';
 import {
   Button,
   ControlGroup,
@@ -14,7 +15,6 @@ import React, { useState } from 'react';
 import { flatten, uniq } from 'lodash';
 
 import { DisplaySavedSessionGroup } from '../../../data/chromeSession/sessionStore';
-import Moment from 'moment';
 import classes from './SessionSelector.module.scss';
 import clsx from 'clsx';
 
@@ -38,10 +38,10 @@ const SessionLabel = ({ session, selected, onDelete }: SessionLabelProps) => {
             <span title={session.id}>Session</span>
           </div>
           <div className={classes.sessionLabelSub}>
-            <sub>Created at {Moment(session.createdAt).calendar()}</sub>
+            <sub>Created at {calendarLabel(session.createdAt)}</sub>
           </div>
           <div className={classes.sessionLabelSub}>
-            <sub>Saved at {Moment(session.updatedAt).calendar()}</sub>
+            <sub>Saved at {calendarLabel(session.updatedAt)}</sub>
           </div>
         </div>
         <div className={classes.sessionLabelTools}>
@@ -73,7 +73,7 @@ export const SessionSelector = ({
     flatten(
       sessions.map((sessionGroup) => {
         return sessionGroup.sessions.map((session) => {
-          return Moment(session.createdAt).startOf('day').valueOf();
+          return startOfDayMs(session.createdAt);
         });
       }),
     ),
@@ -87,8 +87,7 @@ export const SessionSelector = ({
     return flatten(
       sessions.map((sessionGroup) => {
         return sessionGroup.sessions.filter(
-          (session) =>
-            Moment(session.createdAt).startOf('day').valueOf() === groupTag,
+          (session) => startOfDayMs(session.createdAt) === groupTag,
         );
       }),
     );
@@ -119,14 +118,7 @@ export const SessionSelector = ({
           >
             {groupTags.map((groupTag) => (
               <option key={groupTag} value={groupTag}>
-                {`${Moment(groupTag).calendar({
-                  sameDay: '[Today]',
-                  nextDay: '[Tomorrow]',
-                  nextWeek: 'dddd',
-                  lastDay: '[Yesterday]',
-                  lastWeek: '[Last] dddd',
-                  sameElse: 'DD/MM/YYYY',
-                })}`}
+                {`${dayGroupLabel(groupTag)}`}
               </option>
             ))}
           </HTMLSelect>

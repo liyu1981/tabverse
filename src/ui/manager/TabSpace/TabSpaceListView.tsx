@@ -7,6 +7,7 @@ import {
   Intent,
   Menu,
   MenuItem,
+  Popover,
 } from '@blueprintjs/core';
 import React, { useEffect, useState } from 'react';
 import {
@@ -24,7 +25,6 @@ import {
 import { ErrorBoundary } from '../../common/ErrorBoundary';
 import { List } from 'immutable';
 import { MoveToExistTabSpaceDialog } from '../../dialog/MoveToExistTabSpace';
-import { Popover2 } from '@blueprintjs/popover2';
 import { SaveIndicator } from './SaveIndicator';
 import { Tab } from '../../../data/tabSpace/Tab';
 import { TabCard } from './TabCard';
@@ -67,9 +67,9 @@ function SelectedTabToolControl(props: SelectedTabToolControlProps) {
   return (
     <ButtonGroup className={props.className}>
       <Button onClick={() => props.onClick(currentTool)}>{currentTool}</Button>
-      <Popover2 placement="bottom-end" content={content}>
+      <Popover placement="bottom-end" content={content}>
         <Button icon="symbol-triangle-down"></Button>
-      </Popover2>
+      </Popover>
     </ButtonGroup>
   );
 }

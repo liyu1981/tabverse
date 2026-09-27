@@ -1,6 +1,5 @@
 {
   "name": "Tabverse",
-  "version": "0.5.0",
   "manifest_version": 3,
   "minimum_chrome_version": "116",
   "description": "Tabverse is an opinionated way of managing tabs.",
@@ -20,7 +19,8 @@
   },
   "default_locale": "en",
   "background": {
-    "service_worker": "backgroundWrapper.js"
+    "service_worker": "background.js",
+    "type": "module"
   },
   "permissions": [
     "tabs",

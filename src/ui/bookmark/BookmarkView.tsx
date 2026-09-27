@@ -43,9 +43,7 @@ const BookmarkItem = (props: IBookmarkItem) => {
                   });
                   saveCurrentAllBookmarkIfNeeded();
                 }}
-              >
-                {props.bookmark.name}
-              </EditableText>
+              />
             </b>
           </div>
           <small>{props.bookmark.url}</small>

@@ -1,3 +1,4 @@
+import { calendarLabel } from '../../time';
 import {
   Tab as BPTab,
   Tabs as BPTabs,
@@ -20,7 +21,6 @@ import {
 } from '../../dropbox/index';
 import React, { useEffect, useState } from 'react';
 
-import Moment from 'moment';
 import classes from './DropboxDialog.module.scss';
 import clsx from 'clsx';
 import { useSettingItem } from '../../storage/localSetting';
@@ -178,7 +178,7 @@ const DropboxImport = ({ accessToken }: IDropboxImportProps) => {
       const serverModifiedTime = Date.parse(path.server_modified);
       return (
         <option key={index} value={path.path_lower}>
-          {path.path_lower} ({Moment(serverModifiedTime).calendar()})
+          {path.path_lower} ({calendarLabel(serverModifiedTime)})
         </option>
       );
     });

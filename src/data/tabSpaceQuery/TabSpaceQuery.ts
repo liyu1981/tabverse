@@ -1,3 +1,4 @@
+import { fromNow } from '../../time';
 import {
   EmptyQuery,
   IFullTextSearchCursor,
@@ -6,7 +7,6 @@ import {
 } from '../../fullTextSearch';
 
 import { LoadStatus } from '../../global';
-import Moment from 'moment';
 import { QUERY_PAGE_LIMIT_DEFAULT } from '../../storage/db';
 import { TabSpace } from '../tabSpace/TabSpace';
 import { TabSpaceStub } from '../tabSpaceRegistry/TabSpaceRegistry';
@@ -90,11 +90,11 @@ export function getSortedGroupedSavedTabSpaces(
     : clonedSavedTabSpaces.sort((a, b) => b.createdAt - a.createdAt);
 
   const result = clonedSavedTabSpaces.reduce((groups, savedTabSpace) => {
-    const m = Moment(
+    const m = fromNow(
       targetTabSpaceQuery.sortMethod === SortMethods.SAVED
         ? savedTabSpace.updatedAt
         : savedTabSpace.createdAt,
-    ).fromNow();
+    );
     if (groups.length <= 0) {
       groups.push([m, [savedTabSpace]]);
     } else {

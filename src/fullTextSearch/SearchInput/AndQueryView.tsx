@@ -20,6 +20,8 @@ import classNames from 'classnames';
 import { eq } from 'lodash';
 
 export type AndQueryViewProps = Omit<TagProps, 'active'> & {
+  /** Blueprint 6 dropped IElementRefProps; keep our own callback ref prop. */
+  elementRef?: (el: HTMLSpanElement | null) => void;
   andQuery: AndQuery;
   scopeMap: QueryScopeMap;
   onChangeAndQuery: (newAndQuery: AndQuery) => void;

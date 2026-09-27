@@ -1,7 +1,13 @@
-import { Intent, Menu, MenuItem, Tag, TagProps } from '@blueprintjs/core';
+import {
+  Intent,
+  Menu,
+  MenuItem,
+  Popover,
+  Tag,
+  TagProps,
+} from '@blueprintjs/core';
 import { QueryScope, QueryScopeMap } from '..';
 
-import { Popover2 } from '@blueprintjs/popover2';
 import React from 'react';
 import classes from './ScopeTagView.module.scss';
 
@@ -32,7 +38,7 @@ export function ScopeTagView(props: ScopeTagViewProps) {
 
   return (
     <span className={classes.scopeViewTagContainer}>
-      <Popover2 placement="bottom" content={getContent()}>
+      <Popover placement="bottom" content={getContent()}>
         <Tag
           large={false}
           round={true}
@@ -41,7 +47,7 @@ export function ScopeTagView(props: ScopeTagViewProps) {
         >
           {props.value}
         </Tag>
-      </Popover2>
+      </Popover>
     </span>
   );
 }

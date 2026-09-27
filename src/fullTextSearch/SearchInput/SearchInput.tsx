@@ -157,8 +157,10 @@ export function SearchInput(props: SearchInputProps) {
       return null;
     }
     const { large, tagProps } = props;
-    const calculatedTagProps = Utils.isFunction(tagProps)
-      ? tagProps(andQuery, index)
+    // Blueprint 6 types the first argument as ReactNode; our query object is
+    // passed through as-is (it was always an opaque payload here).
+    const calculatedTagProps: any = Utils.isFunction(tagProps)
+      ? (tagProps as any)(andQuery, index)
       : tagProps;
 
     return (

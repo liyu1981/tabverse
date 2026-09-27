@@ -1,7 +1,7 @@
+import { formatDateTime, fromNow } from '../../../time';
 import { Alignment, Button, ButtonGroup } from '@blueprintjs/core';
 import React from 'react';
 
-import Moment from 'moment';
 import { TabCard } from '../TabSpace/TabCard';
 import { TabSpace } from '../../../data/tabSpace/TabSpace';
 import { TabSpaceId } from '../../../message/message';
@@ -55,18 +55,12 @@ export function SavedTabSpaceDetail(props: SavedTabSpaceDetailProps) {
           <h2>{props.tabSpace.name}</h2>
           <div>
             <div className={classes.tabSpaceTimeInfo}>
-              Created <b>{Moment(props.tabSpace.createdAt).fromNow()}</b> at{' '}
-              <br />
-              {Moment(props.tabSpace.createdAt).format(
-                'MMMM Do YYYY, h:mm:ss a',
-              )}
+              Created <b>{fromNow(props.tabSpace.createdAt)}</b> at <br />
+              {formatDateTime(props.tabSpace.createdAt)}
             </div>
             <div className={classes.tabSpaceTimeInfo}>
-              Saved <b>{Moment(props.tabSpace.updatedAt).fromNow()}</b> at{' '}
-              <br />
-              {Moment(props.tabSpace.updatedAt).format(
-                'MMMM Do YYYY, h:mm:ss a',
-              )}
+              Saved <b>{fromNow(props.tabSpace.updatedAt)}</b> at <br />
+              {formatDateTime(props.tabSpace.updatedAt)}
             </div>
           </div>
         </div>

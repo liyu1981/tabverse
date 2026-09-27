@@ -1,3 +1,4 @@
+import { calendarLabel } from '../../../time';
 import { Button, Icon, Tree, TreeNodeInfo } from '@blueprintjs/core';
 import {
   ChromeSession,
@@ -11,7 +12,6 @@ import { clone, reduce } from 'lodash';
 import { restoreTab, restoreWindow } from './util';
 
 import { TabSpaceMap } from '../../../data/chromeSession/sessionStore';
-import Moment from 'moment';
 import classes from './SessionDetail.module.scss';
 import clsx from 'clsx';
 import { logger } from '../../../global';
@@ -134,11 +134,11 @@ export const SessionDetail = ({ session, tabSpaceMap }: SessionDetailProps) => {
           <div className={classes.indicatorInner}>
             <span className={classes.indicatorLineSpan}>
               <b>created: </b>
-              {`${Moment(session.createdAt).calendar()}`}
+              {`${calendarLabel(session.createdAt)}`}
             </span>
             <span className={classes.indicatorLineSpan}>
               <b>saved: </b>
-              {`${Moment(session.updatedAt).calendar()}`}
+              {`${calendarLabel(session.updatedAt)}`}
             </span>
           </div>
         </div>
