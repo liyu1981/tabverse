@@ -75,6 +75,11 @@ func run() error {
 	go func() {
 		logger.Info("tabversed listening",
 			"addr", cfg.Addr, "db", cfg.DBPath, "version", cfg.Version)
+		if cfg.Exposed() {
+			logger.Warn("listening on a non-loopback address: the pairing/bootstrap " +
+				"endpoint is reachable from the network, and whoever pairs first owns " +
+				"this server (set TABVERSED_ADDR=127.0.0.1:8223 to keep it local)")
+		}
 		if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			errCh <- err
 		}

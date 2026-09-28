@@ -8,7 +8,12 @@ export const TABSPACE_VERSION = 'v0.5.0';
 export const TABSPACE_DB_VERSION = 7;
 
 export const TABSPACE_MANAGER_TAB_TITLE_PREFIX = 'Tabverse:Manager';
-export const TABSPACE_MANAGER_TAB_URL_PREFIX = global.chrome
+// `global` is a Node-only global: webpack polyfilled it, Vite/Rolldown does
+// not, so touching it at module scope threw "global is not defined" in the
+// service worker and took every importer down with it. `globalThis.chrome` is
+// the same object in the node test environment (src/dev/chromeMock.ts assigns
+// to it) and exists in the extension.
+export const TABSPACE_MANAGER_TAB_URL_PREFIX = globalThis.chrome
   ? `chrome-extension://${chrome.runtime.id}/manager.html`
   : `chrome-extension://tabverse-jest-test/manager.html`;
 
@@ -59,6 +64,19 @@ export function hasOwnProperty<X extends {}, Y extends PropertyKey>(
 
 export function typeGuard<T>(x: any): x is T {
   return true;
+}
+
+/**
+ * Drop-in replacement for node's `assert.strict`, which cannot be used in the
+ * extension: Vite externalizes node builtins for the browser, so importing it
+ * produced a stub whose `strict` is not a function and threw as soon as the
+ * assertion ran (it killed manager.tsx bootstrap, which then made the
+ * background's tab scan fail too).
+ */
+export function assert(condition: unknown, message: string): asserts condition {
+  if (!condition) {
+    throw new Error(message);
+  }
 }
 
 export const debounce = isJestTest()

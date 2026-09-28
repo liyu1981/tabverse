@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"strconv"
 	"strings"
@@ -13,7 +14,7 @@ import (
 // Everything is environment driven so the server can be deployed as a single
 // static binary (systemd, docker, cross-compiled artifacts) without files.
 type Config struct {
-	// Addr is the listen address, e.g. ":8080".
+	// Addr is the listen address, e.g. "0.0.0.0:8223".
 	Addr string
 	// DBPath is the path to the SQLite database file.
 	DBPath string
@@ -66,10 +67,17 @@ func GetenvBool(name string, fallback bool) (bool, error) {
 	return b, nil
 }
 
+// DefaultAddr binds every interface on purpose: the extension is usually
+// loaded on another machine than the server during development, and Go's
+// ":port" shorthand already means all interfaces. The exposure warning in
+// main.go covers the risk that comes with it (see ADR 0002: the bootstrap
+// endpoint belongs to whoever pairs first).
+const DefaultAddr = "0.0.0.0:8223"
+
 // Load reads configuration from the environment.
 func Load(version string) (Config, error) {
 	cfg := Config{
-		Addr:           Getenv("TABVERSED_ADDR", ":8080"),
+		Addr:           Getenv("TABVERSED_ADDR", DefaultAddr),
 		DBPath:         Getenv("TABVERSED_DB", "data/tabversed.db"),
 		Version:        version,
 		MaxRecordBytes: 1 << 20, // 1 MiB
@@ -105,4 +113,25 @@ func Load(version string) (Config, error) {
 // RetentionWindow is the age after which entity records are pruned.
 func (c Config) RetentionWindow() time.Duration {
 	return time.Duration(c.RetentionDays) * 24 * time.Hour
+}
+
+// Exposed reports whether the server listens on something other than a
+// loopback address, i.e. whether it is reachable from other machines.
+func (c Config) Exposed() bool {
+	host, _, err := net.SplitHostPort(c.Addr)
+	if err != nil {
+		// Unparseable address: the listen call will fail with a better message.
+		return false
+	}
+	switch host {
+	case "", "0.0.0.0", "::", "[::]":
+		return true
+	case "localhost":
+		return false
+	default:
+		// A name we cannot resolve is treated as exposed: the warning is
+		// cheap, a missed exposure is not.
+		ip := net.ParseIP(host)
+		return ip == nil || !ip.IsLoopback()
+	}
 }

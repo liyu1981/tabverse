@@ -8,3 +8,6 @@ dist_crx/
 */.watchman-cookie*
 server/bin/
 server/dist/
+# the SQLite file of a local dev run (only the server's own data dir, never
+# src/data/ which is source)
+server/data/

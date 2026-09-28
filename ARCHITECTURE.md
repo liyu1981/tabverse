@@ -70,12 +70,18 @@ npm run build-crx    # production bundle + dist_crx/tabverse.zip (store package)
 ## Running the server
 
 ```sh
-cd server && make run          # :8080, ./data/tabversed.db
-curl -X POST localhost:8080/api/v1/auth/bootstrap -d '{"name":"me"}'
+pnpm run server:dev      # 0.0.0.0:8223, ./server/data/tabversed.db
+curl -X POST localhost:8223/api/v1/auth/bootstrap -d '{"name":"me"}'
 # on the extension: BottomNav -> sync button -> paste URL + pairing code
-curl -X POST localhost:8080/api/v1/auth/invites \
+curl -X POST localhost:8223/api/v1/auth/invites \
      -H 'Authorization: Bearer <token>' -d '{"ttl_seconds":300}'
 ```
+
+The server has no Makefile: every build, test and cross-compile target is an
+npm script (`server:dev`, `server:build`, `server:test`, `server:vet`,
+`server:fmt`, `server:cross`, `server:docker`). It binds `0.0.0.0:8223` by
+default so the extension can be loaded on another machine; set
+`TABVERSED_ADDR=127.0.0.1:8223` to keep it local.
 
 See `server/README.md` for configuration, deployment and protocol semantics.
 

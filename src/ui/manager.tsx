@@ -10,6 +10,7 @@ import 'simplebar-react/dist/simplebar.min.css';
 import { IManagerQueryParams, ManagerView } from './manager/ManagerView';
 import {
   TabSpaceOp,
+  assert,
   hasOwnProperty,
   isTabSpaceManagerPage,
   logger,
@@ -17,7 +18,6 @@ import {
 
 import { CountExit } from './common/CountExit';
 import React from 'react';
-import { strict as assert } from 'assert';
 import { find } from 'lodash';
 import { bootstrap as fullTextSearchBootstrap } from '../fullTextSearch';
 import { getQueryParameters } from './common/queryAndHashParameter';
@@ -28,6 +28,7 @@ import { tabSpaceBootstrap } from '../data/tabSpaceBootstrap';
 import { bootstrap as tabSpaceRegistryServiceBootstrap } from '../data/tabSpaceRegistry';
 import { tabSpaceStoreApi } from '../data/tabSpace/store';
 import { startChangeFeed } from '../data/repo/changeFeed';
+import { startServerSyncConfiguredWatch } from '../data/repo/syncStatus';
 
 async function bootstrap() {
   const thisChromeTab = await chrome.tabs.getCurrent();
@@ -49,6 +50,10 @@ async function bootstrap() {
     );
 
     tabSpaceRegistryServiceBootstrap();
+
+    // keeps the UI honest about which features need a paired server
+    // (e.g. the cross-window tabverse list in the sidebar)
+    startServerSyncConfiguredWatch();
 
     fullTextSearchBootstrap();
     localStorageInit();

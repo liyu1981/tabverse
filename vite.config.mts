@@ -52,8 +52,11 @@ export default defineConfig(({ mode }) => {
       outDir: 'dist',
       emptyOutDir: true,
       target: 'chrome116',
-      // readable output while developing; production stays minified
-      minify: isDev ? false : 'esbuild',
+      // readable output while developing; production uses the default
+      // minifier (`true`), not 'esbuild' -- the esbuild package is not a
+      // dependency of this Vite/Rolldown setup and asking for it fails the
+      // build with ERR_MODULE_NOT_FOUND
+      minify: !isDev,
       // hidden: the map is emitted but not referenced from the bundle, so
       // it cannot be fetched from inside the store package by accident
       sourcemap: isDev ? true : 'hidden',

@@ -14,7 +14,7 @@ RUN adduser -D -H app && apk add --no-cache ca-certificates tzdata
 COPY --from=build /out/tabversed /usr/local/bin/tabversed
 USER app
 VOLUME /data
-ENV TABVERSED_ADDR=:8080 \
+ENV TABVERSED_ADDR=0.0.0.0:8223 \
     TABVERSED_DB=/data/tabversed.db
-EXPOSE 8080
+EXPOSE 8223
 ENTRYPOINT ["/usr/local/bin/tabversed"]

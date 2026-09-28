@@ -59,17 +59,26 @@ jobs:
           go-version-file: server/go.mod
           cache-dependency-path: server/go.sum
 
+      # the server build/test/cross targets are npm scripts (no Makefile)
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
       - name: gofmt
         run: test -z "$(gofmt -l .)"
+        working-directory: server
 
       - name: go vet
         run: go vet ./...
+        working-directory: server
 
       - name: unit tests (with race detector)
         run: go test -race ./...
+        working-directory: server
 
       - name: cross compile (pure go, no cgo)
-        run: make cross
+        run: npm run server:cross
 
       - name: archive server binaries
         uses: actions/upload-artifact@v4

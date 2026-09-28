@@ -96,10 +96,6 @@ const config = {
                 label: 'User Manual',
                 to: '/docs/intro',
               },
-              {
-                label: 'Dropbox Backup Guide',
-                to: '/docs/dropbox',
-              },
             ],
           },
         ],

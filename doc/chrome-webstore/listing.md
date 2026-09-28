@@ -55,8 +55,7 @@ Answers to give in the dashboard:
 
 None. All code ships inside the package (`dist/`), all CSS/fonts are bundled
 at build time from npm dependencies, and the manifest CSP forbids remote
-scripts. The only network calls are the user-configured sync server and the
-optional Dropbox API (user-supplied token).
+scripts. The only network call is the user-configured sync server.
 
 ## Release checklist
 

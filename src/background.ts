@@ -63,10 +63,3 @@ isDbEmpty().then((empty) => {
     reIndexAll();
   }
 });
-
-// TODO: temporary leave the dropbox auto backup feature behind, as currently
-// there is no good way of dealing with local settings across tabs/background
-// worker
-// setup dropbox auto backup
-// const BACKGROUND_AUTO_BACKUP_PERIOD_IN_MINUTES = 5;
-// startAutoExportToDropbox(BACKGROUND_AUTO_BACKUP_PERIOD_IN_MINUTES);

@@ -10,9 +10,8 @@ import {
   setWindowTabSpaceTabId,
 } from './ChromeSession';
 
-import { strict as assert } from 'assert';
 import { isJestTest } from '../../debug';
-import { isTabSpaceManagerPage } from '../../global';
+import { assert, isTabSpaceManagerPage, logger } from '../../global';
 import { TabSpace } from '../tabSpace/TabSpace';
 import { getStateTabSpaceRegistry } from '../tabSpaceRegistry/store';
 
@@ -41,12 +40,32 @@ async function scanCurrentTabsImpl(
     }
     if (isTabSpaceManagerPage(tab)) {
       const tabSpaceId = await tabSpaceIdResolver(tab.id);
-      newChromeSession = setWindowTabSpaceTabId(
-        window.windowId,
-        tab.id,
-        tabSpaceId,
-        newChromeSession,
-      );
+      if (tabSpaceId) {
+        newChromeSession = setWindowTabSpaceTabId(
+          window.windowId,
+          tab.id,
+          tabSpaceId,
+          newChromeSession,
+        );
+      } else {
+        // No live context claimed this window's tabverse: its manager page may
+        // have been closed since chrome.tabs.query, or (without a paired sync
+        // server) the background simply has no way to resolve it. Keep the tab
+        // as a normal tab of its window instead of failing the whole scan.
+        logger.info(
+          `no tabspace resolved for manager tab ${tab.id} in window ${tab.windowId}`,
+        );
+        newChromeSession = addTab(
+          ChromeTab.new(
+            tab.id,
+            tab.windowId,
+            tab.title,
+            tab.url,
+            tab.favIconUrl,
+          ),
+          newChromeSession,
+        );
+      }
     } else {
       newChromeSession = addTab(
         ChromeTab.new(tab.id, tab.windowId, tab.title, tab.url, tab.favIconUrl),
@@ -94,7 +113,9 @@ export async function scanCurrentTabsForBackground(
         type: BackgroundMsg.GetTabSpace,
         payload: tabId,
       });
-      return tabSpace.id;
+      // no responder (page closed, or no sync server to resolve it with):
+      // the caller falls back to recording the tab as a plain window tab
+      return tabSpace ? tabSpace.id : null;
     }
   }, targetChromeSession);
 }

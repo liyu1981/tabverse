@@ -44,9 +44,6 @@ importers:
       '@types/chrome':
         specifier: ^0.3.0
         version: 0.3.0
-      '@types/crypto-js':
-        specifier: ^4.1.1
-        version: 4.2.2
       '@types/lodash':
         specifier: ^4.14.182
         version: 4.17.25
@@ -80,9 +77,6 @@ importers:
       clsx:
         specifier: ^1.2.1
         version: 1.2.1
-      crypto-js:
-        specifier: ^4.1.1
-        version: 4.2.0
       date-fns:
         specifier: ^4.4.0
         version: 4.4.0
@@ -95,9 +89,6 @@ importers:
       dexie-observable:
         specifier: ^3.0.0-beta.11
         version: 3.0.0-beta.11(dexie@3.2.7)
-      dropbox:
-        specifier: ^10.31.0
-        version: 10.47.0
       effector:
         specifier: ^23.4.4
         version: 23.4.4
@@ -739,9 +730,6 @@ packages:
   '@types/chrome@0.3.0':
     resolution: {integrity: sha512-HPAMKyJwUnNJdVsxgypwvIStlwRhhaLnxgEwKIB99oOcffJrC4UMeD5xseVoBwDinSkr690DCBaAtSYdK6M1qw==}
 
-  '@types/crypto-js@4.2.2':
-    resolution: {integrity: sha512-sDOLlVbHhXpAUAL0YHDUUwDZf3iN4Bwi4W6a0W0b+QcAezUbRtH4FVb+9J4h+XFPW7l/gQ9F8qC7P+Ec4k8QVQ==}
-
   '@types/deep-eql@4.0.2':
     resolution: {integrity: sha512-c9h9dVVMigMPc4bwTvC5dxqtqJZwQPePsWjPlpSOnojbor6pGqdk541lfA7AqFQr5pB1BRdq0juY9db81BwyFw==}
 
@@ -1070,10 +1058,6 @@ packages:
     resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
     engines: {node: '>= 8'}
 
-  crypto-js@4.2.0:
-    resolution: {integrity: sha512-KALDyEYgpY+Rlob/iriUtjV6d5Eq+Y191A5g4UqLAi8CyGP9N1+FdVbkc1SxKc2r4YAYqG8JzO2KGL+AizD70Q==}
-    deprecated: Active development of CryptoJS has been discontinued. This library is no longer maintained.
-
   csstype@3.2.3:
     resolution: {integrity: sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==}
 
@@ -1126,10 +1110,6 @@ packages:
 
   dot-case@3.0.4:
     resolution: {integrity: sha512-Kv5nKlh6yRrdrGvxeJ2e5y2eRUpkUosIW4A2AS38zwSz27zu7ufDwQPi5Jhs3XAlGNetl3bmnGhQsMtkKJnj3w==}
-
-  dropbox@10.47.0:
-    resolution: {integrity: sha512-I/V7ofG7H7vfA3e4YV5DMIxe0K+1deSsxxagKGTNprwec+X65Y57o4n8a3Zf5+VRmoSsit46xHH2HL0ZGNMcLA==}
-    engines: {node: '>=22'}
 
   effector-react@23.3.0:
     resolution: {integrity: sha512-QR0+x1EnbiWhO80Yc0GVF+I9xCYoxBm3t+QLB5Wg+1uY1Q1BrSWDmKvJaJJZ/+9BU4RAr25yS5J2EkdWnicu8g==}
@@ -2742,8 +2722,6 @@ snapshots:
       '@types/filesystem': 0.0.36
       '@types/har-format': 1.2.16
 
-  '@types/crypto-js@4.2.2': {}
-
   '@types/deep-eql@4.0.2': {}
 
   '@types/esrecurse@4.3.1': {}
@@ -3118,8 +3096,6 @@ snapshots:
       shebang-command: 2.0.0
       which: 2.0.2
 
-  crypto-js@4.2.0: {}
-
   csstype@3.2.3: {}
 
   date-fns@4.4.0: {}
@@ -3185,8 +3161,6 @@ snapshots:
     dependencies:
       no-case: 3.0.4
       tslib: 2.6.3
-
-  dropbox@10.47.0: {}
 
   effector-react@23.3.0(effector@23.4.4)(react@19.3.0):
     dependencies:
