@@ -59,13 +59,12 @@ export const logger = {
   },
 };
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type -- \`{}\` is the idiom for a hasOwnProperty constraint
-export function hasOwnProperty<X extends {}, Y extends PropertyKey>(
+// `{}` is the idiom for a hasOwn constraint
+export function hasOwn<X extends {}, Y extends PropertyKey>(
   obj: X,
   prop: Y,
 ): obj is X & Record<Y, unknown> {
-  // eslint-disable-next-line no-prototype-builtins
-  return obj && obj.hasOwnProperty(prop);
+  return obj && Object.hasOwn(obj, prop);
 }
 
 export function typeGuard<T>(x: any): x is T {

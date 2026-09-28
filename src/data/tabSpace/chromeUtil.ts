@@ -69,7 +69,9 @@ export async function createNewChromeWindowWithTab(
   const chromeWindow = await chrome.windows.create({ focused: true });
   const existingTabs = await chrome.tabs.query({ windowId: chromeWindow.id });
   const allPromises = concat([], tabCreateFn(chromeWindow));
-  existingTabs.forEach((tab) => allPromises.push(chrome.tabs.remove(tab.id)));
+  existingTabs.forEach((tab) => {
+    allPromises.push(chrome.tabs.remove(tab.id));
+  });
   await Promise.all(allPromises);
   return chromeWindow;
 }

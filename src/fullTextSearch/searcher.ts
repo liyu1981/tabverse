@@ -4,7 +4,7 @@ import {
   FullTextSearchDatabase,
   INDEX_TABLE_NAME,
 } from './FullTextSearchDatabase';
-import { hasOwnProperty, logger, perfEnd, perfStart } from '../global';
+import { hasOwn, logger, perfEnd, perfStart } from '../global';
 
 import { IFullTextSearchIndexRecord } from './FullTextSearchDatabase';
 import { Query } from './query';
@@ -54,11 +54,11 @@ function createQueryForAndQuery(
     q = q.and((x) => x.terms.findIndex((v) => v === term) >= 0);
   }
 
-  if (hasOwnProperty(andQuery, 'type') && andQuery.type !== TYPE_ALL) {
+  if (hasOwn(andQuery, 'type') && andQuery.type !== TYPE_ALL) {
     q = q.filter((record) => record.type === andQuery.type);
   }
 
-  if (hasOwnProperty(andQuery, 'field') && andQuery.field !== FIELD_ALL) {
+  if (hasOwn(andQuery, 'field') && andQuery.field !== FIELD_ALL) {
     q = q.filter((record) => record.field === andQuery.field);
   }
 

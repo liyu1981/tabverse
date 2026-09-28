@@ -35,7 +35,7 @@ import { entityForTable, rowUpdatedAt } from './dbBridge';
 import { logger } from '../../global';
 import { Outbox } from './outbox';
 import { RecordInput } from './types';
-import { loadSyncConfig } from './syncConfig';
+import { SyncConfig, loadSyncConfig } from './syncConfig';
 import { notifyLocalTablesChanged } from './localTables';
 
 export const WRITE_CREATE = 1;
@@ -189,7 +189,7 @@ export async function handleChanges(
   if (remoteApplyDepth > 0) {
     return;
   }
-  let config;
+  let config: SyncConfig | null;
   try {
     config = await loadSyncConfig(storage);
   } catch {

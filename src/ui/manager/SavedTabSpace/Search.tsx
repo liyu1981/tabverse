@@ -27,7 +27,7 @@ export const scopeMap = {
 export function SearchInput({ query, onChange }: SearchInputProps) {
   const onChangeQuery = useMemo(
     () => (newQuery: Query) => onChange(newQuery),
-    [],
+    [onChange],
   );
 
   return (

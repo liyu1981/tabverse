@@ -21,7 +21,7 @@ export function SidebarSearch(props: SidebarSearchProps) {
         props.onSwitch(ManagerViewRoute.Search);
       }
     },
-    [],
+    [props.onSwitch],
   );
 
   const onFocus = useMemo(
@@ -34,7 +34,7 @@ export function SidebarSearch(props: SidebarSearchProps) {
         props.onSwitch(ManagerViewRoute.Search);
       }
     },
-    [],
+    [props.onSwitch],
   );
 
   return (

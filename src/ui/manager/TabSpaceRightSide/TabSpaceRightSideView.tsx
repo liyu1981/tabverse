@@ -75,7 +75,7 @@ export function TabSpaceRightSideView() {
         title: bookmarkTitle,
       },
     };
-  }, []);
+  }, [tabSpace.id]);
 
   const [currentUnpinned, setCurrentUnpinned] = useState<string>(() => {
     const restUnpinned = Object.keys(rightSideModules).filter(

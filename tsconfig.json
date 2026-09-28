@@ -1,7 +1,10 @@
 {
   "compilerOptions": {
-    "target": "es2020",
-    "lib": ["es2020", "dom", "dom.iterable"],
+    // es2022: Object.hasOwn (which biome's autofix prefers over
+    // obj.hasOwnProperty) is ES2022, and the extension only ships to Chrome
+    // 140+ (Vite's build target is chrome116), which has it natively
+    "target": "es2022",
+    "lib": ["es2022", "dom", "dom.iterable"],
     "module": "esnext",
     "moduleResolution": "bundler",
     // resolve the "browser" condition of package exports, same as Vite does

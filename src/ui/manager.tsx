@@ -10,7 +10,7 @@ import { IManagerQueryParams, ManagerView } from './manager/ManagerView';
 import {
   TabSpaceOp,
   assert,
-  hasOwnProperty,
+  hasOwn,
   isTabSpaceManagerPage,
   logger,
 } from '../global';
@@ -44,7 +44,7 @@ async function bootstrap() {
   } else {
     const queryParams = getQueryParameters();
     assert(
-      hasOwnProperty(queryParams, 'op'),
+      hasOwn(queryParams, 'op'),
       'queryParams do not have attribute op.',
     );
 

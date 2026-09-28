@@ -23,7 +23,7 @@ import {
 } from '../../message/message';
 import {
   debounce,
-  hasOwnProperty,
+  hasOwn,
   logger,
   perfEnd,
   perfStart,
@@ -73,7 +73,7 @@ export async function querySavedTabSpace(
   const pageStart = params?.pageStart ?? 0;
   const pageLimit = params?.pageLimit ?? QUERY_PAGE_LIMIT_DEFAULT;
 
-  if (hasOwnProperty(params, 'anyOf')) {
+  if (hasOwn(params, 'anyOf')) {
     savedData = await db
       .table<TabSpaceSavePayload>(TABSPACE_DB_TABLE_NAME)
       .bulkGet(params.anyOf);
@@ -82,7 +82,7 @@ export async function querySavedTabSpace(
       pageStart * pageLimit,
       (pageStart + 1) * pageLimit,
     );
-  } else if (hasOwnProperty(params, 'noneOf')) {
+  } else if (hasOwn(params, 'noneOf')) {
     savedData = (
       await db
         .table<TabSpaceSavePayload>(TABSPACE_DB_TABLE_NAME)

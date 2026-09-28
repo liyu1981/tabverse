@@ -9,13 +9,13 @@
     "ignoreUnknown": true,
     "includes": [
       "**",
-      "!**/dist/**",
-      "!**/dist_crx/**",
-      "!**/coverage/**",
-      "!**/doc/**",
-      "!**/docs/**",
-      "!**/node_modules/**",
-      "!**/.vscode/**",
+      "!**/dist",
+      "!**/dist_crx",
+      "!**/coverage",
+      "!**/doc",
+      "!**/docs",
+      "!**/node_modules",
+      "!**/.vscode",
       "!**/pnpm-lock.yaml"
     ]
   },
@@ -52,6 +52,44 @@
     }
   },
   "linter": {
-    "enabled": false
-  }
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+      "style": {
+        "preset": "none"
+      },
+      "complexity": {
+        "preset": "none"
+      },
+      "nursery": {
+        "preset": "none"
+      },
+      "a11y": {
+        "preset": "recommended"
+      },
+      "performance": {
+        "preset": "recommended"
+      },
+      "suspicious": {
+        "preset": "recommended",
+        "noExplicitAny": "off",
+        "noExportsInTest": "off",
+        "noTsIgnore": "off"
+      }
+    }
+  },
+  "overrides": [
+    {
+      "includes": [
+        "src/ui/common/useAsyncEffect.ts"
+      ],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "useExhaustiveDependencies": "off"
+          }
+        }
+      }
+    }
+  ]
 }

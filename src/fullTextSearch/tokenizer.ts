@@ -13,7 +13,6 @@ function getSegmenter(lang: string) {
 
 function splitWord(word: string) {
   // use this function to further split by common separator, like ':,-/'
-  // eslint-disable-next-line no-useless-escape
   return word.split(/[.,:;\-\/\\`!\|?]/);
 }
 
@@ -26,7 +25,9 @@ export async function tokenize(content: string): Promise<TokenizeResults> {
   for (const { segment, isWordLike } of segmenter.segment(content)) {
     if (isWordLike) {
       const word = segment.toLowerCase();
-      splitWord(word).forEach((word) => words.add(word));
+      splitWord(word).forEach((part) => {
+        words.add(part);
+      });
     }
   }
   return {

@@ -154,7 +154,9 @@ export async function queryAllNote(
     const notesData = await db
       .table<Note>(NOTE_DB_TABLE_NAME)
       .bulkGet(allNotesData[0].noteIds);
-    notesData.forEach((noteData) => (allNote = addNote(noteData, allNote)));
+    notesData.forEach((noteData) => {
+      allNote = addNote(noteData, allNote);
+    });
     return allNote;
   }
 }

@@ -5,7 +5,7 @@ import { tabSpaceBootstrap } from '../data/tabSpaceBootstrap';
 import { useStore } from 'effector-react';
 import { $tabSpace } from '../data/tabSpace/store';
 
-function DataView() {
+function DataViewPage() {
   const tabSpace = useStore($tabSpace);
   const tabSpaceJSON = {
     ...tabSpace,
@@ -34,7 +34,7 @@ async function start() {
   const tab = await chrome.tabs.getCurrent();
   const window = await chrome.windows.getCurrent();
   tabSpaceBootstrap(tab.id, window.id, getNewId());
-  createRoot(document.getElementById('root')!).render(<DataView />);
+  createRoot(document.getElementById('root')!).render(<DataViewPage />);
 }
 
 start();

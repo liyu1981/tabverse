@@ -104,9 +104,9 @@ export async function queryAllBookmark(
     const bookmarksData = await db
       .table<Bookmark>(BOOKMARK_DB_TABLE_NAME)
       .bulkGet(savedAllBookmark.bookmarkIds);
-    bookmarksData.forEach(
-      (bookmarkData) => (allBookmark = addBookmark(bookmarkData, allBookmark)),
-    );
+    bookmarksData.forEach((bookmarkData) => {
+      allBookmark = addBookmark(bookmarkData, allBookmark);
+    });
     return allBookmark;
   }
 }

@@ -26,7 +26,7 @@ export function TermPlusView(props: TermPlusViewProps) {
         props.onFocusBackToInput();
       }
     },
-    [],
+    [props.onAddTerms, props.onFocusBackToInput],
   );
 
   const onInputBlur = useMemo(
@@ -34,7 +34,7 @@ export function TermPlusView(props: TermPlusViewProps) {
       setActivated(false);
       props.onFocusBackToInput();
     },
-    [],
+    [props.onFocusBackToInput],
   );
 
   useEffect(() => {

@@ -1,6 +1,6 @@
 import { getWindow } from './localSetting';
 import * as PubSub from 'pubsub-js';
-import { hasOwnProperty } from '../global';
+import { hasOwn } from '../global';
 
 const _keysForMonitoring = {};
 
@@ -12,7 +12,7 @@ export function localStorageInit() {
   const window = getWindow();
   if (window) {
     window.onstorage = (ev: StorageEvent) => {
-      if (hasOwnProperty(_keysForMonitoring, ev.key)) {
+      if (hasOwn(_keysForMonitoring, ev.key)) {
         PubSub.publish(ev.key, {
           key: ev.key,
           newValue: ev.newValue,

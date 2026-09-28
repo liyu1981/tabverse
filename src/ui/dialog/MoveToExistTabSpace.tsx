@@ -1,7 +1,7 @@
 import { fromNow } from '../../time';
 import { Button, Checkbox, Dialog, Intent } from '@blueprintjs/core';
 import { EmptyQuery, Query, calcCursorBegin } from '../../fullTextSearch';
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import {
   moveTabsToTabSpace,
   querySavedTabSpace,
@@ -41,7 +41,9 @@ export function MoveToExistTabSpaceDialog(
   const [removeAfterMove, setRemoveAfterMove] = useState<boolean>(true);
   const managerViewContext = useContext(ManagerViewContext);
 
-  const reloadCandidateTabSpaces = async () => {
+  // useCallback so the effect can depend on the loader itself instead of
+  // reaching past it into `query`
+  const reloadCandidateTabSpaces = useCallback(async () => {
     setLoadStatus(LoadStatus.Loading);
     if (query.isEmpty()) {
       const savedTabSpaceParams = addPagingToQueryParams(
@@ -59,11 +61,11 @@ export function MoveToExistTabSpaceDialog(
       setCandidateTabSpaces(tabSpaces);
     }
     setLoadStatus(LoadStatus.Done);
-  };
+  }, [query]);
 
   useEffect(() => {
     reloadCandidateTabSpaces();
-  }, [query]);
+  }, [reloadCandidateTabSpaces]);
 
   const renderCandidateTabSpaces = () => {
     if (candidateTabSpaces.length <= 0) {

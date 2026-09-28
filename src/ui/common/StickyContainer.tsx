@@ -24,11 +24,12 @@ export const StickyContainer = (props: StickyContainerProps) => {
   const [scrollToY, setScrollToY] = useState(0);
   const divRef = useRef<HTMLDivElement | null>(null);
 
-  const handleScroll = debounce((event) => {
-    setScrollToY(window.scrollY);
-  });
-
   useEffect(() => {
+    // created here (not per render) so the listener and the debounce it
+    // captures always belong together
+    const handleScroll = debounce(() => {
+      setScrollToY(window.scrollY);
+    });
     window.addEventListener('scroll', handleScroll);
     return () => {
       window.removeEventListener('scroll', handleScroll);

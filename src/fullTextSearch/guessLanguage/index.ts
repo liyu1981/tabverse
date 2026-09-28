@@ -319,6 +319,8 @@ const DEVANAGARI = ['hi', 'ne'];
 const PT = ['pt-BR', 'pt-PT'];
 
 // Unicode char greedy regex block range matchers
+// biome-ignore-start lint/suspicious/noControlCharactersInRegex: matching
+// control codes is the whole point of the Basic Latin block
 const unicodeBlockTests = {
   'Basic Latin': /[\u0000-\u007F]/g,
   'Latin-1 Supplement': /[\u0080-\u00FF]/g,
@@ -448,6 +450,7 @@ const unicodeBlockTests = {
   'Halfwidth and Fullwidth Forms': /[\uFF00-\uFFEF]/g,
   Specials: /[\uFFF0-\uFFFF]/g,
 };
+// biome-ignore-end lint/suspicious/noControlCharactersInRegex: see above
 
 const guessLanguageImpl = function () {
   function findRuns(text) {
@@ -544,7 +547,7 @@ const guessLanguageImpl = function () {
       0.4
     ) {
       check(text, EXTENDED_LATIN, function (latinLang) {
-        if (latinLang == 'pt') {
+        if (latinLang === 'pt') {
           check(text, PT, callback);
         } else {
           callback.apply(undefined, [latinLang]);
@@ -586,7 +589,7 @@ const guessLanguageImpl = function () {
       scoresArr.push([index, scores[index]]);
     }
 
-    if (scoresArr.length == 0) {
+    if (scoresArr.length === 0) {
       callback.apply(undefined, [UNKNOWN]);
       return;
     }

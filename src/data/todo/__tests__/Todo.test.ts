@@ -1,4 +1,3 @@
-/* eslint-disable prefer-const */
 import {
   addTodo,
   clearCompleted,
@@ -103,9 +102,9 @@ test('allTodo', () => {
     newTodoSavePayloads,
     existTodoSavePayloads,
   } = convertAndGetAllTodoSavePayload(allTodo);
-  allTodoSavePayload.todoIds.forEach((todoId) =>
-    expect(isIdNotSaved(todoId)).toBeFalsy(),
-  );
+  allTodoSavePayload.todoIds.forEach((todoId) => {
+    expect(isIdNotSaved(todoId)).toBeFalsy();
+  });
   expect(isNewAllTodo).toBeTruthy();
   expect(allTodoSavePayload.todoIds).toEqual(
     savedAllTodo.todos.map((todo) => todo.id).toArray(),
