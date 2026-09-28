@@ -210,15 +210,17 @@ export function SearchInput(props: SearchInputProps) {
   return (
     <div className={SearchInputClasses.searchInputContainer}>
       {/*
-        A composite widget, not a control: it groups the term tags and the
-        input, and the only reason it handles an event is to notice focus
-        leaving the whole thing (commit the pending term). There is nothing to
-        activate, so it has no role and no key handling; the label is on the
-        input itself.
+        A composite widget, not a control: the click only moves focus to the
+        input it already contains (clicking the icon or the padding), and the
+        blur notices focus leaving the whole thing so the pending term can be
+        committed. Neither is an action a keyboard user needs, so there is no
+        key handling and no role; the label is on the input itself.
       */}
-      {/* biome-ignore lint/a11y/noStaticElementInteractions: focus-boundary
-          watcher on a composite widget - see above */}
-      <div className={classes} onBlur={handleContainerBlur}>
+      <div
+        className={classes}
+        onBlur={handleContainerBlur}
+        onClick={handleContainerClick}
+      >
         <Icon
           className={Classes.TAG_INPUT_ICON}
           icon={props.leftIcon}

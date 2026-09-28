@@ -41,19 +41,44 @@ beforeEach(async () => {
   await startChangeFeed({ storage, outbox, database: database as any });
 });
 
-/** let the microtask batch and the post-write re-reads settle */
-async function settle() {
-  for (let i = 0; i < 12; i += 1) {
-    await Promise.resolve();
+/**
+ * Waits for a condition instead of guessing how many ticks the feed needs.
+ *
+ * The feed is event driven: the write hook fires, the transaction commits, the
+ * committed row is re-read, the batch is flushed on a microtask and the outbox
+ * write is a storage round trip. Counting microtasks raced that chain and the
+ * test went flaky under load - a fixed number of ticks is not a synchronisation
+ * primitive.
+ */
+async function waitFor(
+  description: string,
+  condition: () => Promise<boolean>,
+  timeoutMs = 2000,
+) {
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    if (await condition()) {
+      return;
+    }
+    if (Date.now() > deadline) {
+      throw new Error(`timed out waiting for: ${description}`);
+    }
+    await new Promise((resolve) => setTimeout(resolve, 5));
   }
-  await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+/** Waits until the outbox holds `count` entries. */
+async function waitForEntries(count: number) {
+  await waitFor(`outbox to hold ${count} entr(y/ies)`, async () => {
+    return (await outbox.size()) === count;
+  });
 }
 
 test('a create is queued with the whole row as payload', async () => {
   await database
     .table('SavedNote')
     .put({ id: 'n1', name: 'hello', updatedAt: 1234, createdAt: 1 });
-  await settle();
+  await waitForEntries(1);
 
   const entries = await outbox.list();
   expect(entries).toHaveLength(1);
@@ -75,14 +100,21 @@ test('an update is queued with the committed row, not the diff', async () => {
   await database
     .table('SavedNote')
     .put({ id: 'n1', name: 'hello', tag: 'keep', updatedAt: 1 });
-  await settle();
+  await waitForEntries(1);
 
-  // the outbox keeps one entry per record, newest edit wins, so the update
-  // below replaces it in place
+  // the outbox keeps one entry per record, newest edit wins, so this replaces
+  // the entry above in place
   await database
     .table('SavedNote')
     .put({ id: 'n1', name: 'renamed', updatedAt: 2 });
-  await settle();
+  // the payload has to be the committed row, so wait for the *new* value to be
+  // the one that lands, not merely for an entry to exist
+  await waitFor('the updated row to be queued', async () => {
+    const entries = await outbox.list();
+    return (
+      entries.length === 1 && JSON.parse(entries[0].payload).name === 'renamed'
+    );
+  });
 
   const entries = await outbox.list();
   expect(entries).toHaveLength(1);
@@ -98,7 +130,7 @@ test('a bulk write collapses to one entry per record', async () => {
     { id: 't2', content: 'b', updatedAt: 1 },
     { id: 't3', content: 'c', updatedAt: 1 },
   ]);
-  await settle();
+  await waitForEntries(3);
 
   const entries = await outbox.list();
   expect(entries).toHaveLength(3);
@@ -110,10 +142,13 @@ test('a delete becomes a tombstone', async () => {
   await database
     .table('SavedNote')
     .put({ id: 'n1', name: 'bye', updatedAt: 1 });
-  await settle();
+  await waitForEntries(1);
 
   await database.table('SavedNote').delete('n1');
-  await settle();
+  await waitFor('the tombstone to be queued', async () => {
+    const entries = await outbox.list();
+    return entries.length === 1 && entries[0].deleted === true;
+  });
 
   const entries = await outbox.list();
   expect(entries).toHaveLength(1);
@@ -136,7 +171,9 @@ test('nothing is queued while sync is not configured', async () => {
   });
 
   await database.table('SavedNote').put({ id: 'n9', updatedAt: 1 });
-  await settle();
+  // give the feed the same chance it has everywhere else, then prove it queued
+  // nothing: a fixed wait would only prove the test was slow
+  await new Promise((resolve) => setTimeout(resolve, 50));
 
   expect(await bareOutbox.size()).toBe(0);
 });

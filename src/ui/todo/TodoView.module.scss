@@ -87,7 +87,7 @@
   bottom: 100%;
 }
 
-.todoapp .toggleAll + button.content {
+.todoapp .toggleAll + label {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -99,7 +99,7 @@
   left: -0;
 }
 
-.todoapp .toggleAll + button.content:before {
+.todoapp .toggleAll + label:before {
   content: '❯';
   display: inline-block;
   font-size: 22px;
@@ -109,7 +109,7 @@
   transition: all 200ms linear;
 }
 
-.todoapp .toggleAll:checked + button.content:before {
+.todoapp .toggleAll:checked + label:before {
   color: #484848;
 }
 
@@ -183,14 +183,18 @@
   display: block;
   line-height: 1.2;
   transition: color 0.4s;
-  font-weight: 400;
   color: #484848;
-  /* a real <button> (it is editable, by double click or Enter): reset the
-     button chrome so the row looks unchanged */
-  width: 100%;
+  /*
+    A real <button> now (editable by double click or Enter). The UA style is
+    `font: 400 13.333px Arial`, so the whole font shorthand has to be reset -
+    font-family alone would leave the text at 13.333px Arial - and then the
+    weight this row always had. The padding above is kept: it is what indents
+    the text past the absolutely positioned toggle.
+  */
+  font: inherit;
+  font-weight: 400;
   border: 0;
   background: none;
-  font-family: inherit;
   text-align: start;
   cursor: text;
 }
@@ -346,11 +350,11 @@
 
 .todoapp :focus,
 .todoapp .toggle:focus + button.content,
-.todoapp .toggleAll:focus + button.content {
+.todoapp .toggleAll:focus + label {
   // box-shadow: 0 0 2px 2px global.$color-main-brand;
   outline: 0;
 }
 
-.todoapp button.toggleAll:focus:before {
+.todoapp label.toggleAll:focus:before {
   transform: rotate(90deg);
 }

@@ -90,6 +90,19 @@
           }
         }
       }
+    },
+    {
+      "includes": [
+        "src/fullTextSearch/SearchInput/SearchInput.tsx"
+      ],
+      "linter": {
+        "rules": {
+          "a11y": {
+            "noStaticElementInteractions": "off",
+            "useKeyWithClickEvents": "off"
+          }
+        }
+      }
     }
   ]
 }

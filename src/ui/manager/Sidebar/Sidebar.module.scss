@@ -54,18 +54,18 @@
 
 .sidebarComponent .header {
   /* a real <button> now (it switches the route): reset the button chrome so
-     the entry looks exactly as it did as a div */
+     the entry looks exactly as it did as a div. padding is set in full because
+     the UA's 1px 6px would otherwise indent the label. */
   display: block;
   width: 100%;
-  padding-left: 10px;
+  padding: 0 0 0 10px;
   border: 0;
   background: none;
   color: inherit;
-  font: inherit;
+  font-family: inherit;
   text-align: start;
   cursor: pointer;
   line-height: 42px;
-  padding-left: 10px;
   font-size: 1.2em;
   font-weight: bold;
 }

@@ -37,12 +37,17 @@
   hyphens: auto;
 }
 
-/* the content area became a real <button> so it is reachable by keyboard;
-   reset what the browser gives a button so the card looks unchanged */
+/*
+ * The content area became a real <button> (so it is reachable by keyboard).
+ * Only what a button actually needs is reset here: the padding that reserves
+ * room for the floated favicon and buttons lives on .content and must survive.
+ */
 .contentButton {
   display: block;
-  width: 100%;
-  padding: 0;
+  /* .content keeps padding-left/right (that is the space beside the floated
+     favicon and buttons); only the UA's 1px top/bottom is dropped */
+  padding-top: 0;
+  padding-bottom: 0;
   border: 0;
   background: none;
   font: inherit;
