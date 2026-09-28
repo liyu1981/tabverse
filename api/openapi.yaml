@@ -288,6 +288,7 @@ components:
           note,
           todo,
           bookmark,
+          closedtab,
           allnote,
           alltodo,
           allbookmark,

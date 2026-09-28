@@ -12,6 +12,12 @@ server authoritative sync protocol.
   `session` (browser window/tab snapshots); the extension no longer records
   those (ADR 0006), so this now exists for older clients and can go with the
   entity
+- **Entities:** `tabspace`, `tab`, `note`, `todo`, `bookmark`, `closedtab`
+  (the History tool: tabs closed in a tabverse, ADR 0007) plus the client's
+  ordered aggregates `allnote`, `alltodo`, `allbookmark`. `closedtab` is
+  deliberately *not* in the FTS index: the client prunes those rows once they
+  fall off its 999 entry cap, and a search hit on a forgotten page is a dead
+  end
 
 ## Run
 

@@ -3,6 +3,7 @@ import React, { useMemo, useState } from 'react';
 
 import { BookmarkView } from '../../bookmark/BookmarkView';
 import { ErrorBoundary } from '../../common/ErrorBoundary';
+import { HistoryView } from '../../history/HistoryView';
 import { NotebookView } from '../../notebook/NotebookView';
 import { TodoView } from '../../todo/TodoView';
 import classes from './TabSpaceRightSideView.module.scss';
@@ -11,6 +12,7 @@ import { isIdNotSaved } from '../../../data/common';
 import { loadAllTodoByTabSpaceId } from '../../../data/todo/util';
 import { loadAllNoteByTabSpaceId } from '../../../data/note/util';
 import { loadAllBookmarkByTabSpaceId } from '../../../data/bookmark/util';
+import { loadClosedTabsByTabSpaceId } from '../../../data/closedTab/util';
 import { useStore } from 'effector-react';
 import { $tabSpace } from '../../../data/tabSpace/store';
 
@@ -18,6 +20,7 @@ enum RightSideModule {
   TODO = 'todo',
   NOTE = 'note',
   BOOKMARK = 'bookmark',
+  HISTORY = 'history',
 }
 
 export function TabSpaceRightSideView() {
@@ -61,6 +64,16 @@ export function TabSpaceRightSideView() {
       </span>
     );
 
+    const historyLoader = async () => {
+      await loadClosedTabsByTabSpaceId(tabSpace.id);
+    };
+    const HistoryWithLoading = getLoadingComponent2(HistoryView, historyLoader);
+    const historyTitle = (
+      <span>
+        <Icon icon="history" /> History
+      </span>
+    );
+
     return {
       [RightSideModule.TODO]: {
         component: TodoWithLoading,
@@ -73,6 +86,10 @@ export function TabSpaceRightSideView() {
       [RightSideModule.BOOKMARK]: {
         component: BookmarkWithLoading,
         title: bookmarkTitle,
+      },
+      [RightSideModule.HISTORY]: {
+        component: HistoryWithLoading,
+        title: historyTitle,
       },
     };
   }, [tabSpace.id]);

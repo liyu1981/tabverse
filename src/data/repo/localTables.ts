@@ -26,8 +26,13 @@ import {
 } from '../../message/message';
 import { logger } from '../../global';
 
-/** Tables written by the sync engine / session saver worth telling pages about. */
-const NOTIFY_TABLES = new Set(['SavedTabSpace', 'SavedTab']);
+/**
+ * Tables written by the sync engine worth telling pages about: the manager
+ * page re-reads the tabverse and the closed tab list when they change. Closed
+ * tabs are included because another device (or another window) can close tabs
+ * in a tabverse this page is showing.
+ */
+const NOTIFY_TABLES = new Set(['SavedTabSpace', 'SavedTab', 'SavedClosedTab']);
 
 export function notifyLocalTablesChanged(tables: string[]): void {
   const unique = Array.from(new Set(tables.filter((t) => !!t)));

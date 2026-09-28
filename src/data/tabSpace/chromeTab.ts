@@ -7,6 +7,7 @@ import { eq } from 'lodash';
 import { getUnsavedNewId } from '../common';
 import { isJestTest } from '../../debug';
 import { produce } from 'immer';
+import { recordClosedTab } from '../closedTab/util';
 import { saveCurrentTabSpaceIfNeeded } from './util';
 import { captureTabGroups, startMonitorTabGroups } from './tabGroup';
 import { forgetPreview, persistPreview } from './tabPreviewStore';
@@ -275,6 +276,12 @@ export function getOnChromeTabDetached() {
     chromeTabId: number,
     _detachInfo: chrome.tabs.OnDetachedInfo,
   ) {
+    // a tab moved to another window left this tabverse; the History tool
+    // remembers it too, like Chrome's own "recently closed" does
+    const detachedTab = findTabByChromeTabId(chromeTabId, $tabSpace.getState());
+    if (detachedTab) {
+      recordClosedTab(detachedTab);
+    }
     tabSpaceStoreApi.removeTabByChromeTabId(chromeTabId);
     tabSpaceStoreApi.removePreview(chromeTabId);
     void forgetPreview(chromeTabId);
@@ -304,6 +311,13 @@ export function getOnChromeTabRemoved() {
     chromeTabId: number,
     _removeInfo: chrome.tabs.OnRemovedInfo,
   ) => {
+    // recorded before the tab leaves the store: this is the only place where
+    // the title/url of a tab being closed is still known (see the History tool
+    // in data/closedTab)
+    const removedTab = findTabByChromeTabId(chromeTabId, $tabSpace.getState());
+    if (removedTab) {
+      recordClosedTab(removedTab);
+    }
     tabSpaceStoreApi.removeTabByChromeTabId(chromeTabId);
     tabSpaceStoreApi.removePreview(chromeTabId);
     void forgetPreview(chromeTabId);

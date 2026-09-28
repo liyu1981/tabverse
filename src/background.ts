@@ -1,4 +1,5 @@
 import { dbAuditor as bookmarkDbAuditor } from './data/bookmark/dbAuditor';
+import { dbAuditor as closedTabDbAuditor } from './data/closedTab/dbAuditor';
 import { bootstrap as fullTextBootstrap, isDbEmpty } from './fullTextSearch';
 import { logger } from './global';
 import { monitorFullTextSearchMsg } from './background/fullTextSearch/chromeMessage';
@@ -28,6 +29,7 @@ registerDbAuditor(tabSpaceDbAuditor);
 registerDbAuditor(todoDbAuditor);
 registerDbAuditor(noteDbAuditor);
 registerDbAuditor(bookmarkDbAuditor);
+registerDbAuditor(closedTabDbAuditor);
 //dbAuditAndClearance();
 
 logger.info('listen to idle state...');

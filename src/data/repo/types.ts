@@ -12,6 +12,8 @@ export type EntityName =
   | 'note'
   | 'todo'
   | 'bookmark'
+  /** a tab that was closed in this tabverse (the History tool) */
+  | 'closedtab'
   // per tabspace ordered aggregates kept by the extension (id lists);
   // synced as records so ordering survives round trips
   | 'allnote'
@@ -24,6 +26,7 @@ export const ENTITY_NAMES: EntityName[] = [
   'note',
   'todo',
   'bookmark',
+  'closedtab',
   'allnote',
   'alltodo',
   'allbookmark',

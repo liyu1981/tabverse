@@ -176,6 +176,30 @@ class MockTabsApi {
       this.chrome.setActiveTab(tabId);
     }
   }
+
+  /**
+   * Opens a tab in the current window (or params.windowId). Used by the code
+   * paths that re-open something, e.g. restoring a closed tab or clicking a
+   * bookmark.
+   */
+  async create(params: chrome.tabs.CreateProperties) {
+    const windowId = params.windowId ?? this.chrome.currentWindowId;
+    const tab = this.chrome._newTabFromData(
+      {
+        title: params.url ?? '',
+        url: params.url ?? '',
+        favIconUrl: '',
+        pinned: !!params.pinned,
+      },
+      windowId,
+    );
+    this.chrome.insertTab(tab, windowId);
+    this.onCreated.sendMessage([tab]);
+    if (params.active) {
+      this.chrome.setActiveTab(tab.id);
+    }
+    return tab;
+  }
 }
 
 class MockWindow {

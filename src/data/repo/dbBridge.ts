@@ -5,12 +5,14 @@
  * stored row itself (all rows are SavePayload objects, i.e. plain JSON, so
  * no conversion is needed). The per tabspace aggregates (SavedAll*) are
  * synced too: they carry the ordering of notes/todos/bookmarks, which could
- * not be reconstructed from the entity rows alone.
+ * not be reconstructed from the entity rows alone. Closed tabs are flat rows
+ * with no aggregate: their order is `closedAt`, which every row carries.
  */
 
 import { db } from '../../storage/db';
 import { isIdNotSaved } from '../common';
 import { ALLBOOKMARK_DB_TABLE_NAME } from '../bookmark/AllBookmark';
+import { CLOSED_TAB_DB_TABLE_NAME } from '../closedTab/ClosedTab';
 import { BOOKMARK_DB_TABLE_NAME } from '../bookmark/Bookmark';
 import { ALLNOTE_DB_TABLE_NAME } from '../note/AllNote';
 import { NOTE_DB_TABLE_NAME } from '../note/Note';
@@ -35,6 +37,7 @@ export const SYNC_TABLE_BINDINGS: SyncTableBinding[] = [
   { entity: 'alltodo', table: ALLTODO_DB_TABLE_NAME },
   { entity: 'bookmark', table: BOOKMARK_DB_TABLE_NAME },
   { entity: 'allbookmark', table: ALLBOOKMARK_DB_TABLE_NAME },
+  { entity: 'closedtab', table: CLOSED_TAB_DB_TABLE_NAME },
 ];
 
 const TABLE_TO_ENTITY: { [table: string]: EntityName } = (() => {

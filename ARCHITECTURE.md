@@ -52,9 +52,10 @@ remote edit ──WebSocket records_changed──► debounced syncOnce()
 
 ### Entities
 
-`tabspace`, `tab`, `note`, `todo`, `bookmark` plus the three
-per-tabspace ordered aggregates `allnote`, `alltodo`, `allbookmark` (they
-carry the display ordering, which cannot be rebuilt from entity rows).
+`tabspace`, `tab`, `note`, `todo`, `bookmark`, `closedtab` (the History
+tool: one row per closed tab, capped at 999 per tabverse, `adr/0007`) plus the
+three per-tabspace ordered aggregates `allnote`, `alltodo`, `allbookmark`
+(they carry the display ordering, which cannot be rebuilt from entity rows).
 
 ## Commands
 

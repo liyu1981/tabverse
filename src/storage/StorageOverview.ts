@@ -92,4 +92,10 @@ export const storageOverviewApi = createApi($storageOverview, {
       note: bookmarkStorage,
     });
   },
+  updateClosedTabStorage: (lastStorageOverviewApi, closedTabStorage) => {
+    return new StorageOverview({
+      ...lastStorageOverviewApi.storages,
+      closedTab: closedTabStorage,
+    });
+  },
 });

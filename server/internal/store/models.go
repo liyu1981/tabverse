@@ -15,6 +15,12 @@ var Entities = map[string]bool{
 	"note":     true,
 	"todo":     true,
 	"bookmark": true,
+	// Closed tabs of a tabverse (the History tool in the right side panel).
+	// One record per url, ordered by the row's own closedAt, so no aggregate
+	// entity is needed. Not indexed: these rows are dropped by the client once
+	// they fall off the history cap, and a stale search hit would be a link to
+	// something the user no longer has.
+	"closedtab": true,
 	// The extension keeps per tabspace aggregates (id lists, ordered). They
 	// are synced as their own records so ordering survives without the
 	// server knowing anything about the client's data model.
