@@ -6,7 +6,7 @@ import { TabCard } from '../TabSpace/TabCard';
 import { TabSpace } from '../../../data/tabSpace/TabSpace';
 import { TabSpaceId } from '../../../message/message';
 import classes from './SavedTabSpaceDetail.module.scss';
-import { createNewChromeWindowWithTab } from '../SessionBrowser/util';
+import { createNewChromeWindowWithTab } from '../../../data/tabSpace/chromeUtil';
 import { logger } from '../../../global';
 import { TabSpaceQuery } from '../../../data/tabSpaceQuery/TabSpaceQuery';
 import { TabCore } from '../../../data/tabSpace/Tab';

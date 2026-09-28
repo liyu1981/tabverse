@@ -1,7 +1,6 @@
 import { dbAuditor as bookmarkDbAuditor } from './data/bookmark/dbAuditor';
 import { bootstrap as fullTextBootstrap, isDbEmpty } from './fullTextSearch';
 import { logger } from './global';
-import { monitorChromeTabChanges } from './background/session';
 import { monitorFullTextSearchMsg } from './background/fullTextSearch/chromeMessage';
 import { dbAuditor as noteDbAuditor } from './data/note/dbAuditor';
 import { reIndexAll } from './background/fullTextSearch/reIndexAll';
@@ -43,11 +42,6 @@ chrome.idle.onStateChanged.addListener(
     }
   },
 );
-
-logger.info('monitor chrome tab changes...');
-// setupSessionSaver();
-const BACKGROUND_DEBOUNCE_TIME = 2 * 1000;
-monitorChromeTabChanges(BACKGROUND_DEBOUNCE_TIME);
 
 // Server sync (server <-> local). No-op when the device has not been paired,
 // which keeps local-only usage intact.

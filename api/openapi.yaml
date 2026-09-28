@@ -276,6 +276,10 @@ components:
   schemas:
     Entity:
       type: string
+      description: >-
+        `session` is deprecated: the extension stopped recording browser
+        session snapshots (ADR 0006) and no current client sends it. The server
+        still accepts and prunes it for older builds.
       enum:
         [
           tabspace,

@@ -39,6 +39,11 @@ Introduce `tabversed`, a Go server, as the single source of truth:
 6. **Server side retention and full text search** (SQLite FTS5) replace the
    `chrome.idle` background audit and ~760 LOC of client-side indexing.
 
+   > Retention only ever pruned `session` snapshots, and the browser-session
+   > feature was deleted later (`adr/0006`), so the server still accepts the
+   > `session` entity and still prunes it for pre-0.6 clients. Drop both when
+   > no supported build pushes sessions any more.
+
 The client side coordination machinery (leader election, change broadcasts)
 is deleted rather than ported: with a server there is no election to hold.
 

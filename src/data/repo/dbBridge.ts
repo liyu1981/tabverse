@@ -12,7 +12,6 @@ import { db } from '../../storage/db';
 import { isIdNotSaved } from '../common';
 import { ALLBOOKMARK_DB_TABLE_NAME } from '../bookmark/AllBookmark';
 import { BOOKMARK_DB_TABLE_NAME } from '../bookmark/Bookmark';
-import { CHROMESESSION_DB_TABLE_NAME } from '../chromeSession/ChromeSession';
 import { ALLNOTE_DB_TABLE_NAME } from '../note/AllNote';
 import { NOTE_DB_TABLE_NAME } from '../note/Note';
 import { ALLTODO_DB_TABLE_NAME } from '../todo/AllTodo';
@@ -36,7 +35,6 @@ export const SYNC_TABLE_BINDINGS: SyncTableBinding[] = [
   { entity: 'alltodo', table: ALLTODO_DB_TABLE_NAME },
   { entity: 'bookmark', table: BOOKMARK_DB_TABLE_NAME },
   { entity: 'allbookmark', table: ALLBOOKMARK_DB_TABLE_NAME },
-  { entity: 'session', table: CHROMESESSION_DB_TABLE_NAME },
 ];
 
 const TABLE_TO_ENTITY: { [table: string]: EntityName } = (() => {

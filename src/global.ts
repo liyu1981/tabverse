@@ -5,7 +5,13 @@ import { debounce as lodashDebounce } from 'lodash';
 // Do not manual edit it, use tools/version_update to update it.
 export const TABSPACE_VERSION = 'v0.5.0';
 
-export const TABSPACE_DB_VERSION = 7;
+// v8 dropped the `chromesession` object store: the browser-session feature
+// (periodic window/tab snapshots, the Session Browser route and the server side
+// retention that pruned them) is gone - see ADR 0006. Dexie deletes stores that
+// disappear from the schema on a version bump. A build older than this one can
+// still open the database: it re-creates the missing store and carries on
+// (see src/storage/__tests__/TabSpaceDatabase.upgrade.test.ts).
+export const TABSPACE_DB_VERSION = 8;
 
 export const TABSPACE_MANAGER_TAB_TITLE_PREFIX = 'Tabverse:Manager';
 // `global` is a Node-only global: webpack polyfilled it, Vite/Rolldown does

@@ -27,11 +27,7 @@ import {
 import { logger } from '../../global';
 
 /** Tables written by the sync engine / session saver worth telling pages about. */
-const NOTIFY_TABLES = new Set([
-  'SavedTabSpace',
-  'SavedTab',
-  'SavedChromeSession',
-]);
+const NOTIFY_TABLES = new Set(['SavedTabSpace', 'SavedTab']);
 
 export function notifyLocalTablesChanged(tables: string[]): void {
   const unique = Array.from(new Set(tables.filter((t) => !!t)));

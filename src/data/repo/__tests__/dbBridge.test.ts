@@ -12,7 +12,6 @@ const NOTE = 'SavedNote';
 const ALLNOTE = 'SavedAllNote';
 const TABSPACE = 'SavedTabSpace';
 const TAB = 'SavedTab';
-const SESSION = 'ChromeSession';
 
 function note(id: string, tabSpaceId: string, updatedAt: number, name = id) {
   return {
@@ -35,7 +34,6 @@ test('entityForTable knows every syncable table', () => {
   expect(entityForTable(ALLNOTE)).toBe('allnote');
   expect(entityForTable(TABSPACE)).toBe('tabspace');
   expect(entityForTable(TAB)).toBe('tab');
-  expect(entityForTable(SESSION)).toBe('session');
   expect(entityForTable('SavedAllTodo')).toBe('alltodo');
   expect(entityForTable('nope')).toBeNull();
 });
@@ -75,14 +73,14 @@ test('listLocalRecords reads saved rows and skips unsaved ones', async () => {
 
 test('listLocalRecords can be restricted to some entities', async () => {
   await db.table(NOTE).put(note('n1', 'ts1', 3000));
-  await db.table(SESSION).put({
-    id: 's1',
-    tag: '2020-01-01 10:00',
-    tabs: [],
-    windows: [],
+  await db.table(TABSPACE).put({
+    id: 'ts1',
+    name: 'space one',
+    tabIds: [],
+    windowId: 3,
     version: 7,
     createdAt: 1000,
-    updatedAt: 1000,
+    updatedAt: 2000,
   });
 
   const onlyNotes = await listLocalRecords(['note']);

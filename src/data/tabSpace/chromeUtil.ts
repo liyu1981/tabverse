@@ -1,5 +1,6 @@
 import { TabSpaceOp } from '../../global';
 import { sendChromeMessage, TabSpaceMsg } from '../../message/message';
+import { concat } from 'lodash';
 
 export function switchToTabSpaceUtil(
   chromeTabId: number,
@@ -13,6 +14,21 @@ export function switchToTabSpaceUtil(
     });
   }
   chrome.windows.update(chromeWindowId, { focused: true });
+}
+
+/**
+ * Opens a new window, hands it to `tabCreateFn` and closes the tabs Chrome put
+ * there by default. Used when restoring a saved tabverse into a new window.
+ */
+export async function createNewChromeWindowWithTab(
+  tabCreateFn: (chromeWindow: chrome.windows.Window) => Promise<any>[],
+): Promise<chrome.windows.Window> {
+  const chromeWindow = await chrome.windows.create({ focused: true });
+  const existingTabs = await chrome.tabs.query({ windowId: chromeWindow.id });
+  const allPromises = concat([], tabCreateFn(chromeWindow));
+  existingTabs.forEach((tab) => allPromises.push(chrome.tabs.remove(tab.id)));
+  await Promise.all(allPromises);
+  return chromeWindow;
 }
 
 export function restoreSavedTabSpaceUtil(tabSpaceId: string) {

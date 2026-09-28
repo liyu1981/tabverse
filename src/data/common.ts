@@ -28,6 +28,9 @@ export function isIdNotSaved(id: string) {
   return id.startsWith('~');
 }
 
+/** tabSpaceId of a record that does not belong to any tabverse (it is a tab). */
+export const NotTabSpaceId = '';
+
 export interface IBase {
   version: number;
   id: string;

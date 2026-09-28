@@ -8,8 +8,10 @@ server authoritative sync protocol.
 - **Sync:** per-user monotonic revisions, delta pull + batch push, LWW conflicts
 - **Realtime:** one WebSocket per device, `records_changed` fan-out
 - **Search:** FTS5 (replaces ~760 LOC of client side indexing)
-- **Retention:** server side pruning of chrome session snapshots (replaces the
-  `chrome.idle` background audit)
+- **Retention:** server side pruning of records by age. It only ever pruned
+  `session` (browser window/tab snapshots); the extension no longer records
+  those (ADR 0006), so this now exists for older clients and can go with the
+  entity
 
 ## Run
 

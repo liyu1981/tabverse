@@ -24,7 +24,9 @@ For v1:
    action in the sync dialog is a separate, deliberate button — pairing alone
    does not move existing data.
 4. **Server side retention** defaults to pruning `session` snapshots after
-   14 days (`TABVERSED_RETENTION_DAYS`, 0 = keep forever).
+   14 days (`TABVERSED_RETENTION_DAYS`, 0 = keep forever). The extension no
+   longer records snapshots at all (`adr/0006`); retention remains for older
+   clients and can go with the `session` entity.
 5. **No third parties.** The extension talks to exactly one server, the one
    the user typed.
 

@@ -8,7 +8,7 @@
 │  └─ data/repo/  ★ sync layer            │      │  internal/hub    WebSocket     │
 │ background service worker               │  WS  │  internal/store  SQLite+FTS5   │
 │  ├─ background.ts  (tab events, search) │◄────►│  internal/auth   pairing       │
-│  └─ repo/backgroundSync (sync runtime)  │      │  internal/retention (sessions) │
+│  └─ repo/backgroundSync (sync runtime)  │      │  internal/retention (legacy)   │
 └─────────────────────────────────────────┘      └────────────────────────────────┘
 ```
 
@@ -52,7 +52,7 @@ remote edit ──WebSocket records_changed──► debounced syncOnce()
 
 ### Entities
 
-`tabspace`, `tab`, `session`, `note`, `todo`, `bookmark` plus the three
+`tabspace`, `tab`, `note`, `todo`, `bookmark` plus the three
 per-tabspace ordered aggregates `allnote`, `alltodo`, `allbookmark` (they
 carry the display ordering, which cannot be rebuilt from entity rows).
 

@@ -13,7 +13,7 @@ import {
 } from '../Base';
 
 import { List } from 'immutable';
-import { NotTabSpaceId } from '../chromeSession/ChromeSession';
+import { NotTabSpaceId } from '../common';
 import { produce } from 'immer';
 
 export interface AllNote extends IBase {

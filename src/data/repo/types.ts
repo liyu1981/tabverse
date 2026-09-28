@@ -9,7 +9,6 @@
 export type EntityName =
   | 'tabspace'
   | 'tab'
-  | 'session'
   | 'note'
   | 'todo'
   | 'bookmark'
@@ -22,7 +21,6 @@ export type EntityName =
 export const ENTITY_NAMES: EntityName[] = [
   'tabspace',
   'tab',
-  'session',
   'note',
   'todo',
   'bookmark',

@@ -20,7 +20,7 @@ All requested permissions below exist to serve that one purpose.
 | `tabs` | Read tab URLs/titles to save a tab group; detect and focus the Tabverse manager tab; restore tabs. Without it the extension cannot know what it is saving. |
 | `activeTab` | Capture a screenshot of the active tab when the user saves it. |
 | `storage` | Persist sync configuration, the sync cursor and the offline mutation queue (`chrome.storage.local`); `chrome.storage.session` for shared state. Required for the optional sync feature. |
-| `unlimitedStorage` | Local IndexedDB cache of saved tab groups/sessions grows unbounded; the default 10 MB quota is far too small for a tab archive. |
+| `unlimitedStorage` | Local IndexedDB cache of saved tab groups grows unbounded; the default 10 MB quota is far too small for a tab archive. |
 | `idle` | Run the local database audit when the browser is idle instead of while the user is working. |
 | `alarms` | Schedule the optional periodic sync and background work; service workers are killed by Chrome, so `setTimeout` cannot be relied on. |
 | `host_permissions: <all_urls>` | Read page favicons and capture screenshots of arbitrary pages the user is saving. No page content is read or injected; there are **no content scripts**. |
@@ -33,11 +33,14 @@ Consistent with `adr/0002-privacy-posture.md`:
   explicitly pairs a device with a sync server in the settings dialog.
 - **When sync is enabled**, the user chooses the server (self-hosted
   `tabversed` by default). The extension sends: tab URLs and titles, saved
-  tab groups, notes, todos, bookmarks and session snapshots.
+  tab groups, notes, todos and bookmarks. (Browser session snapshots were
+  collected by 0.5.x and are no longer sent; the server still prunes any that
+  an older paired build uploaded.)
 - **Not sold, not shared** with third parties; the extension talks to exactly
   one server, the one the user typed.
-- **Retention:** server-side pruning of session snapshots after 14 days by
-  default (`TABVERSED_RETENTION_DAYS`, configurable, 0 = keep forever).
+- **Retention:** server-side pruning of `session` records after 14 days by
+  default (`TABVERSED_RETENTION_DAYS`, configurable, 0 = keep forever). No
+  current build sends them; the window exists for older paired clients.
 - **No analytics, no advertising, no tracking, no remote code.**
 - Data is stored in transit over HTTPS/WSS; at rest it is a SQLite file on
   the server the user operates.
@@ -46,7 +49,7 @@ Answers to give in the dashboard:
 
 | Question | Answer |
 |---|---|
-| Does this item collect user content? | **Yes — only when the user enables sync** (tab URLs/titles, notes, todos, bookmarks, session snapshots), stored on a server the user controls. |
+| Does this item collect user content? | **Yes — only when the user enables sync** (tab URLs/titles, notes, todos, bookmarks), stored on a server the user controls. |
 | Does it collect browsing history? | **Yes — only when the user enables sync**, for the purpose of restoring tab groups. Never sold or shared. |
 | Does it collect personally identifiable information? | No. There are no accounts, emails or names beyond a self-chosen device label. |
 | Is it used for analytics/advertising? | No. |

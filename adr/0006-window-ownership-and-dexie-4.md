@@ -56,6 +56,17 @@ Users had reported exactly that failure.
    now a `BackgroundMsg.LocalTablesChanged` runtime message that
    `message/chromeMessage` re-publishes locally. Payload is table names, not row
    diffs; listeners re-query.
+6. **The browser-session feature is deleted** (recorded here because it is why
+   the v8 schema bump and the `session` entity removal exist):
+   `data/chromeSession` (snapshots, saver, store, 689 LOC),
+   `ui/manager/SessionBrowser` (442 LOC), the `BrowserSession` sidebar entry,
+   the `session` route, `background/session.ts` and the `chromesession` object
+   store are gone, and `'session'` left the sync entity list.
+   **The server keeps accepting the `session` entity and keeps retention for
+   it.** An older build can still be installed on a profile (see below), and it
+   will go on pushing snapshots; retention is the 66 LOC that stops those from
+   filling someone's database forever, so it stays until the entity can be
+   dropped server-side as well.
 
 ## Notable details
 
@@ -89,8 +100,14 @@ Users had reported exactly that failure.
 - No more "could not establish connection" failures between the worker and other
   windows, and the `getStateTabSpaceRegistry` lookups on every tab
   added/updated/removed event are gone.
-- The session browser shows a Tabverse manager tab as an ordinary tab; restoring
-  a snapshot no longer re-attaches it to a tabverse.
+- **The v7 -> v8 schema bump is safe in both directions.** `TabSpaceDatabase`
+  drops the store Dexie no longer declares, and an _older_ build opening the
+  result re-creates it rather than failing: Dexie compares schemas, bumps the
+  native version itself and logs a `SchemaDiff` warning. Both directions are
+  covered by `src/storage/__tests__/TabSpaceDatabase.upgrade.test.ts`, which
+  builds a genuine v7 database with raw IndexedDB instead of trusting a
+  comment. (An earlier draft of this ADR claimed the rollback would fail with
+  `VersionError`; the test disproved it.)
 - `loadToCurrentWindowUtil` and the `LiveTabSpace` sidebar entry got simpler
   because they no longer have to deregister anything.
 - Sync behaviour itself is unchanged: the outbox, LWW, tombstones and the delta

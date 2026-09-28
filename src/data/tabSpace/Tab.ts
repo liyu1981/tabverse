@@ -2,7 +2,7 @@ import { IBase, setAttrForObject2 } from '../common';
 import { convertToSavedBase, newEmptyBase, toBase } from '../Base';
 import { eq, omit } from 'lodash';
 
-import { NotTabSpaceId } from '../chromeSession/ChromeSession';
+import { NotTabSpaceId } from '../common';
 
 export interface TabCore extends IBase {
   tabSpaceId: string;

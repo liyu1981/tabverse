@@ -6,7 +6,6 @@ import React, { useMemo, useState } from 'react';
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { ManagerViewContextSupport } from './ManagerViewContext';
 import { SavedTabSpaceView } from './SavedTabSpace/SavedTabSpaceView';
-import { SessionBrowserView } from './SessionBrowser/SessionBrowserView';
 import { Sidebar } from './Sidebar/Sidebar';
 import { SidebarContainer } from '../common/SidebarContainer';
 import { TabSpaceView } from './TabSpace/TabSpaceView';
@@ -23,7 +22,6 @@ interface IManagerContainerProps {
 }
 
 export enum ManagerViewRoute {
-  Session = 'session',
   Opened = 'live',
   Saved = 'saved',
   Search = 'search',
@@ -54,8 +52,6 @@ export const ManagerView = (props: IManagerContainerProps) => {
         return <TabSpaceView />;
       case ManagerViewRoute.Saved:
         return <SavedTabSpaceView />;
-      case ManagerViewRoute.Session:
-        return <SessionBrowserView />;
       case ManagerViewRoute.Webtool:
         return <WebtoolView></WebtoolView>;
       // case ManagerViewRoute.Search:

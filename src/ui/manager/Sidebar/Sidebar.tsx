@@ -1,7 +1,6 @@
 import { IManagerQueryParams, ManagerViewRoute } from '../ManagerView';
 
 import { BottomNav } from '../BottomNav/BottomNav';
-import { BrowserSession } from './BrowserSession';
 import { ErrorBoundary } from '../../common/ErrorBoundary';
 import { Icon } from '@blueprintjs/core';
 import { LiveTabSpace } from './LiveTabSpace';
@@ -67,18 +66,6 @@ export const Sidebar = (props: ISidebarProps) => {
           active={props.route === ManagerViewRoute.Search}
           onSwitch={(value) => props.switchRoute(value)}
         /> */}
-        <SidebarComponent
-          active={props.route === ManagerViewRoute.Session}
-          route={ManagerViewRoute.Session}
-          onSwitch={props.switchRoute}
-          header={
-            <div className={classes.sidebarHeaderContainer}>
-              <Icon icon="git-repo" size={ICON_SIZE} /> Browser Session
-            </div>
-          }
-        >
-          <BrowserSession active={props.route === ManagerViewRoute.Session} />
-        </SidebarComponent>
         <SidebarComponent
           active={props.route === ManagerViewRoute.Opened}
           route={ManagerViewRoute.Opened}
