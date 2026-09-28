@@ -29,7 +29,8 @@ export const NoteView = (props: INoteViewProps) => {
   return (
     <div>
       <div className={classes.container}>
-        <div
+        <button
+          type="button"
           className={classes.collapseButton}
           onClick={() => {
             setEditorOpen((lastValue) => {
@@ -46,7 +47,7 @@ export const NoteView = (props: INoteViewProps) => {
           ) : (
             <Icon icon="caret-right" />
           )}
-        </div>
+        </button>
         <div className={classes.titleContainer}>
           <EditableText
             alwaysRenderInput={true}

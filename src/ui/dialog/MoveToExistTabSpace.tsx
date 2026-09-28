@@ -75,7 +75,8 @@ export function MoveToExistTabSpaceDialog(
         <div className={classes.candidateTopContainer}>
           {candidateTabSpaces.map((tabSpace) => {
             return (
-              <div
+              <button
+                type="button"
                 key={tabSpace.id}
                 className={clsx(
                   classes.candidateContainer,
@@ -94,7 +95,7 @@ export function MoveToExistTabSpaceDialog(
                   created: {fromNow(tabSpace.createdAt)}, saved:
                   {fromNow(tabSpace.updatedAt)}
                 </span>
-              </div>
+              </button>
             );
           })}
         </div>

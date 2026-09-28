@@ -28,7 +28,13 @@ export const TabSpaceLogo = (props: TabSpaceLogoProps) => {
           title="Expand the sidebar"
           aria-label="Expand the sidebar"
         >
-          <img className={classes.collapsedMark} src="icons/icon128.png" />
+          {/* decorative: the button is already labelled by aria-label */}
+          <img
+            alt=""
+            aria-hidden={true}
+            className={classes.collapsedMark}
+            src="icons/icon128.png"
+          />
         </button>
       </div>
     );
@@ -44,7 +50,10 @@ export const TabSpaceLogo = (props: TabSpaceLogoProps) => {
       }}
     >
       <div>
+        {/* decorative: the wordmark below carries the name */}
         <img
+          alt=""
+          aria-hidden={true}
           style={merge(
             {
               position: 'absolute',

@@ -83,11 +83,17 @@
 }
 
 .styleButton {
+  /* a real <button> now (it was a span with onMouseDown): reset the button
+     chrome, and note that a11y/exhaustive-deps are happy with a real button */
   color: #999;
   cursor: pointer;
   margin-right: 16px;
   padding: 2px 0;
   display: inline-block;
+  border: 0;
+  background: none;
+  font: inherit;
+  line-height: inherit;
 }
 
 .styleButton:hover {

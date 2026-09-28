@@ -13,7 +13,9 @@ export function TermsView({ values, onRemoveTerm }: TermsViewProps) {
       {values.map((value, index) => {
         return (
           <EditableTag
-            key={index}
+            // the term itself is the stable identity here; keying on the
+            // index made React reuse the wrong tag when one was removed
+            key={value}
             large={false}
             round={true}
             intent={Intent.SUCCESS}

@@ -37,6 +37,20 @@
   hyphens: auto;
 }
 
+/* the content area became a real <button> so it is reachable by keyboard;
+   reset what the browser gives a button so the card looks unchanged */
+.contentButton {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
 .tabTitle {
   font-size: 1.2em;
 }

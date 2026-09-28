@@ -48,10 +48,23 @@ const TodoItemView = (props: TodoItemViewProps) => {
           }}
           onChange={() => {}}
         />
-        <label onDoubleClick={() => setEditing(true)}>
-          {props.todo.content}
-        </label>
         <button
+          type="button"
+          className={classes.content}
+          title="Double click, or press Enter, to edit"
+          onDoubleClick={() => setEditing(true)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              setEditing(true);
+            }
+          }}
+        >
+          {props.todo.content}
+        </button>
+        <button
+          type="button"
+          aria-label="Delete todo"
           className={classes.destroy}
           onClick={() => props.removeFunc(props.todo.id)}
         />
@@ -171,7 +184,6 @@ export function TodoView({ tabSpaceId }: TodoViewProps) {
         className={classes.newTodo}
         placeholder="What needs to be done?"
         value={currentInputValue ?? ''}
-        autoFocus={true}
         onKeyDown={(event) => {
           if (event.keyCode === RETURN_KEY) {
             const t = setContent(currentInputValue, newEmptyTodo());
@@ -199,23 +211,27 @@ export function TodoView({ tabSpaceId }: TodoViewProps) {
       </span>
       <ul className={classes.filters}>
         <li key="all">
-          <a href="#" onClick={() => setFilter(null)}>
+          <button type="button" onClick={() => setFilter(null)}>
             All
-          </a>
+          </button>
         </li>{' '}
         <li key="active">
-          <a href="#" onClick={() => setFilter(FILTER_ACTIVE)}>
+          <button type="button" onClick={() => setFilter(FILTER_ACTIVE)}>
             Active
-          </a>
+          </button>
         </li>{' '}
         <li key="completed">
-          <a href="#" onClick={() => setFilter(FILTER_COMPLETED)}>
+          <button
+            type="button"
+            onClick={() => setFilter(FILTER_COMPLETED)}
+          >
             Completed
-          </a>
+          </button>
         </li>
       </ul>
       {hasCompleted ? (
         <button
+          type="button"
           className={classes.clearCompleted}
           onClick={() => {
             todoStoreApi.clearCompleted();

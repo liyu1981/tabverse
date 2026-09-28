@@ -42,7 +42,8 @@ export function SidebarComponent({
         )}
       >
         {!collapsed ? <div className={classes.edge}> </div> : null}
-        <div
+        <button
+          type="button"
           className={classes.header}
           title={collapsed ? railText(header) : undefined}
           onClick={() => onSwitch(route)}
@@ -54,7 +55,7 @@ export function SidebarComponent({
           ) : (
             header
           )}
-        </div>
+        </button>
         {!collapsed && active ? children : <></>}
       </div>
     </ErrorBoundary>

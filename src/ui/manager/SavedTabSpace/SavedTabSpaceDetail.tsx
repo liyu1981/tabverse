@@ -34,9 +34,13 @@ export function SavedTabSpaceDetail(props: SavedTabSpaceDetailProps) {
   const entries: React.ReactElement[] = [];
   props.tabSpace.tabs.forEach((savedTab) => {
     entries.push(
-      <div key={savedTab.id} onClick={() => openTabInNewWindow(savedTab)}>
+      <button
+        type="button"
+        key={savedTab.id}
+        onClick={() => openTabInNewWindow(savedTab)}
+      >
         <TabCard key={savedTab.id} tab={savedTab} />
-      </div>,
+      </button>,
     );
   });
 

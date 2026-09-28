@@ -6,6 +6,12 @@
 
 .collapseButton {
   width: 32px;
+  /* it is a real <button> now: drop the browser's own button chrome */
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
 }
 
 .titleContainer {

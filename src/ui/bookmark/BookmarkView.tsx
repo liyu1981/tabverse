@@ -26,9 +26,18 @@ const BookmarkItem = (props: IBookmarkItem) => {
     <li>
       <div className={classes.listItemView}>
         <div className={classes.favIcon}>
-          <img src={props.bookmark.favIconUrl} width="32" height="32" />
+          {/* decorative: the bookmark title is right next to it */}
+          <img
+            alt=""
+            aria-hidden={true}
+            src={props.bookmark.favIconUrl}
+            width="32"
+            height="32"
+          />
         </div>
-        <label className={classes.label}>
+        {/* a grouping row, not a form control (the eslint/biome "label must
+            have a control" rule was right that <label> was the wrong element) */}
+        <div className={classes.label}>
           <div>
             <b>
               <EditableText
@@ -47,7 +56,7 @@ const BookmarkItem = (props: IBookmarkItem) => {
             </b>
           </div>
           <small>{props.bookmark.url}</small>
-        </label>
+        </div>
         <span>
           <ButtonGroup>
             <Button

@@ -25,7 +25,10 @@ function createStyles(): { [k: string]: React.CSSProperties } {
 export const FavIcon = (props: IFavIconProps) => {
   return (
     <span className={clsx(classes.container, props.className ?? '')}>
+      {/* decorative: the tab title is always rendered next to it */}
       <img
+        alt=""
+        aria-hidden={true}
         className={classes.img}
         src={
           props.url.length > 0

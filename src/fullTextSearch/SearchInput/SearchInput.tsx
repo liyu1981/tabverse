@@ -209,11 +209,16 @@ export function SearchInput(props: SearchInputProps) {
 
   return (
     <div className={SearchInputClasses.searchInputContainer}>
-      <div
-        className={classes}
-        onBlur={handleContainerBlur}
-        onClick={handleContainerClick}
-      >
+      {/*
+        A composite widget, not a control: it groups the term tags and the
+        input, and the only reason it handles an event is to notice focus
+        leaving the whole thing (commit the pending term). There is nothing to
+        activate, so it has no role and no key handling; the label is on the
+        input itself.
+      */}
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: focus-boundary
+          watcher on a composite widget - see above */}
+      <div className={classes} onBlur={handleContainerBlur}>
         <Icon
           className={Classes.TAG_INPUT_ICON}
           icon={props.leftIcon}
@@ -223,6 +228,8 @@ export function SearchInput(props: SearchInputProps) {
           {props.query && props.query.andQueries.map(maybeRenderAndQuery)}
           {props.children}
           <input
+            // a placeholder is not a label
+            aria-label="Search terms"
             value={inputState.inputValue}
             {...props.inputProps}
             onFocus={handleInputFocus}

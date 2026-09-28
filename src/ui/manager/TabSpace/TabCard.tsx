@@ -25,13 +25,17 @@ const TabDetailPreviewPanel = (props) => {
             url={props.tab.favIconUrl}
           />
           <h3 className={clsx(classes.previewWrapText, classes.previewTitleH)}>
-            <a href="#">{props.tab.title}</a>
+            {props.tab.title}
           </h3>
         </div>
         <div className={classes.previewWrapText}>{props.tab.url}</div>
       </div>
       <div className={classes.previewImageContainer}>
-        <img className={classes.previewImage} src={props.tabPreview} />
+        <img
+          alt={`Preview of ${props.tab.title}`}
+          className={classes.previewImage}
+          src={props.tabPreview}
+        />
       </div>
     </Card>
   ) : null;
@@ -120,8 +124,9 @@ export function TabCard(props: ITabCardProps) {
           <></>
         )}
       </div>
-      <div
-        className={classes.content}
+      <button
+        type="button"
+        className={clsx(classes.content, classes.contentButton)}
         onClick={() => {
           if (props.tab.chromeTabId) {
             switchToTab(props.tab);
@@ -148,7 +153,7 @@ export function TabCard(props: ITabCardProps) {
             <CollapsibleLabel text={props.tab.url} />
           </small>
         </div>
-      </div>
+      </button>
     </Card>
   );
 

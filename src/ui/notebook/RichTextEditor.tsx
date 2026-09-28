@@ -110,7 +110,10 @@ function StyleButton(props: { button: IStyleButton; editor: Editor | null }) {
   const { button, editor } = props;
   const active = editor ? button.isActive(editor) : false;
   return (
-    <span
+    <button
+      type="button"
+      aria-label={button.label}
+      aria-pressed={active}
       className={clsx(classes.styleButton, active ? classes.activeButton : '')}
       onMouseDown={(e) => {
         // keep the selection: prevent the editor from losing focus first
@@ -122,7 +125,7 @@ function StyleButton(props: { button: IStyleButton; editor: Editor | null }) {
       title={button.label}
     >
       <Icon icon={button.icon} />
-    </span>
+    </button>
   );
 }
 

@@ -53,6 +53,17 @@
 }
 
 .sidebarComponent .header {
+  /* a real <button> now (it switches the route): reset the button chrome so
+     the entry looks exactly as it did as a div */
+  display: block;
+  width: 100%;
+  padding-left: 10px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
   line-height: 42px;
   padding-left: 10px;
   font-size: 1.2em;

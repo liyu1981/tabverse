@@ -17,7 +17,9 @@ export function SearchPagingControl(props: SearchPagingControlProps) {
       {props.cursors.map((cursor, index) => {
         return (
           <Button
-            key={`cursor-${index}`}
+            // the cursor token is the identity; the index is only a fallback
+            // for the last cursor, which has no next token
+            key={cursor.next || `cursor-${index}`}
             minimal={true}
             onClick={
               index === props.currentCursorIndex
