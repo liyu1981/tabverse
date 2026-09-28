@@ -1,7 +1,7 @@
 {
   "name": "Tabverse",
   "manifest_version": 3,
-  "minimum_chrome_version": "116",
+  "minimum_chrome_version": "140",
   "description": "Tabverse is an opinionated way of managing tabs.",
   "homepage_url": "https://tabverse.github.io",
   "icons": {
@@ -24,6 +24,7 @@
   },
   "permissions": [
     "tabs",
+    "tabGroups",
     "storage",
     "unlimitedStorage",
     "activeTab",

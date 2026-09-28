@@ -41,6 +41,13 @@
   font-size: 1.2em;
 }
 
+/* Chrome's pinned state, shown next to the title */
+.pinnedTag {
+  margin-left: 6px;
+  font-size: 0.6em;
+  vertical-align: middle;
+}
+
 .tabUrl {
   color: #888;
 }

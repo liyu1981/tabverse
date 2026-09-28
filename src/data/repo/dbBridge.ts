@@ -53,6 +53,11 @@ const ENTITY_TO_TABLE: { [entity: string]: string } = (() => {
   return out;
 })();
 
+function isEmptyTabSpaceRow(row: any): boolean {
+  const tabIds = row.tabIds;
+  return Array.isArray(tabIds) ? tabIds.length === 0 : !tabIds;
+}
+
 export function entityForTable(table: string): EntityName | null {
   return TABLE_TO_ENTITY[table] || null;
 }
@@ -91,6 +96,12 @@ export async function listLocalRecords(
     const rows: any[] = await db.table(binding.table).toArray();
     for (const row of rows) {
       if (!row || typeof row.id !== 'string' || isIdNotSaved(row.id)) {
+        continue;
+      }
+      if (binding.entity === 'tabspace' && isEmptyTabSpaceRow(row)) {
+        // A tabverse is created the moment a Tabverse tab opens, so opening
+        // and immediately closing one would otherwise leave a synced, empty
+        // record behind. It uploads as soon as it holds a tab.
         continue;
       }
       out.push({

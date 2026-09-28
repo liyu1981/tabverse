@@ -71,6 +71,8 @@ export default tseslint.config(
       'react-hooks/exhaustive-deps': 'warn',
     },
   },
-  // keep formatting concerns out of ESLint; prettier owns them
+  // keep formatting concerns out of ESLint; biome owns them. The config is
+  // still the right one: it turns off the stylistic rules that would fight
+  // the formatter, whatever the formatter happens to be.
   prettierConfig,
 );

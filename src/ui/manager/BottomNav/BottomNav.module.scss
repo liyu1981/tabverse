@@ -1,11 +1,11 @@
-@use '../../common/SidebarContainer.module.scss';
 @use '../../../global.scss';
 
 .container {
   position: fixed;
   bottom: 0px;
   left: -1px;
-  width: SidebarContainer.$sidebar-width;
+  /* the rail's width, the same custom property the sidebar itself uses */
+  width: var(--sidebar-width, 320px);
 }
 
 .navbar {
@@ -14,4 +14,19 @@
 
 .navbar :global(.bp6-button) {
   border-radius: 16px;
+}
+
+/* collapsed rail: the same bar and buttons, stacked */
+.rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 0;
+}
+
+.rail :global(.bp6-button) {
+  width: 44px;
+  height: 40px;
+  border-radius: 12px;
 }

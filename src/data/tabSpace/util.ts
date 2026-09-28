@@ -32,6 +32,8 @@ import { filter, isEqual, omit } from 'lodash';
 
 import { DEFAULT_SAVE_DEBOUNCE } from '../../storage/StorageOverview';
 import { addTabSpaceToIndex } from '../../background/fullTextSearch/addToIndex';
+import { pinTabverseTabFirst } from './chromeUtil';
+import { restoreTabGroups } from './tabGroup';
 import { removeTabSpaceFromIndex } from '../../background/fullTextSearch/api';
 
 export function monitorDbChanges() {
@@ -300,9 +302,49 @@ export async function loadTabSpaceByTabSpaceId(
 
   // here we do not use map but use for loop to ensure that we restore tabs in
   // the saved order
+  //
+  // Pinned tabs are created unpinned and pinned afterwards, in saved order.
+  // Passing `pinned` (or an index) to tabs.create() would make Chrome resolve
+  // the position inside the pinned section, whose index semantics are not
+  // documented; pinning in order afterwards reproduces the saved order without
+  // depending on that.
+  const createdTabIds: { ourTabId: string; id: number; pinned: boolean }[] = [];
   for (let i = 0; i < tabSpace.tabs.size; i++) {
     const savedTab = tabSpace.tabs.get(i);
-    await chrome.tabs.create({ url: savedTab.url });
+    const created = await chrome.tabs.create({ url: savedTab.url });
+    if (created?.id !== undefined) {
+      createdTabIds.push({
+        ourTabId: savedTab.id,
+        id: created.id,
+        pinned: !!savedTab.pinned,
+      });
+    }
+  }
+  for (const { id, pinned } of createdTabIds) {
+    if (pinned) {
+      try {
+        await chrome.tabs.update(id, { pinned: true });
+      } catch (err) {
+        logger.log('could not pin restored tab', id, err);
+      }
+    }
+  }
+  // the tabverse's own pinned tabs were just pinned, so put the tabverse tab
+  // back at the front of the pinned section
+  await pinTabverseTabFirst(chromeTabId);
+
+  // groups last: chrome.tabs.group() needs every tab to exist, and a split view
+  // (which requires matching group state) is created after this
+  const tabIdByOurTabId = new Map(
+    createdTabIds.map(({ ourTabId, id }) => [ourTabId, id]),
+  );
+  const restoredGroups = await restoreTabGroups(
+    tabSpace.tabGroups,
+    tabIdByOurTabId,
+    (tabId) => !!createdTabIds.find((t) => t.id === tabId)?.pinned,
+  );
+  if (restoredGroups > 0) {
+    logger.log(`restored ${restoredGroups} tab group(s)`);
   }
 
   tabSpaceStoreApi.update(tabSpace);

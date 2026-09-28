@@ -2,22 +2,43 @@
 
 .container {
   display: flex;
-  // margin-left: 2px;
-  // position: relative;
-  // padding-right: calc(50vw - 200px);
+  align-items: stretch;
 }
 
 .mainContainer {
+  /*
+   * The tab list takes what is left. `min-width: 0` matters: a flex item's
+   * default min-width is its content, which is what made this column refuse to
+   * shrink and push the right panel off screen.
+   */
+  flex: 1 1 0;
+  min-width: 0;
   overflow-y: auto;
-  flex-grow: 1;
   height: 100vh;
 }
 
 .rightSideContainer {
-  width: 50%;
-  max-width: 50%;
+  /*
+   * The right panel used to be a hard `width: 50%`, so it kept its share while
+   * the window narrowed and the tab rows were squeezed instead (and, with the
+   * sidebar offset bug, it was clipped off the right edge entirely).
+   * `flex: 0 1 45%` keeps its share of a wide window but lets it give space
+   * back when there is not enough, down to the floor below; below that floor
+   * it is simply too narrow to be useful, so `min-width: 0` lets the main
+   * column win instead of overflowing the page.
+   */
+  flex: 0 1 45%;
+  min-width: 300px;
   overflow-y: auto;
   background-color: global.$color-light-shade;
   box-shadow: 1px 0px 1px 0px inset #bbb;
   height: 100vh;
+}
+
+/* not enough room for a useful panel: the tab list is the priority */
+@media (max-width: 900px) {
+  .rightSideContainer {
+    flex: 0 1 40%;
+    min-width: 0;
+  }
 }

@@ -1,4 +1,5 @@
 import {
+  TabGroupHint,
   TabSpace,
   addTabs,
   insertTab,
@@ -8,6 +9,7 @@ import {
   replaceTab,
   reset,
   setName,
+  setTabGroups,
   updateTab,
   updateTabSpace,
 } from './TabSpace';
@@ -45,6 +47,8 @@ const tabSpaceApi = createApi($tabSpace, {
   updateTabSpace: (lastTabSpace, changes: Partial<Omit<TabSpace, 'tabIds'>>) =>
     updateTabSpace(changes, lastTabSpace),
   setName: (lastTabSpace, name: string) => setName(name, lastTabSpace),
+  setTabGroups: (lastTabSpace, groups: TabGroupHint[]) =>
+    setTabGroups(groups, lastTabSpace),
   reset: (
     lastTabSpace,
     withData: { chromeTabId?: number; chromeWindowId?: number; newId?: string },

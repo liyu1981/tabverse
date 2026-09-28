@@ -3,7 +3,9 @@ import {
   ButtonGroup,
   Card,
   Checkbox,
+  Intent,
   Popover,
+  Tag,
 } from '@blueprintjs/core';
 
 import { CollapsibleLabel } from '../../common/CollapsibleLabel';
@@ -130,6 +132,16 @@ export function TabCard(props: ITabCardProps) {
           <b>
             <CollapsibleLabel maxLength={56} text={props.tab.title} />
           </b>
+          {props.tab.pinned ? (
+            <Tag
+              minimal={true}
+              intent={Intent.PRIMARY}
+              className={classes.pinnedTag}
+              title="This tab is pinned in Chrome"
+            >
+              pinned
+            </Tag>
+          ) : null}
         </div>
         <div className={clsx(classes.tabUrl, classes.wrapText)}>
           <small>

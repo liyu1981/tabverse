@@ -10,6 +10,7 @@ import {
 } from '../../tabSpace/__tests__/common.test';
 
 import { $tabSpace } from '../../tabSpace/store';
+import { getNewId } from '../../common';
 import { QUERY_PAGE_LIMIT_DEFAULT } from '../../../storage/db';
 import { findTabByChromeTabId } from '../../tabSpace/TabSpace';
 import { omit } from 'lodash';
@@ -21,7 +22,7 @@ export async function initTabSpaceData() {
   const { mockChrome, w1, w2, t1, t2, t3, t4 } = initMockChrome();
   const tst1 = mockChrome.insertTabFromData(tsTabData1, w1.id, 0);
   await mockChrome.flushMessages();
-  await tabSpaceBootstrap(tst1.id, tst1.windowId);
+  await tabSpaceBootstrap(tst1.id, tst1.windowId, getNewId());
   return { mockChrome, w1, w2, t1, t2, t3, t4, tst1 };
 }
 

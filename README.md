@@ -22,7 +22,7 @@ npm run build-crx    # production bundle + dist_crx/tabverse.zip (store package)
 npm test             # vitest + coverage
 npm run typecheck    # tsc --noEmit
 npm run lint:check   # eslint (flat config: eslint.config.mjs)
-npm run format:check # prettier
+npm run format:check # biome
 ```
 
 Version bumps happen in one place: `npm version`-style edit of

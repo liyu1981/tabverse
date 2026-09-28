@@ -54,8 +54,10 @@ last `require()` calls (ESM static imports).
 `typescript-eslint` 8, `eslint-plugin-react-hooks` (new: `rules-of-hooks` is an
 error — it caught two real HOC naming violations) and
 `eslint-plugin-unused-imports`; `eslint-plugin-react` was dropped because it
-does not support ESLint 10 and TypeScript covers what it added. Prettier 3
-owns formatting (`eslint-config-prettier` disables the overlap).
+does not support ESLint 10 and TypeScript covers what it added. Formatting
+was owned by Prettier 3, and is now owned by **Biome 2** (see the note at the
+end of this ADR); `eslint-config-prettier` stays either way, because turning
+off ESLint's stylistic rules is what keeps the two from fighting.
 
 **TypeScript 5.9** with `moduleResolution: "bundler"`,
 `customConditions: ["browser"]` (package `exports` maps, same condition Vite
@@ -68,6 +70,28 @@ date-fns), `react-json-view` (dev page renders `JSON.stringify`),
 `eslint-plugin-prettier`, `react-devtools`.
 `crypto-js` stays: it is the only MD5 implementation for the Dropbox
 checksum comparison.
+
+### Later amendment: Prettier 3 -> Biome 2
+
+Prettier is replaced by **Biome 2.5** for formatting, keeping ESLint 10 for
+linting. The reasons:
+
+- **One tool instead of two.** Biome reads `.gitignore`, so the old
+  `.prettierignore` disappears, and `format:check` / `format:write` become
+  `biome format` (check by default, `--write` to fix).
+- **Negligible diff.** Biome aims for Prettier compatibility: of 189 files,
+  187 were already conformant and only 2 changed (a binary expression inside a
+  `Boolean(...)` call, and a long `extends` clause in a Blueprint props
+  interface). Nothing in the diff was a hand-written decision.
+- **Speed.** 189 files in ~30 ms, against a multi-second Prettier run; this is
+  a real difference on `format:check`, which CI runs on every change.
+
+`biome.json` mirrors the old `.prettierrc.json` (2-space indent, width 80,
+single quotes, semicolons, `trailingComma: all`, `arrowParens: always`) and
+adds the ignore list that used to live in `.prettierignore`. Two deliberate
+settings: `organizeImports` is **off** (the repo does not enforce import order
+and a mass reorder would be noise), and the linter is **disabled** (ESLint
+still owns linting, including the strict TypeScript subset and react-hooks).
 
 ## Consequences
 

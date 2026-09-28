@@ -64,7 +64,7 @@ npm run build        # production bundle in dist/
 npm test             # vitest + coverage
 npm run typecheck    # tsc --noEmit
 npm run lint:check   # eslint 10 (flat config in eslint.config.mjs)
-npm run format:check # prettier 3
+npm run format:check # biome 2
 npm run build-crx    # production bundle + dist_crx/tabverse.zip (store package)
 ```
 
@@ -96,7 +96,8 @@ See `server/README.md` for configuration, deployment and protocol semantics.
 - [x] MV3 hardening: `storage` permission, tightened CSP,
       `minimum_chrome_version`, `action.default_icon`, module service worker
 - [x] Toolchain revamp — Vite 8, React 19, Blueprint 6, Vitest 5, ESLint 10
-      flat config, Prettier 3, TypeScript 5.9 (`adr/0003`, `adr/0004`)
+      flat config, TypeScript 5.9 (`adr/0003`, `adr/0004`); Prettier 3 later
+      replaced by Biome 2 for formatting, ESLint kept for linting
 - [x] draft-js -> TipTap with a tested legacy content converter
 - [x] TypeScript strict **subset** enabled (see the comments in
       `tsconfig.json`); dead stores cleaned, ESLint's `no-useless-assignment`

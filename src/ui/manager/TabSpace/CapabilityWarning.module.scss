@@ -1,0 +1,48 @@
+@use '../../../global.scss';
+
+.container {
+  padding: 8px 0 0;
+}
+
+.callout {
+  width: 100%;
+  font-size: 0.9em;
+  cursor: pointer;
+  user-select: none;
+}
+
+.detail {
+  max-width: 420px;
+  padding: 4px 2px;
+  font-size: 0.9em;
+}
+
+.row {
+  margin-bottom: 10px;
+
+  &:last-child {
+    margin-bottom: 4px;
+  }
+}
+
+.rowTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.versionTag {
+  font-size: 0.75em;
+}
+
+.rowLost {
+  color: global.$color-a;
+}
+
+.footer {
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid global.$color-e;
+  color: global.$color-a;
+}

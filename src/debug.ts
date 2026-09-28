@@ -19,8 +19,8 @@ export function isDebug() {
 export function isJestTest(): boolean {
   return Boolean(
     typeof process !== 'undefined' &&
-    process.env &&
-    (process.env['VITEST'] || process.env['JEST_WORKER_ID']),
+      process.env &&
+      (process.env['VITEST'] || process.env['JEST_WORKER_ID']),
   );
 }
 

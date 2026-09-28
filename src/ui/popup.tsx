@@ -1,6 +1,7 @@
 import { TabSpaceOp, isTabSpaceManagerPage } from '../global';
 
 import { find } from 'lodash';
+import { tabverseUrl } from '../data/tabSpace/chromeUtil';
 
 // chrome.tabs.create({ url: 'devdata.html' });
 
@@ -11,7 +12,7 @@ function openManager() {
       chrome.tabs.update(t.id, { active: true });
       window.close();
     } else {
-      chrome.tabs.create({ url: `manager.html?op=${TabSpaceOp.New}` });
+      chrome.tabs.create({ url: tabverseUrl(TabSpaceOp.New) });
     }
   });
 }

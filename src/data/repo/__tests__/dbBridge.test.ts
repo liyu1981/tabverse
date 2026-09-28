@@ -235,3 +235,26 @@ test('rowUpdatedAt falls back to createdAt then to now', () => {
   expect(rowUpdatedAt({ updatedAt: -1, createdAt: 42 })).toBe(42);
   expect(rowUpdatedAt({ updatedAt: -1, createdAt: -1 })).toBeGreaterThan(0);
 });
+
+test('an empty tabverse is not uploaded (opening and closing one is not a tabverse)', async () => {
+  await db.table(TABSPACE).put({
+    id: 'ts-empty',
+    name: 'Window-1',
+    tabIds: [],
+    version: 8,
+    createdAt: 1000,
+    updatedAt: 1000,
+  });
+  await db.table(NOTE).put(note('n1', 'ts-empty', 2000));
+
+  const records = await listLocalRecords();
+  expect(records.map((r) => `${r.entity}/${r.id}`)).toEqual(['note/n1']);
+
+  // as soon as it holds a tab it uploads like anything else
+  await db.table(TABSPACE).update('ts-empty', { tabIds: ['n1'] });
+  const after = await listLocalRecords();
+  expect(after.map((r) => `${r.entity}/${r.id}`).sort()).toEqual([
+    'note/n1',
+    'tabspace/ts-empty',
+  ]);
+});

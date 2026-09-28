@@ -8,6 +8,7 @@ import { getUnsavedNewId } from '../common';
 import { isJestTest } from '../../debug';
 import { produce } from 'immer';
 import { saveCurrentTabSpaceIfNeeded } from './util';
+import { captureTabGroups, startMonitorTabGroups } from './tabGroup';
 
 const CHROME_TAB_DEBOUNCE_TIME = 500;
 
@@ -41,6 +42,12 @@ function copyChromeTabFields(chromeTab: chrome.tabs.Tab, targetTab: Tab): Tab {
     if (chromeTab.discarded) {
       draft.suspended = chromeTab.discarded;
     }
+    if (chromeTab.splitViewId !== undefined) {
+      draft.splitViewId =
+        chromeTab.splitViewId === chrome.tabs.SPLIT_VIEW_ID_NONE
+          ? undefined
+          : chromeTab.splitViewId;
+    }
     // console.log(
     //   'debug: after copyChromeTabFields:',
     //   targetTab.id,
@@ -57,11 +64,14 @@ export async function scanCurrentTabs() {
   const tabs = await chrome.tabs.query({ currentWindow: true });
   const newTabs: Tab[] = [];
   const tabSpace = $tabSpace.getState();
+  const tabIdByChromeTabId = new Map<number, string>();
   tabs.forEach((tab) => {
     if (isTabSpaceManagerPage(tab)) {
       return;
     }
-    if (findTabByChromeTabId(tab.id, tabSpace)) {
+    const existing = findTabByChromeTabId(tab.id, tabSpace);
+    if (existing) {
+      tabIdByChromeTabId.set(tab.id, existing.id);
       return;
     }
     let t = fromLiveTab({
@@ -70,8 +80,28 @@ export async function scanCurrentTabs() {
     });
     t = copyChromeTabFields(tab, t);
     newTabs.push(t);
+    tabIdByChromeTabId.set(tab.id, t.id);
   });
-  tabSpaceStoreApi.addTabs(newTabs);
+  if (newTabs.length > 0) {
+    tabSpaceStoreApi.addTabs(newTabs);
+  }
+  await captureGroupsOfWindow(tabIdByChromeTabId);
+}
+
+/**
+ * Tab groups are an enrichment pass on top of the baseline scan: it runs after
+ * the tabs are in the store, and returns quietly when the browser has no
+ * chrome.tabGroups (see src/capabilities.ts).
+ */
+async function captureGroupsOfWindow(tabIdByChromeTabId: Map<number, string>) {
+  const windowId = $tabSpace.getState().chromeWindowId;
+  if (windowId < 0 || tabIdByChromeTabId.size === 0) {
+    return;
+  }
+  const groups = await captureTabGroups(windowId, tabIdByChromeTabId);
+  if (groups) {
+    tabSpaceStoreApi.setTabGroups(groups);
+  }
 }
 
 function doCapturePreview(chromeTabId: number, chromeWindowId: number) {
@@ -340,6 +370,10 @@ function getOnChromeTabUpdated() {
 
   return (chromeTabId: number, changeInfo: chrome.tabs.OnUpdatedInfo) => {
     logger.log('chrome tab updated:', chromeTabId, changeInfo);
+    if (changeInfo.groupId !== undefined) {
+      // the tab moved in or out of a group: rebuild the group hints
+      void captureGroupsOfWindow(currentTabIdMapping());
+    }
     // debounce tab update because app like workplace chat will update table
     // titles frequently when there is new message.
     const debouncedNormalTabAction = debounce(
@@ -395,4 +429,21 @@ export function startMonitorTabChanges() {
   chrome.tabs.onUpdated.addListener(getOnChromeTabUpdated());
   chrome.tabs.onMoved.addListener(getOnChromeTabMoved());
   chrome.tabs.onActivated.addListener(getOnChromeTabActivated());
+  // group title/colour/collapse changes; membership of a single tab arrives
+  // through tabs.onUpdated's changeInfo.groupId
+  startMonitorTabGroups(() => {
+    void captureGroupsOfWindow(currentTabIdMapping());
+  });
+}
+
+/** chrome tab id -> our tab id for every tab of the current window */
+function currentTabIdMapping(): Map<number, string> {
+  const map = new Map<number, string>();
+  const tabSpace = $tabSpace.getState();
+  tabSpace.tabs.forEach((tab: Tab) => {
+    if (tab.chromeTabId >= 0) {
+      map.set(tab.chromeTabId, tab.id);
+    }
+  });
+  return map;
 }

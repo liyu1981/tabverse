@@ -13,7 +13,8 @@ import { WebtoolView } from './Webtool/WebtoolView';
 
 export interface IManagerQueryParams {
   op: string;
-  stsid?: string;
+  /** the tabverse id, minted when the tab was opened (see tabverseUrl) */
+  tvid?: string;
   route?: string;
 }
 

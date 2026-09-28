@@ -20,6 +20,8 @@ import { CountExit } from './common/CountExit';
 import React from 'react';
 import { find } from 'lodash';
 import { bootstrap as fullTextSearchBootstrap } from '../fullTextSearch';
+import { getNewId } from '../data/common';
+import { pinTabverseTabFirst } from '../data/tabSpace/chromeUtil';
 import { getQueryParameters } from './common/queryAndHashParameter';
 import { loadTabSpaceByTabSpaceId } from '../data/tabSpace/util';
 import { localStorageInit } from '../storage/localStorageWrapper';
@@ -53,17 +55,17 @@ async function bootstrap() {
     // tabverse bootstrap below is not written before the hooks are in place
     await startChangeFeed();
 
-    switch (queryParams.op) {
-      case TabSpaceOp.LoadSaved:
-        await tabSpaceBootstrap(tsChromeTab.id, tsChromeTab.windowId);
-        await loadTabSpaceByTabSpaceId(
-          queryParams.stsid,
-          tsChromeTab.id,
-          tsChromeTab.windowId,
-        );
-        break;
-      default:
-        await tabSpaceBootstrap(tsChromeTab.id, tsChromeTab.windowId);
+    // A tab opened by an older build has no tvid; the in-memory tabspace is
+    // rebuilt on every load anyway, so minting one here cannot orphan anything
+    // that was not already local-only.
+    const tabSpaceId = queryParams.tvid || getNewId();
+    await tabSpaceBootstrap(tsChromeTab.id, tsChromeTab.windowId, tabSpaceId);
+    if (queryParams.op === TabSpaceOp.LoadSaved) {
+      await loadTabSpaceByTabSpaceId(
+        tabSpaceId,
+        tsChromeTab.id,
+        tsChromeTab.windowId,
+      );
     }
 
     await tabSpaceStoreApi.reQuerySavedTabSpaceCount();
@@ -77,9 +79,10 @@ async function bootstrap() {
     });
   }
 
-  chrome.tabs.getCurrent((tab) => {
-    chrome.tabs.update(tab.id, { pinned: true, autoDiscardable: false });
-  });
+  const thisTab = await chrome.tabs.getCurrent();
+  if (thisTab?.id !== undefined) {
+    await pinTabverseTabFirst(thisTab.id);
+  }
 }
 
 logger.log('Tabverse extension id:', chrome.runtime.id);

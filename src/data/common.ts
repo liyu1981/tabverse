@@ -9,6 +9,12 @@ export function getUnsavedNewId() {
   return `~${nanoid(11)}`;
 }
 
+/**
+ * A durable id (no `~` prefix), i.e. one that counts as saved from the start.
+ * Tabverses are born saved: opening a Tabverse tab *is* the decision to keep
+ * this window's tabs, so the id is minted up front and travels in the tab's url
+ * as `tvid`.
+ */
 export function getNewId() {
   return nanoid(11);
 }

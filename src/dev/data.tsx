@@ -1,5 +1,6 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
+import { getNewId } from '../data/common';
 import { tabSpaceBootstrap } from '../data/tabSpaceBootstrap';
 import { useStore } from 'effector-react';
 import { $tabSpace } from '../data/tabSpace/store';
@@ -32,7 +33,7 @@ function DataView() {
 async function start() {
   const tab = await chrome.tabs.getCurrent();
   const window = await chrome.windows.getCurrent();
-  tabSpaceBootstrap(tab.id, window.id);
+  tabSpaceBootstrap(tab.id, window.id, getNewId());
   createRoot(document.getElementById('root')!).render(<DataView />);
 }
 

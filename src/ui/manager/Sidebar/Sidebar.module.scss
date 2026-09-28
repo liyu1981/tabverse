@@ -83,3 +83,31 @@
 .sidebarHeaderContainer :global(.bp6-icon) {
   margin-right: 12px;
 }
+
+/*
+ * Collapsed rail: the entry keeps its card decoration (rounded, shadowed,
+ * active/inactive opacity) but becomes a square icon button, since the label
+ * lives in the tooltip instead.
+ */
+.sidebarComponent.collapsed {
+  padding: 4px;
+  margin-bottom: 12px;
+  border-radius: 14px;
+  display: flex;
+  justify-content: center;
+}
+
+.sidebarComponent.collapsed .header {
+  padding-left: 0;
+  line-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.sidebarComponent.collapsed .railIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}

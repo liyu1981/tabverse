@@ -1,5 +1,4 @@
 @use '../../../global.scss';
-@use '../../common/SidebarContainer.module.scss';
 
 .stickyOn {
   padding-top: 20px;
@@ -16,7 +15,7 @@
 
 .stickyOn .searchBar {
   position: fixed;
-  width: calc(100% - SidebarContainer.$sidebar-width);
+  width: calc(100% - var(--sidebar-width));
   z-index: 100;
 }
 
@@ -35,7 +34,7 @@
 }
 
 .iframeContainer {
-  width: calc(100vw - SidebarContainer.$sidebar-width);
+  width: calc(100vw - var(--sidebar-width));
   height: 100vh;
   border: none;
   margin-left: -20px;

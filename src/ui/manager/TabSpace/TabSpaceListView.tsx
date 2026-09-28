@@ -8,13 +8,19 @@ import {
   Menu,
   MenuItem,
   Popover,
+  Tag,
+  Tooltip,
 } from '@blueprintjs/core';
 import React, { useEffect, useState } from 'react';
 import {
   findTabById,
   getTabIds,
-  needAutoSave,
+  TabGroupHint,
 } from '../../../data/tabSpace/TabSpace';
+import {
+  TAB_GROUP_COLORS_JS,
+  groupOfTab,
+} from '../../../data/tabSpace/tabGroup';
 import {
   newEmptyBookmark,
   setFavIconUrl,
@@ -22,23 +28,28 @@ import {
   setUrl,
 } from '../../../data/bookmark/Bookmark';
 
+import { CapabilityWarning } from './CapabilityWarning';
 import { ErrorBoundary } from '../../common/ErrorBoundary';
 import { List } from 'immutable';
 import { MoveToExistTabSpaceDialog } from '../../dialog/MoveToExistTabSpace';
 import { SaveIndicator } from './SaveIndicator';
-import { Tab } from '../../../data/tabSpace/Tab';
+import { Tab, findSplitPartner } from '../../../data/tabSpace/Tab';
 import { TabCard } from './TabCard';
 import classes from './TabSpaceListView.module.scss';
 import { getPreview } from '../../../data/tabSpace/TabPreviewCache';
-import { isIdNotSaved } from '../../../data/common';
 import { saveCurrentAllBookmarkIfNeeded } from '../../../data/bookmark/util';
-import { saveCurrentTabSpace } from '../../../data/tabSpace/util';
 import { updateTabSpaceName } from '../../../data/tabSpace/chromeTab';
 import { useStore } from 'effector-react';
 
 enum SelectedTabTool {
   MoveToExistTabverse = 'Move to Exist Tabverse',
 }
+
+/** What one row of the tab list renders: a tab, a split pair, or a group. */
+type TabverseEntry =
+  | { kind: 'tab'; tab: Tab }
+  | { kind: 'split'; tabs: [Tab, Tab] }
+  | { kind: 'group'; group: TabGroupHint; tabs: Tab[] };
 
 interface SelectedTabToolControlProps {
   className: string;
@@ -98,44 +109,126 @@ export function TabSpaceListView() {
     });
   }, [tabSpace.tabs]);
 
-  const tabEntries = getTabIds(tabSpace).map((tabId) => {
-    const tab = findTabById(tabId, tabSpace);
-    return tab ? (
-      <div key={tab.id}>
-        <ErrorBoundary>
-          <TabCard
-            tab={tab}
-            needPreview={true}
-            needSelector={true}
-            tabPreview={getPreview(tab.chromeTabId, tabPreviewCache)}
-            isBookmarked={isBookmarked(tab.url)}
-            onBookmark={(tab: Tab) => {
-              bookmarkStoreApi.addBookmark(
-                setFavIconUrl(
-                  tab.favIconUrl,
-                  setName(tab.title, setUrl(tab.url, newEmptyBookmark())),
-                ),
+  const tabIdOrder = getTabIds(tabSpace);
+  const tabGroupOf = (tab: Tab) => groupOfTab(tabSpace.tabGroups, tab.id);
+
+  const tabCard = (tab: Tab) => (
+    <div key={tab.id} className={tabGroupOf(tab) ? classes.tabInGroup : ''}>
+      <ErrorBoundary>
+        <TabCard
+          tab={tab}
+          needPreview={true}
+          needSelector={true}
+          tabPreview={getPreview(tab.chromeTabId, tabPreviewCache)}
+          isBookmarked={isBookmarked(tab.url)}
+          onBookmark={(tab: Tab) => {
+            bookmarkStoreApi.addBookmark(
+              setFavIconUrl(
+                tab.favIconUrl,
+                setName(tab.title, setUrl(tab.url, newEmptyBookmark())),
+              ),
+            );
+            saveCurrentAllBookmarkIfNeeded();
+          }}
+          onSelect={(tabId, selected) => {
+            if (selected) {
+              setSelectedTabs((lastSelected) =>
+                lastSelected.push(findTabById(tabId, tabSpace)),
               );
-              saveCurrentAllBookmarkIfNeeded();
-            }}
-            onSelect={(tabId, selected) => {
-              if (selected) {
-                setSelectedTabs((lastSelected) =>
-                  lastSelected.push(findTabById(tabId, tabSpace)),
-                );
-              } else {
-                setSelectedTabs((lastSelected) =>
-                  lastSelected.filter((tab) => tab.id !== tabId).toList(),
-                );
-              }
-            }}
-          />
-        </ErrorBoundary>
-      </div>
-    ) : (
-      <></>
-    );
-  });
+            } else {
+              setSelectedTabs((lastSelected) =>
+                lastSelected.filter((tab) => tab.id !== tabId).toList(),
+              );
+            }
+          }}
+        />
+      </ErrorBoundary>
+    </div>
+  );
+
+  // Entries are built as a list first, because two of them are composites: a
+  // tab group (header + coloured rule around its tabs) and a split view (two
+  // tabs Chrome shows side by side, drawn as one connected block). Order
+  // follows the tabverse's own tab order, so a composite appears where its
+  // first tab is.
+  const groupedTabIds = new Set(
+    (tabSpace.tabGroups ?? []).flatMap((group) => group.tabIds),
+  );
+  const consumedTabIds = new Set<string>();
+  const entries: TabverseEntry[] = [];
+
+  for (const tabId of tabIdOrder) {
+    if (consumedTabIds.has(tabId) || groupedTabIds.has(tabId)) {
+      continue;
+    }
+    const tab = findTabById(tabId, tabSpace);
+    if (!tab) {
+      continue;
+    }
+    consumedTabIds.add(tabId);
+    const partner = findSplitPartner(tab, tabSpace.tabs);
+    if (partner && tabIdOrder.indexOf(partner.id) >= 0) {
+      consumedTabIds.add(partner.id);
+      entries.push({ kind: 'split', tabs: [tab, partner] });
+    } else {
+      entries.push({ kind: 'tab', tab });
+    }
+  }
+
+  // groups whose tabs are all out of view (search/filter) still get a header
+  const groupEntries: TabverseEntry[] = (tabSpace.tabGroups ?? [])
+    .filter((group) => !group.tabIds.every((id) => consumedTabIds.has(id)))
+    .map((group) => ({
+      kind: 'group' as const,
+      group,
+      tabs: group.tabIds
+        .filter((tabId) => tabIdOrder.indexOf(tabId) >= 0)
+        .map((tabId) => findTabById(tabId, tabSpace))
+        .filter((tab): tab is Tab => !!tab),
+    }));
+
+  const tabEntries: React.ReactNode[] = [];
+  for (const entry of [...entries, ...groupEntries]) {
+    if (entry.kind === 'tab') {
+      tabEntries.push(tabCard(entry.tab));
+    } else if (entry.kind === 'split') {
+      const [first, second] = entry.tabs as [Tab, Tab];
+      tabEntries.push(
+        <div key={`split-${first.splitViewId}`} className={classes.splitView}>
+          <div className={classes.splitHeader}>
+            <span className={classes.splitIcon}>&#9101;</span>
+            split view
+          </div>
+          {tabCard(first)}
+          {tabCard(second)}
+        </div>,
+      );
+    } else {
+      const group = entry.group;
+      if (!entry.tabs || entry.tabs.length === 0) {
+        continue;
+      }
+      tabEntries.push(
+        <div
+          key={`group-${group.id}`}
+          className={classes.tabGroup}
+          style={{ borderColor: TAB_GROUP_COLORS_JS[group.color] }}
+        >
+          <div className={classes.tabGroupHeader}>
+            <span
+              className={classes.tabGroupDot}
+              style={{ backgroundColor: TAB_GROUP_COLORS_JS[group.color] }}
+            />
+            <span className={classes.tabGroupTitle}>
+              {group.title || '(untitled group)'}
+            </span>
+            <small className={classes.tabGroupCount}>{entry.tabs.length}</small>
+          </div>
+          {entry.tabs.map(tabCard)}
+        </div>,
+      );
+    }
+  }
 
   const tabSpaceTitleView = (
     <div className={classes.titleContainer}>
@@ -153,19 +246,16 @@ export function TabSpaceListView() {
         </h1>
       </div>
       <div className={classes.titleButtons}>
-        <Button
-          className={isIdNotSaved(tabSpace.id) ? 'tv-primary-button' : ''}
-          text={isIdNotSaved(tabSpace.id) ? 'Save' : 'Auto'}
-          title={
-            isIdNotSaved(tabSpace.id)
-              ? 'Click to save and turn on auto save mode'
-              : 'Auto save mode is on.'
-          }
-          icon="floppy-disk"
-          intent={Intent.NONE}
-          minimal={isIdNotSaved(tabSpace.id) ? false : true}
-          onClick={saveCurrentTabSpace}
-        />
+        <Tooltip content="This tabverse is saved automatically. Opening a Tabverse tab is what keeps these tabs.">
+          <Tag
+            minimal={true}
+            icon="floppy-disk"
+            intent={Intent.NONE}
+            className={classes.autoSaveTag}
+          >
+            auto save
+          </Tag>
+        </Tooltip>
       </div>
     </div>
   );
@@ -193,7 +283,7 @@ export function TabSpaceListView() {
         </div>
       ) : null}
       <div className={classes.toolbarRightContainer}>
-        {needAutoSave(tabSpace) ? <SaveIndicator /> : 'Auto Saving Off'}
+        <SaveIndicator />
       </div>
     </div>
   );
@@ -204,13 +294,13 @@ export function TabSpaceListView() {
         {tabSpaceTitleView}
         {tabSpaceToolbarView}
       </div>
-      <div className={classes.headerPlaceholder}></div>
     </div>
   );
 
   return (
     <div className={classes.container}>
       {tabSpaceHeaderView}
+      <CapabilityWarning />
       <div className={classes.tabEntriesContainer}>{tabEntries}</div>
       <div className={classes.bottomPlaceholder}></div>
       <MoveToExistTabSpaceDialog

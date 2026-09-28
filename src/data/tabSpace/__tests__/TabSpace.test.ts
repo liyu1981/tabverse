@@ -19,6 +19,7 @@ import {
   setChromeTabId,
   setChromeWindowId,
   setId,
+  setTabGroups,
   setName,
   updateTab,
   updateTabSpace,
@@ -26,6 +27,7 @@ import {
 import {
   setChromeTabId as tabSetChromeTabId,
   setChromeWindowId as tabSetChromeWindowId,
+  setId as tabSetId,
 } from '../Tab';
 import { newEmptyTab } from '../Tab';
 
@@ -34,7 +36,10 @@ test('constructor', () => {
   expect(ts.name).toEqual('');
   expect(ts.chromeTabId).toBe(-1);
   expect(ts.chromeWindowId).toBe(-1);
-  expect(needAutoSave(ts)).toBeFalsy();
+  // a fresh in-memory tabspace still has the '~' id, but tabverses are born
+  // saved now, so autosave is always allowed (ADR: tvid in the tab url)
+  expect(isIdNotSaved(ts.id)).toBeTruthy();
+  expect(needAutoSave(ts)).toBeTruthy();
 
   const ts5 = setChromeTabId(
     300,
@@ -174,4 +179,56 @@ test('reset', () => {
   ts = setChromeTabId(200, setChromeWindowId(201, ts));
   expect(ts.chromeTabId).toBe(200);
   expect(ts.chromeWindowId).toBe(201);
+});
+
+test('the save payload keeps pinned tabs and group hints', () => {
+  let ts = newEmptyTabSpace();
+  ts = setId('ts1', ts);
+  ts = setName('Window-1', ts);
+  ts = addTabs(
+    [
+      {
+        ...newEmptyTab(),
+        ...tabSetId('t1', newEmptyTab()),
+        pinned: true,
+        title: 'pinned tab',
+      },
+      {
+        ...newEmptyTab(),
+        ...tabSetId('t2', newEmptyTab()),
+        title: 'normal tab',
+      },
+    ],
+    ts,
+  );
+  ts = setTabGroups(
+    [{ id: 'g1', title: 'work', color: 'blue', tabIds: ['t1', 't2'] }],
+    ts,
+  );
+
+  const { tabSpaceSavePayload, tabSpace, existTabSavePayloads } =
+    convertAndGetTabSpaceSavePayload(ts);
+
+  expect(tabSpaceSavePayload.tabIds).toEqual(['t1', 't2']);
+  expect(tabSpaceSavePayload.tabGroups).toEqual([
+    { id: 'g1', title: 'work', color: 'blue', tabIds: ['t1', 't2'] },
+  ]);
+  // pinned survives the trip through the database, on both tabs
+  const byId = Object.fromEntries(
+    existTabSavePayloads.map((t) => [t.id, t.pinned]),
+  );
+  expect(byId).toEqual({ t1: true, t2: false });
+  expect(tabSpace.tabGroups).toHaveLength(1);
+});
+
+test('a tabverse saved before groups existed loads with an empty list', () => {
+  const legacy = {
+    id: 'ts-old',
+    name: 'Window-2',
+    tabIds: ['t1'],
+    version: 8,
+    createdAt: 1,
+    updatedAt: 2,
+  } as any;
+  expect(fromSavedDataWithoutTabs(legacy).tabGroups).toEqual([]);
 });

@@ -17,7 +17,9 @@ import classNames from 'classnames';
 import { isReactNodeEmpty } from './util';
 
 export interface EditableTagProps
-  extends Props, IntentProps, React.HTMLAttributes<HTMLSpanElement> {
+  extends Props,
+    IntentProps,
+    React.HTMLAttributes<HTMLSpanElement> {
   /** Blueprint 6 dropped IElementRefProps; keep our own callback ref prop. */
   elementRef?: (el: HTMLSpanElement | null) => void;
   /**

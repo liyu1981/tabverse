@@ -1,14 +1,22 @@
 @use '../../../global.scss';
-@use '../../common/SidebarContainer.module.scss';
 
+/*
+ * The horizontal gutter lives on the column, not on one of its children.
+ * It used to sit on .tabEntriesContainer, which meant the header card and the
+ * capability warning lined up with nothing (the old fixed header had to carry
+ * its own `margin-left: 24px` to compensate - see the sticky note further down).
+ * One padding here keeps the header, the warning and the tab rows aligned by
+ * construction, at any width.
+ */
 .container {
-  margin-left: 2px;
   margin-top: 20px;
+  margin-left: 2px;
   margin-right: 22px;
+  padding: 0 24px;
 }
 
 .tabEntriesContainer {
-  padding: 0px 24px;
+  padding: 0;
 }
 
 .bottomPlaceholder {
@@ -32,6 +40,11 @@
 .titleButtons {
   display: flex;
   align-items: center;
+}
+
+.autoSaveTag {
+  font-size: 0.8em;
+  cursor: default;
 }
 
 .toolbarContainer {
@@ -82,18 +95,76 @@
   transition: box-shadow width 150ms linear;
 }
 
-.headerPlaceholder {
-  height: 0px;
+/*
+ * Sticky, not fixed: a fixed element has to be given a width by hand, and the
+ * old calc(50% - 242px) could not track the real column (it assumed the right
+ * panel was half the window and ignored the sidebar), so the header drifted out
+ * of line with the tab rows as the window narrowed. Sticky keeps the element
+ * in flow, so it is always exactly as wide as the list below it.
+ */
+.stickyOn {
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 .stickyOn .header {
-  position: fixed;
-  z-index: 100;
-  width: calc(50% - 242px);
-  margin-left: 24px;
   box-shadow: 0 2px 10px -5px rgb(16 22 26 / 60%);
 }
 
-.stickyOn .headerPlaceholder {
-  height: 166px;
+/* tab groups: a coloured rule and a header row above the group's tabs */
+.tabGroup {
+  margin: 0 0 8px 0;
+  padding-left: 8px;
+  border-left: 3px solid global.$color-e;
+  border-radius: 2px;
+}
+
+.tabGroupHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 2px;
+  font-size: 0.9em;
+}
+
+.tabGroupDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: global.$color-a;
+}
+
+.tabGroupTitle {
+  font-weight: bold;
+}
+
+.tabGroupCount {
+  color: global.$color-a;
+}
+
+.tabInGroup {
+  margin-bottom: 2px;
+}
+
+/* split view: the two tabs Chrome shows side by side, drawn as one block */
+.splitView {
+  position: relative;
+  margin: 0 0 8px 0;
+  padding-left: 8px;
+  border-left: 3px solid global.$color-light-accent;
+  border-radius: 2px;
+}
+
+.splitHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 2px;
+  font-size: 0.9em;
+  color: global.$color-a;
+}
+
+.splitIcon {
+  font-weight: bold;
 }
