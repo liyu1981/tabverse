@@ -18,7 +18,7 @@ $tabspace-card-width: 900px;
 .tabSpaceCard {
   position: relative;
   margin-bottom: 18px;
-  background-color: darken(global.$color-light-shade, 1%);
+  background-color: color.adjust(global.$color-light-shade, $lightness: -1%);
   border-radius: 30px;
   box-shadow: none;
 }
