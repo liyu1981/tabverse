@@ -52,6 +52,8 @@ export default defineConfig(({ mode }) => {
       outDir: 'dist',
       emptyOutDir: true,
       target: 'chrome116',
+      // readable output while developing; production stays minified
+      minify: isDev ? false : 'esbuild',
       // hidden: the map is emitted but not referenced from the bundle, so
       // it cannot be fetched from inside the store package by accident
       sourcemap: isDev ? true : 'hidden',
