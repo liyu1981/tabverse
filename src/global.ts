@@ -11,7 +11,11 @@ export const TABSPACE_VERSION = 'v0.5.0';
 // disappear from the schema on a version bump. A build older than this one can
 // still open the database: it re-creates the missing store and carries on
 // (see src/storage/__tests__/TabSpaceDatabase.upgrade.test.ts).
-export const TABSPACE_DB_VERSION = 8;
+//
+// v9 adds `SavedTabPreview`, so tab thumbnails survive a reload instead of
+// living only in the page's memory. Still no data at risk on rollback: a
+// pre-v9 build does not know the table and ignores it.
+export const TABSPACE_DB_VERSION = 9;
 
 export const TABSPACE_MANAGER_TAB_TITLE_PREFIX = 'Tabverse:Manager';
 // `global` is a Node-only global: webpack polyfilled it, Vite/Rolldown does

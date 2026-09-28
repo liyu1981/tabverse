@@ -15,6 +15,10 @@ import {
   ALLBOOKMARK_DB_SCHEMA,
   ALLBOOKMARK_DB_TABLE_NAME,
 } from '../data/bookmark/AllBookmark';
+import {
+  TAB_PREVIEW_DB_SCHEMA,
+  TAB_PREVIEW_DB_TABLE_NAME,
+} from '../data/tabSpace/tabPreviewSchema';
 
 export const schemas = {};
 
@@ -26,3 +30,4 @@ schemas[NOTE_DB_TABLE_NAME] = NOTE_DB_SCHEMA;
 schemas[ALLNOTE_DB_TABLE_NAME] = ALLNOTE_DB_SCHEMA;
 schemas[BOOKMARK_DB_TABLE_NAME] = BOOKMARK_DB_SCHEMA;
 schemas[ALLBOOKMARK_DB_TABLE_NAME] = ALLBOOKMARK_DB_SCHEMA;
+schemas[TAB_PREVIEW_DB_TABLE_NAME] = TAB_PREVIEW_DB_SCHEMA;

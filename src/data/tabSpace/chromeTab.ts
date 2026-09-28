@@ -9,6 +9,7 @@ import { isJestTest } from '../../debug';
 import { produce } from 'immer';
 import { saveCurrentTabSpaceIfNeeded } from './util';
 import { captureTabGroups, startMonitorTabGroups } from './tabGroup';
+import { forgetPreview, persistPreview } from './tabPreviewStore';
 
 const CHROME_TAB_DEBOUNCE_TIME = 500;
 
@@ -156,6 +157,9 @@ function doCapturePreview(chromeTabId: number, chromeWindowId: number) {
             chromeTabId: chromeTabId,
             preview: dataUrl,
           });
+          // the cache dies with the page; the durable copy is what makes a
+          // thumbnail still there after a reload
+          void persistPreview(chromeTabId, dataUrl);
         } else {
           logger.log(
             'current tab not matched requested, will skip save preview',
@@ -273,6 +277,7 @@ export function getOnChromeTabDetached() {
   ) {
     tabSpaceStoreApi.removeTabByChromeTabId(chromeTabId);
     tabSpaceStoreApi.removePreview(chromeTabId);
+    void forgetPreview(chromeTabId);
     saveCurrentTabSpaceIfNeeded();
   }
 
@@ -301,6 +306,7 @@ export function getOnChromeTabRemoved() {
   ) => {
     tabSpaceStoreApi.removeTabByChromeTabId(chromeTabId);
     tabSpaceStoreApi.removePreview(chromeTabId);
+    void forgetPreview(chromeTabId);
     saveCurrentTabSpaceIfNeeded();
   };
 
