@@ -4,6 +4,7 @@ import {
   Classes,
   Navbar,
   NavbarGroup,
+  Tooltip,
 } from '@blueprintjs/core';
 import React, { useState } from 'react';
 
@@ -23,19 +24,39 @@ export const BottomNav = (props) => {
 
   // Blueprint's Navbar has no vertical mode, so the collapsed rail renders the
   // same two controls (same dark bar, same rounded buttons) as a plain column.
-  const navButtons = (
+  const aboutLabel = `Tabverse ${TABSPACE_VERSION}`;
+  const aboutButton = (
+    <Button
+      minimal={true}
+      icon="help"
+      title={collapsed ? undefined : aboutLabel}
+      aria-label={aboutLabel}
+      onClick={() => setAboutOpened(true)}
+    />
+  );
+  const syncButton = (
+    <Button
+      icon="refresh"
+      title={collapsed ? undefined : 'Server sync'}
+      aria-label="Server sync"
+      onClick={() => setSyncOpened(true)}
+    />
+  );
+  // in the rail the buttons are icons only, so the label moves into a Blueprint
+  // tooltip instead of the browser's own title bubble
+  const navButtons = collapsed ? (
     <>
-      <Button
-        minimal={true}
-        icon="help"
-        title={`Tabverse ${TABSPACE_VERSION}`}
-        onClick={() => setAboutOpened(true)}
-      />
-      <Button
-        icon="refresh"
-        title="Server sync"
-        onClick={() => setSyncOpened(true)}
-      />
+      <Tooltip content={aboutLabel} placement="right">
+        {aboutButton}
+      </Tooltip>
+      <Tooltip content="Server sync" placement="right">
+        {syncButton}
+      </Tooltip>
+    </>
+  ) : (
+    <>
+      {aboutButton}
+      {syncButton}
     </>
   );
 
