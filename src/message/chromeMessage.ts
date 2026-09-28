@@ -1,7 +1,14 @@
-import { AuditLogs, BackgroundMsg, ChromeTabId, TabSpaceMsg } from './message';
+import {
+  AuditLogs,
+  BackgroundMsg,
+  ChromeTabId,
+  ILocalTablesChangedPayload,
+  TabSpaceDBMsg,
+  TabSpaceMsg,
+} from './message';
 
 import { logger } from '../global';
-import { $tabSpace } from '../data/tabSpace/store';
+import { sendPubSubMessage } from './message';
 
 const handlers = {};
 
@@ -33,18 +40,23 @@ handlers[BackgroundMsg.AuditComplete] = function (
   sendResponse && sendResponse();
 };
 
-handlers[BackgroundMsg.GetTabSpace] = function (
+handlers[BackgroundMsg.LocalTablesChanged] = function (
   message: {
-    type: BackgroundMsg.GetTabSpace;
-    payload: ChromeTabId;
+    type: BackgroundMsg.LocalTablesChanged;
+    payload: ILocalTablesChangedPayload;
   },
   sender: chrome.runtime.MessageSender,
   sendResponse: (response?: any) => void,
 ) {
-  logger.info(`${BackgroundMsg.GetTabSpace}, ${message.payload}`);
-  if (message.payload === $tabSpace.getState().chromeTabId) {
-    sendResponse($tabSpace.getState());
-  }
+  // another context (usually the service worker) wrote to the database;
+  // re-publish locally so this page's listeners re-query
+  logger.log(
+    'chromeMessage got:',
+    BackgroundMsg.LocalTablesChanged,
+    message.payload,
+  );
+  sendPubSubMessage(TabSpaceDBMsg.Changed, message.payload.tables);
+  sendResponse && sendResponse();
 };
 
 function onMessage() {

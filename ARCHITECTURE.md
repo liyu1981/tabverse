@@ -29,22 +29,23 @@ Dependency direction is strictly downwards; nothing above `dbBridge` imports
 Dexie, and nothing below imports `chrome`, so the whole layer is unit tested
 without a browser:
 
-| Module              | Responsibility                                                                                       | Test                     |
-| ------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------ |
-| `types.ts`          | wire types mirrored from `api/openapi.yaml`                                                          | –                        |
-| `serverApi.ts`      | typed fetch client, error normalization (401 = re-pair)                                              | `serverApi.test.ts`      |
-| `outbox.ts`         | durable mutation queue in `chrome.storage.local`, collapses per record to newest edit                | `outbox.test.ts`         |
-| `repo.ts`           | `SyncEngine`: flush outbox → pull delta → persist cursor; LWW conflict hooks; `ChromeSyncStateStore` | `repo.test.ts`           |
-| `realtime.ts`       | WebSocket with injectable scheduler/backoff                                                          | `realtime.test.ts`       |
-| `dbBridge.ts`       | entity ↔ Dexie table mapping, `listLocalRecords` / `applyServerRecords`                              | `dbBridge.test.ts`       |
-| `changeFeed.ts`     | Dexie `changes` hook → outbox (creates, updates, deletes); suppresses pull→push echo                 | `changeFeed.test.ts`     |
-| `syncConfig.ts`     | pairing + config persistence                                                                         | `syncConfig.test.ts`     |
-| `backgroundSync.ts` | wires all of the above for the service worker                                                        | `backgroundSync.test.ts` |
+| Module              | Responsibility                                                                                       | Test                                             |
+| ------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| `types.ts`          | wire types mirrored from `api/openapi.yaml`                                                          | –                                                |
+| `serverApi.ts`      | typed fetch client, error normalization (401 = re-pair)                                              | `serverApi.test.ts`                              |
+| `outbox.ts`         | durable mutation queue in `chrome.storage.local`, collapses per record to newest edit                | `outbox.test.ts`                                 |
+| `repo.ts`           | `SyncEngine`: flush outbox → pull delta → persist cursor; LWW conflict hooks; `ChromeSyncStateStore` | `repo.test.ts`                                   |
+| `realtime.ts`       | WebSocket with injectable scheduler/backoff                                                          | `realtime.test.ts`                               |
+| `dbBridge.ts`       | entity ↔ Dexie table mapping, `listLocalRecords` / `applyServerRecords`                              | `dbBridge.test.ts`                               |
+| `changeFeed.ts`     | Dexie write hooks → outbox (creates, updates, deletes); suppresses pull→push echo                    | `changeFeed.test.ts`, `changeFeed.hooks.test.ts` |
+| `localTables.ts`    | "these tables changed" notice for the UI: PubSub locally + a runtime message to the other pages      | –                                                |
+| `syncConfig.ts`     | pairing + config persistence                                                                         | `syncConfig.test.ts`                             |
+| `backgroundSync.ts` | wires all of the above for the service worker                                                        | `backgroundSync.test.ts`                         |
 
 ### Data flow
 
 ```
-local edit  ──Dexie hook──► outbox ──flush──► POST /sync (LWW push)
+local edit  ──Dexie write hook──► outbox ──flush──► POST /sync (LWW push)
 server copy ──delta pull──► applyServerRecords ──► Dexie (guarded by runAsRemoteApply)
 remote edit ──WebSocket records_changed──► debounced syncOnce()
 ```
@@ -108,7 +109,9 @@ See `server/README.md` for configuration, deployment and protocol semantics.
       (see ADR 0002 §3) — no silent migration
 - [ ] `strictNullChecks` (428 errors) + `noImplicitAny` (227) — staged pass,
       count first with `npx tsc --noEmit --strict`
-- [ ] Re-evaluate the tabSpaceRegistry leader election: it tracks
-      browser-local presence, not synced data (`adr/0004`)
+- [x] Cross-window machinery deleted: each manager page owns one window, so
+      the tabSpaceRegistry (leader election + broadcast-channel) is gone and
+      the change feed uses Dexie's own write hooks instead of dexie-observable
+      (`adr/0006`)
 - [ ] A real run in Chrome: load `dist/` unpacked, pair a server, exercise
       capture -> sync -> search and the note editor

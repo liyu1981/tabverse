@@ -9,7 +9,6 @@ import {
 import { LoadStatus } from '../../global';
 import { QUERY_PAGE_LIMIT_DEFAULT } from '../../storage/db';
 import { TabSpace } from '../tabSpace/TabSpace';
-import { TabSpaceStub } from '../tabSpaceRegistry/TabSpaceRegistry';
 import produce from 'immer';
 
 export enum SortMethods {
@@ -17,9 +16,23 @@ export enum SortMethods {
   SAVED = 1,
 }
 
+/**
+ * A saved tabverse that is open in *this* window. Each manager page owns one
+ * window, so a profile can have several of these open at once (one per window)
+ * but a single page only ever sees its own.
+ */
+export interface OpenedTabSpace {
+  id: string;
+  name: string;
+  createdAt: number;
+  updatedAt: number;
+  chromeTabId: number;
+  chromeWindowId: number;
+}
+
 export interface TabSpaceQuery {
   loadStatus: LoadStatus;
-  openedSavedTabSpaces: TabSpaceStub[];
+  openedSavedTabSpaces: OpenedTabSpace[];
   savedTabSpaces: TabSpace[];
   sortMethod: SortMethods;
   totalPageCount: number;
@@ -72,7 +85,7 @@ export function isSearchMode(targetTabSpaceQuery: TabSpaceQuery): boolean {
 
 export function getSortedOpenedSavedTabSpaces(
   targetTabSpaceQuery: TabSpaceQuery,
-): TabSpaceStub[] {
+): OpenedTabSpace[] {
   const clonedOpenedSavedTabSpaces =
     targetTabSpaceQuery.openedSavedTabSpaces.slice(0);
   targetTabSpaceQuery.sortMethod === SortMethods.SAVED

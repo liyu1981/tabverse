@@ -11,7 +11,7 @@ import {
 import { db } from '../../storage/db';
 import { isJestTest } from '../../debug';
 import { logger } from '../../global';
-import { scanCurrentTabsForBackground } from './chromeScan';
+import { scanCurrentTabsForSession } from './chromeScan';
 import { setAttrForObject } from '../common';
 
 const MAX_SAVED_SESSIONS_PER_DAY = isJestTest() ? 2 : 64;
@@ -77,7 +77,7 @@ export async function saveSession(
   session = setAttrForObject('createdAt', sessionCreatedTime, session);
   session = setAttrForObject('updatedAt', Date.now(), session);
 
-  session = await scanCurrentTabsForBackground(session);
+  session = await scanCurrentTabsForSession(session);
 
   if (session.tabs.size <= 0) {
     // if there is actually no tab (will happen when the browser relaunch

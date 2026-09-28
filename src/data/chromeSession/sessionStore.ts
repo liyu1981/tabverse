@@ -1,5 +1,4 @@
 import {
-  CHROMESESSION_DB_SCHEMA,
   CHROMESESSION_DB_TABLE_NAME,
   ChromeSessionSavePayload,
 } from './ChromeSession';
@@ -9,7 +8,6 @@ import {
 } from '../tabSpace/TabSpace';
 import { TabSpaceDBMsg, subscribePubSubMessage } from '../../message/message';
 
-import { IDatabaseChange } from 'dexie-observable/api';
 import { db } from '../../storage/db';
 import { filter } from 'lodash';
 import { isIdNotSaved } from '../common';
@@ -29,13 +27,11 @@ export type DisplaySavedSessionGroup = SavedSessionGroup & {
 export function monitorDbChanges() {
   subscribePubSubMessage(
     TabSpaceDBMsg.Changed,
-    (message, data: IDatabaseChange[]) => {
-      logger.log('pubsub:', message, data);
-      data.forEach((d) => {
-        if (d.table === CHROMESESSION_DB_SCHEMA) {
-          reloadSavedChromeSessionCollection();
-        }
-      });
+    (message, changedTables: string[]) => {
+      logger.log('pubsub:', message, changedTables);
+      if (changedTables.includes(CHROMESESSION_DB_TABLE_NAME)) {
+        reloadSavedChromeSessionCollection();
+      }
     },
   );
 }

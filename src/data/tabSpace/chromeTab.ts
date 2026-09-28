@@ -1,15 +1,9 @@
 import { $tabSpace, tabSpaceStoreApi } from './store';
 import { Tab, fromLiveTab, setTabSpaceId } from './Tab';
-import { TabSpace, findTabByChromeTabId, toTabSpaceStub } from './TabSpace';
+import { TabSpace, findTabByChromeTabId } from './TabSpace';
 import { debounce, isTabSpaceManagerPage, logger } from '../../global';
-import {
-  removeTabSpace as tabSpaceRegistryRemoveTabSpace,
-  updateTabSpace as tabSpaceRegistryUpdateTabSpace,
-} from '../tabSpaceRegistry';
 
 import { eq } from 'lodash';
-import { findTabSpaceIdByChromeTabId } from '../tabSpaceRegistry/TabSpaceRegistry';
-import { getStateTabSpaceRegistry } from '../tabSpaceRegistry/store';
 import { getUnsavedNewId } from '../common';
 import { isJestTest } from '../../debug';
 import { produce } from 'immer';
@@ -168,12 +162,6 @@ async function maintainTabOrder() {
 
 export function updateTabSpaceName(newName: string) {
   tabSpaceStoreApi.setName(newName);
-  const currentTabSpace = $tabSpace.getState();
-  tabSpaceRegistryUpdateTabSpace({
-    from: currentTabSpace.id,
-    to: currentTabSpace.id,
-    entry: toTabSpaceStub(currentTabSpace),
-  });
   saveCurrentTabSpaceIfNeeded();
 }
 
@@ -191,12 +179,6 @@ export function getOnChromeTabAttached() {
     });
     await scanCurrentTabs();
     saveCurrentTabSpaceIfNeeded();
-
-    tabSpaceRegistryUpdateTabSpace({
-      from: oldId,
-      to: $tabSpace.getState().id,
-      entry: toTabSpaceStub($tabSpace.getState()),
-    });
 
     doCapturePreview(chromeTabId, chromeTab.windowId);
   }
@@ -283,13 +265,6 @@ export function getOnChromeTabDetached() {
 }
 
 export function getOnChromeTabRemoved() {
-  const tabSpaceAction = (
-    chromeTabId: number,
-    _removeInfo: chrome.tabs.OnRemovedInfo,
-  ) => {
-    tabSpaceRegistryRemoveTabSpace(chromeTabId);
-  };
-
   const normalTabAction = (
     chromeTabId: number,
     _removeInfo: chrome.tabs.OnRemovedInfo,
@@ -301,11 +276,6 @@ export function getOnChromeTabRemoved() {
 
   return (chromeTabId: number, removeInfo: chrome.tabs.OnRemovedInfo) => {
     logger.log('chrome tab removed:', chromeTabId, removeInfo);
-    if (findTabSpaceIdByChromeTabId(chromeTabId, getStateTabSpaceRegistry())) {
-      // closing a window with tabspace manager need to process it specially
-      tabSpaceAction(chromeTabId, removeInfo);
-      return;
-    }
     if (
       removeInfo.isWindowClosing ||
       !inCurrentTabSpace(removeInfo.windowId, $tabSpace.getState())
@@ -347,17 +317,6 @@ function getOnChromeTabReplaced() {
 }
 
 function getOnChromeTabUpdated() {
-  async function tabSpaceAction(
-    chromeTabId: number,
-    _changeInfo: chrome.tabs.OnUpdatedInfo,
-  ) {
-    if (chromeTabId === $tabSpace.getState().chromeTabId) {
-      // do not do anything when this tabSpace tab is updating
-    } else {
-      tabSpaceRegistryRemoveTabSpace(chromeTabId);
-    }
-  }
-
   async function normalTabAction(
     chromeTabId: number,
     _changeInfo: chrome.tabs.OnUpdatedInfo,
@@ -381,15 +340,6 @@ function getOnChromeTabUpdated() {
 
   return (chromeTabId: number, changeInfo: chrome.tabs.OnUpdatedInfo) => {
     logger.log('chrome tab updated:', chromeTabId, changeInfo);
-    if (
-      findTabSpaceIdByChromeTabId(chromeTabId, getStateTabSpaceRegistry()) &&
-      changeInfo.status === 'loading'
-    ) {
-      // This is when one of our tabspace manager tab is reloaded
-      tabSpaceAction(chromeTabId, changeInfo);
-      return;
-    }
-
     // debounce tab update because app like workplace chat will update table
     // titles frequently when there is new message.
     const debouncedNormalTabAction = debounce(

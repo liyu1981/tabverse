@@ -1,7 +1,5 @@
 import * as PubSub from 'pubsub-js';
 
-import { IDatabaseChange } from 'dexie-observable/api';
-import { TabSpaceStub } from '../data/tabSpaceRegistry/TabSpaceRegistry';
 import { logger } from '../global';
 
 export type MsgHandler = (
@@ -10,15 +8,14 @@ export type MsgHandler = (
   sendResponse: (response?: any) => void,
 ) => void;
 
-export interface IUpdateRegistryPayload {
-  from: string;
-  to: string;
-  entry: TabSpaceStub;
-}
-
 export interface IFullTextAddRemoveToIndexPayload {
   type: string;
   id: string;
+}
+
+/** Payload of TabSpaceDBMsg.Changed / BackgroundMsg.LocalTablesChanged. */
+export interface ILocalTablesChangedPayload {
+  tables: string[];
 }
 
 export enum TabSpaceMsg {
@@ -26,13 +23,18 @@ export enum TabSpaceMsg {
   ChangeID = 'tabspace_changeid',
 }
 
+/** In-process "these tables changed" notice; payload is a list of table names. */
 export enum TabSpaceDBMsg {
   Changed = 'db_changed',
 }
 
 export enum BackgroundMsg {
   AuditComplete = 'background_auditcomplete',
-  GetTabSpace = 'background_gettabspace',
+  /**
+   * Sent by a context that wrote to the database so the *other* manager pages
+   * can re-read (see data/repo/localTables.ts).
+   */
+  LocalTablesChanged = 'background_localtableschanged',
 }
 
 export enum FullTextSearchMsg {
@@ -59,8 +61,8 @@ export async function sendChromeMessage(msgPayload: {
 }): Promise<any>;
 
 export async function sendChromeMessage(msgPayload: {
-  type: BackgroundMsg.GetTabSpace;
-  payload: ChromeTabId;
+  type: BackgroundMsg.LocalTablesChanged;
+  payload: ILocalTablesChangedPayload;
 }): Promise<any>;
 
 export async function sendChromeMessage(msgPayload: {
@@ -76,18 +78,25 @@ export async function sendChromeMessage(msgPayload: {
 export async function sendChromeMessage(msgPayload: {
   type: string;
   payload:
-    | TabSpaceStub
     | TabSpaceId
     | TabId
-    | TabSpaceStub[]
-    | IUpdateRegistryPayload
     | ChromeTabId
     | AuditLogs
+    | ILocalTablesChangedPayload
     | IFullTextAddRemoveToIndexPayload
     | NotNeed;
 }): Promise<any> {
   const result = await new Promise((resolve, _reject) => {
     chrome.runtime.sendMessage(msgPayload, (response) => {
+      // a context with no listener (e.g. the worker with no page open) is the
+      // normal case, not an error worth throwing on
+      if (chrome.runtime.lastError) {
+        logger.log(
+          'send chrome runtime message had no receiver:',
+          msgPayload.type,
+          chrome.runtime.lastError.message,
+        );
+      }
       logger.info('send chrome runtime message:', msgPayload);
       resolve(response);
     });
@@ -102,7 +111,7 @@ interface ITabSpaceMsgPayload {
 
 export function sendPubSubMessage(
   type: TabSpaceDBMsg.Changed,
-  payload: IDatabaseChange[],
+  payload: string[],
 ): void;
 
 export function sendPubSubMessage(
@@ -112,7 +121,7 @@ export function sendPubSubMessage(
 
 export function sendPubSubMessage(
   type: string,
-  payload: IDatabaseChange[] | ITabSpaceMsgPayload,
+  payload: string[] | ITabSpaceMsgPayload,
 ): void {
   PubSub.publish(type, payload);
 }

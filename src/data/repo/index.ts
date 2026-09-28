@@ -20,7 +20,7 @@ export * from './outbox';
 export * from './repo';
 export * from './realtime';
 export * from './syncConfig';
-export * from './syncStatus';
+export * from './localTables';
 export * from './dbBridge';
 export * from './changeFeed';
 export * from './backgroundSync';

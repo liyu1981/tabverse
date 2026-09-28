@@ -1,6 +1,5 @@
 import { getSavedId, isIdNotSaved } from '../../common';
 
-import { TABSPACE_DB_VERSION } from '../../../global';
 import {
   addTabs,
   convertAndGetTabSpaceSavePayload,
@@ -21,7 +20,6 @@ import {
   setChromeWindowId,
   setId,
   setName,
-  toTabSpaceStub,
   updateTab,
   updateTabSpace,
 } from '../TabSpace';
@@ -176,19 +174,4 @@ test('reset', () => {
   ts = setChromeTabId(200, setChromeWindowId(201, ts));
   expect(ts.chromeTabId).toBe(200);
   expect(ts.chromeWindowId).toBe(201);
-});
-
-test('toTabSpaceStub', () => {
-  let ts = newEmptyTabSpace();
-  ts = updateTabSpace({ id: '888' }, ts);
-  const stub = toTabSpaceStub(ts);
-  expect(stub).toEqual({
-    chromeTabId: -1,
-    chromeWindowId: -1,
-    createdAt: -1,
-    id: '888',
-    name: '',
-    updatedAt: -1,
-    version: TABSPACE_DB_VERSION,
-  });
 });

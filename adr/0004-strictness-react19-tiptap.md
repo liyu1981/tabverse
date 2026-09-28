@@ -62,7 +62,7 @@ the project and React 19.
 All 12 `no-useless-assignment` findings were reviewed and removed, so the
 rule that ships with ESLint 10 is enabled rather than suppressed.
 
-### The tabSpaceRegistry leader election stays (corrected rationale)
+### The tabSpaceRegistry leader election is deleted (corrected again)
 
 The original plan said "the server replaces leader election". That was wrong:
 the registry tracks **which tab spaces are open in this browser**, which the
@@ -75,6 +75,12 @@ What the server _did_ replace: cross-context data coordination
 outbox, Dropbox dumps are obsolete). `broadcast-channel` therefore remains a
 deliberate dependency of local presence tracking; re-evaluate when the
 manager page becomes single-instance by construction.
+
+> **Superseded by [ADR 0006](0006-window-ownership-and-dexie-4.md).** The
+> "single-instance by construction" condition was met deliberately: a manager
+> page now owns exactly one window and never switches to a tabverse in another
+> one, so the registry, the election and `broadcast-channel` are all gone, and
+> the change feed uses Dexie's own write hooks.
 
 ### Store disclosures and privacy text written
 

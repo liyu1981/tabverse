@@ -160,6 +160,10 @@ let running: SyncRuntime | null = null;
 /**
  * Starts background sync if the device is configured. Called from the
  * service worker entry point; a no-op (returns null) otherwise.
+ *
+ * The change feed is started either way: the worker writes chrome session
+ * snapshots and the records the engine pulls, and open manager pages have to
+ * hear about those writes even when the device is not paired with a server.
  */
 export async function startBackgroundSync(
   deps: SyncRuntimeDeps = {},
@@ -168,6 +172,8 @@ export async function startBackgroundSync(
     return running;
   }
   const storage = deps.storage || new ChromeStorageArea();
+
+  await startChangeFeed({ storage });
 
   const config = await loadSyncConfig(storage).catch((err) => {
     logger.log('repo: cannot read sync config:', err);
@@ -178,7 +184,6 @@ export async function startBackgroundSync(
     return null;
   }
 
-  startChangeFeed({ storage });
   running = createSyncRuntime(config, { ...deps, storage });
   logger.log('repo: background sync started for', config.baseUrl);
 

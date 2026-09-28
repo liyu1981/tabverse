@@ -8,7 +8,7 @@ import {
 
 import { List } from 'immutable';
 import { getMockChrome } from '../../../dev/chromeMock';
-import { scanCurrentTabsForTabSpaceManager } from '../chromeScan';
+import { scanCurrentTabsForSession } from '../chromeScan';
 import { tabSpaceBootstrap } from '../../tabSpaceBootstrap';
 
 test('scanCurrentTabs', async () => {
@@ -23,10 +23,13 @@ test('scanCurrentTabs', async () => {
   const tab4 = mockChrome.insertTabFromData(tabData3);
   let session = newEmptyChromeSession();
   await tabSpaceBootstrap(tst1.id, tst1.windowId);
-  session = await scanCurrentTabsForTabSpaceManager(session);
+  session = await scanCurrentTabsForSession(session);
+  // ADR 0006: the manager page tab is a plain tab of its window now, the
+  // session no longer records which tabspace a window was showing
   expect(session.tabs.map((t) => t.tabId).toArray()).toEqual([
     tab1.id,
     tab2.id,
+    tst1.id,
     tab3.id,
     tab4.id,
   ]);
@@ -38,9 +41,9 @@ test('scanCurrentTabs', async () => {
       windowId: window1.id,
     },
     {
-      tabIds: List([tab3.id, tab4.id]),
-      tabSpaceId: 'jest test tabspace',
-      tabSpaceTabId: tst1.id,
+      tabIds: List([tst1.id, tab3.id, tab4.id]),
+      tabSpaceId: '',
+      tabSpaceTabId: NotTabSpaceTabId,
       windowId: window2.id,
     },
   ]);

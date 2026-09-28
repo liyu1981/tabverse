@@ -1,6 +1,8 @@
-import { IDatabaseChange } from 'dexie-observable/api';
-
 import {
+  LocalWrite,
+  WRITE_CREATE,
+  WRITE_DELETE,
+  WRITE_UPDATE,
   handleChanges,
   isRemoteApplyActive,
   resetChangeFeedForTest,
@@ -9,32 +11,16 @@ import {
 import { MemoryStorageArea, Outbox } from '../outbox';
 import { SYNC_CONFIG_KEY } from '../syncConfig';
 
-function createChange(table: string, obj: any): IDatabaseChange {
-  return {
-    type: 1,
-    table,
-    key: obj ? obj.id : undefined,
-    obj,
-  } as IDatabaseChange;
+function createChange(table: string, obj: any): LocalWrite {
+  return { type: WRITE_CREATE, table, key: obj ? obj.id : undefined, obj };
 }
 
-function updateChange(table: string, obj: any): IDatabaseChange {
-  return {
-    type: 2,
-    table,
-    key: obj.id,
-    obj,
-    mods: {},
-    oldObj: { ...obj, updatedAt: 1 },
-  } as IDatabaseChange;
+function updateChange(table: string, obj: any): LocalWrite {
+  return { type: WRITE_UPDATE, table, key: obj.id, obj };
 }
 
-function deleteChange(
-  table: string,
-  key: string,
-  oldObj: any,
-): IDatabaseChange {
-  return { type: 3, table, key, oldObj } as IDatabaseChange;
+function deleteChange(table: string, key: string): LocalWrite {
+  return { type: WRITE_DELETE, table, key };
 }
 
 async function setup(enabled: boolean) {
@@ -89,11 +75,7 @@ test('creates an outbox entry for a saved row', async () => {
 test('turns a delete into a tombstone entry', async () => {
   const { storage, outbox } = await setup(true);
 
-  await handleChanges(
-    [deleteChange('SavedTab', 't1', { id: 't1', url: 'https://x' })],
-    outbox,
-    storage,
-  );
+  await handleChanges([deleteChange('SavedTab', 't1')], outbox, storage);
 
   const entries = await outbox.list();
   expect(entries).toHaveLength(1);
@@ -192,7 +174,7 @@ test('changes without an id are skipped instead of throwing', async () => {
     [
       createChange('SavedNote', { name: 'no id', updatedAt: 1 }),
       createChange('SavedNote', null),
-      deleteChange('SavedNote', 12345 as any, {}), // non string key, no oldObj.id
+      { type: WRITE_DELETE, table: 'SavedNote', key: 12345 as any },
     ],
     outbox,
     storage,

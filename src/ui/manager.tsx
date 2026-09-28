@@ -25,10 +25,8 @@ import { loadTabSpaceByTabSpaceId } from '../data/tabSpace/util';
 import { localStorageInit } from '../storage/localStorageWrapper';
 import { renderPage } from './common/base';
 import { tabSpaceBootstrap } from '../data/tabSpaceBootstrap';
-import { bootstrap as tabSpaceRegistryServiceBootstrap } from '../data/tabSpaceRegistry';
 import { tabSpaceStoreApi } from '../data/tabSpace/store';
 import { startChangeFeed } from '../data/repo/changeFeed';
-import { startServerSyncConfiguredWatch } from '../data/repo/syncStatus';
 
 async function bootstrap() {
   const thisChromeTab = await chrome.tabs.getCurrent();
@@ -49,16 +47,11 @@ async function bootstrap() {
       'queryParams do not have attribute op.',
     );
 
-    tabSpaceRegistryServiceBootstrap();
-
-    // keeps the UI honest about which features need a paired server
-    // (e.g. the cross-window tabverse list in the sidebar)
-    startServerSyncConfiguredWatch();
-
     fullTextSearchBootstrap();
     localStorageInit();
-    // queue local database writes for the server sync engine
-    startChangeFeed();
+    // queue local database writes for the server sync engine; awaited so the
+    // tabverse bootstrap below is not written before the hooks are in place
+    await startChangeFeed();
 
     switch (queryParams.op) {
       case TabSpaceOp.LoadSaved:

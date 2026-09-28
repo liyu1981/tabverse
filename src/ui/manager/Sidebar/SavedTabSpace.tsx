@@ -9,20 +9,18 @@ import {
   $tabSpaceQuery,
   tabSpaceQueryStoreApi,
 } from '../../../data/tabSpaceQuery/store';
-import { $tabSpaceStorage } from '../../../data/tabSpace/store';
+import { $tabSpace, $tabSpaceStorage } from '../../../data/tabSpace/store';
 import { SortMethods } from '../../../data/tabSpaceQuery/TabSpaceQuery';
-import { $tabSpaceRegistryState } from '../../../data/tabSpaceRegistry/store';
 
 export type SavedTabSpaceProps = SidebarComponentProps;
 
 export function SavedTabSpace(props: SavedTabSpaceProps) {
   const tabSpaceQuery = useStore($tabSpaceQuery);
   const tabSpaceStorage = useStore($tabSpaceStorage);
-  const { tabSpaceRegistry } = useStore($tabSpaceRegistryState);
-
-  const openedSavedCount = tabSpaceRegistry.reduce((count, tabSpaceStub) => {
-    return count + (isIdNotSaved(tabSpaceStub.id) ? 0 : 1);
-  }, 0);
+  const tabSpace = useStore($tabSpace);
+  // a manager page owns one window, so at most one saved tabverse is loaded
+  // here (the current one)
+  const openedSavedCount = isIdNotSaved(tabSpace.id) ? 0 : 1;
   const [sortMethod, setSortMethod] = useState<SortMethods>(() => {
     return tabSpaceQuery ? tabSpaceQuery.sortMethod : SortMethods.CREATED;
   });

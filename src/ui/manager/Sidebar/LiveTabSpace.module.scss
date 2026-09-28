@@ -1,17 +1,5 @@
-.clickable {
-  cursor: pointer;
-}
-
-/* The "In Other Windows" group is shown but disabled while no sync server is
-   paired: dimmed, not clickable, with the reason next to the title. */
-.disabled {
+.currentWindow {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  opacity: 0.55;
-  cursor: default;
-
-  small {
-    font-style: italic;
-  }
 }

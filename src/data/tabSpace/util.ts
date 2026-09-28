@@ -11,7 +11,6 @@ import {
   fromSavedDataWithoutTabs,
   insertTab,
   needAutoSave,
-  toTabSpaceStub,
   updateTab,
   updateTabSpace,
 } from './TabSpace';
@@ -32,10 +31,8 @@ import {
 import { filter, isEqual, omit } from 'lodash';
 
 import { DEFAULT_SAVE_DEBOUNCE } from '../../storage/StorageOverview';
-import { IDatabaseChange } from 'dexie-observable/api';
 import { addTabSpaceToIndex } from '../../background/fullTextSearch/addToIndex';
 import { removeTabSpaceFromIndex } from '../../background/fullTextSearch/api';
-import { updateTabSpace as tabSpaceRegistryUpdateTabSpace } from '../tabSpaceRegistry';
 
 export function monitorDbChanges() {
   const querySavedTabSpaceCount = () => {
@@ -44,19 +41,17 @@ export function monitorDbChanges() {
 
   subscribePubSubMessage(
     TabSpaceDBMsg.Changed,
-    (message, data: IDatabaseChange[]) => {
-      logger.log('pubsub:', message, data);
-      data.forEach((d) => {
-        if (
-          d.table === TABSPACE_DB_TABLE_NAME ||
-          d.table === TAB_DB_TABLE_NAME
-        ) {
-          tabSpaceStoreApi.increaseSavedDataVersion();
-          querySavedTabSpaceCount().then((savedTabSpaceCount) =>
-            tabSpaceStoreApi.updateTotalSavedCount(savedTabSpaceCount),
-          );
-        }
-      });
+    (message, changedTables: string[]) => {
+      logger.log('pubsub:', message, changedTables);
+      if (
+        changedTables.includes(TABSPACE_DB_TABLE_NAME) ||
+        changedTables.includes(TAB_DB_TABLE_NAME)
+      ) {
+        tabSpaceStoreApi.increaseSavedDataVersion();
+        querySavedTabSpaceCount().then((savedTabSpaceCount) =>
+          tabSpaceStoreApi.updateTotalSavedCount(savedTabSpaceCount),
+        );
+      }
     },
   );
 }
@@ -260,11 +255,7 @@ const saveCurrentTabSpaceImpl = async () => {
 
   const newId = $tabSpace.getState().id;
   if (oldId !== newId) {
-    tabSpaceRegistryUpdateTabSpace({
-      from: oldId,
-      to: newId,
-      entry: toTabSpaceStub($tabSpace.getState()),
-    });
+    // note/todo/bookmark rows are re-parented to the saved id (same context)
     sendPubSubMessage(TabSpaceMsg.ChangeID, { from: oldId, to: newId });
   }
 };

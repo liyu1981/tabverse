@@ -16,12 +16,10 @@ import {
   convertToSavedBase,
   inPlaceCopyFromOtherBase,
   newEmptyBase,
-  toBase,
 } from '../Base';
 import { eq, omit } from 'lodash';
 
 import { List } from 'immutable';
-import { TabSpaceStub } from '../tabSpaceRegistry/TabSpaceRegistry';
 import { produce } from 'immer';
 
 export interface LiveTabSpace {
@@ -292,14 +290,5 @@ export function convertAndGetTabSpaceSavePayload(targetTabSpace: TabSpace): {
     isNewTabSpace,
     newTabSavePayloads,
     existTabSavePayloads,
-  };
-}
-
-export function toTabSpaceStub(targetTabSpace: TabSpace): TabSpaceStub {
-  return {
-    ...toBase(targetTabSpace),
-    name: targetTabSpace.name,
-    chromeTabId: targetTabSpace.chromeTabId,
-    chromeWindowId: targetTabSpace.chromeWindowId,
   };
 }

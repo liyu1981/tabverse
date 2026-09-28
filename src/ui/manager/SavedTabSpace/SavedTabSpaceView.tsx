@@ -30,25 +30,20 @@ import {
   isSearchMode,
   isTabSpaceOpened,
 } from '../../../data/tabSpaceQuery/TabSpaceQuery';
-import { $tabSpaceRegistryState } from '../../../data/tabSpaceRegistry/store';
 
 export function SavedTabSpaceView() {
   const tabSpace = useStore($tabSpace);
   const tabStorage = useStore($tabSpaceStorage);
   const tabSpaceQuery = useStore($tabSpaceQuery);
-  const { tabSpaceRegistry } = useStore($tabSpaceRegistryState);
-
   useAsyncEffect(async () => {
     await tabSpaceQueryStoreApi.reload();
-  }, [tabSpaceRegistry, tabStorage]);
+  }, [tabSpace, tabStorage]);
 
-  const switchToTabSpace = (tabSpace: TabSpace) => {
-    const tabSpaceStub = tabSpaceRegistry.get(tabSpace.id);
-    if (tabSpaceStub) {
-      switchToTabSpaceUtil(
-        tabSpaceStub.chromeTabId,
-        tabSpaceStub.chromeWindowId,
-      );
+  // Only this window's tabverse can be switched to: a manager page does not
+  // know (or care) which window another tabverse is open in (ADR 0006).
+  const switchToTabSpace = (target: TabSpace) => {
+    if (target.id === tabSpace.id) {
+      switchToTabSpaceUtil(tabSpace.chromeTabId, tabSpace.chromeWindowId);
     }
   };
 
@@ -56,7 +51,7 @@ export function SavedTabSpaceView() {
     restoreSavedTabSpaceUtil(tabSpace.id);
 
   const loadToCurrentWindow = (savedTabSpaceId: string) =>
-    loadToCurrentWindowUtil(tabSpace.chromeTabId, savedTabSpaceId);
+    loadToCurrentWindowUtil(savedTabSpaceId);
 
   const [groupLabelVerb, groupedSavedTabSpaces] =
     getSortedGroupedSavedTabSpaces(tabSpaceQuery);

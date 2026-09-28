@@ -5,8 +5,7 @@ import { exposeDebugData } from '../../debug';
 import { Query } from '../../fullTextSearch';
 import { LoadStatus, perfEnd, perfStart } from '../../global';
 import { isIdNotSaved, setAttrForObject } from '../common';
-import { getStateTabSpaceRegistry } from '../tabSpaceRegistry/store';
-import { $tabSpaceStorage } from '../tabSpace/store';
+import { $tabSpace, $tabSpaceStorage } from '../tabSpace/store';
 import { TabSpace } from '../tabSpace/TabSpace';
 import { querySavedTabSpace } from '../tabSpace/util';
 import {
@@ -48,9 +47,21 @@ async function reload() {
 
   const tabSpaceQuery = $tabSpaceQuery.getState();
 
-  const openedSavedTabSpaces = getStateTabSpaceRegistry()
-    .filter((tabSpaceStub) => !isIdNotSaved(tabSpaceStub.id))
-    .toArray();
+  // A manager page only ever owns the tabverse of its own window, so at most
+  // one saved tabverse can be "opened" (the one being shown right here).
+  const currentTabSpace = $tabSpace.getState();
+  const openedSavedTabSpaces = isIdNotSaved(currentTabSpace.id)
+    ? []
+    : [
+        {
+          id: currentTabSpace.id,
+          name: currentTabSpace.name,
+          createdAt: currentTabSpace.createdAt,
+          updatedAt: currentTabSpace.updatedAt,
+          chromeTabId: currentTabSpace.chromeTabId,
+          chromeWindowId: currentTabSpace.chromeWindowId,
+        },
+      ];
   let savedTabSpaces: TabSpace[];
   let changes: Record<string, any> = {};
   if (!tabSpaceQuery.query.isEmpty()) {
