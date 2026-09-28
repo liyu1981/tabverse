@@ -1,5 +1,5 @@
 import { Map } from 'immutable';
-import produce from 'immer';
+import { produce } from 'immer';
 
 export interface TabPreviewCache {
   previews: Map<number, string>;

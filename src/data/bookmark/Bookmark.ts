@@ -2,7 +2,7 @@ import { IBase, setAttrForObject2 } from '../common';
 import { inPlaceConvertToSaved, newEmptyBase } from '../Base';
 
 import { NotTabSpaceId } from '../common';
-import produce from 'immer';
+import { produce } from 'immer';
 
 export interface Bookmark extends IBase {
   tabSpaceId: string;

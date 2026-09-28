@@ -9,7 +9,7 @@ import {
 import { LoadStatus } from '../../global';
 import { QUERY_PAGE_LIMIT_DEFAULT } from '../../storage/db';
 import { TabSpace } from '../tabSpace/TabSpace';
-import produce from 'immer';
+import { produce } from 'immer';
 
 export enum SortMethods {
   CREATED = 0,

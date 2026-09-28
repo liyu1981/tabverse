@@ -232,3 +232,56 @@ test('a tabverse saved before groups existed loads with an empty list', () => {
   } as any;
   expect(fromSavedDataWithoutTabs(legacy).tabGroups).toEqual([]);
 });
+
+/*
+ * Regression: a tab group hint records the tab ids it saw at capture time, but
+ * the first save strips the '~' from every tab id. If membership is not
+ * remapped at the same time, the hint points at tabs that no longer exist, the
+ * group silently stops matching, and the tabs render as unrelated entries.
+ */
+test('saving remaps group membership onto the saved tab ids', () => {
+  let ts = newEmptyTabSpace();
+  ts = setId('ts1', ts);
+  ts = setName('Window-1', ts);
+  ts = addTabs(
+    [
+      { ...newEmptyTab(), ...tabSetId('~t1', newEmptyTab()), title: 'one' },
+      { ...newEmptyTab(), ...tabSetId('~t2', newEmptyTab()), title: 'two' },
+    ],
+    ts,
+  );
+  ts = setTabGroups(
+    [{ id: 'g1', title: 'work', color: 'blue', tabIds: ['~t1', '~t2'] }],
+    ts,
+  );
+
+  const { tabSpace, tabSpaceSavePayload } =
+    convertAndGetTabSpaceSavePayload(ts);
+
+  // the tabs have been renamed ...
+  expect(tabSpace.tabs.map((t) => t.id).toArray()).toEqual(['t1', 't2']);
+  // ... and the group followed them
+  expect(tabSpace.tabGroups).toEqual([
+    { id: 'g1', title: 'work', color: 'blue', tabIds: ['t1', 't2'] },
+  ]);
+  expect(tabSpaceSavePayload.tabGroups).toEqual(tabSpace.tabGroups);
+});
+
+test('group membership for tabs that are gone is dropped, empty groups with it', () => {
+  let ts = newEmptyTabSpace();
+  ts = setId('ts2', ts);
+  ts = addTabs([{ ...newEmptyTab(), ...tabSetId('~t1', newEmptyTab()) }], ts);
+  ts = setTabGroups(
+    [
+      { id: 'g1', title: 'gone', color: 'red', tabIds: ['~deleted'] },
+      { id: 'g2', title: 'kept', color: 'green', tabIds: ['~t1'] },
+    ],
+    ts,
+  );
+
+  const { tabSpace } = convertAndGetTabSpaceSavePayload(ts);
+
+  expect(tabSpace.tabGroups).toEqual([
+    { id: 'g2', title: 'kept', color: 'green', tabIds: ['t1'] },
+  ]);
+});

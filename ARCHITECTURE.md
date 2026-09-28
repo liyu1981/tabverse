@@ -96,8 +96,9 @@ See `server/README.md` for configuration, deployment and protocol semantics.
 - [x] MV3 hardening: `storage` permission, tightened CSP,
       `minimum_chrome_version`, `action.default_icon`, module service worker
 - [x] Toolchain revamp — Vite 8, React 19, Blueprint 6, Vitest 5, ESLint 10
-      flat config, TypeScript 5.9 (`adr/0003`, `adr/0004`); Prettier 3 later
-      replaced by Biome 2 for formatting, ESLint kept for linting
+      flat config (`adr/0003`, `adr/0004`); Prettier 3 later replaced by Biome 2
+      for formatting, ESLint kept for linting; TypeScript 7.0.2 for typechecking
+      alongside a TypeScript 6 API for typescript-eslint (`adr/0003`)
 - [x] draft-js -> TipTap with a tested legacy content converter
 - [x] TypeScript strict **subset** enabled (see the comments in
       `tsconfig.json`); dead stores cleaned, ESLint's `no-useless-assignment`

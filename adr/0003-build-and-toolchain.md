@@ -59,10 +59,11 @@ was owned by Prettier 3, and is now owned by **Biome 2** (see the note at the
 end of this ADR); `eslint-config-prettier` stays either way, because turning
 off ESLint's stylistic rules is what keeps the two from fighting.
 
-**TypeScript 5.9** with `moduleResolution: "bundler"`,
+**TypeScript 7.0.2** (was 5.9) with `moduleResolution: "bundler"`,
 `customConditions: ["browser"]` (package `exports` maps, same condition Vite
 uses) and `isolatedModules`. `strict` is still off — turning it on is a
-separate, large change.
+separate, large change. See the amendment at the end of this ADR for the two
+things TS 7 changed and how the setup is arranged around them.
 
 **Dependencies removed:** `moment` (→ a tested 60-line `src/time.ts` over
 date-fns), `react-json-view` (dev page renders `JSON.stringify`),
@@ -101,3 +102,52 @@ still owns linting, including the strict TypeScript subset and react-hooks).
   dead-store cleanup — 12 sites, needs review, no runtime tests to lean on.
 - Still deferred: draft-js replacement, React 19, `strict` mode, deleting the
   leader-election machinery (`broadcast-channel`).
+
+### Later amendment: TypeScript 5.9 -> 7.0.2, and the side-by-side arrangement
+
+The whole dependency tree was upgraded, which brought TypeScript **7.0.2** (the
+Go-native compiler) in. Two of its defaults differ from 5.9, and both had to be
+made explicit rather than inherited:
+
+1. **`strictNullChecks` and `noImplicitAny` now default on.** The staged-strict
+   config in `tsconfig.json` deferred exactly those two (428 and 227 errors
+   respectively, per the note there and `adr/0004`), so the upgrade turned a
+   clean `typecheck` into **675 errors** without a single line of source
+   changing. Both are now written out as `false`, with a comment: a deferral
+   that leans on a compiler default is exactly the kind that breaks silently.
+   Turning them on is still the dedicated pass `adr/0004` describes.
+2. **`@types/*` is no longer auto-included in the program.** The `chrome.*`
+   globals disappeared, which alone accounted for 111 cascading errors
+   (`TS2304` "Cannot find name 'chrome'", `TS2503` "Cannot find namespace
+   'chrome'"). `compilerOptions.types` is now `["chrome", "node"]` - the only
+   two global type packages this project actually uses (everything else is
+   imported as a module, so module resolution still finds it).
+
+**typescript-eslint cannot run against TypeScript 7 at all** (8.70.1, the
+current release, refuses to load: "typescript-eslint does not support TS 7.0";
+TS 7.1 support is tracked upstream). Microsoft's own migration note for 7.0
+covers this, and the fix is an npm alias:
+
+```json
+"devDependencies": {
+  "@typescript/native": "npm:typescript@^7.0.2",        // provides tsc  -> 7.0.2
+  "typescript": "npm:@typescript/typescript6@^6.0.2"     // provides tsc6 -> 6.0.3
+}
+```
+
+So `npm run typecheck` is TypeScript 7, ESLint gets the 6.0 API it needs, and
+`npm run typecheck:ts6` is available as a cheap cross-check - both compilers
+are clean on the current tree, which is worth knowing because the two do not
+diagnose identically.
+
+Also in this upgrade:
+
+- **immer 11** dropped the callable default export, so seven
+  `import produce from 'immer'` statements had to become
+  `import { produce } from 'immer'`. It was the only real source break.
+- **replace-in-file 9** dropped `replace.sync`, which silently broke
+  `tools/version_update` (the release checklist's version-bump step). Now uses
+  the named `replaceInFileSync`, verified by running the tool on a scratch copy.
+- **@fortawesome/fontawesome-free** was removed entirely: the only icon class
+  in the codebase was the Dropbox button, which ADR 0006's cleanup deleted.
+  That takes three icon fonts and ~80 kB of CSS out of the package.

@@ -14,7 +14,7 @@ import {
 
 import { List } from 'immutable';
 import { Todo } from './Todo';
-import produce from 'immer';
+import { produce } from 'immer';
 
 export interface AllTodo extends IBase {
   tabSpaceId: string;

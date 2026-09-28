@@ -14,7 +14,7 @@ import {
 
 import { List } from 'immutable';
 import { NotTabSpaceId } from '../common';
-import produce from 'immer';
+import { produce } from 'immer';
 
 export interface AllBookmark extends IBase {
   tabSpaceId: string;
