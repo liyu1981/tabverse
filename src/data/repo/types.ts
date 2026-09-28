@@ -81,9 +81,16 @@ export interface PullResult {
 
 export interface SearchHit {
   entity: EntityName;
+  /** The record that matched. */
   id: string;
   score: number;
   snippet?: string;
+  /**
+   * The tabverse the matching record belongs to (a tabspace hit is its own).
+   * Search results are shown as tabverses and filtered against the rows this
+   * device has, so the server resolves this instead of leaving it to us.
+   */
+  tabspace_id?: string;
 }
 
 export interface DeviceCredentials {

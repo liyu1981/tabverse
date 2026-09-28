@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -168,6 +169,115 @@ func TestSearchFiltersByUserAndEntity(t *testing.T) {
 	}
 	if len(hits) != 0 {
 		t.Fatalf("entity filter broken: %+v", hits)
+	}
+}
+
+// The client shows tabverses, not records: every hit has to say which tabverse
+// it belongs to, so it can drop the ones this device has not downloaded.
+func TestSearchResolvesTabspaceIDs(t *testing.T) {
+	st := newTestStore(t)
+	ctx := context.Background()
+	uid := mustCreateUser(t, st, "s")
+	now := time.Now().UnixMilli()
+
+	_, _, err := st.ApplyRecords(ctx, uid, "dev", []RecordInput{
+		{Entity: "tabspace", ID: "ts1", UpdatedAt: now, Payload: `{"name":"recipes","tabIds":["t1"]}`},
+		{Entity: "tab", ID: "t1", UpdatedAt: now,
+			Payload: `{"tabSpaceId":"ts1","title":"pasta","url":"https://example.com/pasta"}`},
+		{Entity: "todo", ID: "x1", UpdatedAt: now, Payload: `{"tabSpaceId":"ts2","content":"buy semolina"}`},
+		{Entity: "alltodo", ID: "a1", UpdatedAt: now, Payload: `{"tabSpaceId":"ts1","todoIds":["x1"]}`},
+	}, 1<<20)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	byID := map[string]SearchHit{}
+	for _, q := range []string{"pasta", "recipes", "semolina"} {
+		hits, err := st.Search(ctx, uid, q, "", 10)
+		if err != nil {
+			t.Fatalf("search %q: %v", q, err)
+		}
+		if len(hits) != 1 {
+			t.Fatalf("search %q: got %d hits, want 1: %+v", q, len(hits), hits)
+		}
+		byID[hits[0].ID] = hits[0]
+	}
+
+	if got := byID["t1"].TabspaceID; got != "ts1" {
+		t.Errorf("tab hit tabspace id = %q, want ts1", got)
+	}
+	if got := byID["ts1"].TabspaceID; got != "ts1" {
+		t.Errorf("tabspace hit is its own tabverse, got %q", got)
+	}
+	if got := byID["x1"].TabspaceID; got != "ts2" {
+		t.Errorf("todo hit tabspace id = %q, want ts2", got)
+	}
+}
+
+// Closed tabs are searchable like everything else now that a hit is resolved
+// to a tabverse rather than shown as a record that may no longer exist.
+func TestSearchIndexesClosedTabs(t *testing.T) {
+	st := newTestStore(t)
+	ctx := context.Background()
+	uid := mustCreateUser(t, st, "c")
+	now := time.Now().UnixMilli()
+
+	_, _, err := st.ApplyRecords(ctx, uid, "dev", []RecordInput{
+		{Entity: "closedtab", ID: "c1", UpdatedAt: now,
+			Payload: `{"tabSpaceId":"ts1","title":"that one page","url":"https://example.com/x","closedAt":1}`},
+	}, 1<<20)
+	if err != nil {
+		t.Fatal(err)
+	}
+	hits, err := st.Search(ctx, uid, "example", "", 10)
+	if err != nil || len(hits) != 1 || hits[0].Entity != "closedtab" {
+		t.Fatalf("closed tab not searchable: err=%v %+v", err, hits)
+	}
+	if hits[0].TabspaceID != "ts1" {
+		t.Fatalf("closed tab tabspace id = %q", hits[0].TabspaceID)
+	}
+
+	// pruning it (the client drops rows past its cap) removes it from the index
+	_, _, err = st.ApplyRecords(ctx, uid, "dev", []RecordInput{
+		{Entity: "closedtab", ID: "c1", UpdatedAt: now + 1, Deleted: true},
+	}, 1<<20)
+	if err != nil {
+		t.Fatal(err)
+	}
+	hits, err = st.Search(ctx, uid, "example", "", 10)
+	if err != nil || len(hits) != 0 {
+		t.Fatalf("deleted closed tab still searchable: err=%v %+v", err, hits)
+	}
+}
+
+// Ids are not content: searching for a tabverse id must not match every row
+// that hangs off it, and they must stay out of the snippets.
+func TestSearchIgnoresIdentifierFields(t *testing.T) {
+	st := newTestStore(t)
+	ctx := context.Background()
+	uid := mustCreateUser(t, st, "i")
+	now := time.Now().UnixMilli()
+
+	_, _, err := st.ApplyRecords(ctx, uid, "dev", []RecordInput{
+		{Entity: "tab", ID: "t1", UpdatedAt: now,
+			Payload: `{"id":"t1","tabSpaceId":"ts-zzz","title":"hello","url":"https://example.com"}`},
+	}, 1<<20)
+	if err != nil {
+		t.Fatal(err)
+	}
+	hits, err := st.Search(ctx, uid, "ts-zzz", "", 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(hits) != 0 {
+		t.Fatalf("an id matched as content: %+v", hits)
+	}
+	hits, err = st.Search(ctx, uid, "hello", "", 10)
+	if err != nil || len(hits) != 1 {
+		t.Fatalf("content search broken: err=%v %+v", err, hits)
+	}
+	if strings.Contains(hits[0].Snippet, "ts-zzz") {
+		t.Fatalf("snippet leaked an id: %q", hits[0].Snippet)
 	}
 }
 

@@ -12,7 +12,6 @@ import { LoadingSpinner } from '../../common/LoadingSpinner';
 import { PagingControl } from '../../common/PagingControl';
 import { SavedTabSpaceDetail } from './SavedTabSpaceDetail';
 import { SearchInput } from './Search';
-import { SearchPagingControl } from '../../../fullTextSearch/SearchInput';
 import SimpleBar from 'simplebar-react';
 import { TabSpace } from '../../../data/tabSpace/TabSpace';
 import classes from './SavedTabSpaceView.module.scss';
@@ -24,8 +23,6 @@ import {
   tabSpaceQueryStoreApi,
 } from '../../../data/tabSpaceQuery/store';
 import {
-  getCursorsForSearchPaging,
-  getShouldShowSearchPaging,
   getSortedGroupedSavedTabSpaces,
   isSearchMode,
   isTabSpaceOpened,
@@ -56,41 +53,23 @@ export function SavedTabSpaceView() {
   const [groupLabelVerb, groupedSavedTabSpaces] =
     getSortedGroupedSavedTabSpaces(tabSpaceQuery);
 
+  // Browsing and searching page the same way now: both end up with a list of
+  // tabverses (ADR 0008 removed the index cursor).
   const renderPagingControl = () => {
-    let content = null;
-    if (isSearchMode(tabSpaceQuery)) {
-      if (getShouldShowSearchPaging(tabSpaceQuery)) {
-        const { availableCursors, currentCursorIndex, nextCursor } =
-          getCursorsForSearchPaging(tabSpaceQuery);
-        content = (
-          <SearchPagingControl
-            cursors={availableCursors}
-            currentCursorIndex={currentCursorIndex}
-            nextCursor={nextCursor}
-            onClickCursor={(cursorIndex) =>
-              tabSpaceQueryStoreApi.goQueryCursor(cursorIndex)
-            }
-            onClickMore={() => tabSpaceQueryStoreApi.goQueryCursorNext()}
-          />
-        );
-      }
-    } else {
-      if (tabSpaceQuery.totalPageCount > 1) {
-        content = (
-          <PagingControl
-            current={tabSpaceQuery.queryPageStart + 1}
-            total={tabSpaceQuery.totalPageCount}
-            onNext={() => tabSpaceQueryStoreApi.nextPage()}
-            onPrev={() => tabSpaceQueryStoreApi.prevPage()}
-            onLast={() => tabSpaceQueryStoreApi.lastPage()}
-            onFirst={() => tabSpaceQueryStoreApi.firstPage()}
-          />
-        );
-      }
+    if (tabSpaceQuery.totalPageCount <= 1) {
+      return null;
     }
-
-    return content === null ? null : (
-      <div className={classes.pagingControlContainer}>{content}</div>
+    return (
+      <div className={classes.pagingControlContainer}>
+        <PagingControl
+          current={tabSpaceQuery.queryPageStart + 1}
+          total={tabSpaceQuery.totalPageCount}
+          onNext={() => tabSpaceQueryStoreApi.nextPage()}
+          onPrev={() => tabSpaceQueryStoreApi.prevPage()}
+          onLast={() => tabSpaceQueryStoreApi.lastPage()}
+          onFirst={() => tabSpaceQueryStoreApi.firstPage()}
+        />
+      </div>
     );
   };
 
@@ -106,6 +85,20 @@ export function SavedTabSpaceView() {
                   tabSpaceQueryStoreApi.setQuery(query);
                 }}
               />
+              {isSearchMode(tabSpaceQuery) ? (
+                <div className={classes.searchStatus}>
+                  {tabSpaceQuery.totalPageCount} tabverse
+                  {tabSpaceQuery.totalPageCount === 1 ? '' : 's'} found
+                  {tabSpaceQuery.searchBackend === 'server'
+                    ? ' (searched on the sync server)'
+                    : ' (searched on this device)'}
+                  {tabSpaceQuery.searchUnknownTabSpaceIds.length > 0
+                    ? `, ${tabSpaceQuery.searchUnknownTabSpaceIds.length} not downloaded yet`
+                    : ''}
+                </div>
+              ) : (
+                ''
+              )}
             </div>
             <div className={classes.stickyOnPlaceholder}></div>
           </div>

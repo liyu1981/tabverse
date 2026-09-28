@@ -1,5 +1,17 @@
-import { typeGuard } from '../global';
+import { typeGuard } from '../../global';
 
+/**
+ * The query model behind the search box: an OR of AND-groups.
+ *
+ * Typing "foo bar" and pressing Enter adds one group whose terms must all
+ * match the same record; adding a second tag ORs the two groups. Every group
+ * carries a scope ({ type, field }) that narrows what it looks at - the
+ * scopeMap in the UI decides which scopes the user can pick.
+ *
+ * This is the only thing that survived of the old client side full text index
+ * (ADR 0008): the index, its tokenizer and its cursor paging are gone, the
+ * query itself is the same shape.
+ */
 export interface QueryScope {
   type?: string;
   field?: string;

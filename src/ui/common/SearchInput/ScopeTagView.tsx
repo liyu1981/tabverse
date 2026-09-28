@@ -6,7 +6,7 @@ import {
   Tag,
   TagProps,
 } from '@blueprintjs/core';
-import { QueryScope, QueryScopeMap } from '..';
+import { QueryScope, QueryScopeMap } from '../../../data/search/Query';
 
 import React from 'react';
 import classes from './ScopeTagView.module.scss';

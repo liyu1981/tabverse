@@ -37,7 +37,10 @@ Introduce `tabversed`, a Go server, as the single source of truth:
    durable outbox in `chrome.storage.local`; the UI never blocks on the
    network and a server outage loses nothing.
 6. **Server side retention and full text search** (SQLite FTS5) replace the
-   `chrome.idle` background audit and ~760 LOC of client-side indexing.
+   `chrome.idle` background audit and ~760 LOC of client-side indexing. (The
+   client index was still shipped for a while; [ADR 0008](0008-server-search-with-local-fallback.md)
+   removed it, leaving the server as the only real index and a local scan as
+   the offline fallback.)
 
    > Retention only ever pruned `session` snapshots, and the browser-session
    > feature was deleted later (`adr/0006`), so the server still accepts the

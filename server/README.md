@@ -14,10 +14,10 @@ server authoritative sync protocol.
   entity
 - **Entities:** `tabspace`, `tab`, `note`, `todo`, `bookmark`, `closedtab`
   (the History tool: tabs closed in a tabverse, ADR 0007) plus the client's
-  ordered aggregates `allnote`, `alltodo`, `allbookmark`. `closedtab` is
-  deliberately *not* in the FTS index: the client prunes those rows once they
-  fall off its 999 entry cap, and a search hit on a forgotten page is a dead
-  end
+  ordered aggregates `allnote`, `alltodo`, `allbookmark`. Only the first group
+  is in the FTS index; the aggregates are id lists. Every hit comes back with
+  the `tabspace_id` it belongs to, because the client lists tabverses (ADR
+  0008), and identifier fields are not indexed at all
 
 ## Run
 

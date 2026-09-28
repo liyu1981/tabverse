@@ -47,9 +47,11 @@ Two things had to be decided beyond the obvious.
    deletes every row of the tabverse the store no longer holds, so pruning,
    "forget this one" and "clear all" are the same code path - and a pruned row
    is a tombstone on the server rather than an orphan.
-4. **Not indexed for search.** The server's FTS index is a search over what
-   the user still has; a hit on a page that fell off the history cap would be
-   a dead link.
+4. **Indexed for search.** (Originally deferred: the argument then was that a
+   hit on a page that fell off the cap would be a dead link. That stopped being
+   true once [ADR 0008](0008-server-search-with-local-fallback.md) made a search
+   hit resolve to a *tabverse* that is filtered against local rows, and once
+   pruning tombstones the record, which removes the index row with it.)
 5. **No localStorage fallback.** Todo/Note/Bookmark still have one for
    tabverses that were not saved yet, but a tabverse is born saved
    (`needAutoSave()` is `true` and returns `true`), so that branch is dead
@@ -69,3 +71,5 @@ Two things had to be decided beyond the obvious.
 - Restoring an entry re-opens the url with `chrome.tabs.create`, i.e. in the
   window of the tabverse showing the history, exactly like the "Open In Current
   Tabverse" action of the Bookmark tool.
+- Closed tabs are searchable, on the server and in the offline scan, through
+  the same `closedtab` entity (ADR 0008 §7).

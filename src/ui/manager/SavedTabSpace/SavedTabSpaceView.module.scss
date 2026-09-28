@@ -78,6 +78,12 @@ $tabspace-card-width: 900px;
   box-shadow: 0 2px 10px -5px rgb(16 22 26 / 60%);
 }
 
+.searchStatus {
+  color: colors.$gray1;
+  font-size: 12px;
+  padding: 4px 2px 0 2px;
+}
+
 .stickyOn .stickyOnPlaceholder {
   min-height: 50px;
 }

@@ -18,7 +18,6 @@ import {
 import { CountExit } from './common/CountExit';
 import React from 'react';
 import { find } from 'lodash';
-import { bootstrap as fullTextSearchBootstrap } from '../fullTextSearch';
 import { getNewId } from '../data/common';
 import { pinTabverseTabFirst } from '../data/tabSpace/chromeUtil';
 import { getQueryParameters } from './common/queryAndHashParameter';
@@ -48,7 +47,6 @@ async function bootstrap() {
       'queryParams do not have attribute op.',
     );
 
-    fullTextSearchBootstrap();
     localStorageInit();
     // queue local database writes for the server sync engine; awaited so the
     // tabverse bootstrap below is not written before the hooks are in place

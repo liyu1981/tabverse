@@ -386,10 +386,13 @@ func TestSearch(t *testing.T) {
 
 	_, resp := push(t, ts, a.Token, []pushedRecord{
 		{Entity: "note", ID: "n1", UpdatedAt: now,
-			Payload: `{"title":"reading list","text":"articles about distributed systems"}`},
+			Payload: `{"tabSpaceId":"ts1","title":"reading list","text":"articles about distributed systems"}`},
 		{Entity: "tabspace", ID: "t1", UpdatedAt: now,
 			Payload: `{"title":"recipes","tabs":[{"title":"pasta","url":"https://example.com/pasta"}]}`},
-		{Entity: "todo", ID: "x1", UpdatedAt: now, Payload: `{"text":"fix the toaster"}`},
+		{Entity: "todo", ID: "x1", UpdatedAt: now,
+			Payload: `{"tabSpaceId":"t1","text":"fix the toaster"}`},
+		{Entity: "closedtab", ID: "c1", UpdatedAt: now,
+			Payload: `{"tabSpaceId":"t1","title":"that sourdough blog","url":"https://example.com/bread"}`},
 	})
 	resp.mustStatus(t, http.StatusOK)
 
@@ -403,7 +406,8 @@ func TestSearch(t *testing.T) {
 		{"pasta", "tabspace", 1},
 		{"pasta", "note", 0},
 		{"toaster", "", 1},
-		{"", "", 0}, // empty query: no results, no error
+		{"sourdough", "", 1}, // closed tabs are searchable
+		{"", "", 0},          // empty query: no results, no error
 		{"nosuchthing", "", 0},
 	}
 	for _, tc := range cases {
@@ -417,6 +421,16 @@ func TestSearch(t *testing.T) {
 		if len(hits) != tc.want {
 			t.Errorf("q=%q entity=%q: got %d hits, want %d (%s)",
 				tc.q, tc.entity, len(hits), tc.want, r.raw)
+		}
+		if tc.want == 0 {
+			continue
+		}
+		// every hit names the tabverse it belongs to, which is what the
+		// extension filters against its local rows
+		hit := hits[0].(map[string]any)
+		tabspaceID, _ := hit["tabspace_id"].(string)
+		if tabspaceID == "" {
+			t.Errorf("q=%q: hit without tabspace_id: %s", tc.q, r.raw)
 		}
 	}
 

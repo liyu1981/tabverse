@@ -1,10 +1,6 @@
 import { fromNow } from '../../time';
-import {
-  EmptyQuery,
-  IFullTextSearchCursor,
-  Query,
-  calcCursorBegin,
-} from '../../fullTextSearch';
+import { EmptyQuery, Query } from '../search/Query';
+import { SearchBackend } from '../search';
 
 import { LoadStatus } from '../../global';
 import { QUERY_PAGE_LIMIT_DEFAULT } from '../../storage/db';
@@ -19,7 +15,8 @@ export enum SortMethods {
 /**
  * A saved tabverse that is open in *this* window. Each manager page owns one
  * window, so a profile can have several of these open at once (one per window)
- * but a single page only ever sees its own.
+ * but a single page only ever sees its own - the list is built in the store,
+ * not queried.
  */
 export interface OpenedTabSpace {
   id: string;
@@ -37,12 +34,16 @@ export interface TabSpaceQuery {
   sortMethod: SortMethods;
   totalPageCount: number;
   query: Query;
-  // when query is not empty we will use queryCursorPrev & queryCursorNext
-  queryCursors: IFullTextSearchCursor[];
-  queryCursorCurrentIndex: number;
-  queryCursorsVisited: { [index: number]: boolean };
-  queryCursorsLocked: boolean;
-  // when query is empty we will use queryPageStart & queryPageLimit
+  /**
+   * Which backend answered the current search: the server's FTS5 index, or
+   * the local table scan. Shown in the UI, because they do not match exactly
+   * (see ADR 0008).
+   */
+  searchBackend: SearchBackend | null;
+  /** Ids the backend matched that this device has not downloaded. */
+  searchUnknownTabSpaceIds: string[];
+  // paging is the same for browsing and for searching: the result is a list of
+  // tabverse ids either way (ADR 0008 dropped the index cursor)
   queryPageStart: number;
   queryPageLimit: number;
 }
@@ -55,43 +56,15 @@ export function newEmptyTabSpaceQuery(): TabSpaceQuery {
     sortMethod: SortMethods.SAVED,
     totalPageCount: 0,
     query: EmptyQuery,
-    queryCursors: [],
-    queryCursorCurrentIndex: 0,
-    queryCursorsVisited: {},
-    queryCursorsLocked: false,
+    searchBackend: null,
+    searchUnknownTabSpaceIds: [],
     queryPageStart: 0,
     queryPageLimit: QUERY_PAGE_LIMIT_DEFAULT,
   };
 }
 
-export function cloneTabSpaceQuery(
-  targetTabSpaceQuery: TabSpaceQuery,
-): TabSpaceQuery {
-  return produce(targetTabSpaceQuery, (draft) => {
-    draft.query = new Query(draft.query.toJSON());
-  });
-}
-
-export function isEmpty(targetTabSpaceQuery: TabSpaceQuery): boolean {
-  return (
-    targetTabSpaceQuery.openedSavedTabSpaces.length > 0 ||
-    targetTabSpaceQuery.savedTabSpaces.length > 0
-  );
-}
-
 export function isSearchMode(targetTabSpaceQuery: TabSpaceQuery): boolean {
   return !targetTabSpaceQuery.query.isEmpty();
-}
-
-export function getSortedOpenedSavedTabSpaces(
-  targetTabSpaceQuery: TabSpaceQuery,
-): OpenedTabSpace[] {
-  const clonedOpenedSavedTabSpaces =
-    targetTabSpaceQuery.openedSavedTabSpaces.slice(0);
-  targetTabSpaceQuery.sortMethod === SortMethods.SAVED
-    ? clonedOpenedSavedTabSpaces.sort((a, b) => b.updatedAt - a.updatedAt)
-    : clonedOpenedSavedTabSpaces.sort((a, b) => b.createdAt - a.createdAt);
-  return clonedOpenedSavedTabSpaces;
 }
 
 export function getSortedGroupedSavedTabSpaces(
@@ -127,59 +100,6 @@ export function getSortedGroupedSavedTabSpaces(
   ];
 }
 
-export function getCursorsForSearchPaging(targetTabSpaceQuery: TabSpaceQuery): {
-  availableCursors: IFullTextSearchCursor[];
-  currentCursor: IFullTextSearchCursor | null;
-  currentCursorIndex: number | null;
-  nextCursor: IFullTextSearchCursor | null;
-} {
-  const currentCursor =
-    targetTabSpaceQuery.queryCursorCurrentIndex <
-    targetTabSpaceQuery.queryCursors.length
-      ? targetTabSpaceQuery.queryCursors[
-          targetTabSpaceQuery.queryCursorCurrentIndex
-        ]
-      : null;
-  const nextCursor =
-    targetTabSpaceQuery.queryCursors.length >= 1
-      ? targetTabSpaceQuery.queryCursors[
-          targetTabSpaceQuery.queryCursors.length - 1
-        ]
-      : null;
-  // copy from 0 to 2nd last cursors, as the last one is next cursor
-  const availableCursors = targetTabSpaceQuery.queryCursors.slice(0, -1);
-  return {
-    availableCursors,
-    currentCursor,
-    currentCursorIndex:
-      currentCursor === null
-        ? null
-        : targetTabSpaceQuery.queryCursorCurrentIndex,
-    nextCursor,
-  };
-}
-
-export function getShouldShowSearchPaging(
-  targetTabSpaceQuery: TabSpaceQuery,
-): boolean {
-  if (targetTabSpaceQuery.queryCursors.length <= 0) {
-    return false;
-  } else {
-    const nextCursor =
-      targetTabSpaceQuery.queryCursors[
-        targetTabSpaceQuery.queryCursors.length - 1
-      ];
-    if (
-      targetTabSpaceQuery.queryCursors.length <= 2 &&
-      nextCursor.hasMorePage === false
-    ) {
-      return false; // single page result case
-    } else {
-      return true;
-    }
-  }
-}
-
 export function isTabSpaceOpened(
   tabSpaceId: string,
   targetTabSpaceQuery: TabSpaceQuery,
@@ -196,14 +116,12 @@ export function setQuery(
   targetTabSpaceQuery: TabSpaceQuery,
 ): TabSpaceQuery {
   return produce(targetTabSpaceQuery, (draft) => {
-    if (query.isEmpty()) {
-      draft.queryPageStart = 0;
-      draft.queryPageLimit = QUERY_PAGE_LIMIT_DEFAULT;
-    } else {
-      draft.queryCursors = [calcCursorBegin(query, QUERY_PAGE_LIMIT_DEFAULT)];
-      draft.queryCursorCurrentIndex = 0;
-      draft.queryCursorsVisited = {};
-    }
+    // a new query starts at the first page; paging past the end is clamped
+    // again once the result count is known
+    draft.queryPageStart = 0;
+    draft.queryPageLimit = QUERY_PAGE_LIMIT_DEFAULT;
+    draft.searchBackend = null;
+    draft.searchUnknownTabSpaceIds = [];
     draft.query = query;
   });
 }

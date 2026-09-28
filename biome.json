@@ -93,7 +93,7 @@
     },
     {
       "includes": [
-        "src/fullTextSearch/SearchInput/SearchInput.tsx"
+        "src/ui/common/SearchInput/SearchInput.tsx"
       ],
       "linter": {
         "rules": {

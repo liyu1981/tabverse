@@ -7,7 +7,7 @@
 │  ├─ data/  domain stores (effector)     │◄────►│  internal/sync   delta + LWW   │
 │  └─ data/repo/  ★ sync layer            │      │  internal/hub    WebSocket     │
 │ background service worker               │  WS  │  internal/store  SQLite+FTS5   │
-│  ├─ background.ts  (tab events, search) │◄────►│  internal/auth   pairing       │
+│  ├─ background.ts  (tab events, sync)   │◄────►│  internal/auth   pairing       │
 │  └─ repo/backgroundSync (sync runtime)  │      │  internal/retention (legacy)   │
 └─────────────────────────────────────────┘      └────────────────────────────────┘
 ```
@@ -56,6 +56,27 @@ remote edit ──WebSocket records_changed──► debounced syncOnce()
 tool: one row per closed tab, capped at 999 per tabverse, `adr/0007`) plus the
 three per-tabspace ordered aggregates `allnote`, `alltodo`, `allbookmark`
 (they carry the display ordering, which cannot be rebuilt from entity rows).
+
+## Search (`src/data/search/`)
+
+There is no client side index. A search is an OR of AND-groups, each with a
+`{type, field}` scope, and it is answered by one of two backends
+(`adr/0008`):
+
+```
+query ─┬─ paired device ─► GET /api/v1/search  ─► tabverse ids (bm25 ranked)
+       └─ otherwise  ───► localSearch.ts       ─► tabverse ids (table scan)
+                                                     │
+                          loadTabSpacesByIds ◄──────┘  (drops ids this device
+                          drops what is not local, and reports the rest)
+```
+
+`serverSearch.ts` turns a group into a request (its `type` scope becomes the
+server's `entity=` filter) and resolves the `tabspace_id` the server returns;
+`localSearch.ts` scans the tables behind the scope with a substring test. Both
+return the same thing - ranked tabverse ids - so browsing and searching page
+alike, and a server that is unreachable falls back to the local scan instead of
+failing the search box.
 
 ## Commands
 

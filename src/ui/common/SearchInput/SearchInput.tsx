@@ -1,7 +1,11 @@
 // This file is adapted from @blueprintjs v3 tag input, we will mainly change
 // the tag to our customized search condition UI.
 
-import { AndQuery, QueryScope, QueryScopeMap } from '..';
+import {
+  AndQuery,
+  QueryScope,
+  QueryScopeMap,
+} from '../../../data/search/Query';
 import {
   Classes,
   Icon,
@@ -13,7 +17,7 @@ import {
 import { useRef, useState } from 'react';
 
 import { AndQueryView } from './AndQueryView';
-import { Query } from '../query';
+import { Query } from '../../../data/search/Query';
 import React from 'react';
 import SearchInputClasses from './SearchInput.module.scss';
 import classNames from 'classnames';

@@ -1,10 +1,7 @@
 import { dbAuditor as bookmarkDbAuditor } from './data/bookmark/dbAuditor';
 import { dbAuditor as closedTabDbAuditor } from './data/closedTab/dbAuditor';
-import { bootstrap as fullTextBootstrap, isDbEmpty } from './fullTextSearch';
 import { logger } from './global';
-import { monitorFullTextSearchMsg } from './background/fullTextSearch/chromeMessage';
 import { dbAuditor as noteDbAuditor } from './data/note/dbAuditor';
-import { reIndexAll } from './background/fullTextSearch/reIndexAll';
 import { dbAuditor as tabSpaceDbAuditor } from './data/tabSpace/dbAuditor';
 import { dbAuditor as todoDbAuditor } from './data/todo/dbAuditor';
 import { setDebugLogLevel, TabSpaceLogLevel } from './debug';
@@ -49,13 +46,3 @@ chrome.idle.onStateChanged.addListener(
 // which keeps local-only usage intact.
 logger.info('start server sync runtime...');
 void startBackgroundSync();
-
-logger.info('bootstrap full text search service...');
-fullTextBootstrap();
-logger.info('full text service is ready.');
-monitorFullTextSearchMsg();
-isDbEmpty().then((empty) => {
-  if (empty) {
-    reIndexAll();
-  }
-});

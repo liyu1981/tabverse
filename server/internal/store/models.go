@@ -30,10 +30,13 @@ var Entities = map[string]bool{
 }
 
 // IndexedEntities are the entities worth putting into the full text index;
-// aggregates are id lists, pure noise for search.
+// aggregates are id lists, pure noise for search. The client resolves every
+// hit to its tabverse and drops the ones it has not downloaded, so indexing a
+// row the client may prune later is not a problem: pruning it tombstones the
+// record, which removes the index row with it.
 var IndexedEntities = map[string]bool{
 	"tabspace": true, "tab": true, "session": true,
-	"note": true, "todo": true, "bookmark": true,
+	"note": true, "todo": true, "bookmark": true, "closedtab": true,
 }
 
 // PrunableEntities are subject to server side retention.
@@ -106,4 +109,9 @@ type SearchHit struct {
 	ID      string  `json:"id"`
 	Score   float64 `json:"score"` // higher is better
 	Snippet string  `json:"snippet,omitempty"`
+	// TabspaceID is the tabverse the matching record belongs to (for a
+	// tabspace hit it is the record's own id). The client filters these
+	// against its local rows, so a hit for a tabverse this device has not
+	// downloaded is simply dropped.
+	TabspaceID string `json:"tabspace_id,omitempty"`
 }

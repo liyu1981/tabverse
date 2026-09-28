@@ -8,9 +8,9 @@ import {
   TagProps,
   Utils,
 } from '@blueprintjs/core';
-import { QueryScope, QueryScopeMap } from '..';
+import { QueryScope, QueryScopeMap } from '../../../data/search/Query';
 
-import { AndQuery } from '../query';
+import { AndQuery } from '../../../data/search/Query';
 import AndQueryViewClasses from './AndQueryView.module.scss';
 import React from 'react';
 import { ScopeTagView } from './ScopeTagView';

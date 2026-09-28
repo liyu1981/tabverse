@@ -214,6 +214,18 @@ paths:
     get:
       tags: [search]
       summary: Full text search over this account's records
+      description: |
+        Every term is matched, not just one of them, and the last term is
+        matched as a prefix so the extension can search while the user types.
+
+        Hits come back ranked, and each one names the **tabverse** it belongs
+        to (`tabspace_id`), because that is the unit the extension lists: a
+        match on one tab, note or closed tab means "this tabverse matched".
+        The client drops the tabverses it has not downloaded, so a hit for a
+        tabverse this device has never synced is expected and harmless.
+
+        `allnote` / `alltodo` / `allbookmark` are never indexed (they are id
+        lists) and `session` only exists for pre-ADR-0006 clients.
       parameters:
         - {
             name: q,
@@ -351,9 +363,20 @@ components:
       required: [entity, id, score]
       properties:
         entity: { $ref: '#/components/schemas/Entity' }
-        id: { type: string }
+        id: { type: string, description: the id of the record that matched }
         score: { type: number, description: higher is better }
-        snippet: { type: string }
+        snippet:
+          type: string
+          description: >-
+            highlighted excerpt, `[term]` marked. Identifier fields (ids,
+            tabSpaceId, the aggregate id lists) are not indexed, so they never
+            appear here.
+        tabspace_id:
+          type: string
+          description: >-
+            the tabverse this record belongs to; for a `tabspace` hit it is the
+            record's own id. Absent only for a malformed record payload.
+          example: ts-1a2b3c
 
     Error:
       type: object

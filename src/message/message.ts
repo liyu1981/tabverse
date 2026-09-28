@@ -8,11 +8,6 @@ export type MsgHandler = (
   sendResponse: (response?: any) => void,
 ) => void;
 
-export interface IFullTextAddRemoveToIndexPayload {
-  type: string;
-  id: string;
-}
-
 /** Payload of TabSpaceDBMsg.Changed / BackgroundMsg.LocalTablesChanged. */
 export interface ILocalTablesChangedPayload {
   tables: string[];
@@ -35,11 +30,6 @@ export enum BackgroundMsg {
    * can re-read (see data/repo/localTables.ts).
    */
   LocalTablesChanged = 'background_localtableschanged',
-}
-
-export enum FullTextSearchMsg {
-  AddToIndex = 'fulltext_addtoindex',
-  RemoveFromIndex = 'fulltext_removefromindex',
 }
 
 export type TabSpaceId = string;
@@ -66,16 +56,6 @@ export async function sendChromeMessage(msgPayload: {
 }): Promise<any>;
 
 export async function sendChromeMessage(msgPayload: {
-  type: FullTextSearchMsg.AddToIndex;
-  payload: IFullTextAddRemoveToIndexPayload;
-}): Promise<any>;
-
-export async function sendChromeMessage(msgPayload: {
-  type: FullTextSearchMsg.RemoveFromIndex;
-  payload: IFullTextAddRemoveToIndexPayload;
-}): Promise<any>;
-
-export async function sendChromeMessage(msgPayload: {
   type: string;
   payload:
     | TabSpaceId
@@ -83,7 +63,6 @@ export async function sendChromeMessage(msgPayload: {
     | ChromeTabId
     | AuditLogs
     | ILocalTablesChangedPayload
-    | IFullTextAddRemoveToIndexPayload
     | NotNeed;
 }): Promise<any> {
   const result = await new Promise((resolve, _reject) => {

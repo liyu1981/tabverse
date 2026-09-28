@@ -264,9 +264,22 @@ func boolToInt(b bool) int {
 	return 0
 }
 
+// nonContentKeys are JSON fields that hold identifiers, not content. Indexing
+// them would let a search for a tabverse id match every record that hangs off
+// it, and they show up in the highlighted snippets.
+var nonContentKeys = map[string]bool{
+	"id": true, "tabSpaceId": true, "version": true,
+	"tabIds": true, "todoIds": true, "noteIds": true, "bookmarkIds": true,
+}
+
 // ftsBody derives the indexed text for a record: all JSON strings are
 // concatenated (titles, urls, tags, note bodies ...), which is exactly what
-// a tab manager user expects to be searchable.
+// a tab manager user expects to be searchable. Ids are left out, see
+// nonContentKeys.
+//
+// Records indexed before this rule keep their old body until they are written
+// again, which is harmless: the ids only ever add noise, never a false hit on
+// content the user cannot see.
 func ftsBody(payload string) string {
 	if payload == "" {
 		return ""
@@ -276,22 +289,25 @@ func ftsBody(payload string) string {
 		return payload // not JSON: index raw content
 	}
 	var b []byte
-	collectStrings(v, &b)
+	collectStrings(v, &b, "")
 	return string(b)
 }
 
-func collectStrings(v any, out *[]byte) {
+func collectStrings(v any, out *[]byte, key string) {
 	switch t := v.(type) {
 	case string:
+		if nonContentKeys[key] {
+			return
+		}
 		*out = append(*out, t...)
 		*out = append(*out, ' ')
 	case []any:
 		for _, item := range t {
-			collectStrings(item, out)
+			collectStrings(item, out, key)
 		}
 	case map[string]any:
-		for _, item := range t {
-			collectStrings(item, out)
+		for field, item := range t {
+			collectStrings(item, out, field)
 		}
 	}
 }

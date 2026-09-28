@@ -31,10 +31,8 @@ import {
 import { filter, isEqual, omit } from 'lodash';
 
 import { DEFAULT_SAVE_DEBOUNCE } from '../../storage/StorageOverview';
-import { addTabSpaceToIndex } from '../../background/fullTextSearch/addToIndex';
 import { pinTabverseTabFirst } from './chromeUtil';
 import { restoreTabGroups } from './tabGroup';
-import { removeTabSpaceFromIndex } from '../../background/fullTextSearch/api';
 
 export function monitorDbChanges() {
   const querySavedTabSpaceCount = () => {
@@ -175,7 +173,6 @@ export async function saveTabSpace(targetTabSpace: TabSpace): Promise<number> {
   if (isCurrentTabSpace) {
     mayBeSaveCurrentAgain(updatedTabSpace);
   }
-  addTabSpaceToIndex(updatedTabSpace.id);
   return updatedTabSpace.updatedAt;
 }
 
@@ -244,7 +241,6 @@ export async function deleteSavedTabSpace(
       await db.table(TABSPACE_DB_TABLE_NAME).delete(savedTabSpace.id);
     },
   );
-  removeTabSpaceFromIndex(savedTabSpaceId);
 }
 
 const saveCurrentTabSpaceImpl = async () => {
