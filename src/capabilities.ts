@@ -22,12 +22,12 @@ export type CapabilityId = 'tabGroups' | 'splitViewRead' | 'splitViewWrite';
 
 export interface Capability {
   id: CapabilityId;
-  /** Shown in the warning banner and its popover. */
+  /** Shown in the warning banner, and in the list it expands into. */
   title: string;
   /** Chrome version that introduced it, quoted in the message. */
   requiresChrome: number;
   detect: () => boolean;
-  /** One sentence: what the user does not get without it. */
+  /** One short line: what the user does not get without it. */
   lost: string;
 }
 
@@ -52,21 +52,21 @@ export const CAPABILITIES: Capability[] = [
     title: 'Tab groups',
     requiresChrome: 89,
     detect: detectTabGroups,
-    lost: 'Tabs are listed without their group, and a restored tabverse comes back ungrouped.',
+    lost: 'Tabs list ungrouped, and restores come back ungrouped.',
   },
   {
     id: 'splitViewRead',
-    title: 'Split view (showing)',
+    title: 'Showing split views',
     requiresChrome: 140,
     detect: detectSplitViewRead,
-    lost: 'Two tabs that Chrome shows side by side are listed as two unrelated entries.',
+    lost: 'Side-by-side tabs are listed as two separate tabs.',
   },
   {
     id: 'splitViewWrite',
-    title: 'Split view (creating)',
+    title: 'Creating split views',
     requiresChrome: 155,
     detect: detectSplitViewWrite,
-    lost: 'Tabverse cannot put two of your tabs side by side itself.',
+    lost: 'Tabverse cannot open two tabs side by side.',
   },
 ];
 
