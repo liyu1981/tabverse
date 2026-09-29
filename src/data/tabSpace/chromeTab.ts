@@ -3,7 +3,7 @@ import { Tab, fromLiveTab, setTabSpaceId } from './Tab';
 import { TabSpace, findTabByChromeTabId } from './TabSpace';
 import { debounce, isTabSpaceManagerPage, logger } from '../../global';
 
-import { eq } from 'lodash';
+import { eq, isEqual, omit } from 'lodash';
 import { getUnsavedNewId } from '../common';
 import { isJestTest } from '../../debug';
 import { produce } from 'immer';
@@ -16,6 +16,30 @@ const CHROME_TAB_DEBOUNCE_TIME = 500;
 
 function inCurrentTabSpace(windowId: number, tabSpace: TabSpace) {
   return windowId === tabSpace.chromeWindowId;
+}
+
+/**
+ * What a page may rewrite about itself without becoming a different tab: its
+ * title and its favicon.
+ */
+const TAB_METADATA_ONLY_FIELDS = ['title', 'favIconUrl'];
+
+/**
+ * True when the only thing that changed about a tab is page metadata. Chrome
+ * rewrites the title (and favicon) of a chat app on every message, favicon of
+ * a site on every deploy; saving the whole tabverse - and pushing the row to
+ * the server through the change feed - for each of those is pure churn. The
+ * store still takes the new title, so the next real save persists it.
+ *
+ * Everything else counts as a change worth saving, url above all: a different
+ * url (query params and hash included) is a different page, and pinned,
+ * suspended and the split view id describe the tab itself.
+ */
+function isTabMetadataOnlyChange(oldTab: Tab, newTab: Tab): boolean {
+  return isEqual(
+    omit(newTab, TAB_METADATA_ONLY_FIELDS),
+    omit(oldTab, TAB_METADATA_ONLY_FIELDS),
+  );
 }
 
 function copyChromeTabFields(chromeTab: chrome.tabs.Tab, targetTab: Tab): Tab {
@@ -342,10 +366,30 @@ function getOnChromeTabReplaced() {
 }
 
 function getOnChromeTabUpdated() {
-  async function normalTabAction(
-    chromeTabId: number,
-    _changeInfo: chrome.tabs.OnUpdatedInfo,
-  ) {
+  /**
+   * One debounced action per tab, not one per event: a chat app rewriting its
+   * title fires onUpdated every few seconds, and a debounce built inside the
+   * listener is a fresh (never fired) debounce each time - it debounced
+   * nothing at all. Per tab, so a busy tab cannot swallow the update of the
+   * tab next to it.
+   */
+  const debouncedActions = new Map<number, () => void>();
+
+  function scheduleTabUpdate(chromeTabId: number) {
+    let action = debouncedActions.get(chromeTabId);
+    if (!action) {
+      action = debounce(() => {
+        // drop the entry once it fired, so the next burst starts a fresh
+        // window and the map does not keep a closure per tab forever
+        debouncedActions.delete(chromeTabId);
+        return normalTabAction(chromeTabId);
+      }, CHROME_TAB_DEBOUNCE_TIME);
+      debouncedActions.set(chromeTabId, action);
+    }
+    action();
+  }
+
+  async function normalTabAction(chromeTabId: number) {
     const tab = await chrome.tabs.get(chromeTabId);
     if (!inCurrentTabSpace(tab.windowId, $tabSpace.getState())) {
       return;
@@ -354,8 +398,16 @@ function getOnChromeTabUpdated() {
     if (oldT) {
       const newT = copyChromeTabFields(tab, oldT);
       if (!eq(newT, oldT)) {
+        const metadataOnly = isTabMetadataOnlyChange(oldT, newT);
         tabSpaceStoreApi.updateTab({ tid: newT.id, changes: newT });
-        saveCurrentTabSpaceIfNeeded();
+        if (metadataOnly) {
+          logger.log(
+            'chrome tab metadata only update, no tabverse auto save:',
+            chromeTabId,
+          );
+        } else {
+          saveCurrentTabSpaceIfNeeded();
+        }
       }
     }
     if (tab.active) {
@@ -371,11 +423,7 @@ function getOnChromeTabUpdated() {
     }
     // debounce tab update because app like workplace chat will update table
     // titles frequently when there is new message.
-    const debouncedNormalTabAction = debounce(
-      () => normalTabAction(chromeTabId, changeInfo),
-      CHROME_TAB_DEBOUNCE_TIME,
-    );
-    debouncedNormalTabAction();
+    scheduleTabUpdate(chromeTabId);
   };
 }
 

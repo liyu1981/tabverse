@@ -4,12 +4,23 @@
   min-height: 54px;
   border-radius: 12px;
   box-shadow: none;
+  /*
+   * A row of [icon] [text] [buttons], laid out with flex rather than floats.
+   * Floats put the text in line boxes that dodge them, and the text box here
+   * is a <button>: a shrink-to-fit box. A long url with no break opportunity
+   * (percent-encoded paths, long query strings) has a min-content width of the
+   * whole url - `overflow-wrap: break-word` does not shrink that - so the
+   * button grew to the full url width, overflowed the card by hundreds of
+   * pixels and pushed its first line box below the floated favicon.
+   */
+  display: flex;
+  align-items: flex-start;
 }
 
 .leftSide {
-  display: flex;
-  float: left;
-  margin-top: 10px;
+  flex: 0 0 auto;
+  /* the title is 1.2em, so the 16px icon wants a nudge to sit on its line */
+  margin-top: 3px;
 }
 
 .dragHandle {
@@ -19,16 +30,19 @@
   cursor: grab;
 }
 
+/*
+ * min-width: 0 is what makes this work: as a flex item its automatic minimum
+ * size would be the text's min-content width, which is the whole url again.
+ * With it, a long url wraps inside the row instead of stretching it.
+ */
 .content {
-  display: block;
-  padding-left: 44px;
-  padding-right: 64px;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .rightSide {
-  display: flex;
-  float: right;
-  margin-top: 4px;
+  flex: 0 0 auto;
+  margin-top: 2px;
 }
 
 .wrapText {
@@ -39,13 +53,12 @@
 
 /*
  * The content area became a real <button> (so it is reachable by keyboard).
- * Only what a button actually needs is reset here: the padding that reserves
- * room for the floated favicon and buttons lives on .content and must survive.
+ * Only what a button actually needs is reset here; the space beside the icon
+ * and the buttons comes from the flex layout on .card, not from padding.
  */
 .contentButton {
   display: block;
-  /* .content keeps padding-left/right (that is the space beside the floated
-     favicon and buttons); only the UA's 1px top/bottom is dropped */
+  /* the UA's 1px top/bottom is all the button has that we do not want */
   padding-top: 0;
   padding-bottom: 0;
   border: 0;

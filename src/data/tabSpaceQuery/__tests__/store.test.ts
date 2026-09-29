@@ -50,6 +50,9 @@ test('tabSpaceStore', async () => {
     mockChrome.updateTab(t1.id, { title: changedTitle });
     await mockChrome.flushMessages();
     const tab1 = findTabByChromeTabId(t1.id, $tabSpace.getState());
+    // a title on its own no longer auto saves the tabverse (see
+    // chromeTab.ts), so save explicitly to get at the new title
+    await saveCurrentTabSpace();
     const savedTabSpace1 = await querySavedTabSpaceById(
       $tabSpace.getState().id,
     );

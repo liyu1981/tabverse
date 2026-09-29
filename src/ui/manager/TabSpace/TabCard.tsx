@@ -15,6 +15,21 @@ import { Tab } from '../../../data/tabSpace/Tab';
 import classes from './TabCard.module.scss';
 import clsx from 'clsx';
 
+/**
+ * How much of a tab's title / url a row shows before it cuts the rest off.
+ *
+ * The url used to take CollapsibleLabel's default of 70 characters, which is
+ * wider than a tab row: a percent-encoded url (a japanese wikipedia page, a
+ * long query string) runs to ~7px a character at this size, so 70 of them
+ * overran the row and broke the card's layout. Measured against the popup's
+ * 420px list (the tightest place we render these) 40 characters is what fits
+ * on one line; 48 keeps an ordinary url on one line everywhere, and the worst
+ * case only wraps instead of breaking the row. The full text stays in the
+ * row's tooltip.
+ */
+const TAB_TITLE_MAX_LENGTH = 56;
+const TAB_URL_MAX_LENGTH = 48;
+
 const TabDetailPreviewPanel = (props) => {
   return props.tab ? (
     <Card interactive={false} className={classes.previewCard}>
@@ -116,6 +131,42 @@ export function TabCard(props: ITabCardProps) {
         ) : null}
         <FavIcon url={props.tab.favIconUrl} />
       </div>
+      <button
+        type="button"
+        className={clsx(classes.content, classes.contentButton)}
+        title={props.tab.title}
+        onClick={() => activate(props.tab)}
+      >
+        <div className={clsx(classes.tabTitle, classes.wrapText)}>
+          <b>
+            <CollapsibleLabel
+              maxLength={TAB_TITLE_MAX_LENGTH}
+              text={props.tab.title}
+            />
+          </b>
+          {props.tab.pinned ? (
+            <Tag
+              minimal={true}
+              icon="pin"
+              intent={Intent.PRIMARY}
+              className={classes.pinnedTag}
+              title="This tab is pinned in Chrome"
+            >
+              pinned
+            </Tag>
+          ) : null}
+        </div>
+        <div className={clsx(classes.tabUrl, classes.wrapText)}>
+          <small>
+            <CollapsibleLabel
+              maxLength={TAB_URL_MAX_LENGTH}
+              text={props.tab.url}
+            />
+          </small>
+        </div>
+      </button>
+      {/* after the content, because the card is a flex row: source order is
+          layout order, the close button has to come last to sit on the right */}
       <div className={classes.rightSide}>
         {props.tab.chromeTabId ? (
           <ButtonGroup>
@@ -142,34 +193,6 @@ export function TabCard(props: ITabCardProps) {
           <></>
         )}
       </div>
-      <button
-        type="button"
-        className={clsx(classes.content, classes.contentButton)}
-        title={props.tab.title}
-        onClick={() => activate(props.tab)}
-      >
-        <div className={clsx(classes.tabTitle, classes.wrapText)}>
-          <b>
-            <CollapsibleLabel maxLength={56} text={props.tab.title} />
-          </b>
-          {props.tab.pinned ? (
-            <Tag
-              minimal={true}
-              icon="pin"
-              intent={Intent.PRIMARY}
-              className={classes.pinnedTag}
-              title="This tab is pinned in Chrome"
-            >
-              pinned
-            </Tag>
-          ) : null}
-        </div>
-        <div className={clsx(classes.tabUrl, classes.wrapText)}>
-          <small>
-            <CollapsibleLabel text={props.tab.url} />
-          </small>
-        </div>
-      </button>
     </Card>
   );
 
