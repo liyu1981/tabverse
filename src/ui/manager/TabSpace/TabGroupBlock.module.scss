@@ -1,0 +1,45 @@
+@use '../../../global.scss';
+
+/* tab groups and split views: the block framing is shared by the live tab
+ * list and the saved tabverse list, so a group looks the same in both. */
+.block {
+  margin: 0 0 8px 0;
+  padding-left: 8px;
+  border-left: 3px solid global.$color-e;
+  border-radius: 2px;
+}
+
+.splitBlock {
+  border-left-color: global.$color-light-accent;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 2px;
+  font-size: 0.9em;
+}
+
+.splitHeader {
+  color: global.$color-a;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: global.$color-a;
+  flex-shrink: 0;
+}
+
+.title {
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.count {
+  color: global.$color-a;
+}

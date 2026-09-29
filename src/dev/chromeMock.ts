@@ -188,6 +188,15 @@ class MockTabsApi {
   }
 
   /**
+   * Closes a tab. The counterpart of create(), used by the paths that close
+   * something, e.g. "save and close" on the tabverse tab.
+   */
+  async remove(tabId: number) {
+    const removed = this.chrome.removeTab(tabId);
+    return removed ? { id: removed.id, windowId: removed.windowId } : undefined;
+  }
+
+  /**
    * Opens a tab in the current window (or params.windowId). Used by the code
    * paths that re-open something, e.g. restoring a closed tab or clicking a
    * bookmark.

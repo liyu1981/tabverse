@@ -42,11 +42,6 @@
   align-items: center;
 }
 
-.autoSaveTag {
-  font-size: 0.8em;
-  cursor: default;
-}
-
 .toolbarContainer {
   width: 100%;
   display: flex;
@@ -112,59 +107,6 @@
   box-shadow: 0 2px 10px -5px rgb(16 22 26 / 60%);
 }
 
-/* tab groups: a coloured rule and a header row above the group's tabs */
-.tabGroup {
-  margin: 0 0 8px 0;
-  padding-left: 8px;
-  border-left: 3px solid global.$color-e;
-  border-radius: 2px;
-}
-
-.tabGroupHeader {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 2px;
-  font-size: 0.9em;
-}
-
-.tabGroupDot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: global.$color-a;
-}
-
-.tabGroupTitle {
-  font-weight: bold;
-}
-
-.tabGroupCount {
-  color: global.$color-a;
-}
-
 .tabInGroup {
   margin-bottom: 2px;
-}
-
-/* split view: the two tabs Chrome shows side by side, drawn as one block */
-.splitView {
-  position: relative;
-  margin: 0 0 8px 0;
-  padding-left: 8px;
-  border-left: 3px solid global.$color-light-accent;
-  border-radius: 2px;
-}
-
-.splitHeader {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 2px;
-  font-size: 0.9em;
-  color: global.$color-a;
-}
-
-.splitIcon {
-  font-weight: bold;
 }

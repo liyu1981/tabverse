@@ -61,10 +61,14 @@
 }
 
 /* Chrome's pinned state, shown next to the title */
+/* Chrome puts pinned tabs in their own section, so "pinned" is part of what a
+ * tab is, not a decoration: it has to be readable in the saved list too, which
+ * is where a user goes to check what a tabverse holds. */
 .pinnedTag {
-  margin-left: 6px;
-  font-size: 0.6em;
+  margin-left: 8px;
+  font-size: 0.75em;
   vertical-align: middle;
+  white-space: nowrap;
 }
 
 .tabUrl {

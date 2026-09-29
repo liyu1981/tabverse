@@ -73,14 +73,28 @@ interface ITabCardProps {
   isBookmarked?: boolean;
   onBookmark?: (tab: Tab) => void;
   onSelect?: (tabId: string, selected: boolean) => void;
+  /**
+   * What clicking the card does. Defaults to switching to the live tab; the
+   * saved tabverse list passes its own (open this tab in a new window), which
+   * is also why the card owns the click instead of being wrapped in a button:
+   * a saved tab can sit inside a group block, and nesting a button around a
+   * button is invalid markup that loses the inner one's styling.
+   */
+  onActivate?: (tab: Tab) => void;
 }
 
 export function TabCard(props: ITabCardProps) {
   const needPreview = props.needPreview ?? false;
   const needSelector = props.needSelector ?? false;
 
-  const switchToTab = (t: Tab) => {
-    chrome.tabs.update(t.chromeTabId, { active: true });
+  const activate = (t: Tab) => {
+    if (props.onActivate) {
+      props.onActivate(t);
+      return;
+    }
+    if (t.chromeTabId) {
+      chrome.tabs.update(t.chromeTabId, { active: true });
+    }
   };
 
   const closeTab = (t: Tab) => {
@@ -127,11 +141,8 @@ export function TabCard(props: ITabCardProps) {
       <button
         type="button"
         className={clsx(classes.content, classes.contentButton)}
-        onClick={() => {
-          if (props.tab.chromeTabId) {
-            switchToTab(props.tab);
-          }
-        }}
+        title={props.tab.title}
+        onClick={() => activate(props.tab)}
       >
         <div className={clsx(classes.tabTitle, classes.wrapText)}>
           <b>
@@ -140,6 +151,7 @@ export function TabCard(props: ITabCardProps) {
           {props.tab.pinned ? (
             <Tag
               minimal={true}
+              icon="pin"
               intent={Intent.PRIMARY}
               className={classes.pinnedTag}
               title="This tab is pinned in Chrome"

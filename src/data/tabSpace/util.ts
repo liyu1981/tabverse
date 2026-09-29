@@ -343,6 +343,15 @@ const saveCurrentTabSpaceImpl = async () => {
   }
 };
 
+/**
+ * Saves without waiting for the debounce.
+ *
+ * "Save and close" needs this: the page is about to go away, and a debounced
+ * save that has not fired yet dies with it.
+ */
+export const saveCurrentTabSpaceNow: () => Promise<void> =
+  saveCurrentTabSpaceImpl;
+
 export const saveCurrentTabSpace: () => void | Promise<void> = debounce(
   saveCurrentTabSpaceImpl,
   DEFAULT_SAVE_DEBOUNCE,

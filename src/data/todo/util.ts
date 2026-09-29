@@ -77,7 +77,11 @@ export function stopMonitorLocalStorageChanges() {
   localStorageRemoveListener(LOCALSTORAGE_TODO_KEY);
 }
 
-async function saveAllTodo(): Promise<number> {
+/**
+ * Saves the store's todos now, skipping the debounce. Used by "save and
+ * close" (see data/tabSpace/closeTabSpace.ts).
+ */
+export async function saveAllTodo(): Promise<number> {
   // super stupid saving strategy: save them all when needed
   const updatedAt = await db.transaction(
     'rw',

@@ -4,11 +4,9 @@ import {
   Button,
   ButtonGroup,
   EditableText,
-  Intent,
   Menu,
   MenuItem,
   Popover,
-  Tag,
   Tooltip,
 } from '@blueprintjs/core';
 import React, { useEffect, useState } from 'react';
@@ -17,10 +15,7 @@ import {
   getTabIds,
   TabGroupHint,
 } from '../../../data/tabSpace/TabSpace';
-import {
-  TAB_GROUP_COLORS_JS,
-  groupOfTab,
-} from '../../../data/tabSpace/tabGroup';
+import { groupOfTab } from '../../../data/tabSpace/tabGroup';
 import {
   newEmptyBookmark,
   setFavIconUrl,
@@ -33,23 +28,21 @@ import { ErrorBoundary } from '../../common/ErrorBoundary';
 import { List } from 'immutable';
 import { MoveToExistTabSpaceDialog } from '../../dialog/MoveToExistTabSpace';
 import { SaveIndicator } from './SaveIndicator';
-import { Tab, findSplitPartner } from '../../../data/tabSpace/Tab';
+import { SplitBlock, TabGroupBlock } from './TabGroupBlock';
+import { Tab } from '../../../data/tabSpace/Tab';
 import { TabCard } from './TabCard';
 import classes from './TabSpaceListView.module.scss';
 import { getPreview } from '../../../data/tabSpace/TabPreviewCache';
+import { logger } from '../../../global';
+import { saveAndCloseTabSpace } from '../../../data/tabSpace/closeTabSpace';
 import { saveCurrentAllBookmarkIfNeeded } from '../../../data/bookmark/util';
+import { tabverseEntries } from '../../../data/tabSpace/tabEntries';
 import { updateTabSpaceName } from '../../../data/tabSpace/chromeTab';
 import { useStore } from 'effector-react';
 
 enum SelectedTabTool {
   MoveToExistTabverse = 'Move to Exist Tabverse',
 }
-
-/** What one row of the tab list renders: a tab, a split pair, or a group. */
-type TabverseEntry =
-  | { kind: 'tab'; tab: Tab }
-  | { kind: 'split'; tabs: [Tab, Tab] }
-  | { kind: 'group'; group: TabGroupHint; tabs: Tab[] };
 
 interface SelectedTabToolControlProps {
   className: string;
@@ -100,6 +93,24 @@ export function TabSpaceListView() {
   const [selectedTabs, setSelectedTabs] = useState<List<Tab>>(List());
   const [isMoveToExistTabSpaceDialogOpen, setIsMoveToExistTabSpaceDialogOpen] =
     useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+
+  // The tabverse itself is saved on every tab event, so this button is not
+  // about saving it: it flushes whatever is still pending (a note typed a
+  // moment ago, say) and then closes the tabverse tab. The window's other tabs
+  // stay open as ordinary Chrome tabs.
+  const saveAndClose = async () => {
+    if (isClosing) {
+      return;
+    }
+    setIsClosing(true);
+    try {
+      await saveAndCloseTabSpace();
+    } catch (err) {
+      logger.error('could not save and close the tabverse', err);
+      setIsClosing(false);
+    }
+  };
 
   useEffect(() => {
     setSelectedTabs((lastSelectedTabs) => {
@@ -109,7 +120,6 @@ export function TabSpaceListView() {
     });
   }, [tabSpace.tabs]);
 
-  const tabIdOrder = getTabIds(tabSpace);
   const tabGroupOf = (tab: Tab) => groupOfTab(tabSpace.tabGroups, tab.id);
 
   const tabCard = (tab: Tab) => (
@@ -146,86 +156,32 @@ export function TabSpaceListView() {
     </div>
   );
 
-  // Entries are built as a list first, because two of them are composites: a
-  // tab group (header + coloured rule around its tabs) and a split view (two
-  // tabs Chrome shows side by side, drawn as one connected block). Order
-  // follows the tabverse's own tab order, so a composite appears where its
-  // first tab is.
-  const groupedTabIds = new Set(
-    (tabSpace.tabGroups ?? []).flatMap((group) => group.tabIds),
-  );
-  const consumedTabIds = new Set<string>();
-  const entries: TabverseEntry[] = [];
-
-  for (const tabId of tabIdOrder) {
-    if (consumedTabIds.has(tabId) || groupedTabIds.has(tabId)) {
-      continue;
-    }
-    const tab = findTabById(tabId, tabSpace);
-    if (!tab) {
-      continue;
-    }
-    consumedTabIds.add(tabId);
-    const partner = findSplitPartner(tab, tabSpace.tabs);
-    if (partner && tabIdOrder.indexOf(partner.id) >= 0) {
-      consumedTabIds.add(partner.id);
-      entries.push({ kind: 'split', tabs: [tab, partner] });
-    } else {
-      entries.push({ kind: 'tab', tab });
-    }
-  }
-
-  // groups whose tabs are all out of view (search/filter) still get a header
-  const groupEntries: TabverseEntry[] = (tabSpace.tabGroups ?? [])
-    .filter((group) => !group.tabIds.every((id) => consumedTabIds.has(id)))
-    .map((group) => ({
-      kind: 'group' as const,
-      group,
-      tabs: group.tabIds
-        .filter((tabId) => tabIdOrder.indexOf(tabId) >= 0)
-        .map((tabId) => findTabById(tabId, tabSpace))
-        .filter((tab): tab is Tab => !!tab),
-    }));
-
+  // Groups, split pairs and plain tabs come from the shared entry builder, so
+  // this list and the saved tabverse list describe a tabverse the same way
   const tabEntries: React.ReactNode[] = [];
-  for (const entry of [...entries, ...groupEntries]) {
+  for (const entry of tabverseEntries(tabSpace)) {
     if (entry.kind === 'tab') {
       tabEntries.push(tabCard(entry.tab));
     } else if (entry.kind === 'split') {
       const [first, second] = entry.tabs as [Tab, Tab];
       tabEntries.push(
-        <div key={`split-${first.splitViewId}`} className={classes.splitView}>
-          <div className={classes.splitHeader}>
-            <span className={classes.splitIcon}>&#9101;</span>
-            split view
-          </div>
+        <SplitBlock
+          key={`split-${first.splitViewId}`}
+          splitViewId={first.splitViewId}
+        >
           {tabCard(first)}
           {tabCard(second)}
-        </div>,
+        </SplitBlock>,
       );
-    } else {
-      const group = entry.group;
-      if (!entry.tabs || entry.tabs.length === 0) {
-        continue;
-      }
+    } else if (entry.tabs.length > 0) {
       tabEntries.push(
-        <div
-          key={`group-${group.id}`}
-          className={classes.tabGroup}
-          style={{ borderColor: TAB_GROUP_COLORS_JS[group.color] }}
+        <TabGroupBlock
+          key={`group-${entry.group.id}`}
+          group={entry.group}
+          tabCount={entry.tabs.length}
         >
-          <div className={classes.tabGroupHeader}>
-            <span
-              className={classes.tabGroupDot}
-              style={{ backgroundColor: TAB_GROUP_COLORS_JS[group.color] }}
-            />
-            <span className={classes.tabGroupTitle}>
-              {group.title || '(untitled group)'}
-            </span>
-            <small className={classes.tabGroupCount}>{entry.tabs.length}</small>
-          </div>
-          {entry.tabs.map(tabCard)}
-        </div>,
+          <div className={classes.tabInGroup}>{entry.tabs.map(tabCard)}</div>
+        </TabGroupBlock>,
       );
     }
   }
@@ -246,15 +202,15 @@ export function TabSpaceListView() {
         </h1>
       </div>
       <div className={classes.titleButtons}>
-        <Tooltip content="This tabverse is saved automatically. Opening a Tabverse tab is what keeps these tabs.">
-          <Tag
+        <Tooltip content="This tabverse is saved automatically. This flushes anything still pending (notes, todos, bookmarks, closed tabs) and then closes the Tabverse tab; the window's other tabs stay open as normal tabs.">
+          <Button
             minimal={true}
+            small={true}
             icon="floppy-disk"
-            intent={Intent.NONE}
-            className={classes.autoSaveTag}
-          >
-            auto save
-          </Tag>
+            text="Save and close"
+            loading={isClosing}
+            onClick={() => void saveAndClose()}
+          />
         </Tooltip>
       </div>
     </div>

@@ -18,23 +18,6 @@
   min-height: 300px;
 }
 
-/*
- * Each saved tab opens in a new window and is now a real <button>. Scoped to
- * the direct child on purpose: a descendant selector would also strip the
- * chrome off the TabCard's own buttons (bookmark, close, the content area).
- */
-.savedTabsContainer > button {
-  display: block;
-  width: 100%;
-  padding: 0;
-  border: 0;
-  background: none;
-  font: inherit;
-  color: inherit;
-  text-align: start;
-  cursor: pointer;
-}
-
 .savedTabsContainer {
   margin-top: 20px;
   width: 100%;

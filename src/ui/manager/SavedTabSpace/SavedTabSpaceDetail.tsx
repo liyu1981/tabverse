@@ -2,6 +2,7 @@ import { formatDateTime, fromNow } from '../../../time';
 import { Alignment, Button, ButtonGroup } from '@blueprintjs/core';
 import React from 'react';
 
+import { SplitBlock, TabGroupBlock } from '../TabSpace/TabGroupBlock';
 import { TabCard } from '../TabSpace/TabCard';
 import { TabSpace } from '../../../data/tabSpace/TabSpace';
 import { TabSpaceId } from '../../../message/message';
@@ -9,8 +10,9 @@ import classes from './SavedTabSpaceDetail.module.scss';
 import { createNewChromeWindowWithTab } from '../../../data/tabSpace/chromeUtil';
 import { logger } from '../../../global';
 import { TabSpaceQuery } from '../../../data/tabSpaceQuery/TabSpaceQuery';
-import { TabCore } from '../../../data/tabSpace/Tab';
+import { Tab, TabCore } from '../../../data/tabSpace/Tab';
 import { deleteSavedTabSpace } from '../../../data/tabSpace/util';
+import { tabverseEntries } from '../../../data/tabSpace/tabEntries';
 
 interface SavedTabSpaceDetailProps {
   opened: boolean;
@@ -31,18 +33,42 @@ export function SavedTabSpaceDetail(props: SavedTabSpaceDetailProps) {
         }),
       ];
     });
-  const entries: React.ReactElement[] = [];
-  props.tabSpace.tabs.forEach((savedTab) => {
-    entries.push(
-      <button
-        type="button"
-        key={savedTab.id}
-        onClick={() => openTabInNewWindow(savedTab)}
-      >
-        <TabCard key={savedTab.id} tab={savedTab} />
-      </button>,
-    );
-  });
+  const savedTabCard = (savedTab: Tab) => (
+    <TabCard key={savedTab.id} tab={savedTab} onActivate={openTabInNewWindow} />
+  );
+
+  // A saved tabverse has to show what it actually holds: its tab groups and its
+  // split views are part of the record, and this is the view a user opens to
+  // remember what was in it. The entries come from the same builder the live
+  // tab list uses, so the two cannot drift apart.
+  const entries: React.ReactNode[] = [];
+  for (const entry of tabverseEntries(props.tabSpace)) {
+    if (entry.kind === 'tab') {
+      entries.push(savedTabCard(entry.tab));
+    } else if (entry.kind === 'split') {
+      const [first, second] = entry.tabs as [Tab, Tab];
+      entries.push(
+        <SplitBlock
+          key={`split-${first.splitViewId}`}
+          splitViewId={first.splitViewId}
+        >
+          {savedTabCard(first)}
+          {savedTabCard(second)}
+        </SplitBlock>,
+      );
+    } else {
+      entries.push(
+        <TabGroupBlock
+          key={`group-${entry.group.id}`}
+          group={entry.group}
+          tabCount={entry.tabs.length}
+        >
+          {entry.tabs.map((tab) => savedTabCard(tab))}
+        </TabGroupBlock>,
+      );
+    }
+  }
+  const tabCount = props.tabSpace.tabs.size;
 
   const deleteTabSpace = (savedTabSpaceId: string) => {
     async function action() {
@@ -121,8 +147,12 @@ export function SavedTabSpaceDetail(props: SavedTabSpaceDetailProps) {
       </div>
       <div className={classes.savedTabsContainer}>
         <p>
-          Working on <b>{entries.length}</b>{' '}
-          {entries.length > 1 ? 'tabs' : 'tab'}
+          Working on <b>{tabCount}</b> {tabCount === 1 ? 'tab' : 'tabs'}
+          {props.tabSpace.tabGroups.length > 0
+            ? ` in ${props.tabSpace.tabGroups.length} ${
+                props.tabSpace.tabGroups.length === 1 ? 'group' : 'groups'
+              }`
+            : ''}
         </p>
         {entries}
       </div>
