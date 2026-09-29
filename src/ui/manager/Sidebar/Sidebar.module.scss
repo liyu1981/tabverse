@@ -53,8 +53,19 @@
 }
 
 .sidebarComponent .header {
+  /* a real <button> now (it switches the route): reset the button chrome so
+     the entry looks exactly as it did as a div. padding is set in full because
+     the UA's 1px 6px would otherwise indent the label. */
+  display: block;
+  width: 100%;
+  padding: 0 0 0 10px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-family: inherit;
+  text-align: start;
+  cursor: pointer;
   line-height: 42px;
-  padding-left: 10px;
   font-size: 1.2em;
   font-weight: bold;
 }
@@ -80,6 +91,34 @@
   transition: all 150ms ease-in-out;
 }
 
-.sidebarHeaderContainer :global(.bp4-icon) {
+.sidebarHeaderContainer :global(.bp6-icon) {
   margin-right: 12px;
+}
+
+/*
+ * Collapsed rail: the entry keeps its card decoration (rounded, shadowed,
+ * active/inactive opacity) but becomes a square icon button, since the label
+ * lives in the tooltip instead.
+ */
+.sidebarComponent.collapsed {
+  padding: 4px;
+  margin-bottom: 12px;
+  border-radius: 14px;
+  display: flex;
+  justify-content: center;
+}
+
+.sidebarComponent.collapsed .header {
+  padding-left: 0;
+  line-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.sidebarComponent.collapsed .railIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }

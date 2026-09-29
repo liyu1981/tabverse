@@ -1,4 +1,3 @@
-/* eslint-disable prefer-const */
 import { cloneNote, isEqualContent, newEmptyNote, setName } from '../Note';
 
 import { isIdNotSaved } from '../../common';

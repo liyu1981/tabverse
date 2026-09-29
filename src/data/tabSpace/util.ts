@@ -1,4 +1,4 @@
-import { $tabSpace, tabSpaceStoreApi } from './store';
+import { $tabSpace, querySavedTabSpaceCount, tabSpaceStoreApi } from './store';
 import { QUERY_PAGE_LIMIT_DEFAULT, db } from '../../storage/db';
 import {
   TABSPACE_DB_TABLE_NAME,
@@ -11,7 +11,6 @@ import {
   fromSavedDataWithoutTabs,
   insertTab,
   needAutoSave,
-  toTabSpaceStub,
   updateTab,
   updateTabSpace,
 } from './TabSpace';
@@ -22,41 +21,27 @@ import {
   sendPubSubMessage,
   subscribePubSubMessage,
 } from '../../message/message';
-import {
-  debounce,
-  hasOwnProperty,
-  logger,
-  perfEnd,
-  perfStart,
-} from '../../global';
+import { debounce, hasOwn, logger, perfEnd, perfStart } from '../../global';
 import { filter, isEqual, omit } from 'lodash';
 
 import { DEFAULT_SAVE_DEBOUNCE } from '../../storage/StorageOverview';
-import { IDatabaseChange } from 'dexie-observable/api';
-import { addTabSpaceToIndex } from '../../background/fullTextSearch/addToIndex';
-import { removeTabSpaceFromIndex } from '../../background/fullTextSearch/api';
-import { updateTabSpace as tabSpaceRegistryUpdateTabSpace } from '../tabSpaceRegistry';
+import { pinTabverseTabFirst } from './chromeUtil';
+import { restoreTabGroups } from './tabGroup';
 
 export function monitorDbChanges() {
-  const querySavedTabSpaceCount = () => {
-    return db.table(TABSPACE_DB_TABLE_NAME).count();
-  };
-
   subscribePubSubMessage(
     TabSpaceDBMsg.Changed,
-    (message, data: IDatabaseChange[]) => {
-      logger.log('pubsub:', message, data);
-      data.forEach((d) => {
-        if (
-          d.table === TABSPACE_DB_TABLE_NAME ||
-          d.table === TAB_DB_TABLE_NAME
-        ) {
-          tabSpaceStoreApi.increaseSavedDataVersion();
-          querySavedTabSpaceCount().then((savedTabSpaceCount) =>
-            tabSpaceStoreApi.updateTotalSavedCount(savedTabSpaceCount),
-          );
-        }
-      });
+    (message, changedTables: string[]) => {
+      logger.log('pubsub:', message, changedTables);
+      if (
+        changedTables.includes(TABSPACE_DB_TABLE_NAME) ||
+        changedTables.includes(TAB_DB_TABLE_NAME)
+      ) {
+        tabSpaceStoreApi.increaseSavedDataVersion();
+        querySavedTabSpaceCount().then((savedTabSpaceCount: number) =>
+          tabSpaceStoreApi.updateTotalSavedCount(savedTabSpaceCount),
+        );
+      }
     },
   );
 }
@@ -72,11 +57,11 @@ export async function querySavedTabSpace(
   params?: QuerySavedTabSpaceParams,
 ): Promise<TabSpace[]> {
   perfStart('query table space');
-  let savedData: TabSpaceSavePayload[] = [];
+  let savedData: TabSpaceSavePayload[];
   const pageStart = params?.pageStart ?? 0;
   const pageLimit = params?.pageLimit ?? QUERY_PAGE_LIMIT_DEFAULT;
 
-  if (hasOwnProperty(params, 'anyOf')) {
+  if (hasOwn(params, 'anyOf')) {
     savedData = await db
       .table<TabSpaceSavePayload>(TABSPACE_DB_TABLE_NAME)
       .bulkGet(params.anyOf);
@@ -85,7 +70,7 @@ export async function querySavedTabSpace(
       pageStart * pageLimit,
       (pageStart + 1) * pageLimit,
     );
-  } else if (hasOwnProperty(params, 'noneOf')) {
+  } else if (hasOwn(params, 'noneOf')) {
     savedData = (
       await db
         .table<TabSpaceSavePayload>(TABSPACE_DB_TABLE_NAME)
@@ -127,6 +112,87 @@ export async function querySavedTabSpace(
   perfEnd('query tabIds for tabSpaces');
 
   return savedTabSpaces;
+}
+
+/**
+ * Loads tabverses by id, with their tabs, keeping the given order.
+ *
+ * `querySavedTabSpace({anyOf})` sorts by creation date and pages, which is
+ * what the browse list wants and the opposite of what a ranked search (or the
+ * popup's recents) wants.
+ */
+export async function loadTabSpacesByIds(ids: string[]): Promise<TabSpace[]> {
+  if (ids.length <= 0) {
+    return [];
+  }
+  const savedTabSpaces = await db
+    .table<TabSpaceSavePayload>(TABSPACE_DB_TABLE_NAME)
+    .bulkGet(ids);
+  const byId = new Map<string, TabSpaceSavePayload>();
+  savedTabSpaces.forEach((row) => {
+    if (row) {
+      byId.set(row.id, row);
+    }
+  });
+  const toLoadTabIds = Array.from(byId.values())
+    .map((row) => row.tabIds ?? [])
+    .flat();
+  const savedTabs = await db
+    .table<TabSavePayload>(TAB_DB_TABLE_NAME)
+    .bulkGet(toLoadTabIds);
+  const tabById = new Map<string, TabSavePayload>();
+  savedTabs.forEach((row) => {
+    if (row) {
+      tabById.set(row.id, row);
+    }
+  });
+
+  const tabSpaces: TabSpace[] = [];
+  for (const id of ids) {
+    const saved = byId.get(id);
+    if (!saved) {
+      continue;
+    }
+    let tabSpace = fromSavedDataWithoutTabs(saved);
+    for (const tabId of saved.tabIds ?? []) {
+      const savedTab = tabById.get(tabId);
+      if (!savedTab) {
+        continue;
+      }
+      tabSpace = insertTab({ tab: fromSavedTab(savedTab) }, tabSpace);
+    }
+    tabSpaces.push(tabSpace);
+  }
+  return tabSpaces;
+}
+
+/** How many tabverses the popup shows before the user searches. */
+export const RECENT_TAB_SPACE_LIMIT = 10;
+
+/**
+ * The tabverses this device saw last, newest first.
+ *
+ * "Last updated" is the right signal here and it costs nothing: a tabverse is
+ * saved on every tab event and once more at bootstrap, so the tabverse the
+ * user just opened is the one at the top, and one they opened once and never
+ * touched still drifts down instead of vanishing.
+ *
+ * `updatedAt` carries no index (only `createdAt` does), so this is a scan and
+ * a sort. At RECENT_TAB_SPACE_LIMIT rows out of a full table, that is cheaper
+ * than the Dexie version bump an index would need.
+ */
+export async function queryRecentSavedTabSpaces(
+  limit: number = RECENT_TAB_SPACE_LIMIT,
+): Promise<TabSpace[]> {
+  const rows: TabSpaceSavePayload[] = await db
+    .table<TabSpaceSavePayload>(TABSPACE_DB_TABLE_NAME)
+    .toArray();
+  const recent = rows
+    .filter((row) => !!row)
+    .sort((a, b) => b.updatedAt - a.updatedAt)
+    .slice(0, limit)
+    .map((row) => row.id);
+  return loadTabSpacesByIds(recent);
 }
 
 export async function querySavedTabSpaceById(
@@ -178,7 +244,6 @@ export async function saveTabSpace(targetTabSpace: TabSpace): Promise<number> {
   if (isCurrentTabSpace) {
     mayBeSaveCurrentAgain(updatedTabSpace);
   }
-  addTabSpaceToIndex(updatedTabSpace.id);
   return updatedTabSpace.updatedAt;
 }
 
@@ -247,7 +312,6 @@ export async function deleteSavedTabSpace(
       await db.table(TABSPACE_DB_TABLE_NAME).delete(savedTabSpace.id);
     },
   );
-  removeTabSpaceFromIndex(savedTabSpaceId);
 }
 
 const saveCurrentTabSpaceImpl = async () => {
@@ -260,14 +324,19 @@ const saveCurrentTabSpaceImpl = async () => {
 
   const newId = $tabSpace.getState().id;
   if (oldId !== newId) {
-    tabSpaceRegistryUpdateTabSpace({
-      from: oldId,
-      to: newId,
-      entry: toTabSpaceStub($tabSpace.getState()),
-    });
+    // note/todo/bookmark rows are re-parented to the saved id (same context)
     sendPubSubMessage(TabSpaceMsg.ChangeID, { from: oldId, to: newId });
   }
 };
+
+/**
+ * Saves without waiting for the debounce.
+ *
+ * "Save and close" needs this: the page is about to go away, and a debounced
+ * save that has not fired yet dies with it.
+ */
+export const saveCurrentTabSpaceNow: () => Promise<void> =
+  saveCurrentTabSpaceImpl;
 
 export const saveCurrentTabSpace: () => void | Promise<void> = debounce(
   saveCurrentTabSpaceImpl,
@@ -309,9 +378,49 @@ export async function loadTabSpaceByTabSpaceId(
 
   // here we do not use map but use for loop to ensure that we restore tabs in
   // the saved order
+  //
+  // Pinned tabs are created unpinned and pinned afterwards, in saved order.
+  // Passing `pinned` (or an index) to tabs.create() would make Chrome resolve
+  // the position inside the pinned section, whose index semantics are not
+  // documented; pinning in order afterwards reproduces the saved order without
+  // depending on that.
+  const createdTabIds: { ourTabId: string; id: number; pinned: boolean }[] = [];
   for (let i = 0; i < tabSpace.tabs.size; i++) {
     const savedTab = tabSpace.tabs.get(i);
-    await chrome.tabs.create({ url: savedTab.url });
+    const created = await chrome.tabs.create({ url: savedTab.url });
+    if (created?.id !== undefined) {
+      createdTabIds.push({
+        ourTabId: savedTab.id,
+        id: created.id,
+        pinned: !!savedTab.pinned,
+      });
+    }
+  }
+  for (const { id, pinned } of createdTabIds) {
+    if (pinned) {
+      try {
+        await chrome.tabs.update(id, { pinned: true });
+      } catch (err) {
+        logger.log('could not pin restored tab', id, err);
+      }
+    }
+  }
+  // the tabverse's own pinned tabs were just pinned, so put the tabverse tab
+  // back at the front of the pinned section
+  await pinTabverseTabFirst(chromeTabId);
+
+  // groups last: chrome.tabs.group() needs every tab to exist, and a split view
+  // (which requires matching group state) is created after this
+  const tabIdByOurTabId = new Map(
+    createdTabIds.map(({ ourTabId, id }) => [ourTabId, id]),
+  );
+  const restoredGroups = await restoreTabGroups(
+    tabSpace.tabGroups,
+    tabIdByOurTabId,
+    (tabId) => !!createdTabIds.find((t) => t.id === tabId)?.pinned,
+  );
+  if (restoredGroups > 0) {
+    logger.log(`restored ${restoredGroups} tab group(s)`);
   }
 
   tabSpaceStoreApi.update(tabSpace);
@@ -319,8 +428,4 @@ export async function loadTabSpaceByTabSpaceId(
   // focus tabspace tab
   const currentTab = await chrome.tabs.getCurrent();
   await chrome.tabs.update(currentTab.id, { active: true });
-}
-
-export async function querySavedTabSpaceCount() {
-  return await db.table(TABSPACE_DB_TABLE_NAME).count();
 }

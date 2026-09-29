@@ -10,6 +10,7 @@ export function WebtoolView(props) {
   return (
     <iframe
       className={classes.iframeContainer}
+      title="My web tools gallery"
       src="https://liyu1981.github.io/my-awesome-web-tool-gallery/"
     ></iframe>
     // <SimpleBar style={{ height: '100vh' }}>

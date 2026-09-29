@@ -1,0 +1,84 @@
+.container {
+  background: #fff;
+  color: #111111;
+  border-radius: 18px;
+  padding: 8px 0 0 0;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px 8px 12px;
+  color: #666666;
+  font-size: 12px;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+}
+
+.listContainer {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.listItemView {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 8px 12px;
+  border-bottom: 1px solid #ededed;
+}
+
+.favIcon {
+  margin-right: 12px;
+}
+
+.label {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+
+.labelTitle {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.labelUrl {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #777777;
+  font-size: 12px;
+}
+
+.labelTime {
+  color: #999999;
+  font-size: 11px;
+}
+
+.noticeContainer {
+  background: #fff;
+  color: #999;
+  padding: 8px 18px;
+  font-style: italic;
+  font-weight: 500;
+  border-radius: 18px;
+}
+
+.pageControlContainer {
+  text-align: center;
+  padding: 4px 0 8px 0;
+}

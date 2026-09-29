@@ -1,8 +1,46 @@
+import { Tooltip } from '@blueprintjs/core';
 import React from 'react';
+
+import { useSidebarActions } from './SidebarContainer';
 import classes from './TabSpaceLogo.module.scss';
 import { merge } from 'lodash';
 
-export const TabSpaceLogo = (props) => {
+export interface TabSpaceLogoProps {
+  collapsed?: boolean;
+  /** dev page override for the universe graphic position */
+  universeShapeStyles?: React.CSSProperties;
+  /** dev page override for the wordmark position */
+  textStyles?: React.CSSProperties;
+  text?: string;
+}
+
+export const TabSpaceLogo = (props: TabSpaceLogoProps) => {
+  // the rail is 72px wide: the wordmark and the universe graphic do not fit, so
+  // only the square mark is shown (the decoration is the same as expanded).
+  // With no chevron in the rail, this mark is also the way back out.
+  const { expandSidebar } = useSidebarActions();
+  if (props.collapsed) {
+    return (
+      <div className={classes.collapsedContainer}>
+        <Tooltip content="Expand the sidebar" placement="right">
+          <button
+            type="button"
+            className={classes.collapsedMarkButton}
+            onClick={expandSidebar}
+            aria-label="Expand the sidebar"
+          >
+            {/* decorative: the button is already labelled by aria-label */}
+            <img
+              alt=""
+              aria-hidden={true}
+              className={classes.collapsedMark}
+              src="icons/icon128.png"
+            />
+          </button>
+        </Tooltip>
+      </div>
+    );
+  }
   return (
     <div
       style={{
@@ -14,7 +52,10 @@ export const TabSpaceLogo = (props) => {
       }}
     >
       <div>
+        {/* decorative: the wordmark below carries the name */}
         <img
+          alt=""
+          aria-hidden={true}
           style={merge(
             {
               position: 'absolute',

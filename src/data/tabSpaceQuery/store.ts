@@ -1,12 +1,10 @@
 import { createApi, createStore } from 'effector';
 import { merge } from 'lodash';
-import { searchSavedTabSpace } from '../../background/fullTextSearch/search';
 import { exposeDebugData } from '../../debug';
-import { Query } from '../../fullTextSearch';
 import { LoadStatus, perfEnd, perfStart } from '../../global';
+import { Query, SearchBackend, searchSavedTabSpaces } from '../search';
 import { isIdNotSaved, setAttrForObject } from '../common';
-import { getStateTabSpaceRegistry } from '../tabSpaceRegistry/store';
-import { $tabSpaceStorage } from '../tabSpace/store';
+import { $tabSpace, $tabSpaceStorage } from '../tabSpace/store';
 import { TabSpace } from '../tabSpace/TabSpace';
 import { querySavedTabSpace } from '../tabSpace/util';
 import {
@@ -32,15 +30,6 @@ const tabSpaceQueryApi = createApi($tabSpaceQuery, {
     setAttrForObject('queryPageStart', queryPageStart, lastTabSpaceQuery),
   _setQueryPageLimit: (lastTabSpaceQuery, queryPageLimit: number) =>
     setAttrForObject('queryPageLimit', queryPageLimit, lastTabSpaceQuery),
-  _setQueryCursorCurrentIndex: (
-    lastTabSpaceQuery,
-    queryCursorCurrentIndex: number,
-  ) =>
-    setAttrForObject(
-      'queryCursorCurrentIndex',
-      queryCursorCurrentIndex,
-      lastTabSpaceQuery,
-    ),
 });
 
 async function reload() {
@@ -48,36 +37,50 @@ async function reload() {
 
   const tabSpaceQuery = $tabSpaceQuery.getState();
 
-  const openedSavedTabSpaces = getStateTabSpaceRegistry()
-    .filter((tabSpaceStub) => !isIdNotSaved(tabSpaceStub.id))
-    .toArray();
-  let savedTabSpaces: TabSpace[] = [];
+  // A manager page only ever owns the tabverse of its own window, so at most
+  // one saved tabverse can be "opened" (the one being shown right here).
+  const currentTabSpace = $tabSpace.getState();
+  const openedSavedTabSpaces = isIdNotSaved(currentTabSpace.id)
+    ? []
+    : [
+        {
+          id: currentTabSpace.id,
+          name: currentTabSpace.name,
+          createdAt: currentTabSpace.createdAt,
+          updatedAt: currentTabSpace.updatedAt,
+          chromeTabId: currentTabSpace.chromeTabId,
+          chromeWindowId: currentTabSpace.chromeWindowId,
+        },
+      ];
+  let savedTabSpaces: TabSpace[];
   let changes: Record<string, any> = {};
   if (!tabSpaceQuery.query.isEmpty()) {
     perfStart('load:search');
-    const currentCursor =
-      tabSpaceQuery.queryCursors[tabSpaceQuery.queryCursorCurrentIndex];
-    const [_savedTabSpaces, _nextCursor] = await searchSavedTabSpace({
-      query: tabSpaceQuery.query,
-      cursor: currentCursor,
-    });
-    // @ts-ignore
-    savedTabSpaces = _savedTabSpaces;
+    // The server's FTS5 index when this device is paired, the local tables
+    // otherwise (ADR 0008). Either way the backend hands back a ranked list of
+    // tabverse ids, already filtered to the ones this device has.
+    const result = await searchSavedTabSpaces(tabSpaceQuery.query);
+    savedTabSpaces = result.tabSpaces.slice(
+      tabSpaceQuery.queryPageStart * tabSpaceQuery.queryPageLimit,
+      (tabSpaceQuery.queryPageStart + 1) * tabSpaceQuery.queryPageLimit,
+    );
+    changes = {
+      ...changes,
+      totalPageCount: Math.ceil(
+        result.tabSpaces.length / tabSpaceQuery.queryPageLimit,
+      ),
+      searchBackend: result.backend as SearchBackend,
+      searchUnknownTabSpaceIds: result.unknownTabSpaceIds,
+    };
     if (
-      !tabSpaceQuery.queryCursorsVisited[tabSpaceQuery.queryCursorCurrentIndex]
+      tabSpaceQuery.queryPageStart > 0 &&
+      tabSpaceQuery.queryPageStart >= changes.totalPageCount
     ) {
       changes = {
         ...changes,
-        queryCursors: tabSpaceQuery.queryCursors.concat(_nextCursor),
+        queryPageStart: Math.max(0, changes.totalPageCount - 1),
       };
     }
-    changes = {
-      ...changes,
-      queryCursorsVisited: {
-        ...tabSpaceQuery.queryCursorsVisited,
-        [tabSpaceQuery.queryCursorCurrentIndex]: true,
-      },
-    };
     perfEnd('load:search');
   } else {
     perfStart('load:browse');
@@ -88,16 +91,6 @@ async function reload() {
     );
     const totalCount = $tabSpaceStorage.getState().totalSavedCount;
     savedTabSpaces = await querySavedTabSpace(savedTabSpaceParams);
-    changes = {
-      ...changes,
-      totalPageCount: Math.ceil(totalCount / tabSpaceQuery.queryPageLimit),
-    };
-    if (tabSpaceQuery.queryPageStart >= changes.totalPageCount) {
-      changes = {
-        ...changes,
-        queryPageStart: changes.totalPageCount - 1,
-      };
-    }
     changes = {
       ...changes,
       totalPageCount: Math.ceil(totalCount / tabSpaceQuery.queryPageLimit),
@@ -155,28 +148,14 @@ export const tabSpaceQueryStoreApi = merge(tabSpaceQueryApi, {
   },
   lastPage: () => {
     const tabSpaceQuery = $tabSpaceQuery.getState();
-    tabSpaceQueryApi._setQueryPageStart(tabSpaceQuery.totalPageCount - 1);
-    reload();
+    if (tabSpaceQuery.totalPageCount > 0) {
+      tabSpaceQueryApi._setQueryPageStart(tabSpaceQuery.totalPageCount - 1);
+      reload();
+    }
   },
   firstPage: () => {
     tabSpaceQueryApi._setQueryPageStart(0);
     reload();
-  },
-  goQueryCursor: (cursorIndex: number) => {
-    const tabSpaceQuery = $tabSpaceQuery.getState();
-    if (cursorIndex >= 0 && cursorIndex < tabSpaceQuery.queryCursors.length) {
-      tabSpaceQueryApi._setQueryCursorCurrentIndex(cursorIndex);
-      reload();
-    }
-  },
-  goQueryCursorNext() {
-    const tabSpaceQuery = $tabSpaceQuery.getState();
-    if (tabSpaceQuery.queryCursors.length >= 1) {
-      tabSpaceQueryApi._setQueryCursorCurrentIndex(
-        this.queryCursors.length - 1,
-      );
-      reload();
-    }
   },
 });
 

@@ -1,1 +1,11 @@
-@use './BrowserSession.module.scss' as *;
+// These lived in BrowserSession.module.scss, which the browser-session
+// feature took with it (ADR 0006).
+.noticeContainer {
+  padding: 18px;
+  font-size: 1.2em;
+  text-align: right;
+}
+
+.noticeLine {
+  margin-bottom: 8px;
+}

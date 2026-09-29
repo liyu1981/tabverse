@@ -1,13 +1,15 @@
 import Dexie from 'dexie';
+import fakeIndexedDB from 'fake-indexeddb';
+import fakeIDBKeyRange from 'fake-indexeddb/lib/FDBKeyRange';
+
 import { getNewId } from '../data/common';
+import { TabSpaceDatabase } from '../storage/TabSpaceDatabase';
 
-Dexie.dependencies.indexedDB = require('fake-indexeddb');
-Dexie.dependencies.IDBKeyRange = require('fake-indexeddb/lib/FDBKeyRange');
+// Point Dexie at the in-memory IndexedDB before the database is constructed.
+Dexie.dependencies.indexedDB = fakeIndexedDB as any;
+Dexie.dependencies.IDBKeyRange = fakeIDBKeyRange as any;
 
-// console.log('will use dbImplTest');
-
-const { TabSpaceDatabase } = require('../storage/TabSpaceDatabase');
-export const dbImpl = new TabSpaceDatabase(getNewId());
+export const dbImpl: TabSpaceDatabase = new TabSpaceDatabase(getNewId());
 
 export async function resetTestDb() {
   await dbImpl.delete();

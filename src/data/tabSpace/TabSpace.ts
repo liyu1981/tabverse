@@ -16,12 +16,10 @@ import {
   convertToSavedBase,
   inPlaceCopyFromOtherBase,
   newEmptyBase,
-  toBase,
 } from '../Base';
 import { eq, omit } from 'lodash';
 
 import { List } from 'immutable';
-import { TabSpaceStub } from '../tabSpaceRegistry/TabSpaceRegistry';
 import { produce } from 'immer';
 
 export interface LiveTabSpace {
@@ -29,9 +27,50 @@ export interface LiveTabSpace {
   chromeWindowId: number;
 }
 
+/** The nine group colours Chrome's tabGroups API exposes (and only those). */
+export type TabGroupColor =
+  | 'grey'
+  | 'blue'
+  | 'red'
+  | 'yellow'
+  | 'green'
+  | 'pink'
+  | 'purple'
+  | 'cyan'
+  | 'orange';
+
+export const TAB_GROUP_COLORS: TabGroupColor[] = [
+  'grey',
+  'blue',
+  'red',
+  'yellow',
+  'green',
+  'pink',
+  'purple',
+  'cyan',
+  'orange',
+];
+
+/**
+ * A tab group as Tabverse remembers it.
+ *
+ * `id` is ours, never Chrome's: `chrome.tabGroups` group ids are "unique within
+ * a browser session", so they are worthless after a restart. The live
+ * ourId -> chromeId mapping lives in the tabspace's non-persisted part
+ * (see LiveTabSpace) and is rebuilt on every scan.
+ */
+export interface TabGroupHint {
+  id: string;
+  title: string;
+  color: TabGroupColor;
+  /** ids of the tabverse's own tabs, not chrome tab ids */
+  tabIds: string[];
+}
+
 export interface TabSpaceCore extends IBase {
   name: string;
   tabs: List<Tab>;
+  tabGroups: TabGroupHint[];
 }
 
 export type TabSpace = TabSpaceCore & LiveTabSpace;
@@ -39,6 +78,7 @@ export type TabSpace = TabSpaceCore & LiveTabSpace;
 export interface TabSpaceSavePayload extends IBase {
   name: string;
   tabIds: string[];
+  tabGroups: TabGroupHint[];
 }
 
 export const TABSPACE_DB_TABLE_NAME = 'SavedTabSpace';
@@ -49,6 +89,7 @@ export function newEmptyTabSpace(): TabSpace {
     ...newEmptyBase(),
     name: '',
     tabs: List<Tab>(),
+    tabGroups: [],
     chromeTabId: -1,
     chromeWindowId: -1,
   };
@@ -70,6 +111,9 @@ export function updateTabSpace(
 }
 
 export const setId = setAttrForObject2<string, TabSpace>('id');
+export const setTabGroups = setAttrForObject2<TabGroupHint[], TabSpace>(
+  'tabGroups',
+);
 export const setName = setAttrForObject2<string, TabSpace>('name');
 export const setChromeTabId = setAttrForObject2<number, TabSpace>(
   'chromeTabId',
@@ -82,8 +126,18 @@ export function getTabIds(targetTabSpace: TabSpace): string[] {
   return targetTabSpace.tabs.map((tab) => tab.id).toArray();
 }
 
+/**
+ * Whether this tabverse may be written to the database (and, through the change
+ * feed, to the sync server).
+ *
+ * Always true since tabverses became born saved: the id is minted when the
+ * Tabverse tab is opened and travels in its url as `tvid`, so opening a
+ * Tabverse *is* the decision to keep this window's tabs. The function is kept
+ * because the note/todo/bookmark autosave paths ask it about the *tabspace*
+ * before saving their own rows.
+ */
 export function needAutoSave(targetTabSpace: TabSpace): boolean {
-  return !isIdNotSaved(targetTabSpace.id);
+  return true;
 }
 
 export function isEqual(t1: TabSpace, t2: TabSpace): boolean {
@@ -93,40 +147,13 @@ export function isEqual(t1: TabSpace, t2: TabSpace): boolean {
   );
 }
 
-export function isEqualTabs(t1: TabSpace, t2: TabSpace): boolean {
-  const t1Tabs: Tab[] = t1.tabs.toJS();
-  const t2Tabs: Tab[] = t2.tabs.toJS();
-  return (
-    t1Tabs.length === t2Tabs.length &&
-    t1Tabs.reduce((r, _tab1, index) => {
-      if (!r) {
-        return false;
-      }
-      if (isEqualWithoutCreatedAtUpdatedAt(t1Tabs[index], t2Tabs[index])) {
-        return r && true;
-      } else {
-        return r && false;
-      }
-    }, false)
-  );
-}
-
-export function isEqualWithoutCreateAtUpdateAt(
-  t1: TabSpace,
-  t2: TabSpace,
-): boolean {
-  return (
-    t1.chromeTabId === t2.chromeTabId &&
-    t1.chromeWindowId === t2.chromeWindowId &&
-    t1.id === t2.id &&
-    t1.name === t2.name &&
-    t1.version === t2.version &&
-    isEqualTabs(t1, t2)
-  );
-}
-
 export function fromSavedDataWithoutTabs(d: TabSpaceSavePayload): TabSpace {
-  return { ...newEmptyTabSpace(), ...omit(d, 'tabIds') };
+  return {
+    ...newEmptyTabSpace(),
+    ...omit(d, 'tabIds'),
+    // tabverses saved before groups existed have no field at all
+    tabGroups: d.tabGroups ?? [],
+  };
 }
 
 export function reset(
@@ -251,6 +278,42 @@ export function replaceAllTabs(
   });
 }
 
+/**
+ * Rewrites group membership after a save renames tab ids (the '~' prefix is
+ * dropped the first time a tab is saved).
+ *
+ * `idRemap` covers the rename; `validTabIds` covers the other case - a tab that
+ * was closed or moved to another tabverse, whose id is simply not in the
+ * tabverse any more. Both would otherwise leave the hint pointing at tabs that
+ * do not exist, and the group would render as a silently broken entry. A group
+ * left with nothing is dropped.
+ */
+export function remapTabGroups(
+  groups: TabGroupHint[] | undefined,
+  idRemap: Map<string, string>,
+  validTabIds: Set<string>,
+): TabGroupHint[] {
+  if (!groups || groups.length === 0) {
+    return [];
+  }
+  const out: TabGroupHint[] = [];
+  for (const group of groups) {
+    const tabIds: string[] = [];
+    for (const oldId of group.tabIds ?? []) {
+      // an id that was not renamed is already its final form
+      const newId = idRemap.get(oldId) ?? oldId;
+      if (validTabIds.has(newId) && tabIds.indexOf(newId) < 0) {
+        tabIds.push(newId);
+      }
+    }
+    if (tabIds.length === 0) {
+      continue;
+    }
+    out.push({ ...group, tabIds });
+  }
+  return out;
+}
+
 export function convertAndGetTabSpaceSavePayload(targetTabSpace: TabSpace): {
   tabSpace: TabSpace;
   tabSpaceSavePayload: TabSpaceSavePayload;
@@ -261,6 +324,10 @@ export function convertAndGetTabSpaceSavePayload(targetTabSpace: TabSpace): {
   const isNewTabSpace = isIdNotSaved(targetTabSpace.id);
   const existTabSavePayloads: TabCore[] = [];
   const newTabSavePayloads: TabCore[] = [];
+  // saving strips the '~' from every tab id, so remember what each one became:
+  // group membership references tab ids and has to follow the rename, or the
+  // hints point at tabs that no longer exist and the group silently disappears
+  const idRemap = new Map<string, string>();
   const savedTabs = targetTabSpace.tabs
     .map((tab: Tab) => {
       const isNewTab = isIdNotSaved(tab.id);
@@ -268,6 +335,9 @@ export function convertAndGetTabSpaceSavePayload(targetTabSpace: TabSpace): {
         tab,
         getSavedId(targetTabSpace.id),
       );
+      if (updatedTab.id !== tab.id) {
+        idRemap.set(tab.id, updatedTab.id);
+      }
       if (isNewTab) {
         newTabSavePayloads.push(savedTab);
       } else {
@@ -277,14 +347,21 @@ export function convertAndGetTabSpaceSavePayload(targetTabSpace: TabSpace): {
     })
     .toList();
   const savedBase = convertToSavedBase(targetTabSpace);
+  const savedTabGroups = remapTabGroups(
+    targetTabSpace.tabGroups,
+    idRemap,
+    new Set(savedTabs.map((tab) => tab.id).toArray()),
+  );
   const tabSpace = produce(targetTabSpace, (draft) => {
     inPlaceCopyFromOtherBase(draft, savedBase);
     draft.tabs = savedTabs;
+    draft.tabGroups = savedTabGroups;
   });
   const tabSpaceSavePayload = {
     ...savedBase,
     name: targetTabSpace.name,
     tabIds: savedTabs.map((tab) => tab.id).toArray(),
+    tabGroups: savedTabGroups,
   };
   return {
     tabSpace,
@@ -292,14 +369,5 @@ export function convertAndGetTabSpaceSavePayload(targetTabSpace: TabSpace): {
     isNewTabSpace,
     newTabSavePayloads,
     existTabSavePayloads,
-  };
-}
-
-export function toTabSpaceStub(targetTabSpace: TabSpace): TabSpaceStub {
-  return {
-    ...toBase(targetTabSpace),
-    name: targetTabSpace.name,
-    chromeTabId: targetTabSpace.chromeTabId,
-    chromeWindowId: targetTabSpace.chromeWindowId,
   };
 }

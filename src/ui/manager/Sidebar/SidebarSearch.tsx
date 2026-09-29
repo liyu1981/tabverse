@@ -1,7 +1,7 @@
 import { InputGroup, Keys } from '@blueprintjs/core';
 import React, { useMemo, useRef } from 'react';
 
-import { ManagerViewRoute } from '../ManagerView';
+import { ManagerViewRoute } from '../routes';
 import SidebarClasses from './Sidebar.module.scss';
 import classes from './SidebarSearch.module.scss';
 import clsx from 'clsx';
@@ -12,7 +12,7 @@ export interface SidebarSearchProps {
 }
 
 export function SidebarSearch(props: SidebarSearchProps) {
-  const inputRef = useRef<HTMLInputElement>();
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   const onKeyDown = useMemo(
     () => (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -21,7 +21,7 @@ export function SidebarSearch(props: SidebarSearchProps) {
         props.onSwitch(ManagerViewRoute.Search);
       }
     },
-    [],
+    [props.onSwitch],
   );
 
   const onFocus = useMemo(
@@ -34,7 +34,7 @@ export function SidebarSearch(props: SidebarSearchProps) {
         props.onSwitch(ManagerViewRoute.Search);
       }
     },
-    [],
+    [props.onSwitch],
   );
 
   return (

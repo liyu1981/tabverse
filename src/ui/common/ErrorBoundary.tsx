@@ -9,14 +9,14 @@ export class ErrorBoundary extends React.Component<
     this.state = { error: null, errorInfo: null };
   }
 
-  componentDidCatch(error, errorInfo) {
+  override componentDidCatch(error, errorInfo) {
     this.setState({
       error: error,
       errorInfo: errorInfo,
     });
   }
 
-  render() {
+  override render() {
     if (this.state.errorInfo) {
       return (
         <div>

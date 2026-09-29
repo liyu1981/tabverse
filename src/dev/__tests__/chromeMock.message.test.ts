@@ -1,3 +1,5 @@
+import { vi } from 'vitest';
+
 import {
   tabData1,
   tabData2,
@@ -21,7 +23,7 @@ function initMockChrome() {
 
 test('onActivatedCallback', async () => {
   const { mockChrome, w1, w2, t1, t2, t3, t4, t5, t6 } = initMockChrome();
-  const onActivatedCallback = jest.fn();
+  const onActivatedCallback = vi.fn();
   mockChrome.tabs.onActivated.addListener(onActivatedCallback);
   mockChrome.setActiveTab(t6.id);
   await mockChrome.flushMessages();
@@ -32,7 +34,7 @@ test('onActivatedCallback', async () => {
 
 test('onCreatedCallback', async () => {
   const { mockChrome, w1, w2, t1, t2, t3, t4, t5, t6 } = initMockChrome();
-  const onCreatedCallback = jest.fn();
+  const onCreatedCallback = vi.fn();
   mockChrome.tabs.onCreated.addListener(onCreatedCallback);
   const t7 = mockChrome.insertTabFromData(tabData2, w2.id);
   await mockChrome.flushMessages();
@@ -43,8 +45,8 @@ test('onCreatedCallback', async () => {
 
 test('onAttachedCallback, onDetachedCallback', async () => {
   const { mockChrome, w1, w2, t1, t2, t3, t4, t5, t6 } = initMockChrome();
-  const onAttachedCallback = jest.fn();
-  const onDetachedCallback = jest.fn();
+  const onAttachedCallback = vi.fn();
+  const onDetachedCallback = vi.fn();
   mockChrome.tabs.onAttached.addListener(onAttachedCallback);
   mockChrome.tabs.onDetached.addListener(onDetachedCallback);
   mockChrome.moveTabToWindow(t3.id, w2.id);
@@ -71,7 +73,7 @@ test('onAttachedCallback, onDetachedCallback', async () => {
 
 test('onRemovedCallback', async () => {
   const { mockChrome, w1, w2, t1, t2, t3, t4, t5, t6 } = initMockChrome();
-  const onRemovedCallback = jest.fn();
+  const onRemovedCallback = vi.fn();
   mockChrome.tabs.onRemoved.addListener(onRemovedCallback);
   mockChrome.removeTab(t2.id);
   await mockChrome.flushMessages();
@@ -88,7 +90,7 @@ test('onRemovedCallback', async () => {
 
 test('onReplacedCallback', async () => {
   const { mockChrome, w1, w2, t1, t2, t3, t4, t5, t6 } = initMockChrome();
-  const onReplacedCallback = jest.fn();
+  const onReplacedCallback = vi.fn();
   mockChrome.tabs.onReplaced.addListener(onReplacedCallback);
   mockChrome.replaceTabFromData(tabData2, t2.id);
   await mockChrome.flushMessages();
@@ -99,7 +101,7 @@ test('onReplacedCallback', async () => {
 
 test('onUpdatedCallback', async () => {
   const { mockChrome, w1, w2, t1, t2, t3, t4, t5, t6 } = initMockChrome();
-  const onUpdatedCallback = jest.fn();
+  const onUpdatedCallback = vi.fn();
   mockChrome.tabs.onUpdated.addListener(onUpdatedCallback);
   const toTitle = t2.title + 'changed';
   mockChrome.updateTab(t2.id, { title: toTitle });
@@ -116,7 +118,7 @@ test('onUpdatedCallback', async () => {
 
 test('onMovedCallback', async () => {
   const { mockChrome, w1, w2, t1, t2, t3, t4, t5, t6 } = initMockChrome();
-  const onMovedCallback = jest.fn();
+  const onMovedCallback = vi.fn();
   mockChrome.tabs.onMoved.addListener(onMovedCallback);
   const fromIndex = t2.position;
   const toIndex = t2.position + 1;
@@ -129,7 +131,7 @@ test('onMovedCallback', async () => {
 
 test('onMessageCallback', async () => {
   const { mockChrome, w1, w2, t1, t2, t3, t4, t5, t6 } = initMockChrome();
-  const onMessageCallback = jest.fn();
+  const onMessageCallback = vi.fn();
   mockChrome.runtime.onMessage.addListener(onMessageCallback);
   mockChrome.runtime.sendMessage({ type: 'test', payload: 'hello' });
   await mockChrome.flushMessages();
@@ -144,7 +146,7 @@ test('onMessageCallback', async () => {
 
 test('windowOnCreated', async () => {
   const { mockChrome, w1, w2, t1, t2, t3, t4, t5, t6 } = initMockChrome();
-  const onCreatedCallback = jest.fn();
+  const onCreatedCallback = vi.fn();
   mockChrome.windows.onCreated.addListener(onCreatedCallback);
   mockChrome.addWindow();
   await mockChrome.flushMessages();
@@ -164,7 +166,7 @@ test('windowOnCreated', async () => {
 
 test('windowOnRemoved', async () => {
   const { mockChrome, w1, w2, t1, t2, t3, t4, t5, t6 } = initMockChrome();
-  const onRemovedCallback = jest.fn();
+  const onRemovedCallback = vi.fn();
   mockChrome.windows.onRemoved.addListener(onRemovedCallback);
   const mockWindow = mockChrome.addWindow();
   mockChrome.removeWindow(mockWindow.id);

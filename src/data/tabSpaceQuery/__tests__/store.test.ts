@@ -10,6 +10,12 @@ import {
 } from '../../tabSpace/__tests__/common.test';
 
 import { $tabSpace } from '../../tabSpace/store';
+import { $tabSpaceQuery, tabSpaceQueryStoreApi } from '../store';
+import { TABSPACE_DB_TABLE_NAME } from '../../tabSpace/TabSpace';
+import { TAB_DB_TABLE_NAME } from '../../tabSpace/Tab';
+import { Query } from '../../search';
+import { db } from '../../../storage/db';
+import { getNewId } from '../../common';
 import { QUERY_PAGE_LIMIT_DEFAULT } from '../../../storage/db';
 import { findTabByChromeTabId } from '../../tabSpace/TabSpace';
 import { omit } from 'lodash';
@@ -21,7 +27,7 @@ export async function initTabSpaceData() {
   const { mockChrome, w1, w2, t1, t2, t3, t4 } = initMockChrome();
   const tst1 = mockChrome.insertTabFromData(tsTabData1, w1.id, 0);
   await mockChrome.flushMessages();
-  await tabSpaceBootstrap(tst1.id, tst1.windowId);
+  await tabSpaceBootstrap(tst1.id, tst1.windowId, getNewId());
   return { mockChrome, w1, w2, t1, t2, t3, t4, tst1 };
 }
 
@@ -70,5 +76,60 @@ test('tabSpaceStore', async () => {
     await deleteSavedTabSpace($tabSpace.getState().id);
     const savedTabSpaces = await querySavedTabSpace();
     expect(savedTabSpaces.length).toEqual(0);
+  });
+});
+
+test('searching pages the result and reports the backend', async () => {
+  await testWithDb('search', async () => {
+    await initTabSpaceData();
+    // three saved tabverses, one of which matches
+    const saved = [
+      { id: 'ts-a', name: 'Alpha', tabIds: ['ta'] },
+      { id: 'ts-b', name: 'Beta', tabIds: ['tb'] },
+      { id: 'ts-c', name: 'Gamma', tabIds: ['tc'] },
+    ];
+    await db.table(TABSPACE_DB_TABLE_NAME).bulkPut(
+      saved.map((row) => ({
+        ...row,
+        version: 10,
+        createdAt: 1,
+        updatedAt: 1,
+      })),
+    );
+    await db.table(TAB_DB_TABLE_NAME).bulkPut(
+      saved.map((row) => ({
+        id: row.tabIds[0],
+        tabSpaceId: row.id,
+        title: `${row.name} page`,
+        url: `https://example.com/${row.id}`,
+        favIconUrl: '',
+        pinned: false,
+        suspended: false,
+        version: 10,
+        createdAt: 1,
+        updatedAt: 1,
+      })),
+    );
+
+    // no pairing config in this environment, so the local scan answers
+    tabSpaceQueryStoreApi.setQuery(
+      new Query({
+        andQueries: [{ scope: {}, terms: ['gamma'] }],
+      }),
+    );
+    await tabSpaceQueryStoreApi.reload();
+
+    const state = $tabSpaceQuery.getState();
+    expect(state.savedTabSpaces.map((t) => t.id)).toEqual(['ts-c']);
+    expect(state.searchBackend).toEqual('local');
+    expect(state.searchUnknownTabSpaceIds).toEqual([]);
+    expect(state.totalPageCount).toEqual(1);
+    // the result is a tabverse with its tabs, like the browse list
+    expect(state.savedTabSpaces[0].tabs.size).toEqual(1);
+
+    // browsing again clears the search state
+    tabSpaceQueryStoreApi.setQuery(new Query({ andQueries: [] }));
+    await tabSpaceQueryStoreApi.reload();
+    expect($tabSpaceQuery.getState().searchBackend).toEqual(null);
   });
 });

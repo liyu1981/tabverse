@@ -4,7 +4,7 @@ import clsx from 'clsx';
 
 export interface IndicatorLineProps {
   className?: string;
-  children: React.ReactElement | React.ReactFragment | string;
+  children: React.ReactElement | React.ReactNode | string;
 }
 
 export function IndicatorLine(props: IndicatorLineProps) {

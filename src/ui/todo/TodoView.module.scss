@@ -22,7 +22,11 @@
 .todoapp {
   background: #fff;
   position: relative;
-  font: 20px 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font:
+    20px 'Helvetica Neue',
+    Helvetica,
+    Arial,
+    sans-serif;
   border-radius: 18px;
 }
 
@@ -159,7 +163,7 @@
   opacity: 0;
 }
 
-.todoapp .todoList li .toggle + label {
+.todoapp .todoList li .toggle + button.content {
   /*
 		Firefox requires `#` to be escaped - https://bugzilla.mozilla.org/show_bug.cgi?id=922433
 		IE and Edge requires *everything* to be escaped to render, so we do that instead of just the `#` - https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/7157459/
@@ -169,21 +173,33 @@
   background-position: center left;
 }
 
-.todoapp .todoList li .toggle:checked + label {
+.todoapp .todoList li .toggle:checked + button.content {
   background-image: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2240%22%20height%3D%2240%22%20viewBox%3D%22-10%20-18%20100%20135%22%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2250%22%20fill%3D%22none%22%20stroke%3D%22%2359A193%22%20stroke-width%3D%223%22%2F%3E%3Cpath%20fill%3D%22%233EA390%22%20d%3D%22M72%2025L42%2071%2027%2056l-4%204%2020%2020%2034-52z%22%2F%3E%3C%2Fsvg%3E');
 }
 
-.todoapp .todoList li label {
+.todoapp .todoList li button.content {
   word-break: break-all;
   padding: 15px 15px 15px 60px;
   display: block;
   line-height: 1.2;
   transition: color 0.4s;
-  font-weight: 400;
   color: #484848;
+  /*
+    A real <button> now (editable by double click or Enter). The UA style is
+    `font: 400 13.333px Arial`, so the whole font shorthand has to be reset -
+    font-family alone would leave the text at 13.333px Arial - and then the
+    weight this row always had. The padding above is kept: it is what indents
+    the text past the absolutely positioned toggle.
+  */
+  font: inherit;
+  font-weight: 400;
+  border: 0;
+  background: none;
+  text-align: start;
+  cursor: text;
 }
 
-.todoapp .todoList li.completed label {
+.todoapp .todoList li.completed button.content {
   color: #949494;
   text-decoration: line-through;
 }
@@ -246,8 +262,12 @@
   // box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2), 0 8px 0 -3px #f6f6f6,
   //   0 9px 1px -3px rgba(0, 0, 0, 0.2), 0 16px 0 -6px #f6f6f6,
   //   0 17px 2px -6px rgba(0, 0, 0, 0.2);
-  box-shadow: 0 1px 1px #fff, 0 8px 0 -3px #fafafa, 0 9px 1px -3px #fff,
-    0 16px 0 -6px #f6f6f6, 0 17px 2px -6px #fff;
+  box-shadow:
+    0 1px 1px #fff,
+    0 8px 0 -3px #fafafa,
+    0 9px 1px -3px #fff,
+    0 16px 0 -6px #f6f6f6,
+    0 17px 2px -6px #fff;
   border-radius: 18px;
 }
 
@@ -273,20 +293,23 @@
   display: inline;
 }
 
-.todoapp .filters li a {
+.todoapp .filters li button {
   color: inherit;
   margin: 3px;
   padding: 3px 7px;
   text-decoration: none;
   border: 1px solid transparent;
   border-radius: 3px;
+  background: none;
+  font: inherit;
+  cursor: pointer;
 }
 
-.todoapp .filters li a:hover {
+.todoapp .filters li button:hover {
   border-color: rgba(19, 124, 189, 0.8);
 }
 
-.todoapp .filters li a.selected {
+.todoapp .filters li button.selected {
   border-color: rgba(19, 124, 189, 0.6);
 }
 
@@ -326,7 +349,7 @@
 }
 
 .todoapp :focus,
-.todoapp .toggle:focus + label,
+.todoapp .toggle:focus + button.content,
 .todoapp .toggleAll:focus + label {
   // box-shadow: 0 0 2px 2px global.$color-main-brand;
   outline: 0;

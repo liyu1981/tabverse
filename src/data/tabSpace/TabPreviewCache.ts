@@ -1,13 +1,13 @@
-import { Map } from 'immutable';
-import produce from 'immer';
+import { Map as ImmutableMap } from 'immutable';
+import { produce } from 'immer';
 
 export interface TabPreviewCache {
-  previews: Map<number, string>;
+  previews: ImmutableMap<number, string>;
 }
 
 export function newEmptyTabPreviewCache(): TabPreviewCache {
   return {
-    previews: Map<number, string>(),
+    previews: ImmutableMap<number, string>(),
   };
 }
 

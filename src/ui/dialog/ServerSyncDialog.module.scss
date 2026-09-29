@@ -1,0 +1,88 @@
+@use '../../global.scss';
+
+/* the dialog surface itself, to match the app's rounded, borderless chrome */
+.dialog {
+  border-radius: 18px;
+  padding-bottom: 18px;
+  background-color: #fff;
+}
+
+.dialog :global(.bp6-dialog-header) {
+  border-radius: 18px 18px 0 0;
+  background-color: #fff;
+  box-shadow: none;
+}
+
+.content {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.section :global(.bp6-form-group) {
+  margin-bottom: 0;
+}
+
+.content :global(.bp6-form-group) :global(.bp6-label) {
+  color: global.$color-d;
+  font-weight: 600;
+  font-size: 0.85em;
+}
+
+.content :global(.bp6-form-helper-text) {
+  color: global.$color-a;
+  font-size: 0.8em;
+}
+
+.loadingRow {
+  display: flex;
+  justify-content: center;
+  padding: 18px 0;
+}
+
+.buttonRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.buttonRow > * {
+  flex: 1 1 8em;
+}
+
+/* the pill and the icon buttons come from ../theme.scss; only the row layout
+   and the states of this dialog are its own */
+.status {
+  margin-top: 4px;
+}
+
+.status :global(.bp6-callout) {
+  font-size: 0.85em;
+}
+
+.pairingHint {
+  margin: 0;
+  font-size: 0.85em;
+  line-height: 1.5;
+}
+
+.pairingHint code {
+  background-color: global.$color-light-shade;
+  border-radius: 4px;
+  padding: 0 4px;
+  font-size: 0.95em;
+}
+
+.identity {
+  margin: 0;
+  font-size: 0.85em;
+  line-height: 1.6;
+}

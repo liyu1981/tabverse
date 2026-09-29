@@ -1,8 +1,8 @@
 import { IBase, setAttrForObject2 } from '../common';
 import { inPlaceConvertToSaved, newEmptyBase } from '../Base';
 
-import { NotTabSpaceId } from '../chromeSession/ChromeSession';
-import produce from 'immer';
+import { NotTabSpaceId } from '../common';
+import { produce } from 'immer';
 
 export interface Bookmark extends IBase {
   tabSpaceId: string;
@@ -10,11 +10,6 @@ export interface Bookmark extends IBase {
   url: string;
   favIconUrl: string;
 }
-
-export type BookmarkLocalStorage = Pick<
-  Bookmark,
-  'name' | 'url' | 'favIconUrl'
->;
 
 export const BOOKMARK_DB_TABLE_NAME = 'SavedBookmark';
 export const BOOKMARK_DB_SCHEMA = 'id, createdAt, tabSpaceId, name, url';

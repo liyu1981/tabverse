@@ -1,7 +1,7 @@
 import React from 'react';
 import { ReactElement } from 'react';
 import { defaults } from 'lodash';
-import { render } from 'react-dom';
+import { createRoot } from 'react-dom/client';
 
 export interface IBasePageOptions {
   pageComponent?: ReactElement | null;
@@ -15,8 +15,9 @@ export const defaultPageOptions = {
 
 export function renderPage(props: IBasePageOptions = defaultPageOptions): void {
   const p = defaults(props, defaultPageOptions);
-  if (p.pageComponent) {
-    render(<>{p.pageComponent}</>, document.getElementById(p.containerDivId));
+  const container = document.getElementById(p.containerDivId);
+  if (p.pageComponent && container) {
+    createRoot(container).render(<>{p.pageComponent}</>);
   } else {
     console.error('PageComponent not provided! Skip render!');
   }

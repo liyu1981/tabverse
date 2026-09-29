@@ -35,16 +35,13 @@ in current window. Below is an example of Tabverse.
 
 Let's walk through **Tabverse** UI section by section:
 
-- **Section 1** is for `Create New Tabverse` and `Browser Session History`.
+- **Section 1** is for `Create New Tabverse`.
   `Create New Tabverse` will open a new chrome window as well as a new tabverse,
-  so you can start work on something new there. `Browser Session History` will
-  open drawer in the right, please see [Browser Session History](/docs/session)
-  for its user manual.
+  so you can start work on something new there.
 
-- **Section 2** is showing all current Tabverses. You can create multiple
-  Tabverses, each of which managing the tabs in that window. This view showing
-  which is in the current window, and which are in other windows. Clicking
-  tabverse in other window can fast switch to it.
+- **Section 2** is showing the Tabverse of the current window. Each Tabverse
+  manages the tabs of the window it was created in; Tabverses in other windows
+  are managed from those windows.
 
 - **Section 3** is showing all saved Tabverses in local storage. It is sorted by
   either last update time, or created time (clicking the sub string in header to

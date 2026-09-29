@@ -1,13 +1,48 @@
 {
   "compilerOptions": {
-    "sourceMap": true,
-    "target": "es6",
-    "module": "commonjs",
+    // es2022: Object.hasOwn (which biome's autofix prefers over
+    // obj.hasOwnProperty) is ES2022, and the extension only ships to Chrome
+    // 140+ (Vite's build target is chrome116), which has it natively
+    "target": "es2022",
+    "lib": ["es2022", "dom", "dom.iterable"],
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    // resolve the "browser" condition of package exports, same as Vite does
+    "customConditions": ["browser"],
     "jsx": "react",
+    "sourceMap": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
     "skipLibCheck": true,
     "useDefineForClassFields": true,
     "forceConsistentCasingInFileNames": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    // TypeScript 7 no longer auto-includes every package under node_modules/@types
+    // for the program; without this the `chrome.*` globals vanish and 111 errors
+    // cascade out of it. Listed explicitly, in the order tsc would have used.
+    "types": ["chrome", "node"],
+
+    // TypeScript 7 flipped the defaults: strictNullChecks and noImplicitAny
+    // now come on by default, which turned a clean build into 675 errors. The
+    // two are written out here as `false` on purpose - a deferral that depends
+    // on a compiler default is exactly the kind that breaks silently. They are
+    // the same two members of `strict` that adr/0004 defers; turning them on is
+    // still a dedicated pass (roughly 428 and 227 errors respectively).
+    "strictNullChecks": false,
+    "noImplicitAny": false,
+
+    // Staged strictness: every flag below is enabled and clean today.
+    "alwaysStrict": true,
+    "strictBindCallApply": true,
+    "strictFunctionTypes": true,
+    "strictPropertyInitialization": false,
+    "noImplicitThis": true,
+    "noImplicitReturns": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "useUnknownInCatchVariables": true
   },
-  "exclude": ["node_modules"]
+  "include": ["src", "*.d.ts", "*.mts"],
+  "exclude": ["node_modules", "dist", "docs", "doc"]
 }

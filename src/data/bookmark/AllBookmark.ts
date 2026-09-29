@@ -1,6 +1,5 @@
 import {
   Bookmark,
-  BookmarkLocalStorage,
   convertToSavedBookmark,
   newEmptyBookmark,
   setTabSpaceId,
@@ -13,8 +12,8 @@ import {
 } from '../Base';
 
 import { List } from 'immutable';
-import { NotTabSpaceId } from '../chromeSession/ChromeSession';
-import produce from 'immer';
+import { NotTabSpaceId } from '../common';
+import { produce } from 'immer';
 
 export interface AllBookmark extends IBase {
   tabSpaceId: string;
@@ -35,12 +34,6 @@ export function newEmptyAllBookmark(): AllBookmark {
     tabSpaceId: NotTabSpaceId,
     bookmarks: List(),
   };
-}
-
-export function cloneAllBookmark(targetAllBookmark: AllBookmark): AllBookmark {
-  return produce(targetAllBookmark, (draft) => {
-    draft.bookmarks = List(draft.bookmarks);
-  });
 }
 
 export function addBookmark(
@@ -93,39 +86,6 @@ export function updateTabSpaceId(
     draft.bookmarks = draft.bookmarks
       .map((bookmark) => setTabSpaceId(tabSpaceId, bookmark))
       .toList();
-  });
-}
-
-export function getLocalStorageJSON(
-  targetAllBookmark: AllBookmark,
-): BookmarkLocalStorage[] {
-  return targetAllBookmark.bookmarks
-    .map((bookmark) => {
-      return {
-        name: bookmark.name,
-        url: bookmark.url,
-        favIconUrl: bookmark.favIconUrl,
-      };
-    })
-    .toArray();
-}
-
-export function restoreFromLocalStorageJSON(
-  bookmarkJSONs: BookmarkLocalStorage[],
-  targetAllBookmark: AllBookmark,
-): AllBookmark {
-  return produce(targetAllBookmark, (draft) => {
-    draft.bookmarks = List(
-      bookmarkJSONs.map((bookmarkJSON) => ({
-        ...newEmptyBookmark(),
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        tabSpaceId: targetAllBookmark.tabSpaceId,
-        name: bookmarkJSON.name,
-        url: bookmarkJSON.url,
-        favIconUrl: bookmarkJSON.favIconUrl,
-      })),
-    );
   });
 }
 

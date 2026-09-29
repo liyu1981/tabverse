@@ -1,8 +1,15 @@
-import { Button, ButtonGroup, Card, Checkbox } from '@blueprintjs/core';
+import {
+  Button,
+  ButtonGroup,
+  Card,
+  Checkbox,
+  Intent,
+  Popover,
+  Tag,
+} from '@blueprintjs/core';
 
 import { CollapsibleLabel } from '../../common/CollapsibleLabel';
 import { FavIcon } from '../../common/FavIcon';
-import { Popover2 } from '@blueprintjs/popover2';
 import React from 'react';
 import { Tab } from '../../../data/tabSpace/Tab';
 import classes from './TabCard.module.scss';
@@ -18,13 +25,17 @@ const TabDetailPreviewPanel = (props) => {
             url={props.tab.favIconUrl}
           />
           <h3 className={clsx(classes.previewWrapText, classes.previewTitleH)}>
-            <a href="#">{props.tab.title}</a>
+            {props.tab.title}
           </h3>
         </div>
         <div className={classes.previewWrapText}>{props.tab.url}</div>
       </div>
       <div className={classes.previewImageContainer}>
-        <img className={classes.previewImage} src={props.tabPreview} />
+        <img
+          alt={`Preview of ${props.tab.title}`}
+          className={classes.previewImage}
+          src={props.tabPreview}
+        />
       </div>
     </Card>
   ) : null;
@@ -45,8 +56,10 @@ function TabBookmarkBtn({
     <div></div>
   ) : (
     <Button
+      className="tv-icon-button"
       icon="bookmark"
       minimal={true}
+      title="Save this tab as a bookmark"
       onClick={() => {
         onBookmark(tab);
       }}
@@ -62,14 +75,28 @@ interface ITabCardProps {
   isBookmarked?: boolean;
   onBookmark?: (tab: Tab) => void;
   onSelect?: (tabId: string, selected: boolean) => void;
+  /**
+   * What clicking the card does. Defaults to switching to the live tab; the
+   * saved tabverse list passes its own (open this tab in a new window), which
+   * is also why the card owns the click instead of being wrapped in a button:
+   * a saved tab can sit inside a group block, and nesting a button around a
+   * button is invalid markup that loses the inner one's styling.
+   */
+  onActivate?: (tab: Tab) => void;
 }
 
 export function TabCard(props: ITabCardProps) {
   const needPreview = props.needPreview ?? false;
   const needSelector = props.needSelector ?? false;
 
-  const switchToTab = (t: Tab) => {
-    chrome.tabs.update(t.chromeTabId, { active: true });
+  const activate = (t: Tab) => {
+    if (props.onActivate) {
+      props.onActivate(t);
+      return;
+    }
+    if (t.chromeTabId) {
+      chrome.tabs.update(t.chromeTabId, { active: true });
+    }
   };
 
   const closeTab = (t: Tab) => {
@@ -102,8 +129,10 @@ export function TabCard(props: ITabCardProps) {
               />
             )}
             <Button
+              className="tv-icon-button"
               icon="cross"
               minimal={true}
+              title="Close this tab"
               onClick={() => {
                 closeTab(props.tab);
               }}
@@ -113,23 +142,34 @@ export function TabCard(props: ITabCardProps) {
           <></>
         )}
       </div>
-      <div
-        className={classes.content}
-        onClick={() => {
-          props.tab.chromeTabId ? switchToTab(props.tab) : '';
-        }}
+      <button
+        type="button"
+        className={clsx(classes.content, classes.contentButton)}
+        title={props.tab.title}
+        onClick={() => activate(props.tab)}
       >
         <div className={clsx(classes.tabTitle, classes.wrapText)}>
           <b>
             <CollapsibleLabel maxLength={56} text={props.tab.title} />
           </b>
+          {props.tab.pinned ? (
+            <Tag
+              minimal={true}
+              icon="pin"
+              intent={Intent.PRIMARY}
+              className={classes.pinnedTag}
+              title="This tab is pinned in Chrome"
+            >
+              pinned
+            </Tag>
+          ) : null}
         </div>
         <div className={clsx(classes.tabUrl, classes.wrapText)}>
           <small>
             <CollapsibleLabel text={props.tab.url} />
           </small>
         </div>
-      </div>
+      </button>
     </Card>
   );
 
@@ -141,7 +181,7 @@ export function TabCard(props: ITabCardProps) {
   ) : null;
 
   return needPreview ? (
-    <Popover2
+    <Popover
       autoFocus={false}
       placement="right"
       interactionKind="hover"
@@ -153,7 +193,7 @@ export function TabCard(props: ITabCardProps) {
       portalClassName={classes.tabCardPopover}
     >
       {card}
-    </Popover2>
+    </Popover>
   ) : (
     card
   );

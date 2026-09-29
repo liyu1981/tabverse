@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 export function usePageControl<T>(
   pageItems: T[],
   pageLimit: number,
-): [() => T[], () => JSX.Element | string] {
+): [() => T[], () => React.JSX.Element | string] {
   const totalCount = pageItems.length;
   const [startPage, setStartPage] = useState(0);
   const totalPage =

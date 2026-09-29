@@ -3,6 +3,43 @@
   src: url('./resource/Shrikhand.woff2') format('woff2');
 }
 
+/*
+ * Collapsed rail: just the app mark, the wordmark does not fit. It is also the
+ * expand button (there is no chevron in the rail), so it is a real button with
+ * hover/focus feedback.
+ */
+.collapsedContainer {
+  display: flex;
+  justify-content: center;
+  padding: 12px 0 10px 0;
+}
+
+.collapsedMarkButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  border-radius: 14px;
+  cursor: pointer;
+  transition:
+    transform 120ms ease-in-out,
+    background-color 120ms ease-in-out;
+}
+
+.collapsedMarkButton:hover,
+.collapsedMarkButton:focus-visible {
+  background-color: rgb(255 255 255 / 16%);
+  transform: scale(1.06);
+}
+
+.collapsedMark {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+}
+
 .logo {
   background: linear-gradient(
     #fd004c 16.7%,

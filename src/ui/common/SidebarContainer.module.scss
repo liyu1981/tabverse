@@ -1,13 +1,27 @@
 @use '../../global.scss';
 
-$sidebar-width: 320px;
-$transition-time: 0.5s;
+$sidebar-width-expanded: 320px;
+$sidebar-width-collapsed: 72px;
+$transition-time: 200ms;
 
+/*
+ * The sidebar width lives in ONE place: the `--sidebar-width` custom property
+ * set on .topContainer. Both the fixed sidebar and the offset of the content
+ * column read it, so they cannot drift apart (they used to: the content column
+ * was `margin-left: 320px; width: 100%`, which overflows the viewport by the
+ * sidebar width and pushed the right hand panel off screen).
+ */
 .topContainer {
   display: flex;
+  --sidebar-width: #{$sidebar-width-expanded};
+}
+
+.topContainer.collapsed {
+  --sidebar-width: #{$sidebar-width-collapsed};
 }
 
 .leftContainer {
+  box-sizing: border-box;
   height: 100vh;
   position: fixed;
   z-index: 1;
@@ -16,11 +30,52 @@ $transition-time: 0.5s;
   background-color: global.$color-main-brand;
   overflow-x: hidden;
   padding: 12px;
-  width: $sidebar-width;
+  width: var(--sidebar-width);
+  transition: width $transition-time ease-in-out;
 }
 
 .rightContainer {
-  margin-left: $sidebar-width;
-  padding-left: 20px;
-  width: 100%;
+  box-sizing: border-box;
+  margin-left: var(--sidebar-width);
+  width: calc(100% - var(--sidebar-width));
+  min-width: 0;
+  transition: margin-left $transition-time ease-in-out;
+}
+
+/*
+ * The collapse control, pinned to the top of the rail.
+ *
+ * No background, as asked: the glyph itself has to carry the contrast against
+ * the brand-blue rail. Blueprint paints icons with `fill` (its own
+ * `.bp6-icon > svg:not([fill])` rule), so setting `color` on the button is not
+ * the last word - the `fill` is set here too, on a selector that outranks
+ * Blueprint's (0,3,1 vs 0,2,1).
+ */
+.collapseToggle {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 3;
+}
+
+.collapseToggle :global(.bp6-button) {
+  min-width: 30px;
+  min-height: 30px;
+  color: #f4f6fb;
+  background: none;
+  box-shadow: none;
+}
+
+.collapseToggle :global(.bp6-button) :global(.bp6-icon) > svg {
+  fill: #f4f6fb;
+}
+
+.collapseToggle :global(.bp6-button):hover,
+.collapseToggle :global(.bp6-button):focus {
+  color: #ffffff;
+}
+
+.collapseToggle :global(.bp6-button):hover :global(.bp6-icon) > svg,
+.collapseToggle :global(.bp6-button):focus :global(.bp6-icon) > svg {
+  fill: #ffffff;
 }

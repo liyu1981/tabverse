@@ -4,16 +4,18 @@ import {
   Button,
   ButtonGroup,
   EditableText,
-  Intent,
   Menu,
   MenuItem,
+  Popover,
+  Tooltip,
 } from '@blueprintjs/core';
 import React, { useEffect, useState } from 'react';
 import {
   findTabById,
   getTabIds,
-  needAutoSave,
+  TabGroupHint,
 } from '../../../data/tabSpace/TabSpace';
+import { groupOfTab } from '../../../data/tabSpace/tabGroup';
 import {
   newEmptyBookmark,
   setFavIconUrl,
@@ -21,18 +23,20 @@ import {
   setUrl,
 } from '../../../data/bookmark/Bookmark';
 
+import { CapabilityWarning } from './CapabilityWarning';
 import { ErrorBoundary } from '../../common/ErrorBoundary';
 import { List } from 'immutable';
 import { MoveToExistTabSpaceDialog } from '../../dialog/MoveToExistTabSpace';
-import { Popover2 } from '@blueprintjs/popover2';
 import { SaveIndicator } from './SaveIndicator';
+import { SplitBlock, TabGroupBlock } from './TabGroupBlock';
 import { Tab } from '../../../data/tabSpace/Tab';
 import { TabCard } from './TabCard';
 import classes from './TabSpaceListView.module.scss';
 import { getPreview } from '../../../data/tabSpace/TabPreviewCache';
-import { isIdNotSaved } from '../../../data/common';
-import { saveCurrentAllBookmarkIfNeeded } from '../../../data/bookmark/util';
-import { saveCurrentTabSpace } from '../../../data/tabSpace/util';
+import { logger } from '../../../global';
+import { saveAndCloseTabSpace } from '../../../data/tabSpace/closeTabSpace';
+import { saveCurrentBookmarks } from '../../../data/bookmark/util';
+import { tabverseEntries } from '../../../data/tabSpace/tabEntries';
 import { updateTabSpaceName } from '../../../data/tabSpace/chromeTab';
 import { useStore } from 'effector-react';
 
@@ -67,9 +71,9 @@ function SelectedTabToolControl(props: SelectedTabToolControlProps) {
   return (
     <ButtonGroup className={props.className}>
       <Button onClick={() => props.onClick(currentTool)}>{currentTool}</Button>
-      <Popover2 placement="bottom-end" content={content}>
+      <Popover placement="bottom-end" content={content}>
         <Button icon="symbol-triangle-down"></Button>
-      </Popover2>
+      </Popover>
     </ButtonGroup>
   );
 }
@@ -89,6 +93,24 @@ export function TabSpaceListView() {
   const [selectedTabs, setSelectedTabs] = useState<List<Tab>>(List());
   const [isMoveToExistTabSpaceDialogOpen, setIsMoveToExistTabSpaceDialogOpen] =
     useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+
+  // The tabverse itself is saved on every tab event, so this button is not
+  // about saving it: it flushes whatever is still pending (a note typed a
+  // moment ago, say) and then closes the tabverse tab. The window's other tabs
+  // stay open as ordinary Chrome tabs.
+  const saveAndClose = async () => {
+    if (isClosing) {
+      return;
+    }
+    setIsClosing(true);
+    try {
+      await saveAndCloseTabSpace();
+    } catch (err) {
+      logger.error('could not save and close the tabverse', err);
+      setIsClosing(false);
+    }
+  };
 
   useEffect(() => {
     setSelectedTabs((lastSelectedTabs) => {
@@ -98,44 +120,71 @@ export function TabSpaceListView() {
     });
   }, [tabSpace.tabs]);
 
-  const tabEntries = getTabIds(tabSpace).map((tabId) => {
-    const tab = findTabById(tabId, tabSpace);
-    return tab ? (
-      <div key={tab.id}>
-        <ErrorBoundary>
-          <TabCard
-            tab={tab}
-            needPreview={true}
-            needSelector={true}
-            tabPreview={getPreview(tab.chromeTabId, tabPreviewCache)}
-            isBookmarked={isBookmarked(tab.url)}
-            onBookmark={(tab: Tab) => {
-              bookmarkStoreApi.addBookmark(
-                setFavIconUrl(
-                  tab.favIconUrl,
-                  setName(tab.title, setUrl(tab.url, newEmptyBookmark())),
-                ),
+  const tabGroupOf = (tab: Tab) => groupOfTab(tabSpace.tabGroups, tab.id);
+
+  const tabCard = (tab: Tab) => (
+    <div key={tab.id} className={tabGroupOf(tab) ? classes.tabInGroup : ''}>
+      <ErrorBoundary>
+        <TabCard
+          tab={tab}
+          needPreview={true}
+          needSelector={true}
+          tabPreview={getPreview(tab.chromeTabId, tabPreviewCache)}
+          isBookmarked={isBookmarked(tab.url)}
+          onBookmark={(tab: Tab) => {
+            bookmarkStoreApi.addBookmark(
+              setFavIconUrl(
+                tab.favIconUrl,
+                setName(tab.title, setUrl(tab.url, newEmptyBookmark())),
+              ),
+            );
+            saveCurrentBookmarks();
+          }}
+          onSelect={(tabId, selected) => {
+            if (selected) {
+              setSelectedTabs((lastSelected) =>
+                lastSelected.push(findTabById(tabId, tabSpace)),
               );
-              saveCurrentAllBookmarkIfNeeded();
-            }}
-            onSelect={(tabId, selected) => {
-              if (selected) {
-                setSelectedTabs((lastSelected) =>
-                  lastSelected.push(findTabById(tabId, tabSpace)),
-                );
-              } else {
-                setSelectedTabs((lastSelected) =>
-                  lastSelected.filter((tab) => tab.id !== tabId).toList(),
-                );
-              }
-            }}
-          />
-        </ErrorBoundary>
-      </div>
-    ) : (
-      <></>
-    );
-  });
+            } else {
+              setSelectedTabs((lastSelected) =>
+                lastSelected.filter((tab) => tab.id !== tabId).toList(),
+              );
+            }
+          }}
+        />
+      </ErrorBoundary>
+    </div>
+  );
+
+  // Groups, split pairs and plain tabs come from the shared entry builder, so
+  // this list and the saved tabverse list describe a tabverse the same way
+  const tabEntries: React.ReactNode[] = [];
+  for (const entry of tabverseEntries(tabSpace)) {
+    if (entry.kind === 'tab') {
+      tabEntries.push(tabCard(entry.tab));
+    } else if (entry.kind === 'split') {
+      const [first, second] = entry.tabs as [Tab, Tab];
+      tabEntries.push(
+        <SplitBlock
+          key={`split-${first.splitViewId}`}
+          splitViewId={first.splitViewId}
+        >
+          {tabCard(first)}
+          {tabCard(second)}
+        </SplitBlock>,
+      );
+    } else if (entry.tabs.length > 0) {
+      tabEntries.push(
+        <TabGroupBlock
+          key={`group-${entry.group.id}`}
+          group={entry.group}
+          tabCount={entry.tabs.length}
+        >
+          <div className={classes.tabInGroup}>{entry.tabs.map(tabCard)}</div>
+        </TabGroupBlock>,
+      );
+    }
+  }
 
   const tabSpaceTitleView = (
     <div className={classes.titleContainer}>
@@ -153,19 +202,16 @@ export function TabSpaceListView() {
         </h1>
       </div>
       <div className={classes.titleButtons}>
-        <Button
-          className={isIdNotSaved(tabSpace.id) ? 'tv-primary-button' : ''}
-          text={isIdNotSaved(tabSpace.id) ? 'Save' : 'Auto'}
-          title={
-            isIdNotSaved(tabSpace.id)
-              ? 'Click to save and turn on auto save mode'
-              : 'Auto save mode is on.'
-          }
-          icon="floppy-disk"
-          intent={Intent.NONE}
-          minimal={isIdNotSaved(tabSpace.id) ? false : true}
-          onClick={saveCurrentTabSpace}
-        />
+        <Tooltip content="Save and close">
+          <Button
+            className="tv-icon-button"
+            aria-label="Save and close this tabverse"
+            icon="floppy-disk"
+            minimal={true}
+            loading={isClosing}
+            onClick={() => void saveAndClose()}
+          />
+        </Tooltip>
       </div>
     </div>
   );
@@ -193,7 +239,7 @@ export function TabSpaceListView() {
         </div>
       ) : null}
       <div className={classes.toolbarRightContainer}>
-        {needAutoSave(tabSpace) ? <SaveIndicator /> : 'Auto Saving Off'}
+        <SaveIndicator />
       </div>
     </div>
   );
@@ -204,13 +250,13 @@ export function TabSpaceListView() {
         {tabSpaceTitleView}
         {tabSpaceToolbarView}
       </div>
-      <div className={classes.headerPlaceholder}></div>
     </div>
   );
 
   return (
     <div className={classes.container}>
       {tabSpaceHeaderView}
+      <CapabilityWarning />
       <div className={classes.tabEntriesContainer}>{tabEntries}</div>
       <div className={classes.bottomPlaceholder}></div>
       <MoveToExistTabSpaceDialog

@@ -12,7 +12,6 @@ import { LoadingSpinner } from '../../common/LoadingSpinner';
 import { PagingControl } from '../../common/PagingControl';
 import { SavedTabSpaceDetail } from './SavedTabSpaceDetail';
 import { SearchInput } from './Search';
-import { SearchPagingControl } from '../../../fullTextSearch/SearchInput';
 import SimpleBar from 'simplebar-react';
 import { TabSpace } from '../../../data/tabSpace/TabSpace';
 import classes from './SavedTabSpaceView.module.scss';
@@ -24,31 +23,24 @@ import {
   tabSpaceQueryStoreApi,
 } from '../../../data/tabSpaceQuery/store';
 import {
-  getCursorsForSearchPaging,
-  getShouldShowSearchPaging,
   getSortedGroupedSavedTabSpaces,
   isSearchMode,
   isTabSpaceOpened,
 } from '../../../data/tabSpaceQuery/TabSpaceQuery';
-import { $tabSpaceRegistryState } from '../../../data/tabSpaceRegistry/store';
 
 export function SavedTabSpaceView() {
   const tabSpace = useStore($tabSpace);
   const tabStorage = useStore($tabSpaceStorage);
   const tabSpaceQuery = useStore($tabSpaceQuery);
-  const { tabSpaceRegistry } = useStore($tabSpaceRegistryState);
-
   useAsyncEffect(async () => {
     await tabSpaceQueryStoreApi.reload();
-  }, [tabSpaceRegistry, tabStorage]);
+  }, [tabSpace, tabStorage]);
 
-  const switchToTabSpace = (tabSpace: TabSpace) => {
-    const tabSpaceStub = tabSpaceRegistry.get(tabSpace.id);
-    if (tabSpaceStub) {
-      switchToTabSpaceUtil(
-        tabSpaceStub.chromeTabId,
-        tabSpaceStub.chromeWindowId,
-      );
+  // Only this window's tabverse can be switched to: a manager page does not
+  // know (or care) which window another tabverse is open in (ADR 0006).
+  const switchToTabSpace = (target: TabSpace) => {
+    if (target.id === tabSpace.id) {
+      switchToTabSpaceUtil(tabSpace.chromeTabId, tabSpace.chromeWindowId);
     }
   };
 
@@ -56,46 +48,28 @@ export function SavedTabSpaceView() {
     restoreSavedTabSpaceUtil(tabSpace.id);
 
   const loadToCurrentWindow = (savedTabSpaceId: string) =>
-    loadToCurrentWindowUtil(tabSpace.chromeTabId, savedTabSpaceId);
+    loadToCurrentWindowUtil(savedTabSpaceId);
 
   const [groupLabelVerb, groupedSavedTabSpaces] =
     getSortedGroupedSavedTabSpaces(tabSpaceQuery);
 
+  // Browsing and searching page the same way now: both end up with a list of
+  // tabverses (ADR 0008 removed the index cursor).
   const renderPagingControl = () => {
-    let content = null;
-    if (isSearchMode(tabSpaceQuery)) {
-      if (getShouldShowSearchPaging(tabSpaceQuery)) {
-        const { availableCursors, currentCursorIndex, nextCursor } =
-          getCursorsForSearchPaging(tabSpaceQuery);
-        content = (
-          <SearchPagingControl
-            cursors={availableCursors}
-            currentCursorIndex={currentCursorIndex}
-            nextCursor={nextCursor}
-            onClickCursor={(cursorIndex) =>
-              tabSpaceQueryStoreApi.goQueryCursor(cursorIndex)
-            }
-            onClickMore={() => tabSpaceQueryStoreApi.goQueryCursorNext()}
-          />
-        );
-      }
-    } else {
-      if (tabSpaceQuery.totalPageCount > 1) {
-        content = (
-          <PagingControl
-            current={tabSpaceQuery.queryPageStart + 1}
-            total={tabSpaceQuery.totalPageCount}
-            onNext={() => tabSpaceQueryStoreApi.nextPage()}
-            onPrev={() => tabSpaceQueryStoreApi.prevPage()}
-            onLast={() => tabSpaceQueryStoreApi.lastPage()}
-            onFirst={() => tabSpaceQueryStoreApi.firstPage()}
-          />
-        );
-      }
+    if (tabSpaceQuery.totalPageCount <= 1) {
+      return null;
     }
-
-    return content === null ? null : (
-      <div className={classes.pagingControlContainer}>{content}</div>
+    return (
+      <div className={classes.pagingControlContainer}>
+        <PagingControl
+          current={tabSpaceQuery.queryPageStart + 1}
+          total={tabSpaceQuery.totalPageCount}
+          onNext={() => tabSpaceQueryStoreApi.nextPage()}
+          onPrev={() => tabSpaceQueryStoreApi.prevPage()}
+          onLast={() => tabSpaceQueryStoreApi.lastPage()}
+          onFirst={() => tabSpaceQueryStoreApi.firstPage()}
+        />
+      </div>
     );
   };
 
@@ -111,6 +85,20 @@ export function SavedTabSpaceView() {
                   tabSpaceQueryStoreApi.setQuery(query);
                 }}
               />
+              {isSearchMode(tabSpaceQuery) ? (
+                <div className={classes.searchStatus}>
+                  {tabSpaceQuery.totalPageCount} tabverse
+                  {tabSpaceQuery.totalPageCount === 1 ? '' : 's'} found
+                  {tabSpaceQuery.searchBackend === 'server'
+                    ? ' (searched on the sync server)'
+                    : ' (searched on this device)'}
+                  {tabSpaceQuery.searchUnknownTabSpaceIds.length > 0
+                    ? `, ${tabSpaceQuery.searchUnknownTabSpaceIds.length} not downloaded yet`
+                    : ''}
+                </div>
+              ) : (
+                ''
+              )}
             </div>
             <div className={classes.stickyOnPlaceholder}></div>
           </div>

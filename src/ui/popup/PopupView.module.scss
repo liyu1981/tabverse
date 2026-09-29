@@ -1,0 +1,110 @@
+@use '../../global.scss';
+
+.container {
+  display: flex;
+  flex-direction: column;
+  max-height: 600px;
+}
+
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 12px 14px 6px 14px;
+  color: global.$color-a;
+  font-size: 12px;
+}
+
+.headerTitle {
+  font-weight: 600;
+  font-size: 14px;
+  color: global.$color-d;
+}
+
+.createContainer {
+  padding: 0 14px 10px 14px;
+}
+
+.createButton {
+  width: 100%;
+}
+
+.searchContainer {
+  padding: 0 14px 8px 14px;
+}
+
+.listContainer {
+  flex: 1;
+  overflow-y: auto;
+  border-top: 1px solid global.$color-e;
+  max-height: 420px;
+}
+
+.listHeading {
+  position: sticky;
+  top: 0;
+  background-color: global.$color-c;
+  color: global.$color-a;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 6px 14px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-bottom: 1px solid global.$color-light-shade;
+}
+
+.row:hover {
+  background-color: global.$color-light-shade;
+}
+
+.rowLabel {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  padding: 0;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.rowName {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rowMeta {
+  display: flex;
+  gap: 6px;
+  color: global.$color-a;
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rowBadge {
+  color: global.$color-d;
+  font-weight: 600;
+}
+
+.notice {
+  padding: 14px;
+  color: global.$color-a;
+  font-style: italic;
+}
+
+.status {
+  border-top: 1px solid global.$color-light-shade;
+  color: global.$color-a;
+  font-size: 11px;
+  padding: 6px 14px;
+}

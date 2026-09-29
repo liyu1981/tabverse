@@ -1,24 +1,23 @@
+import { fromNow } from '../../time';
 import { Button, Checkbox, Dialog, Intent } from '@blueprintjs/core';
-import { EmptyQuery, Query, calcCursorBegin } from '../../fullTextSearch';
-import React, { useContext, useEffect, useState } from 'react';
+import { EmptyQuery, Query, searchSavedTabSpaces } from '../../data/search';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import {
   moveTabsToTabSpace,
   querySavedTabSpace,
 } from '../../data/tabSpace/util';
 
-import { SearchInput as FullTextSearchInput } from '../../fullTextSearch/SearchInput';
+import { SearchInput as FullTextSearchInput } from '../common/SearchInput';
 import { IconName } from '@blueprintjs/icons';
 import { LoadStatus } from '../../global';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 import { ManagerViewContext } from '../manager/ManagerViewContext';
-import Moment from 'moment';
 import { Tab } from '../../data/tabSpace/Tab';
 import { TabSpace } from '../../data/tabSpace/TabSpace';
 import classes from './MoveToExistTabSpace.module.scss';
 import clsx from 'clsx';
 import { merge } from 'lodash';
 import { scopeMap } from '../manager/SavedTabSpace/Search';
-import { searchSavedTabSpace } from '../../background/fullTextSearch/search';
 import {
   addPagingToQueryParams,
   QUERY_PAGE_LIMIT_DEFAULT,
@@ -41,7 +40,9 @@ export function MoveToExistTabSpaceDialog(
   const [removeAfterMove, setRemoveAfterMove] = useState<boolean>(true);
   const managerViewContext = useContext(ManagerViewContext);
 
-  const reloadCandidateTabSpaces = async () => {
+  // useCallback so the effect can depend on the loader itself instead of
+  // reaching past it into `query`
+  const reloadCandidateTabSpaces = useCallback(async () => {
     setLoadStatus(LoadStatus.Loading);
     if (query.isEmpty()) {
       const savedTabSpaceParams = addPagingToQueryParams(
@@ -52,18 +53,17 @@ export function MoveToExistTabSpaceDialog(
       const tabSpaces = await querySavedTabSpace(savedTabSpaceParams);
       setCandidateTabSpaces(tabSpaces);
     } else {
-      const [tabSpaces, nextCursor] = await searchSavedTabSpace({
-        query,
-        cursor: calcCursorBegin(query, QUERY_PAGE_LIMIT_DEFAULT),
-      });
-      setCandidateTabSpaces(tabSpaces);
+      const result = await searchSavedTabSpaces(query);
+      setCandidateTabSpaces(
+        result.tabSpaces.slice(0, QUERY_PAGE_LIMIT_DEFAULT),
+      );
     }
     setLoadStatus(LoadStatus.Done);
-  };
+  }, [query]);
 
   useEffect(() => {
     reloadCandidateTabSpaces();
-  }, [query]);
+  }, [reloadCandidateTabSpaces]);
 
   const renderCandidateTabSpaces = () => {
     if (candidateTabSpaces.length <= 0) {
@@ -73,7 +73,8 @@ export function MoveToExistTabSpaceDialog(
         <div className={classes.candidateTopContainer}>
           {candidateTabSpaces.map((tabSpace) => {
             return (
-              <div
+              <button
+                type="button"
                 key={tabSpace.id}
                 className={clsx(
                   classes.candidateContainer,
@@ -89,10 +90,10 @@ export function MoveToExistTabSpaceDialog(
               >
                 <span className={classes.candidateName}>{tabSpace.name}</span>
                 <span className={classes.candidateInfo}>
-                  created: {Moment(tabSpace.createdAt).fromNow()}, saved:
-                  {Moment(tabSpace.updatedAt).fromNow()}
+                  created: {fromNow(tabSpace.createdAt)}, saved:
+                  {fromNow(tabSpace.updatedAt)}
                 </span>
-              </div>
+              </button>
             );
           })}
         </div>
@@ -107,6 +108,9 @@ export function MoveToExistTabSpaceDialog(
         intent: Intent.WARNING,
         message: 'Can not move tabs without selecting a target tabverse!',
       });
+      // the toast above is a warning, not a cancel: without this the move ran
+      // with a null target
+      return;
     } else {
       const commonToasterProps = {
         icon: 'git-new-branch' as IconName,
@@ -116,7 +120,7 @@ export function MoveToExistTabSpaceDialog(
           intent: Intent.NONE,
           message: `moving ${props.tabsForMoving.length} ${
             props.tabsForMoving.length > 1 ? 'tabs' : 'tab'
-          } to ${searchSavedTabSpace.name}`,
+          } to ${selectedCandidateTabSpace.name}`,
         }),
       );
       await moveTabsToTabSpace(props.tabsForMoving, selectedCandidateTabSpace);
@@ -130,7 +134,7 @@ export function MoveToExistTabSpaceDialog(
           intent: Intent.SUCCESS,
           message: `moved ${props.tabsForMoving.length} ${
             props.tabsForMoving.length > 1 ? 'tabs' : 'tab'
-          } to ${searchSavedTabSpace.name}`,
+          } to ${selectedCandidateTabSpace.name}`,
         }),
         key,
       );

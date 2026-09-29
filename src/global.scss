@@ -1,3 +1,7 @@
+// `darken()` and friends are removed in Dart Sass 3.0.0; `color.adjust()`
+// is the replacement (equivalent, per Sass's own deprecation notice).
+@use 'sass:color';
+
 $color-a: #797a7a;
 $color-b: #adc7fb;
 $color-c: #f6f7f9;
@@ -10,7 +14,7 @@ $color-main-brand: $color-d;
 $color-dark-accent: #6b6977;
 $color-dark-shade: #1d191f;
 
-$color-text: darken($color-d, 15%);
+$color-text: color.adjust($color-d, $lightness: -15%);
 $color-background: $color-c;
 
 $sidebar-background-color: $color-main-brand;

@@ -1,24 +1,10 @@
 import * as PubSub from 'pubsub-js';
 
-import { IDatabaseChange } from 'dexie-observable/api';
-import { TabSpaceStub } from '../data/tabSpaceRegistry/TabSpaceRegistry';
 import { logger } from '../global';
 
-export type MsgHandler = (
-  payload: any,
-  sender: chrome.runtime.MessageSender,
-  sendResponse: (response?: any) => void,
-) => void;
-
-export interface IUpdateRegistryPayload {
-  from: string;
-  to: string;
-  entry: TabSpaceStub;
-}
-
-export interface IFullTextAddRemoveToIndexPayload {
-  type: string;
-  id: string;
+/** Payload of TabSpaceDBMsg.Changed / BackgroundMsg.LocalTablesChanged. */
+export interface ILocalTablesChangedPayload {
+  tables: string[];
 }
 
 export enum TabSpaceMsg {
@@ -26,18 +12,18 @@ export enum TabSpaceMsg {
   ChangeID = 'tabspace_changeid',
 }
 
+/** In-process "these tables changed" notice; payload is a list of table names. */
 export enum TabSpaceDBMsg {
   Changed = 'db_changed',
 }
 
 export enum BackgroundMsg {
   AuditComplete = 'background_auditcomplete',
-  GetTabSpace = 'background_gettabspace',
-}
-
-export enum FullTextSearchMsg {
-  AddToIndex = 'fulltext_addtoindex',
-  RemoveFromIndex = 'fulltext_removefromindex',
+  /**
+   * Sent by a context that wrote to the database so the *other* manager pages
+   * can re-read (see data/repo/localTables.ts).
+   */
+  LocalTablesChanged = 'background_localtableschanged',
 }
 
 export type TabSpaceId = string;
@@ -45,8 +31,6 @@ export type TabId = string;
 export type ChromeTabId = number;
 export type AuditLogs = string[];
 export type NotNeed = undefined | null;
-
-export const NotNeedPayload = undefined;
 
 export async function sendChromeMessage(msgPayload: {
   type: TabSpaceMsg.Focus;
@@ -59,35 +43,31 @@ export async function sendChromeMessage(msgPayload: {
 }): Promise<any>;
 
 export async function sendChromeMessage(msgPayload: {
-  type: BackgroundMsg.GetTabSpace;
-  payload: ChromeTabId;
-}): Promise<any>;
-
-export async function sendChromeMessage(msgPayload: {
-  type: FullTextSearchMsg.AddToIndex;
-  payload: IFullTextAddRemoveToIndexPayload;
-}): Promise<any>;
-
-export async function sendChromeMessage(msgPayload: {
-  type: FullTextSearchMsg.RemoveFromIndex;
-  payload: IFullTextAddRemoveToIndexPayload;
+  type: BackgroundMsg.LocalTablesChanged;
+  payload: ILocalTablesChangedPayload;
 }): Promise<any>;
 
 export async function sendChromeMessage(msgPayload: {
   type: string;
   payload:
-    | TabSpaceStub
     | TabSpaceId
     | TabId
-    | TabSpaceStub[]
-    | IUpdateRegistryPayload
     | ChromeTabId
     | AuditLogs
-    | IFullTextAddRemoveToIndexPayload
+    | ILocalTablesChangedPayload
     | NotNeed;
 }): Promise<any> {
   const result = await new Promise((resolve, _reject) => {
     chrome.runtime.sendMessage(msgPayload, (response) => {
+      // a context with no listener (e.g. the worker with no page open) is the
+      // normal case, not an error worth throwing on
+      if (chrome.runtime.lastError) {
+        logger.log(
+          'send chrome runtime message had no receiver:',
+          msgPayload.type,
+          chrome.runtime.lastError.message,
+        );
+      }
       logger.info('send chrome runtime message:', msgPayload);
       resolve(response);
     });
@@ -102,7 +82,7 @@ interface ITabSpaceMsgPayload {
 
 export function sendPubSubMessage(
   type: TabSpaceDBMsg.Changed,
-  payload: IDatabaseChange[],
+  payload: string[],
 ): void;
 
 export function sendPubSubMessage(
@@ -112,7 +92,7 @@ export function sendPubSubMessage(
 
 export function sendPubSubMessage(
   type: string,
-  payload: IDatabaseChange[] | ITabSpaceMsgPayload,
+  payload: string[] | ITabSpaceMsgPayload,
 ): void {
   PubSub.publish(type, payload);
 }

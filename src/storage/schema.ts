@@ -1,7 +1,3 @@
-import {
-  CHROMESESSION_DB_SCHEMA,
-  CHROMESESSION_DB_TABLE_NAME,
-} from '../data/chromeSession/ChromeSession';
 import { TAB_DB_SCHEMA, TAB_DB_TABLE_NAME } from '../data/tabSpace/Tab';
 import {
   TABSPACE_DB_SCHEMA,
@@ -19,6 +15,14 @@ import {
   ALLBOOKMARK_DB_SCHEMA,
   ALLBOOKMARK_DB_TABLE_NAME,
 } from '../data/bookmark/AllBookmark';
+import {
+  TAB_PREVIEW_DB_SCHEMA,
+  TAB_PREVIEW_DB_TABLE_NAME,
+} from '../data/tabSpace/tabPreviewSchema';
+import {
+  CLOSED_TAB_DB_SCHEMA,
+  CLOSED_TAB_DB_TABLE_NAME,
+} from '../data/closedTab/ClosedTab';
 
 export const schemas = {};
 
@@ -30,4 +34,5 @@ schemas[NOTE_DB_TABLE_NAME] = NOTE_DB_SCHEMA;
 schemas[ALLNOTE_DB_TABLE_NAME] = ALLNOTE_DB_SCHEMA;
 schemas[BOOKMARK_DB_TABLE_NAME] = BOOKMARK_DB_SCHEMA;
 schemas[ALLBOOKMARK_DB_TABLE_NAME] = ALLBOOKMARK_DB_SCHEMA;
-schemas[CHROMESESSION_DB_TABLE_NAME] = CHROMESESSION_DB_SCHEMA;
+schemas[TAB_PREVIEW_DB_TABLE_NAME] = TAB_PREVIEW_DB_SCHEMA;
+schemas[CLOSED_TAB_DB_TABLE_NAME] = CLOSED_TAB_DB_SCHEMA;

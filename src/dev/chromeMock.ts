@@ -13,13 +13,11 @@ function getMockListenable(type: string): IMockListenable {
   const msgType = type;
   return {
     addListener: (callback: any) => {
-      // console.log('subscribe', msgType, callback);
       PubSub.subscribe(msgType, (msgType, payload) => {
         callback(...payload);
       });
     },
     sendMessage: (args: any[]) => {
-      // console.log('publish', msgType, arguments);
       PubSub.publish(msgType, args);
     },
   };
@@ -102,7 +100,7 @@ class MockTabs {
   }
 
   async query(params: chrome.tabs.QueryInfo): Promise<any[]> {
-    let result = [];
+    let result: any[];
 
     if (params.active) {
       result = this.tabs.filter((t, index) => index === this.activeTabIndex);
@@ -149,7 +147,7 @@ class MockTabsApi {
   }
 
   async query(params: chrome.tabs.QueryInfo): Promise<any[]> {
-    let result = [];
+    let result: any[];
     if (params.currentWindow) {
       const w = this.chrome._getCurrentWindow();
       result = await w.tabs.query(params);
@@ -175,6 +173,49 @@ class MockTabsApi {
     if (params && params.active) {
       this.chrome.setActiveTab(tabId);
     }
+    if (params && params.url) {
+      // a navigation: the popup reuses a window's manager tab instead of
+      // opening a second one, which only works if update really moves it
+      this.chrome.updateTab(
+        tabId,
+        { title: 'loading...', url: params.url, favIconUrl: '', pinned: false },
+        false,
+      );
+    }
+    return this.chrome.getTab(tabId);
+  }
+
+  /**
+   * Closes a tab. The counterpart of create(), used by the paths that close
+   * something, e.g. "save and close" on the tabverse tab.
+   */
+  async remove(tabId: number) {
+    const removed = this.chrome.removeTab(tabId);
+    return removed ? { id: removed.id, windowId: removed.windowId } : undefined;
+  }
+
+  /**
+   * Opens a tab in the current window (or params.windowId). Used by the code
+   * paths that re-open something, e.g. restoring a closed tab or clicking a
+   * bookmark.
+   */
+  async create(params: chrome.tabs.CreateProperties) {
+    const windowId = params.windowId ?? this.chrome.currentWindowId;
+    const tab = this.chrome._newTabFromData(
+      {
+        title: params.url ?? '',
+        url: params.url ?? '',
+        favIconUrl: '',
+        pinned: !!params.pinned,
+      },
+      windowId,
+    );
+    this.chrome.insertTab(tab, windowId);
+    this.onCreated.sendMessage([tab]);
+    if (params.active) {
+      this.chrome.setActiveTab(tab.id);
+    }
+    return tab;
   }
 }
 

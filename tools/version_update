@@ -8,7 +8,9 @@ if (args.length <= 0) {
   process.exit(1);
 }
 
-const replace = require('replace-in-file');
+// replace-in-file 9 dropped the callable default export with a `.sync`
+// method; the API is now named exports (`replaceInFileSync`).
+const { replaceInFileSync } = require('replace-in-file');
 
 const options = [
   {
@@ -21,16 +23,11 @@ const options = [
     from: /"version": "[0-9].[0-9].[0-9]",/g,
     to: `"version": "${args[0]}",`,
   },
-  {
-    files: 'dist/manifest.json',
-    from: /"version": "[0-9].[0-9].[0-9]",/g,
-    to: `"version": "${args[0]}",`,
-  },
 ];
 
 options.forEach(function (option) {
   try {
-    const results = replace.sync(option);
+    const results = replaceInFileSync(option);
     console.log('Replacement results:', results);
   } catch (error) {
     console.error('Error occurred:', error);

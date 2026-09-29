@@ -1,20 +1,19 @@
-import { TabSpaceOp, isTabSpaceManagerPage } from '../global';
+// Vendor styles first: the popup's own stylesheet and css modules have to come
+// after them, in the emitted order.
+import 'normalize.css';
+import '@blueprintjs/core/lib/css/blueprint.css';
+import '@blueprintjs/icons/lib/css/blueprint-icons.css';
+// the same control styles the manager page uses, then the popup's own
+import './theme.scss';
+import './popup/popup.scss';
 
-import { find } from 'lodash';
+import React from 'react';
 
-// chrome.tabs.create({ url: 'devdata.html' });
+import { PopupView } from './popup/PopupView';
+import { renderPage } from './common/base';
+import { setDebugLogLevel, TabSpaceLogLevel } from '../debug';
 
-function openManager() {
-  chrome.tabs.query({ currentWindow: true }, (tabs) => {
-    const t = find(tabs, (tab) => isTabSpaceManagerPage(tab));
-    if (t) {
-      chrome.tabs.update(t.id, { active: true });
-      window.close();
-    } else {
-      chrome.tabs.create({ url: `manager.html?op=${TabSpaceOp.New}` });
-    }
-  });
-}
+setDebugLogLevel(TabSpaceLogLevel.LOG);
+console.info('Tabverse popup');
 
-console.info('Tabverse!');
-openManager();
+renderPage({ pageComponent: <PopupView /> });

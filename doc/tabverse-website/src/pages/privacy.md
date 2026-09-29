@@ -17,9 +17,28 @@ Privacy Policy.
 
 **Information Collection and Use**
 
-For a better experience, while using our Service, I may require you to provide
-us with certain personally identifiable information. The information that I
-request will be retained on your device and is not collected by me in any way.
+Tabverse stores your data **on your own device** (in the browser's local
+database). By default nothing is transmitted anywhere, and the app works
+fully without an account or a network connection.
+
+**Optional server sync**
+
+You can choose to pair your browser with your own sync server (an open source
+Go program called `tabversed`). Only when you do this, and only after you
+press "Upload local data", the following is sent to **the server you
+configured** over an encrypted connection:
+
+- tab URLs and titles, saved tab groups, notes, todos and bookmarks
+- periodically captured session snapshots (window/tab listings)
+
+That data is used solely to synchronise your own devices. It is never sold,
+never shared with third parties, and never sent to any other host than the
+server URL you entered. Server side retention removes session snapshots after
+14 days by default (configurable, 0 keeps them forever). You can disconnect at
+any time from the sync dialog; your local copy remains untouched.
+
+There are no accounts, no analytics, no advertising and no tracking in
+Tabverse.
 
 **Log Data**
 
@@ -92,7 +111,7 @@ I may update our Privacy Policy from time to time. Thus, you are advised to
 review this page periodically for any changes. I will notify you of any changes
 by posting the new Privacy Policy on this page.
 
-This policy is effective as of 2021-12-06
+This policy is effective as of 2021-12-06; the server sync section was added in 2026.
 
 **Contact Us**
 

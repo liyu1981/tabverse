@@ -37,8 +37,38 @@
   hyphens: auto;
 }
 
+/*
+ * The content area became a real <button> (so it is reachable by keyboard).
+ * Only what a button actually needs is reset here: the padding that reserves
+ * room for the floated favicon and buttons lives on .content and must survive.
+ */
+.contentButton {
+  display: block;
+  /* .content keeps padding-left/right (that is the space beside the floated
+     favicon and buttons); only the UA's 1px top/bottom is dropped */
+  padding-top: 0;
+  padding-bottom: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
 .tabTitle {
   font-size: 1.2em;
+}
+
+/* Chrome's pinned state, shown next to the title */
+/* Chrome puts pinned tabs in their own section, so "pinned" is part of what a
+ * tab is, not a decoration: it has to be readable in the saved list too, which
+ * is where a user goes to check what a tabverse holds. */
+.pinnedTag {
+  margin-left: 8px;
+  font-size: 0.75em;
+  vertical-align: middle;
+  white-space: nowrap;
 }
 
 .tabUrl {
@@ -92,19 +122,19 @@
   border: 1px solid #f1f1f1;
 }
 
-.tabCardPopover :global(.bp4-popover2) {
+.tabCardPopover :global(.bp6-popover) {
   border-radius: 38px;
   box-shadow: 0 8px 24px rgb(16 22 26 / 20%);
 }
 
-.tabCardPopover :global(.bp4-popover2-arrow) {
+.tabCardPopover :global(.bp6-popover-arrow) {
   display: none;
 }
 
-.tabCardPopover :global(.bp4-card) {
+.tabCardPopover :global(.bp6-card) {
   box-shadow: none;
 }
 
-.tabCardPopover :global(.bp4-popover2) :global(.bp4-popover2-content) {
+.tabCardPopover :global(.bp6-popover) :global(.bp6-popover-content) {
   border-radius: 38px;
 }

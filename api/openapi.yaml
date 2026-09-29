@@ -1,0 +1,427 @@
+openapi: 3.1.0
+info:
+  title: Tabverse sync API
+  version: 0.1.0
+  description: |
+    Contract for `tabversed`, the Tabverse sync server.
+
+    ## Authentication
+    All endpoints except `/healthz`, `POST /api/v1/auth/bootstrap` and
+    `POST /api/v1/auth/pair` require `Authorization: Bearer <token>`.
+
+    ## Revisions
+    The server keeps a per-user monotonic revision counter (`rev_seq`). Every
+    accepted record write assigns the next value as the record's `rev`.
+    Clients persist the highest revision they have seen and download deltas
+    with `GET /api/v1/sync?since=<rev>`.
+
+    ## Conflict resolution
+    Last-writer-wins on the client supplied `updated_at` (unix milliseconds).
+    Losing writes come back with `status: "stale"` and the winning server copy
+    attached as `current`.
+
+    ## Realtime stream (WebSocket)
+    `GET /api/v1/sync/stream` upgrades to a WebSocket (token may be passed as
+    `?access_token=` because browsers cannot set handshake headers).
+    Server -> client frames:
+
+    ```json
+    {"type":"hello","rev":12,"server_at":1760000000000}
+    {"type":"records_changed","rev":13,"entities":["note"],"server_at":1760000000001}
+    ```
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8223
+
+tags:
+  - name: auth
+  - name: sync
+  - name: search
+
+paths:
+  /healthz:
+    get:
+      tags: [auth]
+      summary: Liveness probe (unauthenticated)
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, version]
+                properties:
+                  status: { type: string, const: ok }
+                  version: { type: string }
+
+  /api/v1/auth/bootstrap:
+    post:
+      tags: [auth]
+      summary: Create the first account of a deployment
+      description: |
+        Only succeeds while the server has zero users; afterwards it returns
+        409 and the deployment must be paired with an invite code.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string, default: default }
+      responses:
+        '201':
+          description: account created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DeviceCredentials' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /api/v1/auth/pair:
+    post:
+      tags: [auth]
+      summary: Redeem a single use pairing code for a device token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [invite_code]
+              properties:
+                invite_code: { type: string, examples: ['BSKT-VT6V-7SX3-XVCQ'] }
+                device_name: { type: string }
+      responses:
+        '201':
+          description: device registered
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DeviceCredentials' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/v1/auth/invites:
+    post:
+      tags: [auth]
+      summary: Mint a pairing code for another device of this account
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ttl_seconds:
+                  { type: integer, minimum: 60, maximum: 86400, default: 900 }
+      responses:
+        '201':
+          description: code created (single use)
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [code, expires_at]
+                properties:
+                  code: { type: string, examples: ['BSKT-VT6V-7SX3-XVCQ'] }
+                  expires_at: { type: integer, description: unix ms }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/v1/sync:
+    get:
+      tags: [sync]
+      summary: Delta download of records changed since a revision
+      parameters:
+        - {
+            name: since,
+            in: query,
+            schema: { type: integer, minimum: 0, default: 0 },
+          }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1 } }
+      responses:
+        '200':
+          description: records ordered by revision
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [records, next_rev, has_more, server_rev]
+                properties:
+                  records:
+                    type: array
+                    items: { $ref: '#/components/schemas/Record' }
+                  next_rev:
+                    { type: integer, description: pass as `since` next time }
+                  has_more: { type: boolean }
+                  server_rev: { type: integer }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    post:
+      tags: [sync]
+      summary: Batch upload of records (LWW per record)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [records]
+              properties:
+                records:
+                  type: array
+                  maxItems: 500
+                  items: { $ref: '#/components/schemas/RecordInput' }
+      responses:
+        '200':
+          description: per record outcome
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [results, server_rev]
+                properties:
+                  results:
+                    type: array
+                    items: { $ref: '#/components/schemas/RecordResult' }
+                  server_rev: { type: integer }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '413': { $ref: '#/components/responses/TooLarge' }
+
+  /api/v1/entities/{entity}/{id}:
+    parameters:
+      - { $ref: '#/components/parameters/entity' }
+      - { name: id, in: path, required: true, schema: { type: string } }
+    get:
+      tags: [sync]
+      summary: Fetch one record (tombstones included)
+      responses:
+        '200':
+          description: the record
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Record' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [sync]
+      summary: Soft delete (creates a tombstone propagated by delta sync)
+      responses:
+        '200': { $ref: '#/components/responses/SyncResult' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/v1/search:
+    get:
+      tags: [search]
+      summary: Full text search over this account's records
+      description: |
+        Every term is matched, not just one of them, and the last term is
+        matched as a prefix so the extension can search while the user types.
+
+        Hits come back ranked, and each one names the **tabverse** it belongs
+        to (`tabspace_id`), because that is the unit the extension lists: a
+        match on one tab, note or closed tab means "this tabverse matched".
+        The client drops the tabverses it has not downloaded, so a hit for a
+        tabverse this device has never synced is expected and harmless.
+
+        `allnote` / `alltodo` / `allbookmark` are never indexed (they are id
+        lists) and `session` only exists for pre-ADR-0006 clients.
+      parameters:
+        - {
+            name: q,
+            in: query,
+            required: true,
+            schema: { type: string },
+            description: 'free text; last term is matched as a prefix',
+          }
+        - {
+            name: entity,
+            in: query,
+            schema: { $ref: '#/components/schemas/Entity' },
+          }
+        - {
+            name: limit,
+            in: query,
+            schema: { type: integer, minimum: 1, maximum: 200 },
+          }
+      responses:
+        '200':
+          description: ranked hits
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [query, hits]
+                properties:
+                  query: { type: string }
+                  hits:
+                    type: array
+                    items: { $ref: '#/components/schemas/SearchHit' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/v1/sync/stream:
+    get:
+      tags: [sync]
+      summary: Realtime change notifications (WebSocket upgrade)
+      description: |
+        Authenticate with the `Authorization` header or `?access_token=`.
+        See the top level description for the frame format.
+      parameters:
+        - { name: access_token, in: query, schema: { type: string } }
+      responses:
+        '101': { description: switching protocols }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+components:
+  securitySchemes:
+    bearerToken:
+      type: http
+      scheme: bearer
+
+  parameters:
+    entity:
+      name: entity
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/Entity' }
+
+  schemas:
+    Entity:
+      type: string
+      description: >-
+        `session` is deprecated: the extension stopped recording browser
+        session snapshots (ADR 0006) and no current client sends it. The server
+        still accepts and prunes it for older builds.
+      enum:
+        [
+          tabspace,
+          tab,
+          session,
+          note,
+          todo,
+          bookmark,
+          closedtab,
+          allnote,
+          alltodo,
+          allbookmark,
+        ]
+
+    RecordInput:
+      type: object
+      required: [entity, id, updated_at]
+      properties:
+        entity: { $ref: '#/components/schemas/Entity' }
+        id: { type: string, maxLength: 128 }
+        updated_at:
+          type: integer
+          description: client assigned modification time (unix ms), used for LWW
+        deleted: { type: boolean, default: false }
+        payload:
+          type: string
+          maxLength: 1048576
+          description: JSON document shape of the entity
+
+    Record:
+      allOf:
+        - $ref: '#/components/schemas/RecordInput'
+        - type: object
+          required: [rev, server_at]
+          properties:
+            rev: { type: integer, description: server assigned revision }
+            server_at:
+              {
+                type: integer,
+                description: when the server accepted it (unix ms),
+              }
+            device_id: { type: string }
+
+    RecordResult:
+      type: object
+      required: [entity, id, status, rev, updated_at]
+      properties:
+        entity: { $ref: '#/components/schemas/Entity' }
+        id: { type: string }
+        status: { type: string, enum: [ok, stale] }
+        rev: { type: integer }
+        updated_at: { type: integer }
+        current:
+          allOf: [{ $ref: '#/components/schemas/Record' }]
+          description: present when status=stale, the winning server copy
+
+    DeviceCredentials:
+      type: object
+      required: [user_id, device_id, token, server_rev]
+      properties:
+        user_id: { type: string }
+        device_id: { type: string }
+        token: { type: string, description: store this, shown only once }
+        server_rev: { type: integer }
+        issued_at: { type: integer }
+
+    SearchHit:
+      type: object
+      required: [entity, id, score]
+      properties:
+        entity: { $ref: '#/components/schemas/Entity' }
+        id: { type: string, description: the id of the record that matched }
+        score: { type: number, description: higher is better }
+        snippet:
+          type: string
+          description: >-
+            highlighted excerpt, `[term]` marked. Identifier fields (ids,
+            tabSpaceId, the aggregate id lists) are not indexed, so they never
+            appear here.
+        tabspace_id:
+          type: string
+          description: >-
+            the tabverse this record belongs to; for a `tabspace` hit it is the
+            record's own id. Absent only for a malformed record payload.
+          example: ts-1a2b3c
+
+    Error:
+      type: object
+      required: [error, message]
+      properties:
+        error: { type: string }
+        message: { type: string }
+
+  responses:
+    BadRequest:
+      description: malformed request
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Unauthorized:
+      description: missing or invalid token / invite code
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Conflict:
+      description: account already bootstrapped
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NotFound:
+      description: unknown entity or record
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    TooLarge:
+      description: batch or payload too large
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    SyncResult:
+      description: sync outcome
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              results:
+                type: array
+                items: { $ref: '#/components/schemas/RecordResult' }
+              server_rev: { type: integer }
+
+security:
+  - bearerToken: []

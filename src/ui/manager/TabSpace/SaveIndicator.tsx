@@ -1,6 +1,6 @@
-import Moment from 'moment';
+import { fromNow } from '../../../time';
+import { Tooltip } from '@blueprintjs/core';
 import React from 'react';
-import { Tooltip2 } from '@blueprintjs/popover2';
 import { useStore } from 'effector-react';
 import { $storageOverview } from '../../../storage/StorageOverview';
 
@@ -13,15 +13,15 @@ export function SaveIndicator() {
     <div>
       {allSavedTimes.map(([key, savedTime]) => (
         <div key={key}>
-          {savedTime > 0 ? `${key} saved ${Moment(savedTime).fromNow()}` : ''}
+          {savedTime > 0 ? `${key} saved ${fromNow(savedTime)}` : ''}
         </div>
       ))}
     </div>
   );
   const savedFromNow = (
-    <Tooltip2 content={allSavedTimesContent}>
-      {`Saved ${Moment(lastSavedTime).fromNow()}`}
-    </Tooltip2>
+    <Tooltip content={allSavedTimesContent}>
+      {`Saved ${fromNow(lastSavedTime)}`}
+    </Tooltip>
   );
   const allSavingContent = (
     <div>
@@ -30,6 +30,6 @@ export function SaveIndicator() {
       ))}
     </div>
   );
-  const saving = <Tooltip2 content={allSavingContent}>...saving</Tooltip2>;
+  const saving = <Tooltip content={allSavingContent}>...saving</Tooltip>;
   return <span>{anyInSaving ? saving : savedFromNow}</span>;
 }

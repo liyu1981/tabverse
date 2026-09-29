@@ -7,18 +7,16 @@ import {
   addBookmark,
   AllBookmark,
   removeBookmark,
-  restoreFromLocalStorageJSON,
   updateBookmark,
   updateTabSpaceId,
 } from './AllBookmark';
 import { newEmptyAllBookmark } from './AllBookmark';
-import { Bookmark, BookmarkLocalStorage } from './Bookmark';
+import { Bookmark } from './Bookmark';
 
 export const $allBookmark = createStore<AllBookmark>(newEmptyAllBookmark());
-export type BookmarkStore = typeof $allBookmark;
 
 const allBookmarkApi = createApi($allBookmark, {
-  update: (lastAllBookmark, updatedAllBookmark: AllBookmark) =>
+  update: (_lastAllBookmark, updatedAllBookmark: AllBookmark) =>
     updatedAllBookmark,
   updateTabSpaceId: (lastAllBookmark, tabSpaceId: string) =>
     updateTabSpaceId(tabSpaceId, lastAllBookmark),
@@ -30,16 +28,11 @@ const allBookmarkApi = createApi($allBookmark, {
   ) => updateBookmark(bid, changes, lastAllBookmark),
   removeBookmark: (lastAllBookmark, bid: string) =>
     removeBookmark(bid, lastAllBookmark),
-  restoreFromLocalStorageJSON: (
-    lastAllBookmark,
-    bookmarkJSONs: BookmarkLocalStorage[],
-  ) => restoreFromLocalStorageJSON(bookmarkJSONs, lastAllBookmark),
 });
 
 const { $store: $bookmarkStorageStore, api: bookmarkStorageApi } =
   createGeneralStorageStoreAndApi();
 export const $bookmarkStorage = $bookmarkStorageStore;
-export type BookmarkStorage = typeof $bookmarkStorageStore;
 
 forward({
   from: $bookmarkStorage,

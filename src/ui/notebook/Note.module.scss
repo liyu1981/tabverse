@@ -6,6 +6,18 @@
 
 .collapseButton {
   width: 32px;
+  /* a real <button> now: drop the button chrome and the line box, and centre
+     the caret in the box the way the block <div> it replaced was centred by
+     the flex row */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  line-height: 0;
+  cursor: pointer;
 }
 
 .titleContainer {

@@ -1,0 +1,38 @@
+{
+  "name": "Tabverse",
+  "manifest_version": 3,
+  "minimum_chrome_version": "140",
+  "description": "Tabverse is an opinionated way of managing tabs.",
+  "homepage_url": "https://tabverse.github.io",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_title": "Tabverse",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png"
+    }
+  },
+  "default_locale": "en",
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "permissions": [
+    "tabs",
+    "tabGroups",
+    "storage",
+    "unlimitedStorage",
+    "activeTab",
+    "idle",
+    "alarms"
+  ],
+  "host_permissions": ["<all_urls>"],
+  "content_security_policy": {
+    "extension_pages": "default-src 'self'; script-src 'self'; connect-src 'self' https: wss: http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:*; img-src * data: blob:; frame-src 'self' http: https:; object-src 'self'"
+  }
+}

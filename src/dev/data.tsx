@@ -1,11 +1,11 @@
 import React from 'react';
-import ReactJson from 'react-json-view';
-import { render } from 'react-dom';
+import { createRoot } from 'react-dom/client';
+import { getNewId } from '../data/common';
 import { tabSpaceBootstrap } from '../data/tabSpaceBootstrap';
 import { useStore } from 'effector-react';
 import { $tabSpace } from '../data/tabSpace/store';
 
-function DataView() {
+function DataViewPage() {
   const tabSpace = useStore($tabSpace);
   const tabSpaceJSON = {
     ...tabSpace,
@@ -20,7 +20,9 @@ function DataView() {
         </tr>
         <tr style={{ verticalAlign: 'top' }}>
           <td width="33%">
-            <ReactJson src={tabSpaceJSON} />
+            <pre style={{ maxHeight: 700, overflow: 'auto' }}>
+              {JSON.stringify(tabSpaceJSON, null, 2)}
+            </pre>
           </td>
         </tr>
       </table>
@@ -31,8 +33,8 @@ function DataView() {
 async function start() {
   const tab = await chrome.tabs.getCurrent();
   const window = await chrome.windows.getCurrent();
-  tabSpaceBootstrap(tab.id, window.id);
-  render(<DataView />, document.getElementById('root'));
+  tabSpaceBootstrap(tab.id, window.id, getNewId());
+  createRoot(document.getElementById('root')!).render(<DataViewPage />);
 }
 
 start();

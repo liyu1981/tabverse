@@ -5,10 +5,29 @@ import { debounce as lodashDebounce } from 'lodash';
 // Do not manual edit it, use tools/version_update to update it.
 export const TABSPACE_VERSION = 'v0.5.0';
 
-export const TABSPACE_DB_VERSION = 7;
+// v8 dropped the `chromesession` object store: the browser-session feature
+// (periodic window/tab snapshots, the Session Browser route and the server side
+// retention that pruned them) is gone - see ADR 0006. Dexie deletes stores that
+// disappear from the schema on a version bump. A build older than this one can
+// still open the database: it re-creates the missing store and carries on
+// (see src/storage/__tests__/TabSpaceDatabase.upgrade.test.ts).
+//
+// v9 adds `SavedTabPreview`, so tab thumbnails survive a reload instead of
+// living only in the page's memory. Still no data at risk on rollback: a
+// pre-v9 build does not know the table and ignores it.
+//
+// v10 adds `SavedClosedTab`, the per tabverse list of tabs that were closed
+// (the History right side tool). Same rollback story: a pre-v10 build does not
+// know the table and ignores it.
+export const TABSPACE_DB_VERSION = 10;
 
 export const TABSPACE_MANAGER_TAB_TITLE_PREFIX = 'Tabverse:Manager';
-export const TABSPACE_MANAGER_TAB_URL_PREFIX = global.chrome
+// `global` is a Node-only global: webpack polyfilled it, Vite/Rolldown does
+// not, so touching it at module scope threw "global is not defined" in the
+// service worker and took every importer down with it. `globalThis.chrome` is
+// the same object in the node test environment (src/dev/chromeMock.ts assigns
+// to it) and exists in the extension.
+export const TABSPACE_MANAGER_TAB_URL_PREFIX = globalThis.chrome
   ? `chrome-extension://${chrome.runtime.id}/manager.html`
   : `chrome-extension://tabverse-jest-test/manager.html`;
 
@@ -48,24 +67,34 @@ export const logger = {
   },
 };
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-export function hasOwnProperty<X extends {}, Y extends PropertyKey>(
+// `{}` is the idiom for a hasOwn constraint
+export function hasOwn<X extends {}, Y extends PropertyKey>(
   obj: X,
   prop: Y,
 ): obj is X & Record<Y, unknown> {
-  // eslint-disable-next-line no-prototype-builtins
-  return obj && obj.hasOwnProperty(prop);
+  return obj && Object.hasOwn(obj, prop);
 }
 
 export function typeGuard<T>(x: any): x is T {
   return true;
 }
 
+/**
+ * Drop-in replacement for node's `assert.strict`, which cannot be used in the
+ * extension: Vite externalizes node builtins for the browser, so importing it
+ * produced a stub whose `strict` is not a function and threw as soon as the
+ * assertion ran (it killed manager.tsx bootstrap, which then made the
+ * background's tab scan fail too).
+ */
+export function assert(condition: unknown, message: string): asserts condition {
+  if (!condition) {
+    throw new Error(message);
+  }
+}
+
 export const debounce = isJestTest()
-  ? // eslint-disable-next-line @typescript-eslint/ban-types
-    <T extends Function>(f: T, t: any) => f
-  : // eslint-disable-next-line @typescript-eslint/ban-types
-    <T extends Function>(f: T, t: any) =>
+  ? <T extends (...args: any[]) => any>(f: T, t: any) => f
+  : <T extends (...args: any[]) => any>(f: T, t: any) =>
       lodashDebounce(() => {
         f();
       }, t);

@@ -4,7 +4,7 @@
   padding: 18px 18px 0px 18px;
 }
 
-.searchInputContainer :global(.bp4-tag-input) {
+.searchInputContainer :global(.bp6-tag-input) {
   border-radius: 28px;
 }
 
@@ -27,8 +27,14 @@
 }
 
 .candidateContainer {
+  /* a real <button> now (it selects a candidate): reset the button chrome so
+     the row looks exactly as it did as a div */
+  width: 100%;
+  border: 0;
   background-color: global.$color-c;
   color: global.$color-d;
+  font: inherit;
+  text-align: start;
   border-radius: 28px;
   line-height: 32px;
   margin-bottom: 8px;

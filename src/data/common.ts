@@ -1,6 +1,5 @@
 import { nanoid } from 'nanoid';
 import { produce } from 'immer';
-import { tabData1 } from './tabSpace/__tests__/common.test';
 
 export function getUnsavedNewId() {
   // use 11 chars, as calculated by the estimator
@@ -10,6 +9,12 @@ export function getUnsavedNewId() {
   return `~${nanoid(11)}`;
 }
 
+/**
+ * A durable id (no `~` prefix), i.e. one that counts as saved from the start.
+ * Tabverses are born saved: opening a Tabverse tab *is* the decision to keep
+ * this window's tabs, so the id is minted up front and travels in the tab's url
+ * as `tvid`.
+ */
 export function getNewId() {
   return nanoid(11);
 }
@@ -28,6 +33,9 @@ export function isIdNotSaved(id: string) {
   // simple: unsaved one starts with ~ which is not in the alphabet of nanoid
   return id.startsWith('~');
 }
+
+/** tabSpaceId of a record that does not belong to any tabverse (it is a tab). */
+export const NotTabSpaceId = '';
 
 export interface IBase {
   version: number;

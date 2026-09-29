@@ -1,7 +1,7 @@
 import { IBase, setAttrForObject2 } from '../common';
 import { inPlaceConvertToSaved, newEmptyBase } from '../Base';
 
-import { NotTabSpaceId } from '../chromeSession/ChromeSession';
+import { NotTabSpaceId } from '../common';
 import { produce } from 'immer';
 
 export interface Note extends IBase {
@@ -9,8 +9,6 @@ export interface Note extends IBase {
   name: string;
   data: string;
 }
-
-export type NoteLocalStorage = Pick<Note, 'name' | 'data'>;
 
 export const NOTE_DB_TABLE_NAME = 'SavedNote';
 export const NOTE_DB_SCHEMA = 'id, createdAt, name, tabSpaceId';
@@ -48,8 +46,7 @@ export function isEqualContent(
   if (!otherNote) {
     return false;
   }
-  let r = false;
-  r =
+  let r =
     thisNote.tabSpaceId === otherNote.tabSpaceId &&
     thisNote.name === otherNote.name &&
     thisNote.data === otherNote.data;

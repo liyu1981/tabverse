@@ -1,0 +1,8 @@
+.scopeViewTagContainer {
+  cursor: pointer;
+}
+
+.scopeViewTagMenuContainer > :global(.bp6-menu) {
+  min-width: auto;
+  text-align: center;
+}

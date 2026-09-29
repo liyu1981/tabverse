@@ -1,0 +1,85 @@
+@use '../../../global.scss';
+
+.container {
+  padding: 8px 0 0;
+}
+
+/* the callout is the bar; the theme already rounds it, this only keeps the
+   text and the chevron on one line */
+.callout {
+  width: 100%;
+  font-size: 0.9em;
+  padding: 8px 12px;
+}
+
+/* a real <button> (Enter and Space come free), reset to look like the bar it
+   sits in */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+  user-select: none;
+}
+
+.header:focus {
+  outline: 2px solid global.$color-d;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.summary {
+  flex: 1;
+  min-width: 0;
+}
+
+.chevron {
+  flex: 0 0 auto;
+  color: global.$color-a;
+}
+
+/* the details live in the flow, under the bar, not over the tab list */
+.detail {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid global.$color-e;
+  font-size: 0.9em;
+}
+
+.row {
+  margin-bottom: 10px;
+
+  &:last-child {
+    margin-bottom: 4px;
+  }
+}
+
+.rowTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.versionTag {
+  font-size: 0.75em;
+  margin-left: auto;
+}
+
+.rowLost {
+  color: global.$color-a;
+  margin-top: 1px;
+}
+
+.footer {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid global.$color-e;
+  color: global.$color-a;
+}

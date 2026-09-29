@@ -1,4 +1,3 @@
-/* eslint-disable prefer-const */
 import { isIdNotSaved } from '../../common';
 import {
   addBookmark,
@@ -30,9 +29,9 @@ test('init', () => {
   const { tabSpaceId, allBookmark, b1, b2 } = initAllBookmark();
   expect(allBookmark.bookmarks.size).toEqual(2);
   expect(allBookmark.tabSpaceId).toEqual(tabSpaceId);
-  allBookmark.bookmarks.forEach((bookmark) =>
-    expect(bookmark.tabSpaceId).toEqual(tabSpaceId),
-  );
+  allBookmark.bookmarks.forEach((bookmark) => {
+    expect(bookmark.tabSpaceId).toEqual(tabSpaceId);
+  });
 });
 
 test('updateBookmark', () => {
@@ -60,9 +59,9 @@ test('updateTabSpaceId', () => {
   const newTabSpaceId = tabSpaceId + 'changed';
   allBookmark = updateTabSpaceId(newTabSpaceId, allBookmark);
   expect(allBookmark.tabSpaceId).toEqual(newTabSpaceId);
-  allBookmark.bookmarks.forEach((bookmark) =>
-    expect(bookmark.tabSpaceId).toEqual(newTabSpaceId),
-  );
+  allBookmark.bookmarks.forEach((bookmark) => {
+    expect(bookmark.tabSpaceId).toEqual(newTabSpaceId);
+  });
 });
 
 test('misc', () => {
@@ -75,9 +74,9 @@ test('misc', () => {
     existBookmarkSavePayloads,
   } = convertAndGetAllBookmarkSavePayload(allBookmark);
   expect(savedAllBookmark.bookmarks.toArray()).toEqual(newBookmarkSavePayloads);
-  allBookmarkSavePayload.bookmarkIds.forEach((bookmarkId) =>
-    expect(isIdNotSaved(bookmarkId)).toBeFalsy(),
-  );
+  allBookmarkSavePayload.bookmarkIds.forEach((bookmarkId) => {
+    expect(isIdNotSaved(bookmarkId)).toBeFalsy();
+  });
   expect(isNewAllBookmark).toBeTruthy();
   expect(allBookmarkSavePayload.bookmarkIds).toEqual(
     newBookmarkSavePayloads.map(

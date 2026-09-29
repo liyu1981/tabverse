@@ -1,4 +1,5 @@
-import { BackgroundMsg, TabSpaceMsg } from '../message';
+// NOTE: the commented out tests below use BackgroundMsg/TabSpaceMsg from
+// '../message'; re-add the import when reviving them.
 
 test('dummy', () => {});
 

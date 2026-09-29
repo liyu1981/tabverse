@@ -1,0 +1,105 @@
+.root {
+  background: #fff;
+  font-family: 'Georgia', serif;
+  font-size: 14px;
+  padding: 15px;
+  border-radius: 18px;
+}
+
+.editor {
+  border-top: 1px solid #ddd;
+  cursor: text;
+  font-size: 16px;
+  margin-top: 10px;
+}
+
+/* the TipTap/ProseMirror content surface */
+.editor :global(.tiptap) {
+  min-height: 100px;
+  height: 300px;
+  overflow-y: auto;
+  margin: 0 -15px -15px;
+  padding: 15px;
+  outline: none;
+}
+
+.editor :global(.tiptap) p {
+  margin: 0 0 8px;
+}
+
+.editor :global(.tiptap) pre {
+  background-color: rgba(0, 0, 0, 0.05);
+  font-family: 'Inconsolata', 'Menlo', 'Consolas', monospace;
+  font-size: 16px;
+  padding: 12px;
+  border-radius: 4px;
+}
+
+.editor :global(.tiptap) code {
+  background-color: rgba(0, 0, 0, 0.05);
+  font-family: 'Inconsolata', 'Menlo', 'Consolas', monospace;
+  font-size: 15px;
+  padding: 2px;
+  border-radius: 3px;
+}
+
+.editor :global(.tiptap) blockquote {
+  border-left: 5px solid #eee;
+  color: #666;
+  font-family: 'Hoefler Text', 'Georgia', serif;
+  font-style: italic;
+  margin: 16px 0;
+  padding: 10px 20px;
+}
+
+/* placeholder for an empty document */
+.editor :global(.tiptap) p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  color: #999;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.controls {
+  font-family: 'Helvetica', sans-serif;
+  font-size: 14px;
+  margin-bottom: 5px;
+  user-select: none;
+  display: inline-block;
+  border-left: 1px solid rgba(16, 22, 26, 0.15);
+  padding-left: 12px;
+}
+
+.controls:first-of-type {
+  border-left: 0px;
+  padding-left: 0px;
+}
+
+.styleButton {
+  /* a real <button> now (it was a span with onMouseDown): reset the button
+     chrome, and note that a11y/exhaustive-deps are happy with a real button */
+  color: #999;
+  cursor: pointer;
+  margin-right: 16px;
+  padding: 2px 0;
+  display: inline-block;
+  border: 0;
+  background: none;
+  font: inherit;
+  line-height: inherit;
+}
+
+.styleButton:hover {
+  color: #333;
+}
+
+.activeButton {
+  color: #5890ff;
+}

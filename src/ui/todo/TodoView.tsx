@@ -1,17 +1,11 @@
 import { $allTodo, todoStoreApi } from '../../data/todo/store';
 import React, { useEffect, useState } from 'react';
 import { Todo, setCompleted } from '../../data/todo/Todo';
-import {
-  monitorTabSpaceChanges,
-  saveCurrentAllTodoIfNeeded,
-  startMonitorLocalStorageChanges,
-  stopMonitorLocalStorageChanges,
-} from '../../data/todo/util';
+import { monitorTabSpaceChanges, saveCurrentTodos } from '../../data/todo/util';
 import { newEmptyTodo, setContent } from '../../data/todo/Todo';
 
 import classes from './TodoView.module.scss';
 import clsx from 'clsx';
-import { isIdNotSaved } from '../../data/common';
 import { logger } from '../../global';
 import { useStore } from 'effector-react';
 
@@ -48,10 +42,23 @@ const TodoItemView = (props: TodoItemViewProps) => {
           }}
           onChange={() => {}}
         />
-        <label onDoubleClick={() => setEditing(true)}>
-          {props.todo.content}
-        </label>
         <button
+          type="button"
+          className={classes.content}
+          title="Double click, or press Enter, to edit"
+          onDoubleClick={() => setEditing(true)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              setEditing(true);
+            }
+          }}
+        >
+          {props.todo.content}
+        </button>
+        <button
+          type="button"
+          aria-label="Delete todo"
           className={classes.destroy}
           onClick={() => props.removeFunc(props.todo.id)}
         />
@@ -85,7 +92,7 @@ export interface TodoViewProps {
   tabSpaceId: string;
 }
 
-export function TodoView({ tabSpaceId }: TodoViewProps) {
+export function TodoView(_props: TodoViewProps) {
   const allTodo = useStore($allTodo);
 
   const [filter, setFilter] = useState<string | null>(null);
@@ -98,25 +105,14 @@ export function TodoView({ tabSpaceId }: TodoViewProps) {
     monitorTabSpaceChanges();
   }, []);
 
-  useEffect(() => {
-    if (tabSpaceId && isIdNotSaved(tabSpaceId)) {
-      logger.info('todo start monitor localstorage changes');
-      startMonitorLocalStorageChanges();
-      return () => {
-        logger.info('todo stop monitor localstorage changes');
-        stopMonitorLocalStorageChanges();
-      };
-    }
-  }, [tabSpaceId]);
-
   const changeTodo = (id: string, t: Todo) => {
     todoStoreApi.updateTodo({ tid: id, changes: t });
-    saveCurrentAllTodoIfNeeded();
+    saveCurrentTodos();
   };
 
   const removeTodo = (id: string) => {
     todoStoreApi.removeTodo(id);
-    saveCurrentAllTodoIfNeeded();
+    saveCurrentTodos();
   };
 
   const filteredTodos = allTodo.todos
@@ -137,8 +133,8 @@ export function TodoView({ tabSpaceId }: TodoViewProps) {
       return ta.completed > tb.completed
         ? 1
         : ta.completed === tb.completed
-        ? 0
-        : -1;
+          ? 0
+          : -1;
     })
     .toArray()
     .map((todo) => (
@@ -170,7 +166,6 @@ export function TodoView({ tabSpaceId }: TodoViewProps) {
         className={classes.newTodo}
         placeholder="What needs to be done?"
         value={currentInputValue ?? ''}
-        autoFocus={true}
         onKeyDown={(event) => {
           if (event.keyCode === RETURN_KEY) {
             const t = setContent(currentInputValue, newEmptyTodo());
@@ -198,23 +193,24 @@ export function TodoView({ tabSpaceId }: TodoViewProps) {
       </span>
       <ul className={classes.filters}>
         <li key="all">
-          <a href="#" onClick={() => setFilter(null)}>
+          <button type="button" onClick={() => setFilter(null)}>
             All
-          </a>
+          </button>
         </li>{' '}
         <li key="active">
-          <a href="#" onClick={() => setFilter(FILTER_ACTIVE)}>
+          <button type="button" onClick={() => setFilter(FILTER_ACTIVE)}>
             Active
-          </a>
+          </button>
         </li>{' '}
         <li key="completed">
-          <a href="#" onClick={() => setFilter(FILTER_COMPLETED)}>
+          <button type="button" onClick={() => setFilter(FILTER_COMPLETED)}>
             Completed
-          </a>
+          </button>
         </li>
       </ul>
       {hasCompleted ? (
         <button
+          type="button"
           className={classes.clearCompleted}
           onClick={() => {
             todoStoreApi.clearCompleted();

@@ -1,0 +1,115 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  # ---- Chrome extension: format, lint, test, production bundle ----
+  extension:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # ESLint 10 requires node >= 20.19; 22 is the active LTS
+          node-version: 22
+          cache: npm
+
+      - name: install dependencies
+        run: npm ci
+
+      - name: typecheck
+        run: npm run typecheck
+
+      - name: format check
+        run: npm run format:check
+
+      - name: lint
+        run: npm run lint:check
+
+      - name: unit tests
+        run: npm test
+
+      - name: production build
+        run: npm run build
+
+      - name: archive production bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-dist
+          path: dist/
+          retention-days: 7
+
+  # ---- tabversed sync server: vet, race tests, cross compile ----
+  server:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: server/go.mod
+          cache-dependency-path: server/go.sum
+
+      # the server build/test/cross targets are npm scripts (no Makefile)
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: gofmt
+        run: test -z "$(gofmt -l .)"
+        working-directory: server
+
+      - name: go vet
+        run: go vet ./...
+        working-directory: server
+
+      - name: unit tests (with race detector)
+        run: go test -race ./...
+        working-directory: server
+
+      - name: cross compile (pure go, no cgo)
+        run: npm run server:cross
+
+      - name: archive server binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: tabversed-binaries
+          path: server/dist/
+          retention-days: 7
+
+  # ---- store package: zip that can be uploaded to the web store ----
+  package:
+    runs-on: ubuntu-latest
+    needs: [extension, server]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: install dependencies
+        run: npm ci
+
+      - name: build store zip
+        # produces dist_crx/tabverse.zip; .crx signing is intentionally not
+        # done here (the web store takes a zip, keys stay local)
+        run: npm run build-crx
+
+      - name: archive store package
+        uses: actions/upload-artifact@v4
+        with:
+          name: tabverse-store-zip
+          path: dist_crx/tabverse.zip
+          retention-days: 14
