@@ -15,9 +15,7 @@ export const AboutDialog = (props) => {
       title={'About Tabverse'}
     >
       <div className={classes.logoContainer}>
-        <div className={classes.logoContainer2}>
-          <TabSpaceLogo />
-        </div>
+        <TabSpaceLogo />
       </div>
       <div className={classes.otherContainer}>
         <p className={classes.aboutText1}>
