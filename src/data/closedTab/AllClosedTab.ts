@@ -33,12 +33,6 @@ export function newEmptyAllClosedTab(): AllClosedTab {
   };
 }
 
-export function cloneAllClosedTab(target: AllClosedTab): AllClosedTab {
-  return produce(target, (draft) => {
-    draft.closedTabs = List(draft.closedTabs);
-  });
-}
-
 /** Newest first. */
 export function sortByClosedAt(closedTabs: List<ClosedTab>): List<ClosedTab> {
   return closedTabs.sort(

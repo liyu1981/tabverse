@@ -8,31 +8,12 @@ import {
   newEmptyAllBookmark,
   updateTabSpaceId,
 } from './AllBookmark';
-import {
-  BOOKMARK_DB_TABLE_NAME,
-  Bookmark,
-  BookmarkLocalStorage,
-} from './Bookmark';
+import { BOOKMARK_DB_TABLE_NAME, Bookmark } from './Bookmark';
 import { TabSpaceMsg, subscribePubSubMessage } from '../../message/message';
 import { addPagingToQueryParams, db } from '../../storage/db';
 import { debounce, logger } from '../../global';
-import {
-  getLocalStorageKey,
-  localStorageAddListener,
-  localStorageGetItem,
-  localStoragePutItem,
-  localStorageRemoveListener,
-} from '../../storage/localStorageWrapper';
-
-import { $tabSpace } from '../tabSpace/store';
 import { DEFAULT_SAVE_DEBOUNCE } from '../../storage/StorageOverview';
-import { isArray } from 'lodash';
-import { isIdNotSaved } from '../common';
-import { isJestTest } from '../../debug';
-import { needAutoSave } from '../tabSpace/TabSpace';
 import { updateFromSaved } from '../Base';
-
-export const LOCALSTORAGE_BOOKMARK_KEY = getLocalStorageKey('bookmark');
 
 export function monitorTabSpaceChanges() {
   subscribePubSubMessage(TabSpaceMsg.ChangeID, (message, data) => {
@@ -43,45 +24,11 @@ export function monitorTabSpaceChanges() {
 }
 
 export async function loadAllBookmarkByTabSpaceId(tabSpaceId: string) {
-  if (isIdNotSaved(tabSpaceId) && !isJestTest()) {
-    await loadCurrentAllBookmarkFromLocalStorage();
-  } else {
-    const loadedAllBookmark = await queryAllBookmark(
-      tabSpaceId,
-      addPagingToQueryParams({}),
-    );
-    bookmarkStoreApi.update(loadedAllBookmark);
-  }
-}
-
-export async function loadCurrentAllBookmarkFromLocalStorage() {
-  return new Promise<void>((resolve, _reject) =>
-    localStorageGetItem(LOCALSTORAGE_BOOKMARK_KEY, (value: string) => {
-      const bookmarkJSONs = JSON.parse(value) as BookmarkLocalStorage[];
-      if (isArray(bookmarkJSONs)) {
-        bookmarkStoreApi.restoreFromLocalStorageJSON(bookmarkJSONs);
-      }
-      resolve();
-    }),
+  const loadedAllBookmark = await queryAllBookmark(
+    tabSpaceId,
+    addPagingToQueryParams({}),
   );
-}
-
-export function startMonitorLocalStorageChanges() {
-  localStorageAddListener(
-    LOCALSTORAGE_BOOKMARK_KEY,
-    (key, newValue, _oldValue) => {
-      const bookmarkJSONs = JSON.parse(newValue) as BookmarkLocalStorage[];
-      if (isArray(bookmarkJSONs)) {
-        bookmarkStoreApi.restoreFromLocalStorageJSON(bookmarkJSONs);
-      }
-    },
-  );
-  // immediately load once after the monitoring is started
-  loadCurrentAllBookmarkFromLocalStorage();
-}
-
-export function stopMonitorLocalStorageChanges() {
-  localStorageRemoveListener(LOCALSTORAGE_BOOKMARK_KEY);
+  bookmarkStoreApi.update(loadedAllBookmark);
 }
 
 export async function queryAllBookmark(
@@ -150,23 +97,8 @@ export const saveCurrentAllBookmark = debounce(
   DEFAULT_SAVE_DEBOUNCE,
 );
 
-export const saveCurrentAllBookmarkIfNeeded = () => {
-  if (needAutoSave($tabSpace.getState())) {
-    logger.log(
-      'current tabSpace need autoSave, will then saveCurrentAllBookmark',
-    );
-    saveCurrentAllBookmark();
-  } else {
-    logger.log(
-      'current tabSpace is not on autoSave, will then save bookmarks to localStorage',
-    );
-    saveCurrentAllBookmarkToLocalStorage();
-  }
+export const saveCurrentBookmarks = () => {
+  // a tabverse is born saved (its id is minted when the tab is opened), so
+  // there is no "not saved yet" state to fall back to
+  saveCurrentAllBookmark();
 };
-
-export function saveCurrentAllBookmarkToLocalStorage() {
-  localStoragePutItem(
-    LOCALSTORAGE_BOOKMARK_KEY,
-    JSON.stringify($allBookmark.getState()),
-  );
-}

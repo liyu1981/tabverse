@@ -13,13 +13,11 @@ function getMockListenable(type: string): IMockListenable {
   const msgType = type;
   return {
     addListener: (callback: any) => {
-      // console.log('subscribe', msgType, callback);
       PubSub.subscribe(msgType, (msgType, payload) => {
         callback(...payload);
       });
     },
     sendMessage: (args: any[]) => {
-      // console.log('publish', msgType, arguments);
       PubSub.publish(msgType, args);
     },
   };

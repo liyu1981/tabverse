@@ -1,4 +1,4 @@
-import { IManagerQueryParams, ManagerViewRoute } from '../ManagerView';
+import { IManagerQueryParams, ManagerViewRoute } from '../routes';
 
 import { BottomNav } from '../BottomNav/BottomNav';
 import { ErrorBoundary } from '../../common/ErrorBoundary';
@@ -94,7 +94,9 @@ export function SidebarComponent({
  * tree and join the text instead, and give up (rather than render an empty
  * tooltip) when there is none.
  */
-export function railTextFromHeader(header: React.ReactNode): string | undefined {
+export function railTextFromHeader(
+  header: React.ReactNode,
+): string | undefined {
   const parts: string[] = [];
   const collect = (node: React.ReactNode): void => {
     if (node === null || node === undefined || typeof node === 'boolean') {

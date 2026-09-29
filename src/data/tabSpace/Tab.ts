@@ -47,17 +47,12 @@ export function newEmptyTab(): Tab {
   };
 }
 
-export function cloneTab(targetTab: Tab): Tab {
-  return { ...targetTab };
-}
-
 export const setId = setAttrForObject2<string, Tab>('id');
 export const setTabSpaceId = setAttrForObject2<string, Tab>('tabSpaceId');
 export const setTitle = setAttrForObject2<string, Tab>('title');
 export const setUrl = setAttrForObject2<string, Tab>('url');
 export const setFavIconUrl = setAttrForObject2<string, Tab>('favIconUrl');
 export const setPinned = setAttrForObject2<boolean, Tab>('pinned');
-export const setSuspended = setAttrForObject2<boolean, Tab>('suspended');
 export const setChromeTabId = setAttrForObject2<number, Tab>('chromeTabId');
 export const setChromeWindowId = setAttrForObject2<number, Tab>(
   'chromeWindowId',
@@ -97,13 +92,6 @@ export function toTabCore(targetTab: Tab): TabCore {
     favIconUrl: targetTab.favIconUrl,
     pinned: targetTab.pinned,
     suspended: targetTab.suspended,
-  };
-}
-
-export function toLiveTab(targetTab: Tab): LiveTab {
-  return {
-    chromeTabId: targetTab.chromeTabId,
-    chromeWindowId: targetTab.chromeWindowId,
   };
 }
 

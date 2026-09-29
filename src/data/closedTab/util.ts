@@ -28,9 +28,9 @@ import { DEFAULT_SAVE_DEBOUNCE } from '../../storage/StorageOverview';
  * go to the database and, through the change feed, to the sync server as the
  * `closedtab` entity.
  *
- * There is no localStorage fallback (todo/note/bookmark still have one for
- * tabverses that were not saved yet): a tabverse is born saved, so there is no
- * unsaved state left to fall back to.
+ * There is no localStorage fallback, and neither is there one on the right
+ * side tools any more: a tabverse is born saved, so there has been no unsaved
+ * state to fall back to since ids were minted in the tab's url.
  */
 
 export function monitorTabSpaceChanges() {

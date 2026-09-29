@@ -5,12 +5,7 @@ import {
   inPlaceCopyFromOtherBase,
   newEmptyBase,
 } from '../Base';
-import {
-  TodoLocalStorage,
-  convertToSavedTodo,
-  newEmptyTodo,
-  setTabSpaceId,
-} from './Todo';
+import { convertToSavedTodo, newEmptyTodo, setTabSpaceId } from './Todo';
 
 import { List } from 'immutable';
 import { Todo } from './Todo';
@@ -35,12 +30,6 @@ export function newEmptyAllTodo(): AllTodo {
     tabSpaceId: NotId,
     todos: List(),
   };
-}
-
-export function cloneAllTodo(targetAllTodo: AllTodo): AllTodo {
-  return produce(targetAllTodo, (draft) => {
-    draft.todos = List(targetAllTodo.todos);
-  });
 }
 
 export function addTodo(todo: Todo, targetAllTodo: AllTodo): AllTodo {
@@ -98,34 +87,6 @@ export function updateTabSpaceId(
     draft.todos = draft.todos
       .map((todo) => setTabSpaceId(newTabSpaceId, todo))
       .toList();
-  });
-}
-
-export function getLocalStorageJSON(
-  targetAllTodo: AllTodo,
-): TodoLocalStorage[] {
-  return targetAllTodo.todos
-    .map((todo) => {
-      return { content: todo.content, completed: todo.completed };
-    })
-    .toArray();
-}
-
-export function restoreFromLocalStorageJSON(
-  todoJSONs: TodoLocalStorage[],
-  targetAllTodo: AllTodo,
-): AllTodo {
-  return produce(targetAllTodo, (draft) => {
-    draft.todos = List(
-      todoJSONs.map((todoJSON) => ({
-        ...newEmptyTodo(),
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        tabSpaceId: targetAllTodo.tabSpaceId,
-        content: todoJSON.content,
-        completed: todoJSON.completed,
-      })),
-    );
   });
 }
 

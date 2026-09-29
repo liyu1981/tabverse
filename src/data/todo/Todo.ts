@@ -9,8 +9,6 @@ export interface Todo extends IBase {
   completed: boolean;
 }
 
-export type TodoLocalStorage = Pick<Todo, 'content' | 'completed'>;
-
 export const TODO_DB_TABLE_NAME = 'SavedTodo';
 export const TODO_DB_SCHEMA = 'id, createdAt, tabSpaceId, content, completed';
 
@@ -21,10 +19,6 @@ export function newEmptyTodo(): Todo {
     content: '',
     completed: false,
   };
-}
-
-export function cloneTodo(targetTodo: Todo): Todo {
-  return produce(targetTodo, (_draft) => {});
 }
 
 export const setTabSpaceId = setAttrForObject2<string, Todo>('tabSpaceId');

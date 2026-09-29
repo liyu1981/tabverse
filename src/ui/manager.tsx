@@ -5,8 +5,12 @@ import 'normalize.css';
 import '@blueprintjs/core/lib/css/blueprint.css';
 import '@blueprintjs/icons/lib/css/blueprint-icons.css';
 import 'simplebar-react/dist/simplebar.min.css';
+// the shared control styles, then this page's own (so a page rule can win)
+import './theme.scss';
+import './manager/manager.scss';
 
-import { IManagerQueryParams, ManagerView } from './manager/ManagerView';
+import { IManagerQueryParams } from './manager/routes';
+import { ManagerView } from './manager/ManagerView';
 import {
   TabSpaceOp,
   assert,
@@ -22,7 +26,6 @@ import { getNewId } from '../data/common';
 import { pinTabverseTabFirst } from '../data/tabSpace/chromeUtil';
 import { getQueryParameters } from './common/queryAndHashParameter';
 import { loadTabSpaceByTabSpaceId } from '../data/tabSpace/util';
-import { localStorageInit } from '../storage/localStorageWrapper';
 import { renderPage } from './common/base';
 import { tabSpaceBootstrap } from '../data/tabSpaceBootstrap';
 import { tabSpaceStoreApi } from '../data/tabSpace/store';
@@ -42,12 +45,8 @@ async function bootstrap() {
     });
   } else {
     const queryParams = getQueryParameters();
-    assert(
-      hasOwn(queryParams, 'op'),
-      'queryParams do not have attribute op.',
-    );
+    assert(hasOwn(queryParams, 'op'), 'queryParams do not have attribute op.');
 
-    localStorageInit();
     // queue local database writes for the server sync engine; awaited so the
     // tabverse bootstrap below is not written before the hooks are in place
     await startChangeFeed();

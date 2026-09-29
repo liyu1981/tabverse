@@ -35,7 +35,7 @@ import classes from './TabSpaceListView.module.scss';
 import { getPreview } from '../../../data/tabSpace/TabPreviewCache';
 import { logger } from '../../../global';
 import { saveAndCloseTabSpace } from '../../../data/tabSpace/closeTabSpace';
-import { saveCurrentAllBookmarkIfNeeded } from '../../../data/bookmark/util';
+import { saveCurrentBookmarks } from '../../../data/bookmark/util';
 import { tabverseEntries } from '../../../data/tabSpace/tabEntries';
 import { updateTabSpaceName } from '../../../data/tabSpace/chromeTab';
 import { useStore } from 'effector-react';
@@ -138,7 +138,7 @@ export function TabSpaceListView() {
                 setName(tab.title, setUrl(tab.url, newEmptyBookmark())),
               ),
             );
-            saveCurrentAllBookmarkIfNeeded();
+            saveCurrentBookmarks();
           }}
           onSelect={(tabId, selected) => {
             if (selected) {
@@ -202,11 +202,12 @@ export function TabSpaceListView() {
         </h1>
       </div>
       <div className={classes.titleButtons}>
-        <Tooltip content="Save and close: this tabverse is saved automatically, so this only flushes anything still pending (notes, todos, bookmarks, closed tabs) and then closes the Tabverse tab. The window's other tabs stay open as normal tabs.">
+        <Tooltip content="Save and close">
           <Button
-            className={classes.saveAndCloseButton}
+            className="tv-icon-button"
             aria-label="Save and close this tabverse"
             icon="floppy-disk"
+            minimal={true}
             loading={isClosing}
             onClick={() => void saveAndClose()}
           />

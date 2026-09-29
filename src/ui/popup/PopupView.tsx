@@ -9,8 +9,8 @@ import { LoadStatus, TabSpaceOp, logger } from '../../global';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { SavedTabSpaceRow } from './SavedTabSpaceRow';
 import { TabSpace } from '../../data/tabSpace/TabSpace';
+import { querySavedTabSpaceCount } from '../../data/tabSpace/store';
 import {
-  countSavedTabSpaces,
   loadTabSpacesByIds,
   queryRecentSavedTabSpaces,
 } from '../../data/tabSpace/util';
@@ -87,7 +87,7 @@ export function PopupView() {
           setCurrentWindowId(currentWindow.id);
         }
         const open = await queryOpenTabSpaces();
-        const count = await countSavedTabSpaces();
+        const count = await querySavedTabSpaceCount();
         if (!cancelled) {
           setOpenTabSpaces(open);
           setSavedCount(count);
@@ -269,9 +269,8 @@ export function PopupView() {
       </div>
       <div className={classes.createContainer}>
         <Button
-          className={classes.createButton}
+          className={`tv-primary-button ${classes.createButton}`}
           icon="plus"
-          intent={Intent.PRIMARY}
           text="New tabverse"
           title={
             currentTabSpaceId

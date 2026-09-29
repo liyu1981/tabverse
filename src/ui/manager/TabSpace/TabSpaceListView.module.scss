@@ -42,40 +42,6 @@
   align-items: center;
 }
 
-/*
- * A round white control like the rest of the page's chrome, rather than a raw
- * Blueprint minimal button: same colours, same radius, same hover treatment as
- * the cards it sits next to. The label lives in the tooltip.
- */
-.saveAndCloseButton {
-  min-width: 36px;
-  min-height: 36px;
-  padding: 0;
-  border-radius: 18px;
-  background-color: #fff;
-  border: 1px solid global.$color-e;
-  box-shadow: 0 1px 2px rgb(16 22 26 / 10%);
-  color: global.$color-d;
-  background-image: none;
-}
-
-.saveAndCloseButton :global(.bp6-icon) {
-  color: global.$color-d;
-}
-
-.saveAndCloseButton:hover,
-.saveAndCloseButton:focus {
-  background-color: global.$color-d;
-  border-color: global.$color-d;
-  color: global.$color-c;
-  box-shadow: 0 0 4px 4px rgb(16 22 26 / 20%);
-}
-
-.saveAndCloseButton:hover :global(.bp6-icon),
-.saveAndCloseButton:focus :global(.bp6-icon) {
-  color: global.$color-c;
-}
-
 .toolbarContainer {
   width: 100%;
   display: flex;

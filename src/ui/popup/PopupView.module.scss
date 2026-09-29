@@ -1,3 +1,5 @@
+@use '../../global.scss';
+
 .container {
   display: flex;
   flex-direction: column;
@@ -9,14 +11,14 @@
   align-items: baseline;
   justify-content: space-between;
   padding: 12px 14px 6px 14px;
-  color: #555555;
+  color: global.$color-a;
   font-size: 12px;
 }
 
 .headerTitle {
   font-weight: 600;
   font-size: 14px;
-  color: #111111;
+  color: global.$color-d;
 }
 
 .createContainer {
@@ -34,15 +36,15 @@
 .listContainer {
   flex: 1;
   overflow-y: auto;
-  border-top: 1px solid #ededed;
+  border-top: 1px solid global.$color-e;
   max-height: 420px;
 }
 
 .listHeading {
   position: sticky;
   top: 0;
-  background: #f8f8f8;
-  color: #777777;
+  background-color: global.$color-c;
+  color: global.$color-a;
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -54,11 +56,11 @@
   align-items: center;
   gap: 8px;
   padding: 8px 14px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid global.$color-light-shade;
 }
 
 .row:hover {
-  background: #f6f9fc;
+  background-color: global.$color-light-shade;
 }
 
 .rowLabel {
@@ -82,7 +84,7 @@
 .rowMeta {
   display: flex;
   gap: 6px;
-  color: #888888;
+  color: global.$color-a;
   font-size: 11px;
   white-space: nowrap;
   overflow: hidden;
@@ -90,18 +92,19 @@
 }
 
 .rowBadge {
-  color: #2d72d2;
+  color: global.$color-d;
+  font-weight: 600;
 }
 
 .notice {
   padding: 14px;
-  color: #888888;
+  color: global.$color-a;
   font-style: italic;
 }
 
 .status {
-  border-top: 1px solid #ededed;
-  color: #888888;
+  border-top: 1px solid global.$color-light-shade;
+  color: global.$color-a;
   font-size: 11px;
   padding: 6px 14px;
 }

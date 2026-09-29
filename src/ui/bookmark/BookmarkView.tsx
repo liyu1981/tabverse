@@ -3,15 +3,12 @@ import { Button, ButtonGroup, EditableText } from '@blueprintjs/core';
 import React, { useEffect, useState } from 'react';
 import {
   monitorTabSpaceChanges,
-  saveCurrentAllBookmarkIfNeeded,
-  startMonitorLocalStorageChanges,
-  stopMonitorLocalStorageChanges,
+  saveCurrentBookmarks,
 } from '../../data/bookmark/util';
 
 import { Bookmark } from '../../data/bookmark/Bookmark';
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import classes from './BookmarkView.module.scss';
-import { isIdNotSaved } from '../../data/common';
 import { logger } from '../../global';
 import { usePageControl } from '../common/usePageControl';
 import { useStore } from 'effector-react';
@@ -50,7 +47,7 @@ const BookmarkItem = (props: IBookmarkItem) => {
                     bid: props.bookmark.id,
                     changes: { name },
                   });
-                  saveCurrentAllBookmarkIfNeeded();
+                  saveCurrentBookmarks();
                 }}
               />
             </b>
@@ -76,7 +73,7 @@ const BookmarkItem = (props: IBookmarkItem) => {
               minimal={true}
               onClick={() => {
                 bookmarkStoreApi.removeBookmark(props.bookmark.id);
-                saveCurrentAllBookmarkIfNeeded();
+                saveCurrentBookmarks();
               }}
             />
           </ButtonGroup>
@@ -86,31 +83,15 @@ const BookmarkItem = (props: IBookmarkItem) => {
   );
 };
 
-export interface IBookmarkViewProps {
-  tabSpaceId: string;
-}
-
 const BOOKMARK_PAGE_LIMIT = 10;
 
-export function BookmarkView({ tabSpaceId }: IBookmarkViewProps) {
+export function BookmarkView() {
   const allBookmark = useStore($allBookmark);
 
   useEffect(() => {
     logger.info('bookmark start monitor tabspace, alltodo changes');
     monitorTabSpaceChanges();
   }, []);
-
-  useEffect(() => {
-    if (tabSpaceId && isIdNotSaved(tabSpaceId)) {
-      logger.info('bookmark start monitor localstorage changes');
-      startMonitorLocalStorageChanges();
-      return () => {
-        logger.info('todo stop monitor localstorage changes');
-        stopMonitorLocalStorageChanges();
-      };
-    }
-    return undefined;
-  }, [tabSpaceId]);
 
   const [getCurrentPageItems, renderPageControl] = usePageControl<Bookmark>(
     allBookmark.bookmarks.reverse().toArray(),

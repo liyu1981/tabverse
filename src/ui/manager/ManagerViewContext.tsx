@@ -22,8 +22,6 @@ export const ManagerViewContext = React.createContext<IManagerViewContext>({
   toaster: silentToaster,
 });
 
-export const ManagerViewContextProvider = ManagerViewContext.Provider;
-
 export function ManagerViewContextSupport() {
   const managerViewContext = useContext(ManagerViewContext);
   useEffect(() => {

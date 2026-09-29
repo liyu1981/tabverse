@@ -1,26 +1,16 @@
 import { $allNote, noteStoreApi } from '../../data/note/store';
 import { Note, newEmptyNote, setName } from '../../data/note/Note';
 import React, { useEffect } from 'react';
-import {
-  monitorTabSpaceChanges,
-  saveCurrentAllNoteIfNeeded,
-  startMonitorLocalStorageChanges,
-  stopMonitorLocalStorageChanges,
-} from '../../data/note/util';
+import { monitorTabSpaceChanges, saveCurrentNotes } from '../../data/note/util';
 
 import { Button } from '@blueprintjs/core';
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { NoteView } from './Note';
 import classes from './NotebookView.module.scss';
-import { isIdNotSaved } from '../../data/common';
 import { logger } from '../../global';
 import { useStore } from 'effector-react';
 
-export interface NotebookViewProps {
-  tabSpaceId: string;
-}
-
-export function NotebookView({ tabSpaceId }: NotebookViewProps) {
+export function NotebookView() {
   const allNote = useStore($allNote);
 
   useEffect(() => {
@@ -28,31 +18,19 @@ export function NotebookView({ tabSpaceId }: NotebookViewProps) {
     monitorTabSpaceChanges();
   }, []);
 
-  useEffect(() => {
-    if (tabSpaceId && isIdNotSaved(tabSpaceId)) {
-      logger.info('notebook start monitor localstorage changes');
-      startMonitorLocalStorageChanges();
-      return () => {
-        logger.info('notebook stop monitor localstorage changes');
-        stopMonitorLocalStorageChanges();
-      };
-    }
-    return undefined;
-  }, [tabSpaceId]);
-
   const updateNote = (nid: string, changes: Partial<Note>) => {
     noteStoreApi.updateNote({ nid, changes });
-    saveCurrentAllNoteIfNeeded();
+    saveCurrentNotes();
   };
 
   const removeNote = (nid: string) => {
     noteStoreApi.removeNote(nid);
-    saveCurrentAllNoteIfNeeded();
+    saveCurrentNotes();
   };
 
   const newNote = () => {
     noteStoreApi.addNote(setName(`Note ${Date.now()}`, newEmptyNote()));
-    saveCurrentAllNoteIfNeeded();
+    saveCurrentNotes();
   };
 
   const currentNotes = allNote.notes.reverse().toArray();

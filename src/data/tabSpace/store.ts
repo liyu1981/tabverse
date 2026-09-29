@@ -23,12 +23,12 @@ import {
 import { Tab } from './Tab';
 import { createGeneralStorageStoreAndApi } from '../../storage/GeneralStorage';
 import { exposeDebugData } from '../../debug';
+import { TABSPACE_DB_TABLE_NAME } from './TabSpace';
+import { db } from '../../storage/db';
 import { merge } from 'lodash';
-import { querySavedTabSpaceCount } from './util';
 import { storageOverviewApi } from '../../storage/StorageOverview';
 
 export const $tabSpace = createStore(newEmptyTabSpace());
-export type TabSpaceStore = typeof $tabSpace;
 
 const tabSpaceApi = createApi($tabSpace, {
   update: (_lastTabSpace, updatedTabSpace: TabSpace) => updatedTabSpace,
@@ -56,7 +56,6 @@ const tabSpaceApi = createApi($tabSpace, {
 });
 
 export const $tabSpacePreviewCache = createStore(newEmptyTabPreviewCache());
-export type TabSpacePreviewCacheStore = typeof $tabSpacePreviewCache;
 
 const tabSpacePreviewCacheApi = createApi($tabSpacePreviewCache, {
   setPreview: (
@@ -70,12 +69,22 @@ const tabSpacePreviewCacheApi = createApi($tabSpacePreviewCache, {
 const { $store: $tabSpaceStorageStore, api: tabSpaceStorageApi } =
   createGeneralStorageStoreAndApi();
 export const $tabSpaceStorage = $tabSpaceStorageStore;
-export type TabSpaceStorage = typeof $tabSpaceStorageStore;
 
 forward({
   from: $tabSpaceStorage,
   to: storageOverviewApi.updateTabSpaceStorage,
 });
+
+/**
+ * How many tabverses are stored.
+ *
+ * It lives here, not in util.ts, because util.ts imports this module: a count
+ * query that both need used to be the third copy of itself and the reason the
+ * two modules imported each other.
+ */
+export async function querySavedTabSpaceCount(): Promise<number> {
+  return db.table(TABSPACE_DB_TABLE_NAME).count();
+}
 
 async function reQuerySavedTabSpaceCount() {
   const count = await querySavedTabSpaceCount();

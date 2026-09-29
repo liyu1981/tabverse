@@ -1,0 +1,120 @@
+// The shared look of every control in the app, for both pages that render one:
+// the manager page and the toolbar popup. It lives in one file because the two
+// pages drifted apart once already - the popup was built with default
+// Blueprint components and read as a different application.
+//
+// This is a plain stylesheet, not a CSS module, so the selectors below are
+// written plain: `:global(...)` here would never be stripped (only
+// `*.module.scss` files go through that transform), and a selector like
+// `:global(.bp6-button)` is invalid CSS that browsers drop on the floor - which
+// is how these rules used to be written in manager.scss without ever applying.
+
+@use 'sass:color';
+@use '../global.scss';
+
+/* one radius for everything clickable, one for everything that holds text */
+.bp6-button {
+  border-radius: 18px;
+}
+
+.bp6-input,
+.bp6-tag-input {
+  border-radius: 28px;
+  box-shadow: none;
+  border: 1px solid global.$color-e;
+  background-color: #fff;
+  color: global.$color-text;
+}
+
+.bp6-input:focus,
+.bp6-tag-input:focus {
+  border-color: global.$color-d;
+  box-shadow: 0 0 0 1px global.$color-d;
+}
+
+.bp6-callout {
+  border-radius: 18px;
+}
+
+.bp6-tag {
+  border-radius: 8px;
+  font-size: 0.75em;
+}
+
+.bp6-control.bp6-checkbox .bp6-control-indicator {
+  border-radius: 8px;
+}
+
+.bp6-card.bp6-interactive:hover {
+  box-shadow:
+    0 2px 4px rgb(16 22 26 / 20%),
+    0 8px 24px rgb(16 22 26 / 20%);
+}
+
+/**
+ * The primary action of a view or a dialog: a solid brand pill.
+ *
+ * The hover deliberately does not repaint the button - the fill is already the
+ * strongest thing on the page, and a glow around it turns every dialog into a
+ * call to action. It only darkens a little.
+ */
+.tv-primary-button.bp6-button {
+  background-color: global.$color-d;
+  color: global.$color-c;
+  background-image: none;
+  box-shadow: none;
+}
+
+.tv-primary-button.bp6-button .bp6-icon {
+  color: global.$color-c;
+}
+
+.tv-primary-button.bp6-button:hover,
+.tv-primary-button.bp6-button:focus {
+  background-color: color.adjust(global.$color-d, $lightness: -8%);
+  color: global.$color-c;
+  box-shadow: none;
+}
+
+.tv-primary-button.bp6-button:hover .bp6-icon,
+.tv-primary-button.bp6-button:focus .bp6-icon {
+  color: global.$color-c;
+}
+
+/**
+ * An icon-only control: the icon carries the meaning and the brand colour, and
+ * the background only appears when the pointer is over it. The tab rows, the
+ * saved tabverse list and the popup all use this one, so "bookmark this tab",
+ * "close this tab" and "save and close the tabverse" are visibly the same
+ * control.
+ */
+.tv-icon-button.bp6-button {
+  min-width: 30px;
+  min-height: 30px;
+  padding: 0;
+  border-radius: 18px;
+  background-color: transparent;
+  background-image: none;
+  box-shadow: none;
+  color: global.$color-d;
+}
+
+.tv-icon-button.bp6-button .bp6-icon {
+  color: global.$color-d;
+}
+
+.tv-icon-button.bp6-button:hover,
+.tv-icon-button.bp6-button:focus {
+  background-color: global.$color-light-shade;
+  color: global.$color-d;
+  box-shadow: none;
+}
+
+.tv-icon-button.bp6-button:hover .bp6-icon,
+.tv-icon-button.bp6-button:focus .bp6-icon {
+  color: global.$color-d;
+}
+
+.tv-icon-button.bp6-button:disabled {
+  opacity: 0.4;
+}

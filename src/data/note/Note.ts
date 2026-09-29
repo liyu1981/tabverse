@@ -10,8 +10,6 @@ export interface Note extends IBase {
   data: string;
 }
 
-export type NoteLocalStorage = Pick<Note, 'name' | 'data'>;
-
 export const NOTE_DB_TABLE_NAME = 'SavedNote';
 export const NOTE_DB_SCHEMA = 'id, createdAt, name, tabSpaceId';
 

@@ -1,4 +1,4 @@
-import { $tabSpace, tabSpaceStoreApi } from './store';
+import { $tabSpace, querySavedTabSpaceCount, tabSpaceStoreApi } from './store';
 import { QUERY_PAGE_LIMIT_DEFAULT, db } from '../../storage/db';
 import {
   TABSPACE_DB_TABLE_NAME,
@@ -21,13 +21,7 @@ import {
   sendPubSubMessage,
   subscribePubSubMessage,
 } from '../../message/message';
-import {
-  debounce,
-  hasOwn,
-  logger,
-  perfEnd,
-  perfStart,
-} from '../../global';
+import { debounce, hasOwn, logger, perfEnd, perfStart } from '../../global';
 import { filter, isEqual, omit } from 'lodash';
 
 import { DEFAULT_SAVE_DEBOUNCE } from '../../storage/StorageOverview';
@@ -35,10 +29,6 @@ import { pinTabverseTabFirst } from './chromeUtil';
 import { restoreTabGroups } from './tabGroup';
 
 export function monitorDbChanges() {
-  const querySavedTabSpaceCount = () => {
-    return db.table(TABSPACE_DB_TABLE_NAME).count();
-  };
-
   subscribePubSubMessage(
     TabSpaceDBMsg.Changed,
     (message, changedTables: string[]) => {
@@ -48,7 +38,7 @@ export function monitorDbChanges() {
         changedTables.includes(TAB_DB_TABLE_NAME)
       ) {
         tabSpaceStoreApi.increaseSavedDataVersion();
-        querySavedTabSpaceCount().then((savedTabSpaceCount) =>
+        querySavedTabSpaceCount().then((savedTabSpaceCount: number) =>
           tabSpaceStoreApi.updateTotalSavedCount(savedTabSpaceCount),
         );
       }
@@ -174,10 +164,6 @@ export async function loadTabSpacesByIds(ids: string[]): Promise<TabSpace[]> {
     tabSpaces.push(tabSpace);
   }
   return tabSpaces;
-}
-
-export async function countSavedTabSpaces(): Promise<number> {
-  return db.table(TABSPACE_DB_TABLE_NAME).count();
 }
 
 /** How many tabverses the popup shows before the user searches. */
@@ -442,8 +428,4 @@ export async function loadTabSpaceByTabSpaceId(
   // focus tabspace tab
   const currentTab = await chrome.tabs.getCurrent();
   await chrome.tabs.update(currentTab.id, { active: true });
-}
-
-export async function querySavedTabSpaceCount() {
-  return await db.table(TABSPACE_DB_TABLE_NAME).count();
 }

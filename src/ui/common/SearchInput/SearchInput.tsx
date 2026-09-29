@@ -30,7 +30,6 @@ import classNames from 'classnames';
  * - `"paste"` - indicates that a value was added via paste. This is only
  *   possible when `addOnPaste=true`.
  */
-export type SearchInputAddMethod = 'default' | 'blur' | 'paste';
 
 export type SearchInputProps = Omit<
   TagInputProps,
@@ -42,13 +41,6 @@ export type SearchInputProps = Omit<
   onChangeQuery: (newQuery: Query) => void;
   children?: React.ReactNode;
 };
-
-export interface ISearchInputState {
-  activeIndex: number;
-  inputValue: string;
-  isInputFocused: boolean;
-  prevInputValueProp?: string;
-}
 
 /** special value for absence of active tag */
 const NONE = -1;

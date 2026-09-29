@@ -1,8 +1,5 @@
-import {
-  countSavedTabSpaces,
-  queryRecentSavedTabSpaces,
-  RECENT_TAB_SPACE_LIMIT,
-} from '../util';
+import { queryRecentSavedTabSpaces, RECENT_TAB_SPACE_LIMIT } from '../util';
+import { querySavedTabSpaceCount } from '../store';
 import { db } from '../../../storage/db';
 import { resetTestDb } from '../../../dev/dbImplTest';
 
@@ -87,7 +84,7 @@ test('recents come with their tabs, for the row to count them', async () => {
 
 test('an empty database has no recents and no saved tabverses', async () => {
   expect(await queryRecentSavedTabSpaces()).toEqual([]);
-  expect(await countSavedTabSpaces()).toEqual(0);
+  expect(await querySavedTabSpaceCount()).toEqual(0);
   await db.table('SavedTabSpace').put(savedTabSpace('ts-a', 'A', 1));
-  expect(await countSavedTabSpaces()).toEqual(1);
+  expect(await querySavedTabSpaceCount()).toEqual(1);
 });

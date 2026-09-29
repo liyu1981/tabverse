@@ -1,11 +1,5 @@
 import { IBase, isIdNotSaved } from '../common';
-import {
-  Note,
-  NoteLocalStorage,
-  convertToSavedNote,
-  newEmptyNote,
-  setTabSpaceId,
-} from './Note';
+import { Note, convertToSavedNote, newEmptyNote, setTabSpaceId } from './Note';
 import {
   convertToSavedBase,
   inPlaceCopyFromOtherBase,
@@ -35,10 +29,6 @@ export function newEmptyAllNote(): AllNote {
     tabSpaceId: NotTabSpaceId,
     notes: List(),
   };
-}
-
-export function cloneAllNote(targetAllNote: AllNote): AllNote {
-  return produce(targetAllNote, (_draft) => {});
 }
 
 export function addNote(note: Note, targetAllNote: AllNote): AllNote {
@@ -82,33 +72,6 @@ export function updateTabSpaceId(
     draft.notes = draft.notes
       .map((note) => setTabSpaceId(tabSpaceId, note))
       .toList();
-  });
-}
-
-export function getLocalStorageJSON(
-  targetAllNote: AllNote,
-): NoteLocalStorage[] {
-  return targetAllNote.notes
-    .map((note) => {
-      return { name: note.name, data: note.data };
-    })
-    .toArray();
-}
-
-export function restoreFromLocalStorageJSON(
-  noteJSONs: NoteLocalStorage[],
-  targetAllNote: AllNote,
-): AllNote {
-  return produce(targetAllNote, (draft) => {
-    draft.notes = List(
-      noteJSONs.map((noteJSON) => ({
-        ...newEmptyNote(),
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        name: noteJSON.name,
-        data: noteJSON.data,
-      })),
-    );
   });
 }
 

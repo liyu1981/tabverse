@@ -20,26 +20,6 @@
   gap: 12px;
 }
 
-/* the callouts are the dialog's only "cards", so they get the page's radius */
-.content :global(.bp6-callout) {
-  border-radius: 18px;
-}
-
-.content :global(.bp6-input) {
-  border-radius: 28px;
-  box-shadow: none;
-  border: 1px solid global.$color-e;
-  background-color: #fff;
-  color: global.$color-text;
-}
-
-.content :global(.bp6-input:focus) {
-  border-color: global.$color-d;
-  box-shadow: 0 0 0 1px global.$color-d;
-}
-
-/* the form sections own their spacing, so Blueprint's own margins do not stack
-   on top of the dialog's gap */
 .section {
   display: flex;
   flex-direction: column;
@@ -78,40 +58,13 @@
   flex: 1 1 8em;
 }
 
-/* the primary action of a dialog is the brand-coloured pill, as everywhere
-   else in the app (see .tv-primary-button in manager.scss) */
-.buttonRow :global(.tv-primary-button) {
-  background-color: global.$color-d;
-  color: global.$color-c;
-  background-image: none;
-  box-shadow: none;
-}
-
-.buttonRow :global(.tv-primary-button) :global(.bp6-icon) {
-  color: global.$color-c;
-}
-
-.buttonRow :global(.tv-primary-button):hover {
-  background-color: global.$color-d;
-  color: global.$color-c;
-  box-shadow: 0 0 4px 4px rgb(16 22 26 / 20%);
-}
-
-.buttonRow :global(.bp6-button) {
-  border-radius: 28px;
-}
-
-.buttonRow :global(.bp6-button):not(.bp6-intent-danger):hover {
-  background-color: global.$color-light-shade;
-  box-shadow: 0 0 4px 2px rgb(16 22 26 / 12%);
-}
-
+/* the pill and the icon buttons come from ../theme.scss; only the row layout
+   and the states of this dialog are its own */
 .status {
   margin-top: 4px;
 }
 
 .status :global(.bp6-callout) {
-  border-radius: 18px;
   font-size: 0.85em;
 }
 

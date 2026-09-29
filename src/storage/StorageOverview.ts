@@ -68,6 +68,9 @@ export class StorageOverview {
 
 export const $storageOverview = createStore(new StorageOverview({}));
 export const storageOverviewApi = createApi($storageOverview, {
+  // every other store in the app has one; this one needs it too (a test, or a
+  // context that wants a clean overview)
+  update: (_last, updated: StorageOverview) => updated,
   updateTabSpaceStorage: (lastStorageOverviewApi, tabSpaceStorage) => {
     return new StorageOverview({
       ...lastStorageOverviewApi.storages,
@@ -80,16 +83,18 @@ export const storageOverviewApi = createApi($storageOverview, {
       note: noteStorage,
     });
   },
+  // the key is the name SaveIndicator shows per row, and a shared key would
+  // make three tools overwrite one another's saving status
   updateTodoStorage: (lastStorageOverviewApi, todoStorage) => {
     return new StorageOverview({
       ...lastStorageOverviewApi.storages,
-      note: todoStorage,
+      todo: todoStorage,
     });
   },
   updateBookmarkStorage: (lastStorageOverviewApi, bookmarkStorage) => {
     return new StorageOverview({
       ...lastStorageOverviewApi.storages,
-      note: bookmarkStorage,
+      bookmark: bookmarkStorage,
     });
   },
   updateClosedTabStorage: (lastStorageOverviewApi, closedTabStorage) => {

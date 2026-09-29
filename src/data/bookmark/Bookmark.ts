@@ -11,11 +11,6 @@ export interface Bookmark extends IBase {
   favIconUrl: string;
 }
 
-export type BookmarkLocalStorage = Pick<
-  Bookmark,
-  'name' | 'url' | 'favIconUrl'
->;
-
 export const BOOKMARK_DB_TABLE_NAME = 'SavedBookmark';
 export const BOOKMARK_DB_SCHEMA = 'id, createdAt, tabSpaceId, name, url';
 

@@ -1,17 +1,11 @@
 import { $allTodo, todoStoreApi } from '../../data/todo/store';
 import React, { useEffect, useState } from 'react';
 import { Todo, setCompleted } from '../../data/todo/Todo';
-import {
-  monitorTabSpaceChanges,
-  saveCurrentAllTodoIfNeeded,
-  startMonitorLocalStorageChanges,
-  stopMonitorLocalStorageChanges,
-} from '../../data/todo/util';
+import { monitorTabSpaceChanges, saveCurrentTodos } from '../../data/todo/util';
 import { newEmptyTodo, setContent } from '../../data/todo/Todo';
 
 import classes from './TodoView.module.scss';
 import clsx from 'clsx';
-import { isIdNotSaved } from '../../data/common';
 import { logger } from '../../global';
 import { useStore } from 'effector-react';
 
@@ -98,7 +92,7 @@ export interface TodoViewProps {
   tabSpaceId: string;
 }
 
-export function TodoView({ tabSpaceId }: TodoViewProps) {
+export function TodoView(_props: TodoViewProps) {
   const allTodo = useStore($allTodo);
 
   const [filter, setFilter] = useState<string | null>(null);
@@ -111,26 +105,14 @@ export function TodoView({ tabSpaceId }: TodoViewProps) {
     monitorTabSpaceChanges();
   }, []);
 
-  useEffect(() => {
-    if (tabSpaceId && isIdNotSaved(tabSpaceId)) {
-      logger.info('todo start monitor localstorage changes');
-      startMonitorLocalStorageChanges();
-      return () => {
-        logger.info('todo stop monitor localstorage changes');
-        stopMonitorLocalStorageChanges();
-      };
-    }
-    return undefined;
-  }, [tabSpaceId]);
-
   const changeTodo = (id: string, t: Todo) => {
     todoStoreApi.updateTodo({ tid: id, changes: t });
-    saveCurrentAllTodoIfNeeded();
+    saveCurrentTodos();
   };
 
   const removeTodo = (id: string) => {
     todoStoreApi.removeTodo(id);
-    saveCurrentAllTodoIfNeeded();
+    saveCurrentTodos();
   };
 
   const filteredTodos = allTodo.todos
@@ -221,10 +203,7 @@ export function TodoView({ tabSpaceId }: TodoViewProps) {
           </button>
         </li>{' '}
         <li key="completed">
-          <button
-            type="button"
-            onClick={() => setFilter(FILTER_COMPLETED)}
-          >
+          <button type="button" onClick={() => setFilter(FILTER_COMPLETED)}>
             Completed
           </button>
         </li>

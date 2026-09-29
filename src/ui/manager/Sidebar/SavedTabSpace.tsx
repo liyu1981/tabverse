@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 import { HTMLSelect } from '@blueprintjs/core';
-import { SidebarComponentProps } from './Sidebar';
+import type { SidebarComponentProps } from './Sidebar';
 import classes from './SavedTabSpace.module.scss';
 import { isIdNotSaved } from '../../../data/common';
 import { useStore } from 'effector-react';

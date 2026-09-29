@@ -1,32 +1,18 @@
 import '../common/reactdev';
-import './manager.scss';
 
 import React, { useMemo, useState } from 'react';
 
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { ManagerViewContextSupport } from './ManagerViewContext';
+import { IManagerQueryParams, ManagerViewRoute } from './routes';
 import { SavedTabSpaceView } from './SavedTabSpace/SavedTabSpaceView';
 import { Sidebar } from './Sidebar/Sidebar';
 import { SidebarContainer } from '../common/SidebarContainer';
 import { TabSpaceView } from './TabSpace/TabSpaceView';
 import { WebtoolView } from './Webtool/WebtoolView';
 
-export interface IManagerQueryParams {
-  op: string;
-  /** the tabverse id, minted when the tab was opened (see tabverseUrl) */
-  tvid?: string;
-  route?: string;
-}
-
 interface IManagerContainerProps {
   queryParams?: IManagerQueryParams;
-}
-
-export enum ManagerViewRoute {
-  Opened = 'live',
-  Saved = 'saved',
-  Search = 'search',
-  Webtool = 'webtool',
 }
 
 export const ManagerView = (props: IManagerContainerProps) => {

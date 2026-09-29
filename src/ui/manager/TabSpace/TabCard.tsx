@@ -56,8 +56,10 @@ function TabBookmarkBtn({
     <div></div>
   ) : (
     <Button
+      className="tv-icon-button"
       icon="bookmark"
       minimal={true}
+      title="Save this tab as a bookmark"
       onClick={() => {
         onBookmark(tab);
       }}
@@ -127,8 +129,10 @@ export function TabCard(props: ITabCardProps) {
               />
             )}
             <Button
+              className="tv-icon-button"
               icon="cross"
               minimal={true}
+              title="Close this tab"
               onClick={() => {
                 closeTab(props.tab);
               }}

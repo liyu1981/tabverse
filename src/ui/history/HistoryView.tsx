@@ -27,7 +27,7 @@ import { ErrorBoundary } from '../common/ErrorBoundary';
 import { FavIcon } from '../common/FavIcon';
 import { ManagerViewContext } from '../manager/ManagerViewContext';
 import { calendarLabel, fromNow } from '../../time';
-import { saveCurrentAllBookmarkIfNeeded } from '../../data/bookmark/util';
+import { saveCurrentBookmarks } from '../../data/bookmark/util';
 import { usePageControl } from '../common/usePageControl';
 import { useStore } from 'effector-react';
 import classes from './HistoryView.module.scss';
@@ -96,16 +96,7 @@ const HistoryItem = (props: IHistoryItemProps) => {
   );
 };
 
-export interface IHistoryViewProps {
-  /**
-   * The tabverse this panel belongs to. The list itself is loaded by the
-   * parent (see TabSpaceRightSideView) and the tabverse id is re-parented on
-   * a TabSpaceMsg.ChangeID, so nothing here has to filter by it.
-   */
-  tabSpaceId: string;
-}
-
-export function HistoryView(_props: IHistoryViewProps) {
+export function HistoryView() {
   const allClosedTab = useStore($allClosedTab);
   const allBookmark = useStore($allBookmark);
   const { toaster } = useContext(ManagerViewContext);
@@ -144,7 +135,7 @@ export function HistoryView(_props: IHistoryViewProps) {
         setName(closedTab.title, setUrl(closedTab.url, newEmptyBookmark())),
       ),
     );
-    saveCurrentAllBookmarkIfNeeded();
+    saveCurrentBookmarks();
     // it lives in the Bookmark tool now, so it does not need to stay in the
     // history as well
     deleteClosedTab(closedTab.id);

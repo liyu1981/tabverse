@@ -20,15 +20,6 @@ function inCurrentTabSpace(windowId: number, tabSpace: TabSpace) {
 
 function copyChromeTabFields(chromeTab: chrome.tabs.Tab, targetTab: Tab): Tab {
   return produce(targetTab, (draft) => {
-    // console.log(
-    //   'debug: before copyChromeTabFields:',
-    //   targetTab.id,
-    //   draft.title,
-    //   draft.url,
-    //   draft.favIconUrl,
-    //   draft.pinned,
-    //   draft.suspended,
-    // );
     if (chromeTab.title) {
       draft.title = chromeTab.title;
     }
@@ -50,15 +41,6 @@ function copyChromeTabFields(chromeTab: chrome.tabs.Tab, targetTab: Tab): Tab {
           ? undefined
           : chromeTab.splitViewId;
     }
-    // console.log(
-    //   'debug: after copyChromeTabFields:',
-    //   targetTab.id,
-    //   draft.title,
-    //   draft.url,
-    //   draft.favIconUrl,
-    //   draft.pinned,
-    //   draft.suspended,
-    // );
   });
 }
 
@@ -135,13 +117,6 @@ function doCapturePreview(chromeTabId: number, chromeWindowId: number) {
         const dataUrl = await chrome.tabs.captureVisibleTab(chromeWindowId, {
           quality: 85,
         });
-        // console.log('got back dataurl:', dataurl.length, activeInfo.tabId);
-        // it is possible that when we get the dataurl, the tab has been
-        // switched (as captureVisibleTab is operating towards windowId), so
-        // here query chrome tabs for the current active one so that we know
-        // whether we have got the correct screenshot. (Must not use
-        // chrome.tabs.getCurrent as it will always return the tab this script
-        // running in, which is tabspace manager tab)
         const tabs = await chrome.tabs.query({
           active: true,
           // pay attention to use currentWindow here, as if not use, can result

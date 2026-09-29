@@ -5,31 +5,17 @@ import {
   AllTodoSavePayload,
   addTodo,
   convertAndGetAllTodoSavePayload,
-  getLocalStorageJSON,
   newEmptyAllTodo,
   updateTabSpaceId,
 } from './AllTodo';
-import { TODO_DB_TABLE_NAME, Todo, TodoLocalStorage } from './Todo';
+import { TODO_DB_TABLE_NAME, Todo } from './Todo';
 import { TabSpaceMsg, subscribePubSubMessage } from '../../message/message';
 import { addPagingToQueryParams, db } from '../../storage/db';
 import { debounce, logger } from '../../global';
-import {
-  getLocalStorageKey,
-  localStorageAddListener,
-  localStorageGetItem,
-  localStoragePutItem,
-  localStorageRemoveListener,
-} from '../../storage/localStorageWrapper';
 
 import { $tabSpace } from '../tabSpace/store';
 import { DEFAULT_SAVE_DEBOUNCE } from '../../storage/StorageOverview';
-import { isArray } from 'lodash';
-import { isIdNotSaved } from '../common';
-import { isJestTest } from '../../debug';
-import { needAutoSave } from '../tabSpace/TabSpace';
 import { updateFromSaved } from '../Base';
-
-export const LOCALSTORAGE_TODO_KEY = getLocalStorageKey('todo');
 
 export function monitorTabSpaceChanges() {
   subscribePubSubMessage(TabSpaceMsg.ChangeID, (message, data) => {
@@ -39,42 +25,13 @@ export function monitorTabSpaceChanges() {
   });
 }
 
-export async function loadCurrentAllTodoFromLocalStorage() {
-  return new Promise<void>((resolve, reject) => {
-    localStorageGetItem(LOCALSTORAGE_TODO_KEY, (value: string) => {
-      const todoJSONs = JSON.parse(value) as TodoLocalStorage[];
-      if (isArray(todoJSONs)) {
-        todoStoreApi.restoreFromLocalStorageJSON(todoJSONs);
-      }
-      resolve();
-    });
-  });
-}
-
 export async function loadAllTodoByTabSpaceId(tabSpaceId: string) {
-  if (isIdNotSaved(tabSpaceId) && !isJestTest()) {
-    await loadCurrentAllTodoFromLocalStorage();
-  } else {
-    const savedAllTodo = await queryAllTodo(
-      tabSpaceId,
-      addPagingToQueryParams({}),
-    );
-    todoStoreApi.update(savedAllTodo);
-    todoStoreApi.updateLastSavedTime(savedAllTodo.updatedAt);
-  }
-}
-
-export function startMonitorLocalStorageChanges() {
-  localStorageAddListener(LOCALSTORAGE_TODO_KEY, (key, newValue, _oldValue) => {
-    const todoJSONs = JSON.parse(newValue) as TodoLocalStorage[];
-    todoStoreApi.restoreFromLocalStorageJSON(todoJSONs);
-  });
-  // immediately load once after the monitoring is started
-  loadCurrentAllTodoFromLocalStorage();
-}
-
-export function stopMonitorLocalStorageChanges() {
-  localStorageRemoveListener(LOCALSTORAGE_TODO_KEY);
+  const savedAllTodo = await queryAllTodo(
+    tabSpaceId,
+    addPagingToQueryParams({}),
+  );
+  todoStoreApi.update(savedAllTodo);
+  todoStoreApi.updateLastSavedTime(savedAllTodo.updatedAt);
 }
 
 /**
@@ -94,7 +51,6 @@ export async function saveAllTodo(): Promise<number> {
         newTodoSavePayloads,
         existTodoSavePayloads,
       } = convertAndGetAllTodoSavePayload($allTodo.getState());
-      // console.log('allTodoSavePayload:', allTodoSavePayload);
       await db.table(TODO_DB_TABLE_NAME).bulkAdd(newTodoSavePayloads);
       await db.table(TODO_DB_TABLE_NAME).bulkPut(existTodoSavePayloads);
       if (isNewAllTodo) {
@@ -121,24 +77,11 @@ export const saveCurrentAllTodo = debounce(
   DEFAULT_SAVE_DEBOUNCE,
 );
 
-export const saveCurrentAllTodoIfNeeded = () => {
-  if (needAutoSave($tabSpace.getState())) {
-    logger.log('current tabSpace need autoSave, will then saveCurrentAllTodo');
-    saveCurrentAllTodo();
-  } else {
-    logger.log(
-      'current tabSpace is not on autoSave, will then save todos to localStorage',
-    );
-    saveCurrentAllTodoToLocalStorage();
-  }
+export const saveCurrentTodos = () => {
+  // a tabverse is born saved (its id is minted when the tab is opened), so
+  // there is no "not saved yet" state to fall back to
+  saveCurrentAllTodo();
 };
-
-export function saveCurrentAllTodoToLocalStorage() {
-  localStoragePutItem(
-    LOCALSTORAGE_TODO_KEY,
-    JSON.stringify(getLocalStorageJSON($allTodo.getState())),
-  );
-}
 
 export async function queryAllTodo(
   tabSpaceId: string,

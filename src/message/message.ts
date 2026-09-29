@@ -2,12 +2,6 @@ import * as PubSub from 'pubsub-js';
 
 import { logger } from '../global';
 
-export type MsgHandler = (
-  payload: any,
-  sender: chrome.runtime.MessageSender,
-  sendResponse: (response?: any) => void,
-) => void;
-
 /** Payload of TabSpaceDBMsg.Changed / BackgroundMsg.LocalTablesChanged. */
 export interface ILocalTablesChangedPayload {
   tables: string[];
@@ -37,8 +31,6 @@ export type TabId = string;
 export type ChromeTabId = number;
 export type AuditLogs = string[];
 export type NotNeed = undefined | null;
-
-export const NotNeedPayload = undefined;
 
 export async function sendChromeMessage(msgPayload: {
   type: TabSpaceMsg.Focus;

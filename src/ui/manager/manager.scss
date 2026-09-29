@@ -1,5 +1,9 @@
 @use '../../global.scss';
 
+// Page level chrome for the manager page only. The shared control styles
+// (buttons, inputs, callouts, cards) live in ../theme.scss, which both this
+// page and the popup import.
+
 body {
   color: global.$color-text;
   background-color: global.$color-background;
@@ -10,33 +14,6 @@ body {
   outline: none;
 }
 
-:global(.bp6-button) {
-  border-radius: 18px;
-}
-
-:global(.bp6-card):global(.bp6-interactive):hover {
-  box-shadow:
-    0 2px 4px rgb(16 22 26 / 20%),
-    0 8px 24px rgb(16 22 26 / 20%);
-}
-
-:global(.bp6-control):global(.bp6-checkbox) :global(.bp6-control-indicator) {
-  border-radius: 8px;
-}
-
-:global(.tv-primary-button):global(.bp6-button) {
-  background-color: global.$color-d;
-  color: global.$color-c;
-  background-image: none;
-  box-shadow: none;
-}
-
-:global(.tv-primary-button):global(.bp6-button) :global(.bp6-icon) {
-  color: global.$color-c;
-}
-
-:global(.tv-primary-button):global(.bp6-button):hover {
-  background-color: global.$color-d;
-  color: global.$color-c;
-  box-shadow: 0px 0px 4px 4px rgb(16 22 26 / 20%);
+.stickyOn .header {
+  box-shadow: 0 2px 10px -5px rgb(16 22 26 / 60%);
 }

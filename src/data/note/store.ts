@@ -3,22 +3,20 @@ import {
   AllNote,
   newEmptyAllNote,
   removeNote,
-  restoreFromLocalStorageJSON,
   updateNote,
   updateTabSpaceId,
 } from './AllNote';
 import { createApi, createStore, forward } from 'effector';
 import { merge } from 'lodash';
-import { Note, NoteLocalStorage } from './Note';
+import { Note } from './Note';
 import { exposeDebugData } from '../../debug';
 import { createGeneralStorageStoreAndApi } from '../../storage/GeneralStorage';
 import { storageOverviewApi } from '../../storage/StorageOverview';
 
 export const $allNote = createStore<AllNote>(newEmptyAllNote());
-export type AllNoteStore = typeof $allNote;
 
 const allNoteApi = createApi($allNote, {
-  update: (lastAllNote, updatedAllNote: AllNote) => updatedAllNote,
+  update: (_lastAllNote, updatedAllNote: AllNote) => updatedAllNote,
   addNote: (lastAllNote, note: Note) => addNote(note, lastAllNote),
   updateNote: (
     lastAllNote,
@@ -27,14 +25,11 @@ const allNoteApi = createApi($allNote, {
   removeNote: (lastAllNote, nid: string) => removeNote(nid, lastAllNote),
   updateTabSpaceId: (lastAllNote, tabSpaceId: string) =>
     updateTabSpaceId(tabSpaceId, lastAllNote),
-  restoreFromLocalStorageJSON: (lastAllNote, noteJSONs: NoteLocalStorage[]) =>
-    restoreFromLocalStorageJSON(noteJSONs, lastAllNote),
 });
 
 const { $store: $noteStorageStore, api: noteStorageApi } =
   createGeneralStorageStoreAndApi();
 export const $noteStorage = $noteStorageStore;
-export type NoteStorageStore = typeof $noteStorageStore;
 
 forward({
   from: $noteStorage,
@@ -42,6 +37,5 @@ forward({
 });
 
 export const noteStoreApi = merge(allNoteApi, noteStorageApi);
-export type NoteStoreApi = typeof noteStorageApi;
 
 exposeDebugData('note', { $allNote, $noteStorageStore, noteStoreApi });

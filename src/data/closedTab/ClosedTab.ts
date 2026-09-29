@@ -51,10 +51,6 @@ export const setTabSpaceId = setAttrForObject2<string, ClosedTab>('tabSpaceId');
 export const setTitle = setAttrForObject2<string, ClosedTab>('title');
 export const setUrl = setAttrForObject2<string, ClosedTab>('url');
 export const setFavIconUrl = setAttrForObject2<string, ClosedTab>('favIconUrl');
-export const setClosedAt = setAttrForObject2<number, ClosedTab>('closedAt');
-export const setTimesClosed = setAttrForObject2<number, ClosedTab>(
-  'timesClosed',
-);
 
 export function convertToSavedClosedTab(targetClosedTab: ClosedTab): ClosedTab {
   return produce(targetClosedTab, (draft) => {

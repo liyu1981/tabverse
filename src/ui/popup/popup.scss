@@ -1,11 +1,18 @@
 // The popup is the one page that renders into a browser-chrome sized surface:
 // a fixed width, and as much height as Chrome allows (600px is its ceiling).
 // The list scrolls inside that, the header and the create button do not.
+@use '../../global.scss';
+
 body {
   width: 420px;
   max-height: 600px;
   margin: 0;
   overflow: hidden;
-  background: #ffffff;
-  color: #111111;
+  // the popup is a white surface like the cards in the app, not a grey page
+  background-color: #fff;
+  color: global.$color-text;
+}
+
+:focus {
+  outline: none;
 }

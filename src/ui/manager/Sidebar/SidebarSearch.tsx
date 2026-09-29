@@ -1,7 +1,7 @@
 import { InputGroup, Keys } from '@blueprintjs/core';
 import React, { useMemo, useRef } from 'react';
 
-import { ManagerViewRoute } from '../ManagerView';
+import { ManagerViewRoute } from '../routes';
 import SidebarClasses from './Sidebar.module.scss';
 import classes from './SidebarSearch.module.scss';
 import clsx from 'clsx';

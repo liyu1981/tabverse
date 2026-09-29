@@ -147,38 +147,6 @@ export function isEqual(t1: TabSpace, t2: TabSpace): boolean {
   );
 }
 
-export function isEqualTabs(t1: TabSpace, t2: TabSpace): boolean {
-  const t1Tabs: Tab[] = t1.tabs.toJS();
-  const t2Tabs: Tab[] = t2.tabs.toJS();
-  return (
-    t1Tabs.length === t2Tabs.length &&
-    t1Tabs.reduce((r, _tab1, index) => {
-      if (!r) {
-        return false;
-      }
-      if (isEqualWithoutCreatedAtUpdatedAt(t1Tabs[index], t2Tabs[index])) {
-        return r && true;
-      } else {
-        return r && false;
-      }
-    }, false)
-  );
-}
-
-export function isEqualWithoutCreateAtUpdateAt(
-  t1: TabSpace,
-  t2: TabSpace,
-): boolean {
-  return (
-    t1.chromeTabId === t2.chromeTabId &&
-    t1.chromeWindowId === t2.chromeWindowId &&
-    t1.id === t2.id &&
-    t1.name === t2.name &&
-    t1.version === t2.version &&
-    isEqualTabs(t1, t2)
-  );
-}
-
 export function fromSavedDataWithoutTabs(d: TabSpaceSavePayload): TabSpace {
   return {
     ...newEmptyTabSpace(),

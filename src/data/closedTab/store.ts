@@ -15,7 +15,6 @@ import {
 import { ClosedTab } from './ClosedTab';
 
 export const $allClosedTab = createStore<AllClosedTab>(newEmptyAllClosedTab());
-export type AllClosedTabStore = typeof $allClosedTab;
 
 const allClosedTabApi = createApi($allClosedTab, {
   update: (_last, updated: AllClosedTab) => updated,
@@ -33,7 +32,6 @@ const allClosedTabApi = createApi($allClosedTab, {
 const { $store: $closedTabStorageStoreImpl, api: closedTabStorageApi } =
   createGeneralStorageStoreAndApi();
 export const $closedTabStorage = $closedTabStorageStoreImpl;
-export type ClosedTabStorageStore = typeof $closedTabStorageStoreImpl;
 
 forward({
   from: $closedTabStorage,
@@ -41,7 +39,6 @@ forward({
 });
 
 export const closedTabStoreApi = merge(allClosedTabApi, closedTabStorageApi);
-export type ClosedTabStoreApi = typeof closedTabStoreApi;
 
 exposeDebugData('closedTab', {
   $allClosedTab,

@@ -5,7 +5,7 @@ import classes from './LiveTabSpace.module.scss';
 import { isIdNotSaved } from '../../../data/common';
 import { $tabSpace } from '../../../data/tabSpace/store';
 import { useStore } from 'effector-react';
-import { SidebarComponentProps } from './Sidebar';
+import type { SidebarComponentProps } from './Sidebar';
 
 export type LiveTabSpaceProps = SidebarComponentProps;
 

@@ -48,7 +48,7 @@ export function SavedTabSpaceRow(props: ISavedTabSpaceRowProps) {
           <span>·</span>
           <span>{calendarLabel(tabSpace.updatedAt)}</span>
           {props.isCurrentWindow ? (
-            <Tag minimal={true} intent={Intent.PRIMARY}>
+            <Tag minimal={true} intent={Intent.PRIMARY} round={true}>
               this window
             </Tag>
           ) : null}
@@ -64,6 +64,7 @@ export function SavedTabSpaceRow(props: ISavedTabSpaceRowProps) {
       <ButtonGroup>
         {isOpen && !props.isCurrentWindow ? (
           <Button
+            className="tv-icon-button"
             icon="locate"
             title="Go to the window of this tabverse"
             minimal={true}
@@ -72,6 +73,7 @@ export function SavedTabSpaceRow(props: ISavedTabSpaceRowProps) {
           />
         ) : null}
         <Button
+          className="tv-icon-button"
           icon="folder-shared"
           title="Open In A New Window"
           minimal={true}
@@ -79,6 +81,7 @@ export function SavedTabSpaceRow(props: ISavedTabSpaceRowProps) {
           onClick={() => props.openInNewWindow(tabSpace)}
         />
         <Button
+          className="tv-icon-button"
           icon="folder-open"
           title="Open In This Window (replaces its tabs)"
           minimal={true}

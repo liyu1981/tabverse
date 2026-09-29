@@ -53,14 +53,6 @@ function getDebugLogLevel() {
   return debugLogLevel;
 }
 
-export function setDebugLogLevelOn(isOn: boolean) {
-  if (isOn) {
-    debugLogLevel = TabSpaceLogLevel.LOG;
-  } else {
-    debugLogLevel = TabSpaceLogLevel.ERROR + 1;
-  }
-}
-
 export const loglevel = isJestTest()
   ? getDebugLogLevel()
   : getSettingItem<TabSpaceLogLevel>('loglevel', (v) => parseInt(v)) ||

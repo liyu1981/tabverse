@@ -8,7 +8,6 @@ import { NotebookView } from '../../notebook/NotebookView';
 import { TodoView } from '../../todo/TodoView';
 import classes from './TabSpaceRightSideView.module.scss';
 import { getLoadingComponent2 } from '../../common/LoadingComponent';
-import { isIdNotSaved } from '../../../data/common';
 import { loadAllTodoByTabSpaceId } from '../../../data/todo/util';
 import { loadAllNoteByTabSpaceId } from '../../../data/note/util';
 import { loadAllBookmarkByTabSpaceId } from '../../../data/bookmark/util';
@@ -25,7 +24,9 @@ enum RightSideModule {
 
 export function TabSpaceRightSideView() {
   const tabSpace = useStore($tabSpace);
-  const [pinned, setPinned] = useState<string>(RightSideModule.TODO);
+  // null means nothing is pinned: the pinned row disappears and every tool
+  // moves back into the single scrolling list
+  const [pinned, setPinned] = useState<string | null>(RightSideModule.TODO);
 
   const rightSideModules = useMemo(() => {
     const todoLoader = async () => {
@@ -119,14 +120,6 @@ export function TabSpaceRightSideView() {
   return (
     <ErrorBoundary>
       <div className={classes.container}>
-        {isIdNotSaved(tabSpace.id) ? (
-          <div className={classes.localStorageWarning}>
-            Using local storage for saving data from tools here. To save with
-            current Tabverse, simply save Tabverse.
-          </div>
-        ) : (
-          ''
-        )}
         {pinned !== null ? (
           <div className={classes.tabsContainer}>
             <Button
@@ -146,9 +139,10 @@ export function TabSpaceRightSideView() {
               <BPTab
                 id={pinned}
                 title={rightSideModules[pinned].title}
-                panel={React.createElement(rightSideModules[pinned].component, {
-                  tabSpaceId: tabSpace.id,
-                })}
+                panel={React.createElement(
+                  rightSideModules[pinned].component,
+                  {},
+                )}
               />
             </BPTabs>
           </div>
@@ -178,9 +172,7 @@ export function TabSpaceRightSideView() {
                   key={key}
                   id={key}
                   title={rightSideModules[key].title}
-                  panel={React.createElement(componentClass, {
-                    tabSpaceId: tabSpace.id,
-                  })}
+                  panel={React.createElement(componentClass, {})}
                 />
               );
             })}
