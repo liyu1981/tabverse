@@ -202,12 +202,11 @@ export function TabSpaceListView() {
         </h1>
       </div>
       <div className={classes.titleButtons}>
-        <Tooltip content="This tabverse is saved automatically. This flushes anything still pending (notes, todos, bookmarks, closed tabs) and then closes the Tabverse tab; the window's other tabs stay open as normal tabs.">
+        <Tooltip content="Save and close: this tabverse is saved automatically, so this only flushes anything still pending (notes, todos, bookmarks, closed tabs) and then closes the Tabverse tab. The window's other tabs stay open as normal tabs.">
           <Button
-            minimal={true}
-            small={true}
+            className={classes.saveAndCloseButton}
+            aria-label="Save and close this tabverse"
             icon="floppy-disk"
-            text="Save and close"
             loading={isClosing}
             onClick={() => void saveAndClose()}
           />

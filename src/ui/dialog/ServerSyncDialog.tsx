@@ -1,8 +1,8 @@
 import {
   Button,
   Callout,
-  ControlGroup,
   Dialog,
+  DialogBody,
   FormGroup,
   InputGroup,
   Intent,
@@ -11,6 +11,7 @@ import {
 import React, { useEffect, useState } from 'react';
 
 import { logger } from '../../global';
+import classes from './ServerSyncDialog.module.scss';
 import {
   SyncRuntime,
   startBackgroundSync,
@@ -181,25 +182,26 @@ export const ServerSyncDialog = (props: {
       isOpen={isOpen}
       onClose={onClose}
       title="Server sync"
-      style={{ width: 560 }}
+      className={classes.dialog}
+      canOutsideClickClose={true}
     >
-      <div style={{ padding: 20 }}>
-        {!loaded ? <Spinner size={20} /> : null}
+      <DialogBody className={classes.content}>
+        {!loaded ? (
+          <div className={classes.loadingRow}>
+            <Spinner size={20} />
+          </div>
+        ) : null}
 
         {loaded && !config ? (
-          <div>
+          <div className={classes.section}>
             <Callout intent={Intent.PRIMARY} title="Pair this browser">
-              <p>
+              <p className={classes.pairingHint}>
                 Run your own <code>tabversed</code> server, create an account on
                 it, then generate a one time pairing code with
                 <code> POST /api/v1/auth/invites</code> and paste it below.
               </p>
             </Callout>
-            <FormGroup
-              label="Server URL"
-              labelFor="sync-url-input"
-              style={{ marginTop: 12 }}
-            >
+            <FormGroup label="Server URL" labelFor="sync-url-input">
               <InputGroup
                 id="sync-url-input"
                 placeholder="https://sync.example.com"
@@ -226,29 +228,29 @@ export const ServerSyncDialog = (props: {
                 fill={true}
               />
             </FormGroup>
-            <ControlGroup fill={true}>
+            <div className={classes.buttonRow}>
               <Button
-                intent={Intent.PRIMARY}
+                className="tv-primary-button"
                 loading={busy}
                 text="Pair & connect"
                 onClick={onPair}
               />
-            </ControlGroup>
+            </div>
           </div>
         ) : null}
 
         {loaded && config ? (
-          <div>
+          <div className={classes.section}>
             <Callout intent={Intent.SUCCESS} title={config.baseUrl}>
-              <p>
+              <p className={classes.identity}>
                 Device: <code>{config.deviceId || 'unknown'}</code>
                 <br />
                 Account: <code>{config.userId || 'unknown'}</code>
               </p>
             </Callout>
-            <ControlGroup fill={true} style={{ marginTop: 12 }}>
+            <div className={classes.buttonRow}>
               <Button
-                intent={Intent.PRIMARY}
+                className="tv-primary-button"
                 loading={busy}
                 text="Sync now"
                 onClick={onSyncNow}
@@ -256,22 +258,24 @@ export const ServerSyncDialog = (props: {
               <Button
                 loading={busy}
                 text="Upload local data"
+                title="Send everything stored on this device to the server (ADR 0002: pairing alone does not upload)"
                 onClick={onUpload}
               />
               <Button
                 intent={Intent.DANGER}
+                minimal={true}
                 loading={busy}
                 text="Disconnect"
                 onClick={onDisconnect}
               />
-            </ControlGroup>
+            </div>
           </div>
         ) : null}
 
-        <Callout intent={status.intent} style={{ marginTop: 12 }}>
-          {status.text}
-        </Callout>
-      </div>
+        <div className={classes.status}>
+          <Callout intent={status.intent}>{status.text}</Callout>
+        </div>
+      </DialogBody>
     </Dialog>
   );
 };
