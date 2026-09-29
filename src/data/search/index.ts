@@ -6,19 +6,8 @@ import { logger } from '../../global';
 import { searchLocalTabSpaceIds } from './localSearch';
 import { searchServerTabSpaceIds } from './serverSearch';
 
-import {
-  TAB_DB_TABLE_NAME,
-  TabSavePayload,
-  fromSavedTab,
-} from '../tabSpace/Tab';
-import {
-  TABSPACE_DB_TABLE_NAME,
-  TabSpace,
-  TabSpaceSavePayload,
-  fromSavedDataWithoutTabs,
-  insertTab,
-} from '../tabSpace/TabSpace';
-import { db } from '../../storage/db';
+import { TabSpace } from '../tabSpace/TabSpace';
+import { loadTabSpacesByIds } from '../tabSpace/util';
 
 export * from './Query';
 export * from './localSearch';
@@ -41,57 +30,6 @@ export interface SearchSavedTabSpacesResult {
   backend: SearchBackend;
   /** Ids the backend matched that this device has not downloaded. */
   unknownTabSpaceIds: string[];
-}
-
-/**
- * Loads tabverses by id, with their tabs, keeping the given order.
- *
- * `querySavedTabSpace({anyOf})` sorts by creation date and pages, which is
- * what the browse list wants and the opposite of what a ranked search wants.
- */
-export async function loadTabSpacesByIds(ids: string[]): Promise<TabSpace[]> {
-  if (ids.length <= 0) {
-    return [];
-  }
-  const savedTabSpaces = await db
-    .table<TabSpaceSavePayload>(TABSPACE_DB_TABLE_NAME)
-    .bulkGet(ids);
-  const byId = new Map<string, TabSpaceSavePayload>();
-  savedTabSpaces.forEach((row) => {
-    if (row) {
-      byId.set(row.id, row);
-    }
-  });
-  const toLoadTabIds = Array.from(byId.values())
-    .map((row) => row.tabIds ?? [])
-    .flat();
-  const savedTabs = await db
-    .table<TabSavePayload>(TAB_DB_TABLE_NAME)
-    .bulkGet(toLoadTabIds);
-  const tabById = new Map<string, TabSavePayload>();
-  savedTabs.forEach((row) => {
-    if (row) {
-      tabById.set(row.id, row);
-    }
-  });
-
-  const tabSpaces: TabSpace[] = [];
-  for (const id of ids) {
-    const saved = byId.get(id);
-    if (!saved) {
-      continue;
-    }
-    let tabSpace = fromSavedDataWithoutTabs(saved);
-    for (const tabId of saved.tabIds ?? []) {
-      const savedTab = tabById.get(tabId);
-      if (!savedTab) {
-        continue;
-      }
-      tabSpace = insertTab({ tab: fromSavedTab(savedTab) }, tabSpace);
-    }
-    tabSpaces.push(tabSpace);
-  }
-  return tabSpaces;
 }
 
 /**

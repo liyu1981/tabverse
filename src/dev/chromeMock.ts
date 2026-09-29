@@ -175,6 +175,16 @@ class MockTabsApi {
     if (params && params.active) {
       this.chrome.setActiveTab(tabId);
     }
+    if (params && params.url) {
+      // a navigation: the popup reuses a window's manager tab instead of
+      // opening a second one, which only works if update really moves it
+      this.chrome.updateTab(
+        tabId,
+        { title: 'loading...', url: params.url, favIconUrl: '', pinned: false },
+        false,
+      );
+    }
+    return this.chrome.getTab(tabId);
   }
 
   /**

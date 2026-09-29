@@ -124,6 +124,91 @@ export async function querySavedTabSpace(
   return savedTabSpaces;
 }
 
+/**
+ * Loads tabverses by id, with their tabs, keeping the given order.
+ *
+ * `querySavedTabSpace({anyOf})` sorts by creation date and pages, which is
+ * what the browse list wants and the opposite of what a ranked search (or the
+ * popup's recents) wants.
+ */
+export async function loadTabSpacesByIds(ids: string[]): Promise<TabSpace[]> {
+  if (ids.length <= 0) {
+    return [];
+  }
+  const savedTabSpaces = await db
+    .table<TabSpaceSavePayload>(TABSPACE_DB_TABLE_NAME)
+    .bulkGet(ids);
+  const byId = new Map<string, TabSpaceSavePayload>();
+  savedTabSpaces.forEach((row) => {
+    if (row) {
+      byId.set(row.id, row);
+    }
+  });
+  const toLoadTabIds = Array.from(byId.values())
+    .map((row) => row.tabIds ?? [])
+    .flat();
+  const savedTabs = await db
+    .table<TabSavePayload>(TAB_DB_TABLE_NAME)
+    .bulkGet(toLoadTabIds);
+  const tabById = new Map<string, TabSavePayload>();
+  savedTabs.forEach((row) => {
+    if (row) {
+      tabById.set(row.id, row);
+    }
+  });
+
+  const tabSpaces: TabSpace[] = [];
+  for (const id of ids) {
+    const saved = byId.get(id);
+    if (!saved) {
+      continue;
+    }
+    let tabSpace = fromSavedDataWithoutTabs(saved);
+    for (const tabId of saved.tabIds ?? []) {
+      const savedTab = tabById.get(tabId);
+      if (!savedTab) {
+        continue;
+      }
+      tabSpace = insertTab({ tab: fromSavedTab(savedTab) }, tabSpace);
+    }
+    tabSpaces.push(tabSpace);
+  }
+  return tabSpaces;
+}
+
+export async function countSavedTabSpaces(): Promise<number> {
+  return db.table(TABSPACE_DB_TABLE_NAME).count();
+}
+
+/** How many tabverses the popup shows before the user searches. */
+export const RECENT_TAB_SPACE_LIMIT = 10;
+
+/**
+ * The tabverses this device saw last, newest first.
+ *
+ * "Last updated" is the right signal here and it costs nothing: a tabverse is
+ * saved on every tab event and once more at bootstrap, so the tabverse the
+ * user just opened is the one at the top, and one they opened once and never
+ * touched still drifts down instead of vanishing.
+ *
+ * `updatedAt` carries no index (only `createdAt` does), so this is a scan and
+ * a sort. At RECENT_TAB_SPACE_LIMIT rows out of a full table, that is cheaper
+ * than the Dexie version bump an index would need.
+ */
+export async function queryRecentSavedTabSpaces(
+  limit: number = RECENT_TAB_SPACE_LIMIT,
+): Promise<TabSpace[]> {
+  const rows: TabSpaceSavePayload[] = await db
+    .table<TabSpaceSavePayload>(TABSPACE_DB_TABLE_NAME)
+    .toArray();
+  const recent = rows
+    .filter((row) => !!row)
+    .sort((a, b) => b.updatedAt - a.updatedAt)
+    .slice(0, limit)
+    .map((row) => row.id);
+  return loadTabSpacesByIds(recent);
+}
+
 export async function querySavedTabSpaceById(
   tabSpaceId: string,
 ): Promise<TabSpace> {

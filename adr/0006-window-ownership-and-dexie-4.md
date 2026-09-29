@@ -5,6 +5,14 @@ Status: accepted (2026-09)
 Supersedes the "the tabSpaceRegistry leader election stays" section of
 [ADR 0004](0004-strictness-react19-tiptap.md).
 
+Partly revisited by the toolbar popup (`doc/tabverse-popup-plan.md`): the
+manager page still only ever knows its own window, but the popup lists the
+tabverses open in *all* windows and can switch to one. It can afford that
+because it answers the question with one `chrome.tabs.query({})` and the
+`tvid` every manager page carries in its url, with no state to keep
+consistent - the leader election the old registry needed is what this
+avoids, not the ability to see another window.
+
 ## Context
 
 Two facts about the extension had been carried for a long time:

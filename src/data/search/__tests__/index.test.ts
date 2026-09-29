@@ -2,7 +2,8 @@ import { MemoryStorageArea } from '../../repo/outbox';
 import { Query } from '../Query';
 import { SYNC_CONFIG_KEY } from '../../repo/syncConfig';
 import { db } from '../../../storage/db';
-import { loadTabSpacesByIds, searchSavedTabSpaces } from '../index';
+import { loadTabSpacesByIds } from '../../tabSpace/util';
+import { searchSavedTabSpaces } from '../index';
 import { resetTestDb } from '../../../dev/dbImplTest';
 
 function savedTabSpace(id: string, name: string, tabIds: string[] = []) {

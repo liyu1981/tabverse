@@ -31,6 +31,13 @@ export interface OrQuery {
 export const TYPE_ALL = '__all';
 export const FIELD_ALL = '__all';
 
+/**
+ * The scope of an unscoped search: every entity, every field. The popup's plain
+ * search box uses it, so "pasta basics" is one group of two terms looked for
+ * anywhere, rather than the tag UI's per-term scope picker.
+ */
+export const ANY_SCOPE: QueryScope = { type: TYPE_ALL, field: FIELD_ALL };
+
 export class Query implements OrQuery {
   andQueries: AndQuery[];
 
