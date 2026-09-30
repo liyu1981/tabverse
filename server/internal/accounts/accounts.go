@@ -122,27 +122,33 @@ func VerifyPassword(encoded, password string) bool {
 
 // ResolveAccountID turns a session id into the account that owns the data.
 //
-// go-pkgz/auth's convention is that a user id is "<provider>_<subject>": the
+// The library's convention is that a user id is "<provider>_<subject>": the
 // authenticator's provider allow-list reads that prefix, which is the only way
 // it knows which login produced a token. Ours is a plain "usr_..." row id, so
-// the two are bridged here and in exactly one other place - the authenticator's
-// UpdateUser hook, which rewrites the claim for the request that follows.
+// the two are bridged through the identities table, which is where the mapping
+// actually lives - the subject is the provider's identifier, and only we know
+// which account it belongs to.
 //
-// The subject is our own user id, because UserIDFunc hands it over at login: the
-// pairing is made once, at sign-in, and every later request is a primary key
-// lookup.
-func ResolveAccountID(ctx context.Context, st *store.Store, sessionID string) (string, error) {
-	subject := sessionID
+// The second return says whether the subject is already known. An unknown
+// subject is a registration that has not happened yet, and the caller creates
+// the account; a retired one (its account was deleted) is an error, so a stale
+// session cannot bring an account back from the dead.
+func ResolveAccountID(ctx context.Context, st *store.Store, sessionID string) (string, bool, error) {
+	provider, subject := sessionID, sessionID
 	if i := strings.IndexByte(sessionID, '_'); i >= 0 {
-		subject = sessionID[i+1:]
+		provider, subject = sessionID[:i], sessionID[i+1:]
 	}
 	if subject == "" {
-		return "", store.ErrNotFound
+		return "", false, store.ErrNotFound
 	}
-	if _, err := st.AccountByID(ctx, subject); err != nil {
-		return "", err
+	userID, known, retired, err := st.AccountIDForIdentity(ctx, provider, subject)
+	if err != nil {
+		return "", false, err
 	}
-	return subject, nil
+	if retired {
+		return "", true, store.ErrNotFound
+	}
+	return userID, known, nil
 }
 
 // SessionAllowed is the one predicate that decides whether a session token is
@@ -153,10 +159,17 @@ func ResolveAccountID(ctx context.Context, st *store.Store, sessionID string) (s
 // authenticator's Validator hook and the tests can share one implementation -
 // a second copy of this rule is how "revoked but still logged in" happens.
 func SessionAllowed(ctx context.Context, st *store.Store, sessionID string, issuedAt time.Time) bool {
-	userID, err := ResolveAccountID(ctx, st, sessionID)
+	userID, known, err := ResolveAccountID(ctx, st, sessionID)
 	if err != nil {
-		// An account that no longer exists cannot hold a live session.
+		// A retired identity: the account it belonged to was deleted, and this
+		// session must not bring it back.
 		return false
+	}
+	if !known {
+		// A subject the server has never seen, from a token it signed itself: a
+		// registration that has not created its account yet. The updater runs
+		// immediately after this and does, so there is nothing to check here.
+		return true
 	}
 	if _, err := st.RoleOf(ctx, userID); err != nil {
 		// RoleOf reports ErrAccountDisabled for a switched-off account.

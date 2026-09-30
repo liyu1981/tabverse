@@ -1,12 +1,19 @@
 package api
 
 import (
+	"bytes"
 	"context"
+	"crypto/sha256"
+	"database/sql"
+	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -19,17 +26,23 @@ import (
 	"github.com/liyu1981/tabverse/server/internal/store"
 )
 
-// The console API now answers to two credentials, and the interesting cases are
-// the ones in between: a signed-in person reaching their own account, reaching
-// somebody else's, and reaching an operator-only view (adr/0012).
+// The console API answers to one credential now - a signed-in account
+// (adr/0013) - and the interesting cases are the ones in between: a person
+// reaching their own account, reaching somebody else's, and reaching an
+// operator-only view.
 
 func newAccountServer(t *testing.T) (*httptest.Server, *Server) {
+	t.Helper()
+	return newServerWithConfig(t, testAdminEmail)
+}
+
+func newServerWithConfig(t *testing.T, adminEmail string) (*httptest.Server, *Server) {
 	t.Helper()
 	cfg := config.Config{
 		Addr: ":0", DBPath: filepath.Join(t.TempDir(), "accounts-api.db"),
 		MaxRecordBytes: 1 << 20, SyncBatchLimit: 100, SearchLimit: 50,
-		Version: "test", AdminToken: testAdminToken,
-		AuthMode: "accounts", PublicURL: "http://127.0.0.1:8223",
+		Version: "test", AdminEmail: adminEmail,
+		PublicURL:     "http://127.0.0.1:8223",
 		SecureCookies: false, LinkByEmail: true, RequireEmailVerification: true,
 	}
 	st, err := store.Open(cfg.DBPath)
@@ -38,51 +51,121 @@ func newAccountServer(t *testing.T) (*httptest.Server, *Server) {
 	}
 	t.Cleanup(func() { st.Close() })
 
-	svc, err := accounts.New(cfg, st, nil)
+	s, err := New(cfg, st, hub.New(), nil)
 	if err != nil {
-		t.Fatalf("accounts: %v", err)
+		t.Fatalf("server: %v", err)
 	}
-	s := New(cfg, st, hub.New(), nil).WithAccounts(svc)
 	ts := httptest.NewServer(s.Handler())
 	t.Cleanup(ts.Close)
 	return ts, s
 }
 
-// signInAs creates an account and returns a signed-in client: a cookie jar and
-// the XSRF header the console has to send back.
+// newServerWithAdminEmail builds a deployment whose operator address may be
+// empty, for the tests about what happens before the variable is set.
+func newServerWithAdminEmail(t *testing.T, adminEmail string) (*httptest.Server, *Server) {
+	t.Helper()
+	return newServerWithConfig(t, adminEmail)
+}
+
+// restartWithAdminEmail opens the same database with a different configuration,
+// which is what a restart with a new environment variable is.
+func restartWithAdminEmail(t *testing.T, old *Server, adminEmail string) (*httptest.Server, *Server) {
+	t.Helper()
+	path := old.cfg.DBPath
+	old.store.Close()
+	cfg := old.cfg
+	cfg.AdminEmail = adminEmail
+	st, err := store.Open(path)
+	if err != nil {
+		t.Fatalf("reopen store: %v", err)
+	}
+	t.Cleanup(func() { st.Close() })
+	srv, err := New(cfg, st, hub.New(), nil)
+	if err != nil {
+		t.Fatalf("server: %v", err)
+	}
+	ts := httptest.NewServer(srv.Handler())
+	t.Cleanup(ts.Close)
+	return ts, srv
+}
+
+// operatorSession returns a signed-in operator, which is how the console tests
+// reach anything reserved for operators. There is no master credential any more
+// (adr/0013), so an operator is an account that registered with
+// TABVERSED_ADMIN_EMAIL.
+func operatorSession(t *testing.T, ts *httptest.Server, s *Server) *sessionClient {
+	t.Helper()
+	// No manual promotion: registering with TABVERSED_ADMIN_EMAIL *is* the
+	// operator bootstrap, so the tests use the real one.
+	client := signInAs(t, ts, s, testAdminEmail)
+	if role, _ := client.do(t, http.MethodGet, "/api/v1/console/me").body["role"].(string); role != store.RoleAdmin {
+		t.Fatalf("the admin email should have made this an operator, role = %v", role)
+	}
+	// Helpers that stand in for a registration need the store, and the
+	// operator session is where they get it from.
+	client.srv = s
+	return client
+}
+
+// signInAs registers an account and returns a signed-in client: the console
+// session the tests use instead of the master credential that no longer exists.
+//
+// The order matters and mirrors the real flow. A row is created, the address is
+// set, and only then is a session minted whose claim id is
+// "<provider>_<account id>" - the shape the library's UserIDFunc produces. The
+// single request that follows goes through the authenticator, so the identity is
+// linked, a lone pre-account row is adopted if there is one, and the admin email
+// becomes an operator. Minting a cookie and calling handlers directly would skip
+// all of that, which is how a test ends up asserting something the product never
+// does.
 func signInAs(t *testing.T, ts *httptest.Server, s *Server, email string) *sessionClient {
 	t.Helper()
 	ctx := context.Background()
-	userID, _, err := s.store.UpsertIdentity(ctx, accounts.ProviderEmail,
-		"subject-"+email, email, email, true)
+	created, err := s.store.CreateUser(ctx, "usr_"+shortHash(email), email)
+	acc := store.Account{ID: created.ID, Name: created.Name, Email: email}
 	if err != nil {
-		t.Fatalf("create account: %v", err)
+		// Signing in twice is not a failure: the account is already there.
+		acc, err = s.store.AccountByEmail(ctx, email)
+		if err != nil {
+			t.Fatalf("create account: %v", err)
+		}
 	}
-	if err := s.store.MarkEmailVerified(ctx, userID); err != nil {
-		t.Fatalf("verify: %v", err)
+	if err := s.store.SetEmail(ctx, acc.ID, email); err != nil {
+		t.Fatalf("set email: %v", err)
 	}
-
 	// Verifying an address revokes sessions issued before the proof, so a login
 	// in the same second is refused once (accounts.SessionRevocationWindow).
-	// A real person clicks the link and signs in a moment later; the test has
-	// to step over the same boundary rather than pretend it is not there.
-	waitOutRevocationWindow(t, s, userID)
+	// A real person clicks the link and signs in a moment later; the test steps
+	// over the same boundary rather than pretending it is not there.
+	if err := s.store.MarkEmailVerified(ctx, acc.ID); err != nil {
+		t.Fatalf("verify: %v", err)
+	}
+	waitOutRevocationWindow(t, s, acc.ID)
 
-	// The library owns login, so the test signs in the way it does: a session
-	// token through its own token service, then a request carrying it.
 	rec := httptest.NewRecorder()
-	claims := sessionClaimsFor(userID)
 	mw := s.accounts.Middleware()
-	if _, err := mw.JWTService.Set(rec, claims); err != nil {
+	if _, err := mw.JWTService.Set(rec, sessionClaimsFor(acc.ID, email)); err != nil {
 		t.Fatalf("sign in: %v", err)
 	}
-	return &sessionClient{cookies: rec.Result().Cookies(), ts: ts, xsrfHeader: "X-XSRF-Token"}
+	client := &sessionClient{cookies: rec.Result().Cookies(), ts: ts, xsrfHeader: "X-XSRF-Token"}
+	client.do(t, http.MethodGet, "/api/v1/console/me")
+	return client
+}
+
+// shortHash keeps a stable, readable id per address, so a test that refers to an
+// account twice finds the same one.
+func shortHash(s string) string {
+	sum := sha256.Sum256([]byte(s))
+	return hex.EncodeToString(sum[:8])
 }
 
 type sessionClient struct {
 	cookies    []*http.Cookie
 	ts         *httptest.Server
 	xsrfHeader string
+	// srv is the server behind this session, for helpers that need the store
+	// (registration, which is now how an account is created).
+	srv *Server
 }
 
 func (c *sessionClient) assumeCookiePresent() bool {
@@ -94,11 +177,25 @@ func (c *sessionClient) assumeCookiePresent() bool {
 	return false
 }
 
-func (c *sessionClient) do(t *testing.T, method, path string) apiResp {
+// doJSON is do() with a body, for the calls that change something. The cookie
+// handling is the browser's: Set-Cookie replaces or, for an empty value,
+// deletes.
+func (c *sessionClient) doJSON(t *testing.T, method, path string, body any) apiResp {
 	t.Helper()
-	req, err := http.NewRequest(method, c.ts.URL+path, nil)
+	var reader io.Reader
+	if body != nil {
+		data, err := json.Marshal(body)
+		if err != nil {
+			t.Fatalf("marshal: %v", err)
+		}
+		reader = bytes.NewReader(data)
+	}
+	req, err := http.NewRequest(method, c.ts.URL+path, reader)
 	if err != nil {
 		t.Fatalf("request: %v", err)
+	}
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
 	}
 	for _, cookie := range c.cookies {
 		req.AddCookie(cookie)
@@ -111,12 +208,22 @@ func (c *sessionClient) do(t *testing.T, method, path string) apiResp {
 		t.Fatalf("do: %v", err)
 	}
 	defer res.Body.Close()
-	// Keep the cookies the server sets, the way a browser would: that is how
-	// impersonation's assumed identity arrives at the next request.
+	c.keepCookies(res)
+	raw, _ := io.ReadAll(res.Body)
+	out := map[string]any{}
+	if len(raw) > 0 {
+		if err := json.Unmarshal(raw, &out); err != nil {
+			t.Fatalf("decode %s: %v", res.Request.URL, err)
+		}
+	}
+	return apiResp{status: res.StatusCode, body: out, raw: string(raw)}
+}
+
+// keepCookies mirrors what a browser does with Set-Cookie, deletions included:
+// a cookie with no value removes the one we were holding, which is how "stop
+// impersonating" works in the tests.
+func (c *sessionClient) keepCookies(res *http.Response) {
 	for _, cookie := range res.Cookies() {
-		// A cookie with no value is a deletion, and a browser really does drop
-		// it. Ignoring deletions would make a "stop impersonating" test pass
-		// while the browser had not actually stopped.
 		kept := c.cookies[:0]
 		for _, existing := range c.cookies {
 			if existing.Name != cookie.Name {
@@ -128,28 +235,33 @@ func (c *sessionClient) do(t *testing.T, method, path string) apiResp {
 			c.cookies = append(c.cookies, cookie)
 		}
 	}
-	raw, _ := io.ReadAll(res.Body)
-	out := map[string]any{}
-	if len(raw) > 0 {
-		if err := json.Unmarshal(raw, &out); err != nil {
-			t.Fatalf("decode %s: %v", res.Request.URL, err)
-		}
-	}
-	return apiResp{status: res.StatusCode, body: out, raw: string(raw)}
+}
+
+func (c *sessionClient) postJSON(t *testing.T, path string, body map[string]string) apiResp {
+	t.Helper()
+	return c.doJSON(t, http.MethodPost, path, body)
+}
+
+func (c *sessionClient) do(t *testing.T, method, path string) apiResp {
+	t.Helper()
+	return c.doJSON(t, method, path, nil)
 }
 
 func TestConsoleMeBeforeAndAfterSignIn(t *testing.T) {
 	ts, s := newAccountServer(t)
 
-	// Before signing in, the page learns the deployment is in account mode -
-	// that is how it knows to show a login form at all.
+	// Before signing in, the page learns who it is talking to and what the
+	// deployment offers - there is no longer a token to fall back on.
 	r := (&sessionClient{ts: ts}).do(t, http.MethodGet, "/api/v1/console/me")
 	r.mustStatus(t, http.StatusOK)
-	if r.body["signed_in"] != false || r.body["accounts_enabled"] != true {
+	if r.body["signed_in"] != false {
 		t.Fatalf("signed out: %s", r.raw)
 	}
-	if r.body["admin_token"] != true {
-		t.Fatalf("the break-glass token should still be advertised: %s", r.raw)
+	if r.body["admin_email"] != testAdminEmail {
+		t.Fatalf("the page needs the operator address: %s", r.raw)
+	}
+	if _, ok := r.body["providers"].([]any); !ok {
+		t.Fatalf("the page needs the provider list, even empty: %s", r.raw)
 	}
 
 	alice := signInAs(t, ts, s, "alice@example.com")
@@ -194,13 +306,14 @@ func TestAPersonReachesTheirOwnAccountAndNobodyElses(t *testing.T) {
 
 func TestAMintedDeviceTokenCannotStandInForASession(t *testing.T) {
 	ts, s := newAccountServer(t)
-	_, token := seedUser(t, ts, "carol")
+	op := operatorSession(t, ts, s)
+	_, token := seedUser(t, op, "carol")
 
 	// A device token is a credential for the extension, not for the console.
 	r := doJSON(t, http.MethodGet, ts.URL+"/api/v1/admin/users", token, nil)
 	r.mustStatus(t, http.StatusUnauthorized)
 
-	// And the console API with a session is a different thing from a bearer
+	// And the console API with a session is a different thing from a device
 	// token: the session works, the device token does not.
 	dave := signInAs(t, ts, s, "dave@example.com")
 	dave.do(t, http.MethodGet, "/api/v1/console/me").mustStatus(t, http.StatusOK)
@@ -216,151 +329,109 @@ func TestAPersonCannotReachTheOperatorViews(t *testing.T) {
 	if r.body["error"] != "forbidden" {
 		t.Fatalf("expected forbidden, got %s", r.raw)
 	}
-	// So are the deployment totals and account creation.
+	// So are the deployment totals.
 	alice.do(t, http.MethodGet, "/api/v1/admin/totals").mustStatus(t, http.StatusForbidden)
-	alice.do(t, http.MethodPost, "/api/v1/admin/users").
-		mustStatus(t, http.StatusForbidden)
 
-	// The break-glass token still reaches them, which is the point of it.
-	adminDo(t, ts, http.MethodGet, "/api/v1/admin/users", testAdminToken, nil).
-		mustStatus(t, http.StatusOK)
+	// Account creation is not an API at all: registration is the only way one
+	// comes into existence (ADR 0014), so the endpoint is gone rather than
+	// merely closed to people.
+	before, _ := s.store.CountAccounts(context.Background())
+	// The response is the console's HTML now (the SPA catches unknown paths), so
+	// this is a raw request: what matters is that nothing was created.
+	created := doRequest(t, ts, http.MethodPost, "/api/v1/admin/users")
+	created.Body.Close()
+	if created.StatusCode == http.StatusCreated {
+		t.Fatal("there is still a way to create an account")
+	}
+	after, _ := s.store.CountAccounts(context.Background())
+	if after != before {
+		t.Fatalf("an account was created anyway: %d -> %d", before, after)
+	}
+
+	// An operator does reach them, and a device token does not: the extension's
+	// credential is not a console credential.
+	op := operatorSession(t, ts, s)
+	op.do(t, http.MethodGet, "/api/v1/admin/users").mustStatus(t, http.StatusOK)
+	_, deviceToken := seedUser(t, op, "carol")
+	doJSON(t, http.MethodGet, ts.URL+"/api/v1/admin/users", deviceToken, nil).
+		mustStatus(t, http.StatusUnauthorized)
 }
 
-func TestAnOperatorSessionReachesTheOperatorViews(t *testing.T) {
+// The bootstrap the deployment runs on: the first account registered with
+// TABVERSED_ADMIN_EMAIL is the operator, with no secret handed out and no curl
+// (adr/0013). A second person does not become one by the same route, which is
+// what keeps a stray configuration from minting operators later.
+func TestTheAdminEmailMakesTheFirstOperator(t *testing.T) {
 	ts, s := newAccountServer(t)
-	ctx := context.Background()
-	root := signInAs(t, ts, s, "root@example.com")
-	rootID, _ := root.do(t, http.MethodGet, "/api/v1/console/me").body["user_id"].(string)
-	if err := s.store.SetRole(ctx, rootID, store.RoleAdmin); err != nil {
-		t.Fatalf("promote: %v", err)
-	}
-	// The role travels in the claim, so a *new* session is needed to see it -
-	// which is the honest behaviour: a role change takes effect on next sign-in
-	// or on the token's refresh, not silently mid-session.
-	fresh := signInAs(t, ts, s, "root@example.com")
-	r := fresh.do(t, http.MethodGet, "/api/v1/admin/users")
+
+	// Nobody yet, and the console says so.
+	r := (&sessionClient{ts: ts}).do(t, http.MethodGet, "/api/v1/console/me")
 	r.mustStatus(t, http.StatusOK)
-	users, _ := r.body["users"].([]any)
-	if len(users) == 0 {
-		t.Fatalf("operator sees no accounts: %s", r.raw)
+	if r.body["operator_exists"] != false {
+		t.Fatalf("a fresh deployment should have no operator: %s", r.raw)
 	}
-}
-
-func TestSignOutClearsTheSession(t *testing.T) {
-	ts, s := newAccountServer(t)
-	alice := signInAs(t, ts, s, "alice@example.com")
-	alice.do(t, http.MethodGet, "/api/v1/console/me").mustStatus(t, http.StatusOK)
-
-	r := alice.do(t, http.MethodPost, "/api/v1/console/signout")
-	r.mustStatus(t, http.StatusNoContent)
-	// The jar still holds the old cookies, so this checks the audit entry and
-	// that the endpoint exists rather than that the browser forgot the cookie.
-	entries, err := s.store.ListAudit(context.Background(), store.AuditLogout, "", 10)
-	if err != nil || len(entries) != 1 {
-		t.Fatalf("sign out was not audited: %+v (%v)", entries, err)
-	}
-}
-
-// waitOutRevocationWindow sleeps until a session issued now would be newer than
-// the account's revocation cut-off. It normally returns immediately.
-func waitOutRevocationWindow(t *testing.T, s *Server, userID string) {
-	t.Helper()
-	cut, err := s.store.TokensValidAfter(context.Background(), userID)
-	if err != nil {
-		t.Fatalf("cut-off: %v", err)
-	}
-	if time.Now().Unix() > time.UnixMilli(cut).Unix() {
-		return
-	}
-	time.Sleep(time.Until(time.UnixMilli(cut).Truncate(time.Second).Add(time.Second)) + 10*time.Millisecond)
-}
-
-// sessionClaimsFor builds the claims the library would sign after a login. The
-// id is provider shaped, exactly as accounts.ResolveAccountID expects.
-func sessionClaimsFor(userID string) token.Claims {
-	now := time.Now()
-	return token.Claims{
-		RegisteredClaims: jwt.RegisteredClaims{
-			ID:        "session-" + userID,
-			Audience:  jwt.ClaimStrings{"tabversed"},
-			IssuedAt:  jwt.NewNumericDate(now),
-			ExpiresAt: jwt.NewNumericDate(now.Add(time.Hour)),
-		},
-		User: &token.User{
-			ID:       accounts.ProviderEmail + "_" + userID,
-			Name:     userID,
-			Audience: "tabversed",
-		},
-	}
-}
-
-// TestSessionFailureIsExplainable keeps the diagnosis that unblocked this whole
-// feature: a refused session reports *why*. Every one of these sessions was
-// refused for a different reason, and while the guard only said "401" the only
-// way to tell them apart was to instrument it - which is worth guarding, because
-// the next person to add a session path will hit the same wall.
-func TestSessionFailureIsExplainable(t *testing.T) {
-	ts, s := newAccountServer(t)
-	alice := signInAs(t, ts, s, "alice@example.com")
-	t.Logf("cookies: %d", len(alice.cookies))
-	for _, c := range alice.cookies {
-		t.Logf("  %s (httponly=%v) = %.40s...", c.Name, c.HttpOnly, c.Value)
-	}
-	req, _ := http.NewRequest(http.MethodGet, ts.URL+"/api/v1/console/me", nil)
-	for _, c := range alice.cookies {
-		req.AddCookie(c)
-	}
-	rec := httptest.NewRecorder()
-	s.accounts.Guard(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		u, err := token.GetUserInfo(r)
-		t.Logf("inside Guard: user=%+v err=%v", u, err)
-	})).ServeHTTP(rec, req)
-	t.Logf("guard status=%d body=%.120s", rec.Code, rec.Body.String())
-	// The guard writes 401 for "no valid session" and the reason is available
-	// separately; a future change that loses either half shows up here.
-	if rec.Code == http.StatusUnauthorized && s.accounts.LastAuthError() == nil {
-		t.Fatal("a refused session must record why it was refused")
-	}
-}
-
-// The point of accounts: a person can add a device to their own account
-// without an operator, which is the chicken-and-egg problem ADR 0012 set out to
-// remove. The code is minted for them, and for nobody else.
-func TestAPersonMintsTheirOwnPairingCode(t *testing.T) {
-	ts, s := newAccountServer(t)
-	alice := signInAs(t, ts, s, "alice@example.com")
-	me, _ := alice.do(t, http.MethodGet, "/api/v1/console/me").body["user_id"].(string)
-
-	r := alice.do(t, http.MethodPost, "/api/v1/admin/users/"+me+"/invites?ttl_seconds=300")
-	r.mustStatus(t, http.StatusCreated)
-	code, _ := r.body["code"].(string)
-	if code == "" {
-		t.Fatalf("no code returned: %s", r.raw)
-	}
-	if r.body["user_id"] != me {
-		t.Fatalf("the code is for %v, want %s", r.body["user_id"], me)
+	if r.body["admin_email"] != testAdminEmail {
+		t.Fatalf("the console needs to know the operator address: %s", r.raw)
 	}
 
-	// It works: the extension can redeem it and get a device token.
-	paired := doJSON(t, http.MethodPost, ts.URL+"/api/v1/auth/pair", "",
-		map[string]string{"invite_code": code, "device_name": "my laptop"})
-	paired.mustStatus(t, http.StatusCreated)
-	if paired.body["user_id"] != me {
-		t.Fatalf("the paired device belongs to %v, want %s", paired.body["user_id"], me)
-	}
-	if _, ok := paired.body["token"].(string); !ok {
-		t.Fatalf("no device token: %s", paired.raw)
+	// A different person registers first: an ordinary account.
+	other := signInAs(t, ts, s, "someone@example.com")
+	other.do(t, http.MethodGet, "/api/v1/admin/users").mustStatus(t, http.StatusForbidden)
+	r = other.do(t, http.MethodGet, "/api/v1/console/me")
+	if r.body["awaiting_operator"] == true {
+		t.Fatalf("only the configured address is awaiting the role: %s", r.raw)
 	}
 
-	// And it is audited, because "this person added a device" is exactly the
-	// question an operator asks.
-	entries, err := s.store.ListAudit(context.Background(), "", me, 50)
+	// The configured address registers and is the operator from the start.
+	op := signInAs(t, ts, s, testAdminEmail)
+	me := op.do(t, http.MethodGet, "/api/v1/console/me").body
+	if me["role"] != store.RoleAdmin {
+		t.Fatalf("registering with the admin email should be an operator: %v", me["role"])
+	}
+	op.do(t, http.MethodGet, "/api/v1/admin/users").mustStatus(t, http.StatusOK)
+	op.do(t, http.MethodGet, "/api/v1/admin/totals").mustStatus(t, http.StatusOK)
+
+	// And it is on the record.
+	entries, err := s.store.ListAudit(context.Background(), store.AuditRoleChanged, "", 10)
 	if err != nil {
 		t.Fatalf("audit: %v", err)
 	}
 	if len(entries) == 0 {
-		t.Fatal("pairing by a person left no audit trail")
+		t.Fatal("the first operator was not audited")
 	}
+}
+
+// The upgrade path for a deployment that already has accounts: the variable is
+// set *after* the fact, and a restart promotes the account that matches it.
+// Without the restart nothing happens, which is what the console tells the
+// person rather than pretending otherwise.
+func TestStartupPromotesAnExistingAdminEmailAccount(t *testing.T) {
+	ctx := context.Background()
+	ts, s := newServerWithAdminEmail(t, "") // registered before the variable existed
+	// The person uses the address that will *become* the operator address, but
+	// at this point it is just an ordinary registration.
+	existing := signInAs(t, ts, s, testAdminEmail)
+	existingID, _ := existing.do(t, http.MethodGet, "/api/v1/console/me").body["user_id"].(string)
+	if acc, err := s.store.AccountByID(ctx, existingID); err != nil || acc.IsAdmin() {
+		t.Fatalf("the account should not be an operator yet: %+v (%v)", acc, err)
+	}
+	// The console says what is missing.
+	r := existing.do(t, http.MethodGet, "/api/v1/console/me")
+	if r.body["awaiting_operator"] == true {
+		t.Fatalf("without the variable configured there is nothing to await: %s", r.raw)
+	}
+
+	// Restart with the variable set - a second server over the same database.
+	restarted, srv := restartWithAdminEmail(t, s, testAdminEmail)
+	if err := srv.BootstrapOperator(ctx); err != nil {
+		t.Fatalf("bootstrap: %v", err)
+	}
+	acc, err := srv.store.AccountByID(ctx, existingID)
+	if err != nil || !acc.IsAdmin() {
+		t.Fatalf("the restart did not promote the account: %+v (%v)", acc, err)
+	}
+	fresh := signInAs(t, restarted, srv, testAdminEmail)
+	fresh.do(t, http.MethodGet, "/api/v1/admin/users").mustStatus(t, http.StatusOK)
 }
 
 // ---- impersonation --------------------------------------------------------
@@ -414,8 +485,8 @@ func TestImpersonationIsReadOnlyAndAudited(t *testing.T) {
 	if r.body["assuming"] != true || r.body["read_only"] != true {
 		t.Fatalf("impersonation status: %s", r.raw)
 	}
-	if r.body["as"] == "" || r.body["as"] == aliceID {
-		t.Fatalf("impersonation does not name the account: %s", r.raw)
+	if r.body["as"] != "alice@example.com" {
+		t.Fatalf("impersonation should name the account: %s", r.raw)
 	}
 
 	// Everything that would change something is refused, and the refusal is
@@ -512,11 +583,11 @@ func mintDeviceToken(t *testing.T, ts *httptest.Server, s *Server, userID string
 	if err != nil {
 		t.Fatalf("account %s: %v", userID, err)
 	}
-	// The operator token: this is test scaffolding standing in for "the
-	// person signs in and pairs their own device", and it is the credential
-	// that path does not need a browser for.
-	r := adminDo(t, ts, http.MethodPost,
-		"/api/v1/admin/users/"+acc.ID+"/invites?ttl_seconds=300", testAdminToken, nil)
+	// A session for the account that owns the device: the same path a person
+	// takes, without a browser.
+	owner := signInAs(t, ts, s, acc.Email)
+	r := owner.doJSON(t, http.MethodPost,
+		"/api/v1/admin/users/"+acc.ID+"/invites?ttl_seconds=300", nil)
 	r.mustStatus(t, http.StatusCreated)
 	c, _ := r.body["code"].(string)
 	paired := doJSON(t, http.MethodPost, ts.URL+"/api/v1/auth/pair", "",
@@ -527,4 +598,287 @@ func mintDeviceToken(t *testing.T, ts *httptest.Server, s *Server, userID string
 		t.Fatalf("no device token: %s", paired.raw)
 	}
 	return tok
+}
+
+// waitOutRevocationWindow sleeps until a session issued now would be newer than
+// the account's revocation cut-off. It normally returns immediately.
+func waitOutRevocationWindow(t *testing.T, s *Server, userID string) {
+	t.Helper()
+	cut, err := s.store.TokensValidAfter(context.Background(), userID)
+	if err != nil {
+		t.Fatalf("cut-off: %v", err)
+	}
+	if time.Now().Unix() > time.UnixMilli(cut).Unix() {
+		return
+	}
+	time.Sleep(time.Until(time.UnixMilli(cut).Truncate(time.Second).Add(time.Second)) + 10*time.Millisecond)
+}
+
+// sessionClaimsFor builds the claims the library would sign after a login: a
+// provider shaped id, exactly as accounts.ResolveAccountID expects, and the
+// address the provider reported, which is what the account is linked by.
+func sessionClaimsFor(userID, email string) token.Claims {
+	now := time.Now()
+	return token.Claims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			ID:        "session-" + userID,
+			Audience:  jwt.ClaimStrings{"tabversed"},
+			IssuedAt:  jwt.NewNumericDate(now),
+			ExpiresAt: jwt.NewNumericDate(now.Add(time.Hour)),
+		},
+		User: &token.User{
+			ID:       accounts.ProviderEmail + "_" + userID,
+			Name:     userID,
+			Email:    email,
+			Audience: "tabversed",
+		},
+	}
+}
+
+// ---- the journey a person actually takes ----------------------------------
+
+// The first-operator journey, walked end to end: the console's form, the link
+// the "email" carries, the session that link produces, and the operator role
+// that comes with it.
+//
+// Two things about the auth library made this worth writing rather than
+// assuming. Its verify provider reads the address from the *query string* as
+// `address` (a POST body is ignored, and a missing `site` produces a token the
+// extractor later rejects), and its default message is a bare JWT rather than a
+// link. Both the form and the template are ours to get right, and a mistake in
+// either is a bare 400 or an unusable message.
+func TestTheFirstOperatorJourney(t *testing.T) {
+	ts, s := newAccountServer(t)
+
+	var sentTo, sentText string
+	s.accounts.SetSenderOverride(func(address, text string) error {
+		sentTo, sentText = address, text
+		return nil
+	})
+
+	// 1. the console's sign-in form
+	query := url.Values{
+		"user":    {testAdminEmail},
+		"address": {testAdminEmail},
+		"site":    {"http://127.0.0.1:8223"},
+	}
+	form := doRequest(t, ts, http.MethodPost,
+		"/api/v1/console/signin-link?"+query.Encode())
+	if form.StatusCode != http.StatusOK {
+		t.Fatalf("the sign-in form = %d, want 200: %s", form.StatusCode, readAll(t, form))
+	}
+	if sentTo != testAdminEmail {
+		t.Fatalf("the link went to %q, want %q (response: %s)", sentTo, testAdminEmail, readAll(t, form))
+	}
+	if !strings.Contains(sentText, "/auth/"+accounts.ProviderEmail+"/login?token=") {
+		t.Fatalf("the message has no clickable link: %q", sentText)
+	}
+	if !strings.Contains(sentText, "30 minutes") {
+		t.Fatalf("the message does not say the link expires: %q", sentText)
+	}
+
+	// 2. following the link, as a person would
+	// The link is absolute, because the person may be on another machine; the
+	// test's server is on a different port, so only the path is replayed.
+	link := strings.TrimSpace(sentText[strings.Index(sentText, "http"):])
+	link = link[:strings.IndexAny(link, " \n")]
+	u, err := url.Parse(link)
+	if err != nil {
+		t.Fatalf("the link is not a url: %q (%v)", link, err)
+	}
+	link = u.RequestURI()
+	followed := doRequest(t, ts, http.MethodGet, link)
+	// Following the link has to end in the console. Without a `from`, the
+	// library signs the person in and then renders the user as JSON, which is a
+	// successful sign-in that looks like a dead end.
+	if followed.StatusCode != http.StatusSeeOther {
+		t.Fatalf("following the link = %d, want a redirect to the console: %s",
+			followed.StatusCode, readAll(t, followed))
+	}
+	if to := followed.Header.Get("Location"); to != "http://127.0.0.1:8223" {
+		t.Fatalf("the sign-in sends the person to %q, want the console", to)
+	}
+	var session, xsrf *http.Cookie
+	for _, c := range followed.Cookies() {
+		switch c.Name {
+		case "tv_session":
+			session = c
+		case "tv_xsrf":
+			xsrf = c
+		}
+	}
+	if session == nil {
+		t.Fatalf("the link did not sign anybody in; cookies: %v", followed.Cookies())
+	}
+
+	// 3. that session is the operator
+	client := &sessionClient{ts: ts, cookies: []*http.Cookie{session, xsrf}, xsrfHeader: "X-XSRF-Token"}
+	me := client.do(t, http.MethodGet, "/api/v1/console/me").body
+	if me["signed_in"] != true {
+		t.Fatalf("the session from the link does not work: %v", me)
+	}
+	if me["role"] != store.RoleAdmin {
+		t.Fatalf("the first operator is %v, want admin", me["role"])
+	}
+	// ...and it reaches the operator views, which is the whole point.
+	client.do(t, http.MethodGet, "/api/v1/admin/users").mustStatus(t, http.StatusOK)
+	// The link is single use.
+	again := doRequest(t, ts, http.MethodGet, link)
+	if again.StatusCode == http.StatusOK {
+		// The library answers a replay with 403 (consumed) or 200 with a
+		// *new* link depending on whether a confirmation store is configured;
+		// what must never happen is a second session for the same token.
+		var replaySession *http.Cookie
+		for _, c := range again.Cookies() {
+			if c.Name == "tv_session" {
+				replaySession = c
+			}
+		}
+		if replaySession != nil && replaySession.Value == session.Value {
+			t.Fatal("following the same link twice produced a live session")
+		}
+	}
+}
+
+// doRequest sends one request and does *not* follow redirects: following the
+// sign-in link answers "where did the person end up", which is a different
+// question from "did the link redirect them into the console".
+func doRequest(t *testing.T, ts *httptest.Server, method, path string) *http.Response {
+	t.Helper()
+	req, err := http.NewRequest(method, ts.URL+path, nil)
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	client := &http.Client{
+		CheckRedirect: func(*http.Request, []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+	res, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("do: %v", err)
+	}
+	return res
+}
+
+func readAll(t *testing.T, res *http.Response) string {
+	t.Helper()
+	defer res.Body.Close()
+	raw, _ := io.ReadAll(res.Body)
+	return string(raw)
+}
+
+// TestDebugJourney prints what each step of the sign-in flow leaves behind, for
+// the times when the session is refused and the only clue is in the store.
+func TestDebugJourney(t *testing.T) {
+	ts, s := newAccountServer(t)
+	var sentTo, sentText string
+	s.accounts.SetSenderOverride(func(a, txt string) error { sentTo, sentText = a, txt; return nil })
+	q := url.Values{"user": {testAdminEmail}, "address": {testAdminEmail}, "site": {"http://127.0.0.1:8223"}}
+	form := doRequest(t, ts, http.MethodPost, "/api/v1/console/signin-link?"+q.Encode())
+	t.Logf("form: %d %s", form.StatusCode, readAll(t, form))
+	t.Logf("sent to %q: %q", sentTo, sentText)
+	link := sentText[strings.Index(sentText, "http"):]
+	link = link[:strings.IndexAny(link, " \\n")]
+	if u, err := url.Parse(link); err == nil {
+		link = u.RequestURI()
+	}
+	t.Logf("requesting %s", link)
+	followed := doRequest(t, ts, http.MethodGet, link)
+	t.Logf("follow: %d %s", followed.StatusCode, readAll(t, followed))
+	for _, c := range followed.Cookies() {
+		t.Logf("cookie %s", c.Name)
+	}
+	rows, err := s.store.DB().QueryContext(context.Background(),
+		`SELECT u.id, u.email, u.role, i.provider, i.subject FROM users u LEFT JOIN identities i ON i.user_id = u.id`)
+	if err != nil {
+		t.Fatalf("query: %v", err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id, email, role sql.NullString
+		var provider, subject sql.NullString
+		if err := rows.Scan(&id, &email, &role, &provider, &subject); err != nil {
+			t.Fatalf("scan: %v", err)
+		}
+		t.Logf("user %s email=%q role=%q identity=%q/%q",
+			id.String, email.String, role.String, provider.String, subject.String)
+	}
+}
+
+// A console served over plain http cannot have Secure cookies: the browser
+// drops them, so a sign-in that works on the server looks like it worked and
+// then signs the person straight back out.
+func TestPlainHttpGetsUsableCookies(t *testing.T) {
+	ts, s := newAccountServer(t) // the fixture serves http://127.0.0.1:8223
+
+	var sentText string
+	s.accounts.SetSenderOverride(func(_, text string) error {
+		sentText = text
+		return nil
+	})
+	q := url.Values{
+		"user":    {testAdminEmail},
+		"address": {testAdminEmail},
+		"site":    {"http://127.0.0.1:8223"},
+	}
+	doRequest(t, ts, http.MethodPost, "/api/v1/console/signin-link?"+q.Encode()).Body.Close()
+
+	link := sentText[strings.Index(sentText, "http"):]
+	link = link[:strings.IndexAny(link, " \n")]
+	if u, err := url.Parse(link); err == nil {
+		link = u.RequestURI()
+	}
+	followed := doRequest(t, ts, http.MethodGet, link)
+	followed.Body.Close()
+	if followed.StatusCode != http.StatusSeeOther {
+		t.Fatalf("following the link = %d, want a redirect to the console", followed.StatusCode)
+	}
+	for _, c := range followed.Cookies() {
+		if c.Name == "tv_session" && c.Secure {
+			t.Fatal("a Secure session cookie over plain http: the browser would drop it, " +
+				"and the sign-in would appear to work and then sign the person out")
+		}
+	}
+}
+
+// Deleting is the one thing a person may do to their own account without an
+// operator, and the one thing an operator may not do to their own: the first is
+// the ordinary expectation of an account system, the second would leave the
+// deployment with no way back in.
+func TestDeletingAccounts(t *testing.T) {
+	ts, s := newAccountServer(t)
+	ctx := context.Background()
+	own := signInAs(t, ts, s, "alice@example.com")
+	ownID, _ := own.do(t, http.MethodGet, "/api/v1/console/me").body["user_id"].(string)
+
+	// The confirmation is required whatever else is true: this one is
+	// irreversible.
+	r := own.doJSON(t, http.MethodDelete, "/api/v1/admin/users/"+ownID, nil)
+	r.mustStatus(t, http.StatusBadRequest)
+	if r.body["error"] != "confirmation_required" {
+		t.Fatalf("an unconfirmed delete = %s", r.raw)
+	}
+
+	// A person, on their own account, with the confirmation: allowed.
+	own.doJSON(t, http.MethodDelete,
+		"/api/v1/admin/users/"+ownID+"?confirm="+ownID, nil).
+		mustStatus(t, http.StatusNoContent)
+	if _, err := s.store.AccountByID(ctx, ownID); !errors.Is(err, store.ErrNotFound) {
+		t.Fatalf("the account is still there: %v", err)
+	}
+
+	// An operator, on their own account: refused, with the reason.
+	op := operatorSession(t, ts, s)
+	opID, _ := op.do(t, http.MethodGet, "/api/v1/console/me").body["user_id"].(string)
+	r = op.doJSON(t, http.MethodDelete,
+		"/api/v1/admin/users/"+opID+"?confirm="+opID, nil)
+	r.mustStatus(t, http.StatusConflict)
+	if r.body["error"] != "cannot_delete_self" {
+		t.Fatalf("an operator deleting their own account = %s", r.raw)
+	}
+	// ...and the account is still there, which is the point.
+	if _, err := s.store.AccountByID(ctx, opID); err != nil {
+		t.Fatalf("the operator's account was deleted anyway: %v", err)
+	}
 }

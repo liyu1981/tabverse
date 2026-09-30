@@ -18,12 +18,13 @@ server authoritative sync protocol.
   is in the FTS index; the aggregates are id lists. Every hit comes back with
   the `tabspace_id` it belongs to, because the client lists tabverses (ADR
   0008), and identifier fields are not indexed at all
-- **Accounts:** one account per deployment by default (open bootstrap, first
-  pairer wins). Set `TABVERSED_ADMIN_TOKEN` and an operator provisions any
-  number of accounts through the admin API instead (ADR 0009)
-- **Console:** `GET /` serves an embedded, dependency free operator console
-  (read only over user data: tabverses, records, search; mutable: accounts,
-  devices, tokens). Same env var, same secret, no build step
+- **Accounts:** people sign in to the console with a single-use email link (or a
+  configured social provider) and manage their own account; the first
+  registration with `TABVERSED_ADMIN_EMAIL` is the operator. There is no master
+  credential (ADR 0012, ADR 0013)
+- **Console:** `GET /` serves an embedded, dependency free console: a read only
+  browser over stored data, and the account, device and token management around
+  it. No build step
 
 ## Run
 
@@ -40,10 +41,9 @@ pnpm run server:docker && docker run -p 8223:8223 -v tvdata:/data tabversed
 The default bind address is `0.0.0.0` on purpose: during development the
 extension is usually loaded on a different machine than the server. The server
 logs a warning when it listens on a non-loopback address, because the
-bootstrap/pairing endpoint is then reachable from the network and whoever pairs
-first owns the deployment (ADR 0002). Set `TABVERSED_ADDR=127.0.0.1:8223` to
-keep it local, or set `TABVERSED_ADMIN_TOKEN` to take the pairing endpoint
-behind a secret and to be able to run more than one account (ADR 0009).
+bootstrap/pairing endpoint is then reachable from the network (ADR 0002). It is
+open only until this deployment has a user or an account, so the window is
+short; set `TABVERSED_ADDR=127.0.0.1:8223` to keep it local.
 
 Cross compile (no cgo):
 
@@ -72,7 +72,7 @@ pnpm run server:fmt:check   # lists unformatted files (CI asserts the list is em
 | `TABVERSED_SYNC_BATCH_LIMIT` | `500`               | max records per sync request                                |
 | `TABVERSED_SEARCH_LIMIT`     | `50`                | max search hits                                             |
 | `TABVERSED_WS_ORIGINS`       | _(any)_             | comma separated Origin allow list for the WebSocket upgrade |
-| `TABVERSED_ADMIN_TOKEN`      | _(unset)_           | enables the admin API and the console; without it the deployment is single tenant (ADR 0009) |
+| `TABVERSED_ADMIN_EMAIL`      | _(unset)_           | whose first registration becomes the operator (ADR 0013) |
 | `TABVERSED_DEVICE_INACTIVE_DAYS` | `30`           | silence required before a device may be archived (ADR 0011); a device that never authenticated is exempt, `0` disables the check |
 
 ## API
@@ -124,53 +124,97 @@ Realtime: `ws://host/api/v1/sync/stream?access_token=<token>` receives
   hashes; pairing codes are single use with a TTL; the bootstrap endpoint
   permanently locks itself after the first account exists.
 
-## Accounts (ADR 0012)
+## Accounts (ADR 0012, ADR 0013)
 
-The extension keeps pairing with a device token; the *console* signs in with an
-account, so a person can add devices and see their own data without an operator
-in the loop.
+The extension keeps pairing with a device token; the **console signs in with an
+account**. There is no master credential: every console route needs a session,
+and the only secret involved is the one that signs it.
 
 ```sh
-TABVERSED_AUTH=accounts \
+TABVERSED_ADMIN_EMAIL=you@example.com \
 TABVERSED_PUBLIC_URL=https://tabs.example.com \
 TABVERSED_SMTP_HOST=smtp.example.com TABVERSED_SMTP_FROM=tabs@example.com \
   pnpm run server:dev
+# open /, enter that address, follow the link it sends
 ```
 
-- **Sign in with a link.** Enter an email address; the server emails a
-  single-use link. No password exists to forget, reuse or leak. With no
-  `TABVERSED_SMTP_HOST` the link is printed to the server log, which is what a
-  LAN-only deployment wants.
-- **Sign in with GitHub or Google** when `TABVERSED_GITHUB_CLIENT_ID`/
-  `_SECRET` (or the Google pair) is set. A self hosted OpenID Connect provider
-  is *not* wired: the auth library's custom provider speaks plain OAuth2, not
-  OIDC discovery with id_token validation, and a login button that half-works
-  is worse than none.
-- **Add your own devices.** A signed-in person mints pairing codes from the
-  console's Pair Code tab. This is what removes the operator from the critical
-  path: pairing used to need `curl` on the server.
-- **Operators** get the account list, the deployment totals, a role switch, and
-  "look as them": a 15 minute, **read only**, audited view of somebody else's
-  console. Everything that would change anything answers 403 while it is on.
-- **The admin token still works** everywhere, as the break-glass path for a
-  deployment that has locked itself out.
+### Becoming the operator
+
+The first account registered with `TABVERSED_ADMIN_EMAIL` **is** the operator -
+no token, no code, nothing to copy out of a log. Everything else follows from
+there: an operator promotes other people from the account page, and the last
+operator cannot be demoted or disabled.
+
+- If the variable is **unset**, nobody is an operator until you set it and
+  restart; the server says so in the log, and a signed-in person who matches it
+  is told in the console that a restart is what is missing.
+- If the address **already has an account** when you set the variable, the next
+  start promotes it. That is the upgrade path for a deployment that was
+  registered before this rule existed.
+- Once an operator exists the variable grants **nothing**, so leaving it set
+  cannot become a stale privilege.
+- **Lockout recovery** is the database, which is the honest answer for a
+  self-hosted server whose data is plaintext anyway (ADR 0002):
+  `sqlite3 tabversed.db "UPDATE users SET role='admin' WHERE email='<you>'"`.
+  There is deliberately no backdoor that works without it.
+
+### What you see
+
+Everybody lands on **their own account** with the three tabs - Pair Code,
+Devices & Tokens, Stored data. An operator gets a **fourth tab, "Admin"** (ADR
+0014): the accounts, with *Impersonate*, *Make/Remove operator* and *Delete*
+per row.
+
+*Impersonate* switches the three account tabs to that account, read-only, titled
+`alice (impersonated by admin)`; the Admin tab stays put, so another account is
+one click and coming back is *Stop looking*.
+
+There is no "create account" anywhere: registration is the only way an account
+comes into existence, so there is a single path that can prove an address. The
+accounts sidebar is gone - it was a second copy of the directory for an operator
+and a single useless row for a person.
+
+### Signing in
+
+A single-use link sent to the address you type - there is no password anywhere,
+so nothing to forget, reuse or leak. The link works once and expires in 30
+minutes. With no `TABVERSED_SMTP_HOST` the link is printed to the server log,
+which is what a LAN-only deployment wants. GitHub and Google are offered when
+configured; a self hosted OpenID Connect provider is *not* wired (the auth
+library's custom provider speaks plain OAuth2, not OIDC discovery with id_token
+validation, and a button that half-works is worse than none).
+
+A person then manages their own account: mint pairing codes, list and revoke
+their own devices, browse their own data. That is what removes the operator
+from the critical path.
+
+### Accounts on a server that predates them
+
+A deployment can hold sync users created before accounts existed - by the old
+bootstrap, or by pairing. The **first registration adopts a lone one**: the
+account takes over that row, keeping its id, so every record already synced
+stays attached instead of being orphaned on an account the console cannot show.
+With several such users nothing is adopted - a wrong guess would hand one
+person another person's browsing history - and the server says so in the log.
 
 | Variable | Default | Meaning |
 | -------- | ------- | ------- |
-| `TABVERSED_AUTH` | `off` | `accounts` to let people sign in to the console |
+| `TABVERSED_ADMIN_EMAIL` | _(unset)_ | whose first registration becomes the operator |
 | `TABVERSED_AUTH_SECRET` | generated once | signs session cookies; stored in the database if unset |
-| `TABVERSED_PUBLIC_URL` | _(unset)_ | absolute base for login links and social callbacks |
+| `TABVERSED_PUBLIC_URL` | _(unset)_ | absolute base for sign-in links and social callbacks |
 | `TABVERSED_SECURE_COOKIES` | `true` | turn off only for plain http on a trusted LAN |
 | `TABVERSED_LINK_BY_EMAIL` | `true` | link a social login to an account with the same address; `0` refuses instead |
 | `TABVERSED_REQUIRE_EMAIL_VERIFICATION` | `true` | refuse a session for an unproven address |
 | `TABVERSED_SMTP_HOST` / `_PORT` / `_USER` / `_PASS` / `_FROM` | _(none)_ | where sign-in links go |
 | `TABVERSED_GITHUB_CLIENT_ID` / `_SECRET` | _(none)_ | enable the GitHub button |
 | `TABVERSED_GOOGLE_CLIENT_ID` / `_SECRET` | _(none)_ | enable the Google button |
-| `TABVERSED_DEV_MODE` | `false` | the library's fake OAuth provider, for local development |
+| `TABVERSED_DEV_MODE` | `false` | the auth library's fake OAuth provider, for local development |
 
-Sign-out ends the session in that browser only; a password change or an operator
-disabling the account invalidates every session everywhere, through a revocation
-cut-off rather than a session table.
+**Upgrading from `TABVERSED_ADMIN_TOKEN`:** it is gone, and so is the token
+screen in the console. Set `TABVERSED_ADMIN_EMAIL` to the address you use, start
+the server, and register with it - the account that matches becomes the
+operator. Anything the old token could reach, that account can reach. The
+extension is unaffected: it pairs with a device token exactly as before.
 
 ## Multi tenancy and the console (ADR 0009)
 
@@ -180,7 +224,7 @@ afterwards. Every tenant scoped table already carried `user_id`, so making a
 second account possible was a matter of letting an operator create one.
 
 ```sh
-TABVERSED_ADMIN_TOKEN=$(openssl rand -base32 24) pnpm run server:dev
+TABVERSED_ADMIN_EMAIL=you@example.com pnpm run server:dev
 # then open http://localhost:8223/ and paste the token
 ```
 
@@ -211,10 +255,9 @@ the next honest sync from the real device would win the LWW comparison. The
 admin surface is for operator state; the data stays the extension's to write.
 
 The console is three embedded files under `internal/webui/assets/` (HTML, CSS,
-JS - no framework, no build step) served with a strict CSP. It keeps the admin
-token in `localStorage`, so treat that browser profile like the token itself.
-Without `TABVERSED_ADMIN_TOKEN` the routes answer `404` and the login screen
-explains that the deployment is single tenant.
+JS - no framework, no build step) served with a strict CSP. It holds no secret
+at all: the session is an httpOnly cookie, and the page only ever sees the XSRF
+token it has to echo back.
 
 The pairing code and the server URL next to it each get a copy button. Copying
 falls back through three steps on purpose, because a self-hosted console is
@@ -224,20 +267,33 @@ is available, then `execCommand('copy')`, and as a last resort selects the text
 and says "press Ctrl+C" instead of silently doing nothing.
 
 ```sh
-# what the console does, by hand
-A='Authorization: Bearer $TABVERSED_ADMIN_TOKEN'
-curl -s localhost:8223/api/v1/admin/users -H "$A"
-curl -s -X POST localhost:8223/api/v1/admin/users -H "$A" -d '{"name":"alice"}'
-curl -s -X POST localhost:8223/api/v1/admin/users/usr_.../invites -H "$A" -d '{"ttl_seconds":300}'
-curl -s 'localhost:8223/api/v1/admin/users/usr_.../tabspaces' -H "$A"
-curl -s 'localhost:8223/api/v1/admin/users/usr_.../tabspaces/ts_...' -H "$A"
-curl -s 'localhost:8223/api/v1/admin/users/usr_.../search?q=hello' -H "$A"
-curl -s -X DELETE localhost:8223/api/v1/admin/users/usr_.../devices/dev_... -H "$A"
+B=localhost:8223
+J=cookies.txt     # a signed-in session, from the sign-in link
+
+# who am I, and who runs this deployment
+curl -s -b $J $B/api/v1/console/me
+
+# what the console does for a person, by hand
+curl -s -X POST "$B/api/v1/console/signin-link?user=me@example.com&address=me@example.com&site=$B"
+U=usr_...
+curl -s -b $J -X POST "$B/api/v1/admin/users/$U/invites?ttl_seconds=300"
+curl -s -b $J "$B/api/v1/admin/users/$U/tabspaces"
+curl -s -b $J "$B/api/v1/admin/users/$U/tabspaces/ts_..."
+curl -s -b $J "$B/api/v1/admin/users/$U/search?q=hello"
+curl -s -b $J -X DELETE "$B/api/v1/admin/users/$U/devices/dev_..."
+
+# the operator's directory (and the filter it needs)
+curl -s -b $J "$B/api/v1/admin/users"
+curl -s -b $J "$B/api/v1/admin/users?q=alice"
+curl -s -b $J -X PUT "$B/api/v1/admin/users/$U/role" -d '{"role":"admin"}'
+curl -s -b $J -X POST "$B/api/v1/admin/users/$U/impersonate"
+curl -s -b $J "$B/api/v1/console/impersonation"
+curl -s -b $J -X POST "$B/api/v1/console/impersonate/stop"
 
 # then retire the dead device (revoked + silent), and what it last wrote
-curl -s -X PUT localhost:8223/api/v1/admin/users/usr_.../devices/dev_.../archive -H "$A"
-curl -s -X PUT localhost:8223/api/v1/admin/users/usr_.../devices/dev_.../records/archive -H "$A"
-curl -s 'localhost:8223/api/v1/admin/users/usr_...?archived=1' -H "$A"   # show archived
+curl -s -b $J -X PUT "$B/api/v1/admin/users/$U/devices/dev_.../archive"
+curl -s -b $J -X PUT "$B/api/v1/admin/users/$U/devices/dev_.../records/archive"
+curl -s -b $J "$B/api/v1/admin/users/$U/records?archived=1"   # show archived
 ```
 
 ### Archiving (ADR 0011)

@@ -34,17 +34,18 @@ to **the server you configured** over an encrypted connection:
 - tab URLs and titles, saved tab groups, notes, todos and bookmarks
 - periodically captured session snapshots (window/tab listings)
 
-**Console accounts (optional).** If the person running the server turned on
-accounts (`TABVERSED_AUTH=accounts`), you can sign in to the server's own web
-console to add devices and look at your data. Signing in means either a
-single-use link sent to your email address - there is no password to store - or
-GitHub or Google, and only if the server operator configured that. Signing in
-adds your **email address** to that server's database, because it is what the
-link is sent to; it is never sent anywhere else, and the console can be used
-without an account at all. Sessions are cookies on that server only, and an
-operator of a multi-user server can open a **read only, time limited, logged**
-view of your account to answer support questions; they cannot change anything
-that way.
+**Console accounts.** You can sign in to the server's own web console to add
+devices and look at your data. Signing in means either a single-use link sent to
+your email address - there is no password to store anywhere - or GitHub or
+Google, and only if the server operator configured that. Signing in adds your
+**email address** to that server's database, because it is what the link is sent
+to; it is never sent anywhere else. Sessions are cookies on that server only,
+and an operator of a multi-user server can open a **read only, time limited,
+logged** view of your account to answer support questions; they cannot change
+anything that way. The console has no master password or token: the person who
+runs the server is an ordinary account, identified by an address the operator
+configured, and every action taken in the console is recorded against an
+account.
 
 That data is used solely to synchronise your own devices. It is never sold,
 never shared with third parties, and never sent to any other host than the

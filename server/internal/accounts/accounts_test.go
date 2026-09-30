@@ -2,6 +2,7 @@ package accounts
 
 import (
 	"context"
+	"crypto/sha1"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -52,8 +53,13 @@ type testRig struct {
 	// *returns* a middleware, which has to be composed under Auth. Getting that
 	// wrong is silent - the request is simply refused - so the rig keeps the
 	// updater and composes both, as the real server will.
-	mw  middleware.Authenticator
-	upd middleware.UserUpdater
+	mw middleware.Authenticator
+	// the server the browser talks to, and what the "email" carried, so the
+	// first-operator journey can be walked without an SMTP server
+	url      string
+	sentTo   string
+	sentText string
+	upd      middleware.UserUpdater
 }
 
 func newRig(t *testing.T) testRig {
@@ -143,8 +149,9 @@ func newRig(t *testing.T) testRig {
 	// before it can ask the account anything.
 	mw := svc.Middleware()
 	upd := middleware.UserUpdFunc(func(u token.User) token.User {
-		userID, err := ResolveAccountID(context.Background(), st, u.ID)
-		if err != nil {
+		userID, known, err := ResolveAccountID(context.Background(), st, u.ID)
+		if err != nil || !known {
+			// A session for an identity this rig has not created.
 			u.ID = ""
 			return u
 		}
@@ -196,7 +203,15 @@ func claimsFor(userID, name, email string, st *store.Store) token.Claims {
 		},
 		// The id is provider shaped: the authenticator's allow-list reads the
 		// prefix, and the account behind it is resolved by id afterwards.
-		User: &token.User{ID: directProvider + "_" + userID, Name: name, Email: email, Audience: testAudience},
+		// The claim id is "<provider>_<subject>", and the subject is what the
+		// passwordless provider derives from the address - the same value
+		// register() stores as the identity, or the session resolves to nothing.
+		User: &token.User{
+			ID:       directProvider + "_" + token.HashID(sha1.New(), email),
+			Name:     name,
+			Email:    email,
+			Audience: testAudience,
+		},
 	}
 }
 
@@ -236,14 +251,7 @@ func (r testRig) signIn(t *testing.T, srv *httptest.Server, claims token.Claims,
 
 func TestSessionCookieIsIssuedAndAcceptedByOurRoutes(t *testing.T) {
 	rig := newRig(t)
-	ctx := context.Background()
-	acc, err := rig.store.CreateUser(ctx, "usr_1", "Yuli")
-	if err != nil {
-		t.Fatalf("create user: %v", err)
-	}
-	if err := rig.store.SetEmail(ctx, acc.ID, "yuli@example.com"); err != nil {
-		t.Fatalf("set email: %v", err)
-	}
+	acc := store.Account{ID: register(t, rig, "yuli@example.com"), Name: "Yuli", Email: "yuli@example.com"}
 
 	var sawUser, sawRole string
 	guarded := rig.guard(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -309,17 +317,14 @@ func TestXSRFIsEnforcedOnOurRoutes(t *testing.T) {
 	// every state changing route in the console would be forgeable from another
 	// site the browser is logged in to.
 	rig := newRig(t)
-	acc, err := rig.store.CreateUser(context.Background(), "usr_2", "Yuli")
-	if err != nil {
-		t.Fatalf("create user: %v", err)
-	}
+	acc := store.Account{ID: register(t, rig, "yuli2@example.com"), Name: "Yuli", Email: "yuli2@example.com"}
 	guarded := rig.guard(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
 	srv := httptest.NewServer(guarded)
 	defer srv.Close()
 
-	call := rig.signIn(t, srv, claimsFor(acc.ID, "Yuli", "", rig.store), http.MethodPost)
+	call := rig.signIn(t, srv, claimsFor(acc.ID, acc.Name, acc.Email, rig.store), http.MethodPost)
 	if code := call(false); code == http.StatusOK {
 		t.Fatal("a cookie session POST without the XSRF header was accepted")
 	}
@@ -335,10 +340,7 @@ func TestRevokingASession(t *testing.T) {
 	// keeping a session table.
 	rig := newRig(t)
 	ctx := context.Background()
-	acc, err := rig.store.CreateUser(ctx, "usr_3", "Yuli")
-	if err != nil {
-		t.Fatalf("create user: %v", err)
-	}
+	acc := store.Account{ID: register(t, rig, "yuli3@example.com"), Name: "Yuli", Email: "yuli3@example.com"}
 
 	guarded := rig.guard(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -347,7 +349,7 @@ func TestRevokingASession(t *testing.T) {
 	defer srv.Close()
 
 	// sign in first, with nothing revoked yet
-	call := rig.signIn(t, srv, claimsFor(acc.ID, "Yuli", "", rig.store), http.MethodGet)
+	call := rig.signIn(t, srv, claimsFor(acc.ID, acc.Name, acc.Email, rig.store), http.MethodGet)
 	if code := call(true); code != http.StatusOK {
 		t.Fatalf("fresh session = %d, want 200 (auth error: %v)", code, (*rig.authErr))
 	}
@@ -371,7 +373,7 @@ func TestRevokingASession(t *testing.T) {
 	waitForNextSecond()
 	// A new sign-in, not the old cookie: its iat is baked in, so waiting cannot
 	// rescue it - only a fresh session is issued after the cut-off.
-	fresh := rig.signIn(t, srv, claimsFor(acc.ID, "Yuli", "", rig.store), http.MethodGet)
+	fresh := rig.signIn(t, srv, claimsFor(acc.ID, acc.Name, acc.Email, rig.store), http.MethodGet)
 	if code := fresh(true); code != http.StatusOK {
 		t.Fatalf("session after the revocation window = %d, want 200 (auth error: %v)",
 			code, (*rig.authErr))
@@ -388,28 +390,26 @@ func TestDisabledAccountLosesItsSession(t *testing.T) {
 	// switched this person off" takes effect without touching the JWT.
 	rig := newRig(t)
 	ctx := context.Background()
-	acc, err := rig.store.CreateUser(ctx, "usr_4", "Yuli")
-	if err != nil {
-		t.Fatalf("create user: %v", err)
-	}
+	acc := store.Account{ID: register(t, rig, "yuli4@example.com"), Name: "Yuli", Email: "yuli4@example.com"}
 	guarded := rig.guard(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
 	srv := httptest.NewServer(guarded)
 	defer srv.Close()
 
-	call := rig.signIn(t, srv, claimsFor(acc.ID, "Yuli", "", rig.store), http.MethodGet)
+	call := rig.signIn(t, srv, claimsFor(acc.ID, acc.Name, acc.Email, rig.store), http.MethodGet)
 	if code := call(true); code != http.StatusOK {
 		t.Fatalf("before disabling = %d, want 200", code)
 	}
 	if err := rig.store.SetDisabled(ctx, acc.ID, true); err != nil {
 		t.Fatalf("disable: %v", err)
 	}
+	waitForNextSecond()
 	if code := call(true); code == http.StatusOK {
 		t.Fatal("a disabled account still holds a live session")
 	}
 	// and a fresh sign-in is refused too, not just the old cookie
-	fresh := rig.signIn(t, srv, claimsFor(acc.ID, "Yuli", "", rig.store), http.MethodGet)
+	fresh := rig.signIn(t, srv, claimsFor(acc.ID, acc.Name, acc.Email, rig.store), http.MethodGet)
 	if code := fresh(true); code == http.StatusOK {
 		t.Fatal("a disabled account could open a new session")
 	}
@@ -420,10 +420,7 @@ func TestRoleTravelsInTheClaims(t *testing.T) {
 	// two code paths.
 	rig := newRig(t)
 	ctx := context.Background()
-	admin, err := rig.store.CreateUser(ctx, "usr_admin", "Root")
-	if err != nil {
-		t.Fatalf("create admin: %v", err)
-	}
+	admin := store.Account{ID: register(t, rig, "root@example.com"), Name: "Root", Email: "root@example.com"}
 	if err := rig.store.SetRole(ctx, admin.ID, store.RoleAdmin); err != nil {
 		t.Fatalf("promote: %v", err)
 	}
@@ -441,7 +438,7 @@ func TestRoleTravelsInTheClaims(t *testing.T) {
 	srv := httptest.NewServer(guarded)
 	defer srv.Close()
 
-	if code := rig.signIn(t, srv, claimsFor(admin.ID, "Root", "", rig.store), http.MethodGet)(true); code != http.StatusOK {
+	if code := rig.signIn(t, srv, claimsFor(admin.ID, admin.Name, admin.Email, rig.store), http.MethodGet)(true); code != http.StatusOK {
 		t.Fatalf("admin request = %d, want 200", code)
 	}
 	if seenRole != store.RoleAdmin {
@@ -457,4 +454,22 @@ func TestRoleTravelsInTheClaims(t *testing.T) {
 func TestDependencyWeight(t *testing.T) {
 	t.Log("compare the built binary with and without the provider packages; " +
 		"the console needs auth + token + middleware only")
+}
+
+// register creates an account *and* the identity a session resolves through,
+// with the same subject the passwordless provider mints. Without the identity
+// row a session has nothing to resolve to, which is a real state the product is
+// never in; the whole sign-in journey is walked in internal/api.
+func register(t *testing.T, rig testRig, email string) string {
+	t.Helper()
+	ctx := context.Background()
+	id, _, err := rig.store.UpsertIdentity(ctx, ProviderEmail,
+		token.HashID(sha1.New(), email), email, email, true)
+	if err != nil {
+		t.Fatalf("register: %v", err)
+	}
+	if err := rig.store.MarkEmailVerified(ctx, id); err != nil {
+		t.Fatalf("verify: %v", err)
+	}
+	return id
 }

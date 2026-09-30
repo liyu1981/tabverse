@@ -17,8 +17,12 @@ import (
 // UserSummary is one row of the account list, with just enough counters for
 // the console's user list to be useful without a second round trip.
 type UserSummary struct {
-	ID        string    `json:"id"`
-	Name      string    `json:"name"`
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	// Email and Role are what the operator's directory is for: without them a
+	// row is an opaque id, and "who is the other operator" is unanswerable.
+	Email     string    `json:"email"`
+	Role      string    `json:"role"`
 	CreatedAt time.Time `json:"created_at"`
 	RevSeq    int64     `json:"rev_seq"`
 	// DeviceCount counts the user's devices, TokenCount the tokens that are
@@ -32,17 +36,25 @@ type UserSummary struct {
 	LastActivity int64 `json:"last_activity"`
 }
 
-// ListUsers returns every account, oldest first, with its counters.
-func (s *Store) ListUsers(ctx context.Context) ([]UserSummary, error) {
+// ListUsers returns every account, oldest first, with its counters - the
+// operator's directory. A query filters on the name or the address, which is
+// what makes a list of accounts usable rather than a wall.
+func (s *Store) ListUsers(ctx context.Context, query string) ([]UserSummary, error) {
+	where := "1 = 1"
+	args := []any{}
+	if q := strings.ToLower(strings.TrimSpace(query)); q != "" {
+		where = "(instr(lower(u.name), lower(?)) > 0 OR instr(lower(COALESCE(u.email, '')), lower(?)) > 0)"
+		args = append(args, q, q)
+	}
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT u.id, u.name, u.created_at, u.rev_seq,
+		SELECT u.id, u.name, COALESCE(u.email, ''), COALESCE(u.role, 'user'), u.created_at, u.rev_seq,
 		       (SELECT COUNT(*) FROM devices d WHERE d.user_id = u.id),
 		       (SELECT COUNT(*) FROM tokens t WHERE t.user_id = u.id AND t.revoked = 0),
 		       (SELECT COUNT(*) FROM tokens t WHERE t.user_id = u.id AND t.revoked = 1),
 		       (SELECT COUNT(*) FROM records r WHERE r.user_id = u.id AND r.deleted = 0),
 		       COALESCE((SELECT MAX(r.updated_at) FROM records r
 		                 WHERE r.user_id = u.id AND r.deleted = 0), 0)
-		FROM users u ORDER BY u.created_at ASC, u.id ASC`)
+		FROM users u WHERE `+where+` ORDER BY u.created_at ASC, u.id ASC`, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +64,7 @@ func (s *Store) ListUsers(ctx context.Context) ([]UserSummary, error) {
 	for rows.Next() {
 		var u UserSummary
 		var createdAt int64
-		if err := rows.Scan(&u.ID, &u.Name, &createdAt, &u.RevSeq,
+		if err := rows.Scan(&u.ID, &u.Name, &u.Email, &u.Role, &createdAt, &u.RevSeq,
 			&u.DeviceCount, &u.TokenCount, &u.RevokedCount,
 			&u.RecordCount, &u.LastActivity); err != nil {
 			return nil, err

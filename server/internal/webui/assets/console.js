@@ -9,31 +9,22 @@
  * next to index.html and serves both.
  */
 
-const TOKEN_KEY = 'tabversed.admin.token';
-
 // The URL fragment carries the console's state: `token=`, `user=`,
 // `view=`, `tabspace=` and `q=`, e.g.
 //
 //   http://host:8223/#token=SECRET&user=usr_123&tabspace=ts_456
 //
 // so an operator can paste a link from a terminal and bookmark an account. The
-// token is moved into localStorage and stripped from the fragment immediately
-// (fragments are never sent to a server and never reach a Referer header, so
-// it does not linger in history or in a copied URL); the routing parameters
-// stay, because they are not secret.
+// The fragment carries the console's routing state (which account, which tab),
+// which is not secret; the session is a cookie and never travels in a URL.
 function readHash() {
   const params = new URLSearchParams(location.hash.replace(/^#/, ''));
-  const token = params.get('token');
-  if (token) {
-    localStorage.setItem(TOKEN_KEY, token);
-    params.delete('token');
-    const rest = params.toString();
-    history.replaceState(
-      null,
-      '',
-      location.pathname + location.search + (rest ? '#' + rest : ''),
-    );
-  }
+  const rest = params.toString();
+  history.replaceState(
+    null,
+    '',
+    location.pathname + location.search + (rest ? '#' + rest : ''),
+  );
   return params;
 }
 
@@ -51,19 +42,16 @@ function writeHash(patch) {
   );
 }
 
-// Two credentials, and the page has to know which one it is holding (adr/0012):
+// One credential, and the page never holds it: the session lives in an
+// httpOnly cookie the browser sends on its own. The one thing the page does
+// hold is the XSRF token, from a deliberately readable cookie, which has to be
+// echoed in a header on every state changing request (adr/0012).
 //
-//   - a session cookie, when accounts are on: the XSRF token comes out of a
-//     readable cookie and has to be echoed in a header, or the request is refused
-//   - the admin token in localStorage, the break-glass path for a deployment
-//     with no accounts
-//
-// Same-origin requests carry the cookie automatically, which is why
-// credentials is not set: 'include' would break a plain http deployment.
+// credentials is not set: same-origin requests carry the cookie anyway, and
+// 'include' would break a plain http deployment on a LAN.
 const api = {
   async call(method, path, body) {
     const headers = {};
-    if (state.token) headers['Authorization'] = 'Bearer ' + state.token;
     if (body !== undefined) headers['Content-Type'] = 'application/json';
     if (state.csrfHeader && method !== 'GET' && method !== 'HEAD') {
       headers[state.csrfHeader] = state.csrf;
@@ -97,8 +85,9 @@ const api = {
   put: (p, b) => api.call('PUT', p, b),
 };
 
+let assumeTimer = null;
+
 const state = {
-  token: localStorage.getItem(TOKEN_KEY) || '',
   users: [],
   selected: null, // user summary
   detail: null, // { user, stats, devices, tokens }
@@ -122,6 +111,10 @@ const state = {
     archived: false,
   },
   openTabspace: null, // bundle
+  // the operator's directory filter
+  directoryQuery: '',
+  // the account an active impersonation is looking at, and who started it
+  assuming: null,
   // which of the account's three tabs is open: 'pair' | 'credentials' | 'data'.
   // null until an account is opened, so the first visit can pick a sensible one.
   tab: null,
@@ -265,15 +258,16 @@ function toast(message, kind) {
   }, 4000);
 }
 
-function banner(message) {
-  const node = $('#banner');
-  if (!message) {
-    node.hidden = true;
-    node.textContent = '';
-    return;
+// askConfig is the one call that needs no session: it tells the page which
+// build it is talking to and what the deployment offers, so the sign-in screen
+// can explain itself instead of being a form that fails when submitted.
+async function askConfig() {
+  try {
+    const cfg = await api.get('/api/v1/admin/config');
+    $('#server-version').textContent = cfg.version ? 'v' + cfg.version : '';
+  } catch {
+    // A server too old to have the endpoint: the defaults in the page stand.
   }
-  node.textContent = message;
-  node.hidden = false;
 }
 
 // whoAmI asks the server who the caller is. It answers for all three states -
@@ -285,32 +279,58 @@ async function whoAmI() {
     if (e.status === 401) {
       return null;
     }
-    // A deployment too old to have the endpoint falls back to the token flow.
-    return { accounts_enabled: false, signed_in: false, admin_token: true };
+    // A deployment too old to have accounts at all: the page will say so.
+    return { accounts_enabled: false, signed_in: false, providers: [] };
   }
 }
 
-function showSignIn(me) {
-  $('#view-login').hidden = true;
-  $('#view-signin').hidden = false;
-  $('#app').hidden = true;
-  $('#login-hint').textContent =
-    'This server has accounts enabled, so people sign in with a link sent to ' +
-    'their email address.';
-  const adminLink = $('#signin-admin');
-  if (me.admin_token) {
-    adminLink.hidden = false;
+function showApp() {
+  $('#view-signin').hidden = true;
+  $('#app').hidden = false;
+  // The one case where being signed in is not enough: this account is the
+  // address the operator is expected to be, and nobody has claimed the role.
+  // The server says so, so the page does not have to work it out.
+  const hint = $('#operator-hint');
+  hint.hidden = !(state.me && state.me.awaiting_operator);
+}
+
+// ---- session --------------------------------------------------------------
+//
+// There is nothing to sign in *to* any more: the session is a cookie the
+// browser already has, and the only question is whether the server still
+// recognises it.
+
+async function boot() {
+  askConfig();
+  const params = readHash();
+  const me = await whoAmI();
+  if (!me) {
+    showSignin({ accounts_enabled: false, signed_in: false, providers: [] });
+    return;
   }
+  if (!me.signed_in) {
+    showSignin(me);
+    return;
+  }
+  state.me = me;
+  state.csrf = me.csrf || '';
+  state.csrfHeader = me.csrf_header || '';
+  showApp();
+  await openMyAccount();
+  const tab = params.get('tab');
+  if (tab) setTab(tab);
+}
+
+function showSignin(me) {
+  $('#app').hidden = true;
+  $('#view-signin').hidden = false;
   renderSignInProviders(me.providers || []);
-  const note = $('#signin-note');
-  note.textContent = me.self_hosted
+  $('#signin-note').textContent = me.self_hosted
     ? 'The link comes from the server, so check your spam folder.'
     : 'No mail server is configured, so the server prints the link in its own log.';
   $('#signin-email').focus();
 }
 
-// renderSignInProviders draws one button per configured provider, pointing at
-// the library's own login start for that provider.
 function renderSignInProviders(providers) {
   const box = $('#signin-providers');
   clear(box);
@@ -324,7 +344,7 @@ function renderSignInProviders(providers) {
     box.append(
       el(
         'a',
-        { class: 'provider', href: '/auth/' + name },
+        { class: 'provider', href: '/auth/' + name + '/login' },
         name === 'github' ? 'GitHub' : name === 'google' ? 'Google' : name,
       ),
     );
@@ -333,27 +353,38 @@ function renderSignInProviders(providers) {
 
 $('#signin-form').addEventListener('submit', async (ev) => {
   ev.preventDefault();
-  const email = $('#signin-email').value.trim();
+  // Lowercased before it is sent, so the address the server hashes for the
+  // session's identity and the one it stores are the same string however the
+  // person typed it.
+  const email = $('#signin-email').value.trim().toLowerCase();
   if (!email) return;
   const err = $('#signin-error');
   err.hidden = true;
   const button = $('#signin-form button[type=submit]');
   button.disabled = true;
   try {
-    // The library owns the form and the send; posting to its endpoint is the
-    // whole integration.
-    const res = await fetch('/auth/tabverse', {
+    // The library owns the form and the send, and it reads the address from the
+    // *query string* as `address` (with `user` for the name and `site` for the
+    // audience) - a POST body is ignored, so the fields go in the URL. Getting
+    // this wrong is a bare 400 with nothing to explain it.
+    const query = new URLSearchParams({
+      user: email,
+      address: email,
+      site: location.origin,
+    });
+    // Our endpoint, not the library's: it creates the account before the link
+    // is sent, which is the order the session check needs.
+    const res = await fetch('/api/v1/console/signin-link?' + query.toString(), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ user: email }).toString(),
     });
     if (!res.ok && res.status !== 200) {
       throw new Error('HTTP ' + res.status);
     }
-    $('#signin-error').hidden = false;
-    $('#signin-error').className = 'muted small';
-    $('#signin-error').textContent =
-      'Check your email for the sign-in link. It works once and expires.';
+    err.hidden = false;
+    err.className = 'muted small';
+    err.textContent =
+      'Check your email for the sign-in link. It works once and expires in 30 ' +
+      'minutes.';
     $('#signin-email').value = '';
   } catch (e) {
     err.hidden = false;
@@ -364,228 +395,14 @@ $('#signin-form').addEventListener('submit', async (ev) => {
   }
 });
 
-$('#signin-admin').addEventListener('click', (ev) => {
-  ev.preventDefault();
-  showLogin();
-});
-
 $('#sign-out').addEventListener('click', async () => {
   try {
     await api.post('/api/v1/console/signout');
   } catch {
-    // Even if the call fails, drop what this page holds.
+    // Even if the call fails, the page stops pretending it is signed in.
   }
-  state.me = null;
-  state.csrf = '';
-  state.token = '';
-  localStorage.removeItem(TOKEN_KEY);
   location.reload();
 });
-
-// ---- session --------------------------------------------------------------
-
-async function boot() {
-  askConfig();
-  const params = readHash();
-  state.token = state.token || localStorage.getItem(TOKEN_KEY) || '';
-
-  // Who am I? This decides between the three front doors: a signed-in account,
-  // the operator token, or nothing. Asking first is what lets a person skip the
-  // token screen entirely.
-  const me = await whoAmI();
-  if (!me) {
-    showLogin();
-    return;
-  }
-  if (me.accounts_enabled && !me.signed_in) {
-    showSignIn(me);
-    return;
-  }
-  if (me.signed_in) {
-    state.me = me;
-    state.csrf = me.csrf || '';
-    state.csrfHeader = me.csrf_header || '';
-  }
-  try {
-    await refreshTotals();
-    await loadUsers();
-    showApp();
-    // A link straight to an account (or one of its tabverses) opens it.
-    const user = params.get('user');
-    if (user && state.users.some((u) => u.id === user)) {
-      await openAccount(user);
-      // a link can name the tab: #token=...&user=usr_...&tab=credentials
-      const tab = params.get('tab');
-      if (tab) setTab(tab);
-      const view = params.get('view');
-      if (view === 'records' || view === 'search') {
-        if (view === 'search') $('#fts-search').value = params.get('q') || '';
-        setDataView(view);
-      }
-      const tabspace = params.get('tabspace');
-      if (tabspace) await openTabspace(tabspace);
-    }
-  } catch (e) {
-    if (e.status === 401) {
-      // A stale token in localStorage should not wedge the page.
-      localStorage.removeItem(TOKEN_KEY);
-      state.token = '';
-      showLogin('That token was rejected. Try again.');
-    } else {
-      showApp();
-      banner(e.message);
-    }
-  }
-}
-
-function showLogin(error) {
-  $('#view-login').hidden = false;
-  $('#view-signin').hidden = true;
-  $('#app').hidden = true;
-  $('#logout').hidden = true;
-  const err = $('#login-error');
-  err.hidden = !error;
-  err.textContent = error || '';
-  $('#admin-token').value = state.token;
-  $('#admin-token').focus();
-}
-
-// askConfig is the one admin call that needs no token: it says whether this
-// deployment has the admin API on at all, so the login screen can explain
-// itself instead of rejecting a correctly typed token.
-async function askConfig() {
-  try {
-    const cfg = await api.get('/api/v1/admin/config');
-    $('#server-version').textContent = cfg.version ? 'v' + cfg.version : '';
-    const hint = $('#login-hint');
-    if (!cfg.admin_enabled) {
-      hint.innerHTML =
-        'This server has no <code>TABVERSED_ADMIN_TOKEN</code> set, so the console and the ' +
-        'admin API are off. It is a single tenant deployment: pair the extension once and it owns the server.';
-      $('#admin-token').disabled = true;
-      $('#login-form button[type=submit]').disabled = true;
-      // Nothing behind the sign-in button can work, so do not offer it.
-      $('#refresh').hidden = true;
-    } else {
-      hint.innerHTML =
-        'The value of <code>TABVERSED_ADMIN_TOKEN</code> on the server. It is kept in this ' +
-        "browser's localStorage only.";
-    }
-  } catch {
-    // A server too old to have the endpoint: leave the default hint alone.
-  }
-}
-
-async function refreshTotals() {
-  const t = await api.get('/api/v1/admin/totals');
-  const entities = Object.entries(t.by_entity || {})
-    .sort((a, b) => b[1] - a[1])
-    .map(([e, n]) => `${e} ${n}`)
-    .join('  ');
-  $('#totals').textContent =
-    `${t.users} accounts · ${t.devices} devices · ${t.active_tokens} live tokens · ` +
-    `${t.live_records} records (${t.tombstones} tombstones)` +
-    (entities ? ' · ' + entities : '') +
-    (t.archived_devices || t.archived_tokens || t.archived_records
-      ? ` · archived ${t.archived_devices} devices, ${t.archived_tokens} tokens, ${t.archived_records} records`
-      : '');
-}
-
-$('#login-form').addEventListener('submit', async (ev) => {
-  ev.preventDefault();
-  const value = $('#admin-token').value.trim();
-  if (!value) return;
-  state.token = value;
-  try {
-    await refreshTotals();
-    await loadUsers();
-    localStorage.setItem(TOKEN_KEY, value);
-    showApp();
-    banner('');
-  } catch (e) {
-    showLogin(e.status === 401 ? 'Not the admin token.' : e.message);
-  }
-});
-
-$('#logout').addEventListener('click', () => {
-  localStorage.removeItem(TOKEN_KEY);
-  state.token = '';
-  state.users = [];
-  state.selected = null;
-  showLogin();
-});
-
-// showApp reveals the app shell, whichever front door was used to get here.
-function showApp() {
-  $('#view-login').hidden = true;
-  $('#view-signin').hidden = true;
-  $('#app').hidden = false;
-  $('#logout').hidden = !state.token;
-}
-
-$('#refresh').addEventListener('click', async () => {
-  await refreshTotals();
-  await loadUsers();
-  if (state.selected) await openAccount(state.selected.id);
-  toast('Reloaded', 'good');
-});
-
-// openMyAccount is what a signed-in person lands on. An operator sees the
-// account list; everyone else goes straight to their own account and the
-// sidebar is hidden, because a person has exactly one account and showing them
-// a list they cannot use is just a route to a 403.
-async function openMyAccount() {
-  const operator = state.me && state.me.role === 'admin';
-  const roleBadge = $('#account-role');
-  roleBadge.hidden = !operator;
-  roleBadge.textContent = 'operator';
-  $('#sign-out').hidden = !(state.me && state.me.signed_in);
-  $('#sidebar-accounts').hidden = !operator;
-
-  await refreshAssumption();
-
-  if (operator) {
-    await refreshTotals().catch(() => {});
-    await loadUsers();
-    const users = state.users;
-    if (users.length === 1) {
-      await openAccount(users[0].id);
-      return;
-    }
-    if (users.length > 1) {
-      showAccountList();
-      return;
-    }
-  }
-  if (state.me && state.me.user_id) {
-    await openAccount(state.me.user_id);
-    await refreshAssumption();
-    return;
-  }
-  // The break-glass token with accounts enabled but no session: the old flow.
-  await refreshTotals().catch(() => {});
-  await loadUsers();
-  if (state.users.length === 1) {
-    await openAccount(state.users[0].id);
-  } else {
-    showAccountList();
-  }
-}
-
-function showAccountList() {
-  $('#empty-state').hidden = false;
-  $('#view-account').hidden = true;
-  $('#view-tabspace').hidden = true;
-  renderUserList();
-}
-
-// ---- impersonation (adr/0012) --------------------------------------------
-//
-// An operator can look at an account as its owner sees it. The server enforces
-// read only; this half is the banner, because a read only view that looks like
-// a normal one is how an operator walks away believing they changed something.
-
-let assumeTimer = null;
 
 async function refreshAssumption() {
   if (!state.me || !state.me.signed_in) return;
@@ -597,16 +414,20 @@ async function refreshAssumption() {
   }
   const bar = $('#assume-bar');
   if (!info || !info.assuming) {
+    state.assuming = null;
     bar.hidden = true;
     clearInterval(assumeTimer);
     assumeTimer = null;
-    // back to being ourselves: the account list and the operator's own
-    // account are the right things to show
+    // Back to being ourselves: an operator gets the directory again, because
+    // that is where they came from and where the next action lives.
     if (state.me.role === 'admin') {
-      await loadUsers();
+      await showDirectory();
+    } else if (state.me && state.me.user_id) {
+      await openAccount(state.me.user_id);
     }
     return;
   }
+  state.assuming = { user_id: info.user_id, as: info.as, as_by: info.as_by };
   bar.hidden = false;
   const until = info.until ? new Date(info.until) : null;
   const left = until ? Math.max(0, Math.round((until - Date.now()) / 1000)) : 0;
@@ -620,20 +441,6 @@ async function refreshAssumption() {
   clearInterval(assumeTimer);
   assumeTimer = setInterval(refreshAssumption, 1000);
 }
-
-$('#assume-stop').addEventListener('click', async () => {
-  try {
-    await api.post('/api/v1/console/impersonate/stop');
-  } catch (e) {
-    toast('Could not stop: ' + e.message, 'bad');
-    return;
-  }
-  $('#assume-bar').hidden = true;
-  clearInterval(assumeTimer);
-  assumeTimer = null;
-  await loadUsers();
-  toast('Stopped looking', 'good');
-});
 
 async function startImpersonation(userID) {
   if (
@@ -649,9 +456,242 @@ async function startImpersonation(userID) {
     await api.post(
       '/api/v1/admin/users/' + encodeURIComponent(userID) + '/impersonate',
     );
+    // ...and land on the account, not back on the list that started this: the
+    // point was to look at *their* tabverses.
+    const wasOnAdmin = state.tab === 'admin';
     await refreshAssumption();
     await openAccount(userID);
+    if (wasOnAdmin) setTab('data');
     toast('Read only — banner at the top', 'good');
+  } catch (e) {
+    toast(e.message, 'bad');
+  }
+}
+
+// openMyAccount opens the account the three tabs act on: your own, or the one
+// an operator is currently looking through.
+//
+// There is no operator-only landing page, and that is the point (adr/0014): an
+// operator's own tabverses, devices and pairing codes are one click away, the
+// same as everybody else's. The operator's powers are a fourth tab, not a
+// different application.
+async function openMyAccount() {
+  const operator = state.me && state.me.role === 'admin';
+  $('#sign-out').hidden = !(state.me && state.me.signed_in);
+  $('#account-role').hidden = !operator;
+  $('#account-role').textContent = 'operator';
+  // The Admin tab is the only operator-only affordance, so it is the only
+  // thing that has to appear or disappear.
+  $('#rail-admin').hidden = !operator;
+
+  await refreshAssumption();
+  // An operator who is looking at somebody is looking at *them*: without this, a
+  // reload drops the operator back into their own data while the assumed session
+  // is still live.
+  const target =
+    isAssumed() && state.assuming
+      ? state.assuming.user_id
+      : state.me && state.me.user_id;
+  if (!target) {
+    // Signed in, but the server did not say whose account this is: there is
+    // nothing to open, and for an operator the Admin tab is the only way in.
+    if (operator) {
+      setTab('admin');
+    }
+    return;
+  }
+  await openAccount(target);
+}
+
+function showApp() {
+  $('#view-signin').hidden = true;
+  $('#app').hidden = false;
+  // The one case where being signed in is not enough: this account is the
+  // address the operator is expected to be, and nobody has claimed the role yet.
+  $('#operator-hint').hidden = !(state.me && state.me.awaiting_operator);
+}
+
+// ---- the directory ------------------------------------------------------
+
+// showDirectory is the operator's Admin tab: every account, and what can be
+// done to it. There is no create button - registration is the only way an
+// account comes into existence (ADR 0014), and a second way to make one is a
+// second path to get an address proof wrong.
+async function showDirectory() {
+  state.users = [];
+  await loadUsers();
+  renderDirectory();
+}
+
+function renderDirectory() {
+  const body = $('#directory-table tbody');
+  clear(body);
+  const total = state.users.length;
+  $('#rail-note-admin').textContent = total
+    ? total + ' accounts'
+    : 'no accounts yet';
+  $('#directory-subtitle').textContent =
+    total === 0
+      ? 'No accounts yet - people appear here when they register.'
+      : `${total} account${total === 1 ? '' : 's'} on this server.`;
+  $('#directory-filter').disabled = total === 0;
+
+  for (const user of state.users) {
+    body.append(directoryRow(user));
+  }
+  const empty = total === 0;
+  $('#directory-empty').hidden = !empty;
+  if (empty) {
+    $('#directory-empty').textContent =
+      "No accounts yet. Give somebody this server's address and let them register - " +
+      'that is how an account is created.';
+  }
+}
+
+// directoryRow is one account, with the powers an operator has over it. The
+// controls differ by role and by who is looking, because "delete" means
+// something different when it is your own account.
+function directoryRow(user) {
+  const operator = state.me && state.me.role === 'admin';
+  const isSelf = state.me && state.me.user_id === user.id;
+  const actions = el('div', { class: 'actions' });
+
+  if (!operator) {
+    // A person in the directory - which they should not normally reach at all,
+    // since the API refuses it - sees no operator powers.
+    actions.append(el('span', { class: 'muted small' }, 'your account'));
+  } else if (isSelf) {
+    actions.append(el('span', { class: 'muted small' }, 'this is you'));
+  } else {
+    if (user.role === 'admin') {
+      // Operators cannot be looked through: the impersonation refuses it, so
+      // the button is not offered rather than offered and refused.
+      actions.append(
+        el(
+          'span',
+          {
+            class: 'muted small',
+            title: 'an operator cannot look through another operator',
+          },
+          'operator',
+        ),
+      );
+    } else {
+      actions.append(
+        el(
+          'button',
+          {
+            class: 'tiny',
+            type: 'button',
+            onclick: () => startImpersonation(user.id),
+          },
+          'Impersonate',
+        ),
+      );
+    }
+    actions.append(
+      el(
+        'button',
+        {
+          class: 'tiny',
+          type: 'button',
+          onclick: () =>
+            setRole(user, user.role === 'admin' ? 'user' : 'admin'),
+        },
+        user.role === 'admin' ? 'Remove operator' : 'Make operator',
+      ),
+    );
+    actions.append(
+      el(
+        'button',
+        {
+          class: 'tiny danger',
+          type: 'button',
+          onclick: () => deleteAccount(user),
+        },
+        'Delete',
+      ),
+    );
+  }
+
+  const name = el('span', {}, user.name || '(unnamed)');
+  if (user.role === 'admin') {
+    name.append(el('span', { class: 'badge' }, 'operator'));
+  }
+  return el(
+    'tr',
+    {},
+    el('td', {}, name, el('div', { class: 'mono muted' }, user.id)),
+    el('td', { class: 'muted' }, user.email || '—'),
+    el('td', { class: 'muted' }, String(user.device_count ?? 0)),
+    el('td', { class: 'muted' }, String(user.record_count ?? 0)),
+    el(
+      'td',
+      { class: 'muted' },
+      user.last_activity ? ago(user.last_activity) : 'never',
+    ),
+    el('td', {}, actions),
+  );
+}
+
+$('#directory-filter').addEventListener(
+  'input',
+  debounce(async () => {
+    state.directoryQuery = $('#directory-filter').value.trim();
+    await loadUsers();
+    renderDirectory();
+  }, 200),
+);
+
+async function setRole(user, role) {
+  if (
+    !confirm(
+      role === 'admin'
+        ? `Make ${user.name || user.email} an operator?\n\nThey will be able to see ` +
+            'every account on this server, mint pairing codes for anyone, and look ' +
+            'through other accounts read only.'
+        : `Take operator access away from ${user.name || user.email}?\n\nThey keep their ` +
+            'own account, devices and data.',
+    )
+  ) {
+    return;
+  }
+  try {
+    await api.put(
+      '/api/v1/admin/users/' + encodeURIComponent(user.id) + '/role',
+      { role },
+    );
+    await loadUsers();
+    renderDirectory();
+    toast(
+      role === 'admin' ? 'They are an operator now' : 'Operator access removed',
+      'good',
+    );
+  } catch (e) {
+    // The server refuses to remove the last operator, and says so.
+    toast(e.message, 'bad');
+  }
+}
+
+async function deleteAccount(user) {
+  const who = user.name || user.email;
+  const typed = prompt(
+    `Deleting ${who} removes the account, its ${user.record_count ?? 0} record(s), its ` +
+      `devices and its tokens. There is no undo.\n\nType ${who} to confirm:`,
+  );
+  if (typed !== who) {
+    return;
+  }
+  try {
+    await api.del(
+      '/api/v1/admin/users/' +
+        encodeURIComponent(user.id) +
+        '?confirm=' +
+        encodeURIComponent(user.id),
+    );
+    await loadUsers();
+    renderDirectory();
+    toast(who + ' deleted', 'good');
   } catch (e) {
     toast(e.message, 'bad');
   }
@@ -660,30 +700,18 @@ async function startImpersonation(userID) {
 // ---- account list ---------------------------------------------------------
 
 async function loadUsers() {
-  const data = await api.get('/api/v1/admin/users');
+  const query = state.directoryQuery
+    ? '?q=' + encodeURIComponent(state.directoryQuery)
+    : '';
+  const data = await api.get('/api/v1/admin/users' + query);
   state.users = data.users || [];
   if (state.selected) {
     // keep the selection pointing at the refreshed row (new counters)
     const fresh = state.users.find((u) => u.id === state.selected.id);
     if (fresh) state.selected = fresh;
   }
-  renderUserList();
+  if (state.tab === 'admin') renderDirectory();
 }
-
-$('#create-user-form').addEventListener('submit', async (ev) => {
-  ev.preventDefault();
-  const name = $('#new-user-name').value.trim();
-  if (!name) return;
-  try {
-    const data = await api.post('/api/v1/admin/users', { name });
-    $('#new-user-name').value = '';
-    await loadUsers();
-    await openAccount(data.user.id);
-    toast('Account created: ' + data.user.name, 'good');
-  } catch (e) {
-    toast(e.message, 'bad');
-  }
-});
 
 // ---- account view ---------------------------------------------------------
 
@@ -699,7 +727,6 @@ async function openAccount(userID) {
   );
   state.detail = detail;
   showAccount();
-  renderUserList();
   // Reset paging: both listings are per account.
   state.tabspaces = { items: [], total: 0, offset: 0, limit: 24, q: '' };
   state.records = {
@@ -712,16 +739,6 @@ async function openAccount(userID) {
     deleted: false,
     archived: false,
   };
-  // The "look as them" button is an operator's tool and only makes sense for
-  // somebody else's account, and never while already assuming one.
-  const operator = state.me && state.me.role === 'admin';
-  const isSelf = state.me && state.me.signed_in && state.me.user_id === userID;
-  const btn = $('#impersonate');
-  btn.hidden = !operator || isSelf || isAssumed();
-  if (operator && !isSelf && !isAssumed()) {
-    btn.textContent = 'Look as them';
-  }
-
   // a new account starts from the default view, with nothing archived shown
   state.tabspaces.archived = false;
   $('#record-archived').checked = false;
@@ -729,41 +746,13 @@ async function openAccount(userID) {
   await Promise.all([loadTabspaces(), loadRecords()]);
 }
 
-function renderUserList() {
-  const list = $('#user-list');
-  clear(list);
-  for (const user of state.users) {
-    const selected = state.selected && state.selected.id === user.id;
-    list.append(
-      el(
-        'li',
-        { class: selected ? 'selected' : '' },
-        el(
-          'button',
-          { type: 'button', onclick: () => openAccount(user.id) },
-          el('span', { class: 'u-name' }, user.name),
-          el(
-            'span',
-            { class: 'u-meta' },
-            `${user.record_count} records · ${user.device_count} devices · ` +
-              `${user.last_activity ? ago(user.last_activity) : 'never synced'}`,
-          ),
-        ),
-      ),
-    );
-  }
-  if (!state.users.length)
-    list.append(el('li', { class: 'empty-inline' }, 'no accounts yet'));
-}
-
 function showAccount() {
-  $('#empty-state').hidden = true;
   $('#view-account').hidden = false;
   $('#view-tabspace').hidden = true;
   renderAccount();
   // An account with no device has nothing to look at in the other two tabs, so
-  // the first visit lands on Pair Code. After that the operator's choice wins,
-  // and switching accounts keeps the tab they were reading.
+  // the first visit lands on Pair Code. After that the choice wins, and
+  // switching accounts keeps the tab they were reading.
   if (state.tab === null) {
     state.tab = state.detail && state.detail.devices.length ? 'data' : 'pair';
   }
@@ -786,6 +775,15 @@ function setTab(tab) {
   $$('.tab-panel').forEach((panel) => {
     panel.hidden = panel.dataset.panel !== tab;
   });
+  // The account header (name, rename, delete) belongs to the three account
+  // tabs; on the Admin tab it would be describing an account nobody is looking
+  // at, so it steps aside.
+  const onAccount = tab !== 'admin';
+  $('#account-head').hidden = !onAccount;
+  if (tab === 'admin') {
+    // The directory may be stale the moment somebody else registers.
+    showDirectory().catch(() => {});
+  }
 }
 
 $$('.rail-item').forEach((item) => {
@@ -795,9 +793,30 @@ $$('.rail-item').forEach((item) => {
 function renderAccount() {
   const d = state.detail;
   if (!d) return;
-  $('#account-name').textContent = d.user.name;
-  $('#account-id').textContent =
-    `${d.user.id} · created ${dateOf(+new Date(d.user.created_at))}`;
+
+  // While an operator is looking through this account, the header says so. It
+  // is in the title and not only in the banner, because a screenshot or a
+  // "what did you see" question should carry the answer with it.
+  const assuming = isAssumed();
+  $('#account-name').textContent =
+    (d.user.name || d.user.id) + (assuming ? ' (impersonated by admin)' : '');
+  const mine = state.me && state.me.signed_in && state.me.user_id === d.user.id;
+  $('#account-id').textContent = [
+    d.user.id,
+    mine && state.me.email ? state.me.email : null,
+    assuming ? null : `created ${dateOf(+new Date(d.user.created_at))}`,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
+  // Rename and delete are owner actions. While an operator is looking through
+  // the account they are not theirs to use, and the server refuses them anyway -
+  // better not to offer them at all.
+  const owner =
+    !assuming &&
+    (!state.me || !state.me.signed_in || state.me.user_id === d.user.id);
+  $('#rename-user').hidden = !owner;
+  $('#delete-user').hidden = !owner;
 
   // The counters belong to the tab they describe: how many credentials can
   // reach the account on one side, how much it has stored on the other. One
@@ -1245,10 +1264,6 @@ function isAssumed() {
   return !$('#assume-bar').hidden;
 }
 
-$('#impersonate').addEventListener('click', () => {
-  if (state.selected) startImpersonation(state.selected.id);
-});
-
 $('#rename-user').addEventListener('click', async () => {
   const name = prompt('New account name', state.detail.user.name);
   if (name == null) return;
@@ -1278,10 +1293,14 @@ $('#delete-user').addEventListener('click', async () => {
     );
     state.selected = null;
     state.detail = null;
-    await loadUsers();
-    $('#view-account').hidden = true;
-    $('#empty-state').hidden = false;
+    // The console has nothing left to show without an account, and this page
+    // was your own: back to the sign-in form, which is the honest end state.
     toast('Account deleted', 'good');
+    state.me = null;
+    state.selected = null;
+    state.detail = null;
+    $('#app').hidden = true;
+    $('#view-signin').hidden = false;
   } catch (e) {
     toast(e.message, 'bad');
   }

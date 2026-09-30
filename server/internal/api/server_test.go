@@ -37,7 +37,10 @@ func newTestServer(t *testing.T) (*httptest.Server, *Server) {
 	}
 	t.Cleanup(func() { st.Close() })
 
-	s := New(cfg, st, hub.New(), nil)
+	s, err := New(cfg, st, hub.New(), nil)
+	if err != nil {
+		t.Fatalf("server: %v", err)
+	}
 	ts := httptest.NewServer(s.Handler())
 	t.Cleanup(ts.Close)
 	return ts, s

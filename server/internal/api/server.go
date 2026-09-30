@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -30,25 +31,25 @@ type Server struct {
 	store  *store.Store
 	hub    *hub.Hub
 	logger *slog.Logger
-	// accounts is the console's account layer, or nil when TABVERSED_AUTH is
-	// not "accounts". The console API accepts either a session from it or the
-	// break-glass admin token, so a nil here simply means "no sessions yet".
+	// accounts is the console's account layer. It is never nil: accounts are
+	// unconditional as of adr/0013, and building it here rather than by the
+	// caller means there is no "console without accounts" state to get wrong -
+	// which is exactly the state that used to exist, and the one that had to be
+	// checked in every middleware.
 	accounts *accounts.Service
 }
 
-func New(cfg config.Config, st *store.Store, h *hub.Hub, logger *slog.Logger) *Server {
+// New builds the server, account layer included. It can fail, because the
+// account layer resolves its signing secret and that touches the database.
+func New(cfg config.Config, st *store.Store, h *hub.Hub, logger *slog.Logger) (*Server, error) {
 	if logger == nil {
 		logger = slog.Default()
 	}
-	return &Server{cfg: cfg, store: st, hub: h, logger: logger}
-}
-
-// WithAccounts attaches the account layer. It is separate from New because the
-// service needs a *store (for the signing secret) and a logger, and because a
-// deployment that keeps TABVERSED_AUTH=off must build without one.
-func (s *Server) WithAccounts(svc *accounts.Service) *Server {
-	s.accounts = svc
-	return s
+	svc, err := accounts.New(cfg, st, logger)
+	if err != nil {
+		return nil, fmt.Errorf("account layer: %w", err)
+	}
+	return &Server{cfg: cfg, store: st, hub: h, logger: logger, accounts: svc}, nil
 }
 
 // The cookie and header names the console's JavaScript needs. They are exported
@@ -87,7 +88,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/v1/admin/config", s.handleAdminConfig) // unauthenticated: tells the console whether to ask for a token
 	mux.HandleFunc("GET /api/v1/admin/totals", s.adminOnly(s.handleAdminTotals))
 	mux.HandleFunc("GET /api/v1/admin/users", s.adminOnly(s.handleAdminListUsers))
-	mux.HandleFunc("POST /api/v1/admin/users", s.adminOnly(s.handleAdminCreateUser))
+	// There is no POST /api/v1/admin/users: registration is the only way an
+	// account is created (ADR 0014).
 	mux.HandleFunc("GET /api/v1/admin/users/{user_id}", admin(s.handleAdminGetUser))
 	mux.HandleFunc("PUT /api/v1/admin/users/{user_id}", admin(s.handleAdminRenameUser))
 	mux.HandleFunc("PUT /api/v1/admin/users/{user_id}/role", s.adminOnly(s.handleAdminSetRole))
@@ -110,10 +112,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/v1/admin/users/{user_id}/records", admin(s.handleAdminListRecords))
 	mux.HandleFunc("GET /api/v1/admin/users/{user_id}/search", admin(s.handleAdminSearch))
 
-	// The library's login routes, mounted where the console expects them. Only
-	// present when the account layer is on; without it the paths are ours and
-	// unknown, which is the honest answer for a deployment with no accounts.
-	if s.accounts != nil {
+	// The library's login routes, mounted where the console expects them.
+	{
 		mux.Handle("/auth/", http.StripPrefix("/auth", s.accounts.Handlers()))
 		// The soft guard, because these two are what the page calls before it
 		// knows whether anyone is signed in.
@@ -121,6 +121,9 @@ func (s *Server) Handler() http.Handler {
 		mux.Handle("POST /api/v1/console/signout", s.accounts.Trace(http.HandlerFunc(s.handleConsoleSignOut)))
 		mux.Handle("GET /api/v1/console/impersonation", s.accounts.Trace(http.HandlerFunc(s.handleConsoleImpersonation)))
 		mux.Handle("POST /api/v1/console/impersonate/stop", s.accounts.Trace(http.HandlerFunc(s.handleConsoleImpersonateStop)))
+		// The sign-in form posts here rather than straight to the library, so
+		// the account exists before the link that claims it.
+		mux.HandleFunc("POST /api/v1/console/signin-link", s.handleConsoleSigninLink)
 		// Starting an assumed identity is an operator action, so it goes
 		// through the same gate as the operator views.
 		mux.Handle("POST /api/v1/admin/users/{user_id}/impersonate",

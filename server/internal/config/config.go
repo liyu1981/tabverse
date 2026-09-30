@@ -26,12 +26,6 @@ type Config struct {
 	// 0 disables that check, leaving "has no usable token" as the only rule.
 	DeviceInactiveDays int
 
-	// --- accounts (adr/0012) ---
-
-	// AuthMode is "off" (the default: the console keeps using the admin token
-	// and the extension keeps pairing) or "accounts" (people register and sign
-	// in to the console).
-	AuthMode string
 	// AuthSecret signs the console's session cookies. Empty means "generate
 	// one on first boot and keep it in the database", so a self hosted
 	// deployment needs no configuration to work.
@@ -91,30 +85,21 @@ type Config struct {
 	// Empty means any origin may connect; authentication with a bearer token
 	// is still mandatory before the upgrade succeeds.
 	WSOrigins []string
-	// AdminToken gates the admin API and the web console: creating users,
-	// minting their pairing codes, revoking devices/tokens and the read only
-	// data browser. Empty (the default) disables all of it.
-	//
-	// Without it a deployment is single tenant: the bootstrap endpoint is
-	// open until the first user exists, and after that only that user's own
-	// devices can do anything (see adr/0009). With it, an admin provisions
-	// any number of users and each user's data is reachable only through the
-	// admin token.
-	AdminToken string
+	// --- accounts (adr/0013) ---
+	// The console has no master credential: it is always served, and every
+	// route needs a signed-in account (adr/0013). These are what remain.
+
+	// AdminEmail is the address whose first registration becomes the operator.
+	// It is the whole bootstrap: there is no secret to lose, no token to
+	// rotate, and once an operator exists it grants nothing.
+	AdminEmail string
 }
-
-// AdminEnabled reports whether the admin API and web console are available.
-func (c Config) AdminEnabled() bool { return c.AdminToken != "" }
-
-// AccountsEnabled reports whether people sign in to the console (adr/0012).
-// The admin token stays available either way, as the break-glass path.
-func (c Config) AccountsEnabled() bool { return c.AuthMode == "accounts" }
 
 // SocialProviders lists the configured social logins, for the console's login
 // buttons. An unconfigured provider is simply absent: a button that cannot work
 // is worse than no button.
 func (c Config) SocialProviders() []string {
-	var out []string
+	out := []string{}
 	if c.GitHubClientID != "" {
 		out = append(out, "github")
 	}
@@ -151,21 +136,6 @@ func GetenvInt(name string, fallback int) (int, error) {
 	return n, nil
 }
 
-// GetenvEnum reads a value constrained to a fixed set, so a typo is a startup
-// error rather than a silently disabled feature.
-func GetenvEnum(name, fallback string, allowed ...string) (string, error) {
-	v := os.Getenv(name)
-	if v == "" {
-		return fallback, nil
-	}
-	for _, a := range allowed {
-		if v == a {
-			return v, nil
-		}
-	}
-	return "", fmt.Errorf("%s: %q is not one of %v", name, v, allowed)
-}
-
 func GetenvBool(name string, fallback bool) (bool, error) {
 	v := os.Getenv(name)
 	if v == "" {
@@ -194,7 +164,6 @@ func Load(version string) (Config, error) {
 		MaxRecordBytes: 1 << 20, // 1 MiB
 		SyncBatchLimit: 500,
 		SearchLimit:    50,
-		AdminToken:     Getenv("TABVERSED_ADMIN_TOKEN", ""),
 	}
 
 	var err error
@@ -212,9 +181,7 @@ func Load(version string) (Config, error) {
 	if cfg.DeviceInactiveDays, err = GetenvInt("TABVERSED_DEVICE_INACTIVE_DAYS", 30); err != nil {
 		return Config{}, err
 	}
-	if cfg.AuthMode, err = GetenvEnum("TABVERSED_AUTH", "off", "off", "accounts"); err != nil {
-		return Config{}, err
-	}
+	cfg.AdminEmail = strings.ToLower(strings.TrimSpace(Getenv("TABVERSED_ADMIN_EMAIL", "")))
 	cfg.AuthSecret = Getenv("TABVERSED_AUTH_SECRET", "")
 	cfg.PublicURL = Getenv("TABVERSED_PUBLIC_URL", "")
 	if cfg.SecureCookies, err = GetenvBool("TABVERSED_SECURE_COOKIES", true); err != nil {

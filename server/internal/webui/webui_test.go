@@ -124,22 +124,64 @@ func TestStoredDataSubViewsAllExist(t *testing.T) {
 // that the account header and the two empty states are not orphaned by it.
 func TestAccountChromeIsStillReachable(t *testing.T) {
 	ids := htmlIDs(t)
+	// Everything the tabbed layout is made of, still wired to something.
 	for _, id := range []string{
-		"view-account",   // the account header, tab rail and panels
-		"view-tabspace",  // the tabverse detail, which replaces them
-		"empty-state",    // "pick an account"
-		"account-stats-", // placeholder, asserted absent below
+		"view-account",  // the tab rail and its panels
+		"view-tabspace", // the tabverse detail, which replaces them
+		"view-signin",   // the account login
+		"view-login",    // the break-glass token screen
+		"assume-bar",    // the read only banner an operator must not miss
+		"account-head",  // the account title and its owner actions
+		"rail-admin",    // the operator's fourth tab
+		"panel-admin",   // ...and the directory it shows
+		"directory-table",
+		"sign-out",
 	} {
-		if id == "account-stats-" {
-			// The single stat strip was split between the two panels; make sure
-			// it did not survive as a stale container.
-			if ids[id] {
-				t.Errorf("the old %q strip is still in the page", id)
-			}
-			continue
-		}
 		if !ids[id] {
-			t.Errorf("index.html lost #%s in the tabbed layout", id)
+			t.Errorf("index.html lost #%s", id)
+		}
+	}
+	// And the things that were in the accounts sidebar, which is gone (adr/0014):
+	// a second copy of the directory for an operator, a single useless row for a
+	// person, and a create-account form that could only make an account nobody
+	// can prove they own.
+	for _, id := range []string{
+		"sidebar-accounts",
+		"create-user-form",
+		"new-user-name",
+		"impersonate",    // its power is a directory row now
+		"set-role",       // ...as is the role switch
+		"view-directory", // the directory is a tab panel, not a view
+		"account-stats-", // the one stat strip, split between two tabs
+	} {
+		if ids[id] {
+			t.Errorf("#%s is still in the page and should not be", id)
+		}
+	}
+}
+
+// The rail and the panels have to agree: a tab with no panel opens an empty
+// page, and a panel with no tab is unreachable.
+func TestRailAndPanelsMatch(t *testing.T) {
+	page := readAsset(t, "index.html")
+	tabs := map[string]bool{}
+	for _, m := range regexp.MustCompile(`data-tab="([^"]+)"`).FindAllStringSubmatch(page, -1) {
+		tabs[m[1]] = true
+	}
+	panels := map[string]bool{}
+	for _, m := range regexp.MustCompile(`data-panel="([^"]+)"`).FindAllStringSubmatch(page, -1) {
+		panels[m[1]] = true
+	}
+	if len(tabs) != 4 || len(panels) != 4 {
+		t.Fatalf("expected 4 tabs and 4 panels, got %d and %d: %v %v",
+			len(tabs), len(panels), tabs, panels)
+	}
+	for tab := range tabs {
+		if !panels[tab] {
+			t.Errorf("tab %q has no panel", tab)
+		}
+		if !strings.Contains(page, `aria-controls="panel-`+tab+`"`) {
+			t.Errorf("tab %q points at no panel for aria-controls", tab)
 		}
 	}
 }

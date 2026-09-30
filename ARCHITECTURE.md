@@ -141,7 +141,20 @@ browser ── GET / ───┤                        └─ read only: tabve
   there is no endpoint that edits a user's records, because a record written
   outside the extension would lose the next LWW comparison anyway
 
-**Accounts (`adr/0012`) are for the console; pairing stays with the extension.**
+**Operator powers are a fourth tab (`adr/0014`).** Everybody lands on their own
+account - Pair Code, Devices & Tokens, Stored data - and an operator also gets
+*Admin*: the accounts, with *impersonate*, *make/remove operator* and *delete*
+per row. Impersonating switches the three account tabs to that account, read-only
+and titled `alice (impersonated by admin)`, and the Admin tab stays put. There is
+no create-account path anywhere: registration is the only way an account exists,
+so there is one path that can prove an address.
+
+**Accounts (`adr/0012`, `adr/0013`) are for the console; pairing stays with
+the extension. The console has no master credential** - the first registration
+with `TABVERSED_ADMIN_EMAIL` is the operator, an operator names others, and every
+action is attributable to an account. A first registration also adopts a lone
+pre-account sync user, so records synced before accounts existed are not
+orphaned.
 `internal/accounts` holds the account layer - the account row, the Argon2id
 hash (for the password path), the cut-off that revokes sessions, the one function
 that bridges the auth library's `<provider>_<subject>` id to our `usr_...` rows,

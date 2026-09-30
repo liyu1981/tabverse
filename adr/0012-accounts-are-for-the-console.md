@@ -132,5 +132,10 @@ in the code and its comments:
 - `docs/privacy` and the store disclosure both currently say there are no
   accounts. That stops being true in phase 2, and collecting an email address is
   a disclosure change, not a copy edit.
-- Phases: 1 schema (landed) - 2 auth wiring and console login - 3 self-service
-  pairing - 4 social login - 5 impersonation - 6 docs and disclosure.
+- Phases: 1 schema, 2 auth wiring and console login, 3 self-service pairing,
+  4 social login (GitHub and Google; generic OIDC deliberately not wired) and
+  5 impersonation all landed. Phase 6, the disclosure, is documented in
+  `doc/tabverse-website/src/pages/privacy.md` and the store listing.
+- `TABVERSED_ADMIN_TOKEN` did not survive phase 2: ADR 0013 removed it and
+  replaced the bootstrap with `TABVERSED_ADMIN_EMAIL`, so the account system
+  has no master credential behind it.

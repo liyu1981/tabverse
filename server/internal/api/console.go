@@ -1,9 +1,11 @@
 package api
 
 import (
-	"errors"
+	"context"
 	"net/http"
+	"strings"
 
+	"github.com/liyu1981/tabverse/server/internal/accounts"
 	"github.com/liyu1981/tabverse/server/internal/store"
 )
 
@@ -15,30 +17,16 @@ import (
 // which credential it is holding.
 
 func (s *Server) handleConsoleMe(w http.ResponseWriter, r *http.Request) {
-	if s.accounts == nil {
-		// A deployment with accounts switched off still serves the page, which
-		// then falls back to the admin token. Saying so here lets the page make
-		// that choice without a second endpoint.
-		writeJSON(w, http.StatusOK, map[string]any{
-			"accounts_enabled": false,
-			"admin_token":      s.cfg.AdminEnabled(),
-			"self_hosted":      s.selfHosted(),
-			"providers":        []string{},
-		})
-		return
-	}
+	// Accounts are unconditional (adr/0013), so this endpoint has one shape.
+	// The page's whole job is to read it and decide what to show.
 	acc, err := s.accounts.AccountFromRequest(r)
 	if err != nil {
-		if !errors.Is(err, store.ErrNotFound) {
-			writeStoreErr(w, err)
-			return
-		}
 		writeJSON(w, http.StatusOK, map[string]any{
-			"accounts_enabled": true,
-			"admin_token":      s.cfg.AdminEnabled(),
-			"self_hosted":      s.selfHosted(),
-			"signed_in":        false,
-			"providers":        s.cfg.SocialProviders(),
+			"signed_in":       false,
+			"providers":       s.cfg.SocialProviders(),
+			"admin_email":     s.cfg.AdminEmail,
+			"operator_exists": s.operatorExists(r),
+			"csrf_header":     accountsCSRFHeader,
 		})
 		return
 	}
@@ -55,23 +43,51 @@ func (s *Server) handleConsoleMe(w http.ResponseWriter, r *http.Request) {
 		writeStoreErr(w, err)
 		return
 	}
+	// A row that predates the role column reads as an ordinary account, and the
+	// page should never have to know that.
+	role := acc.Role
+	if role == "" {
+		role = store.RoleUser
+	}
+	operator := s.operatorExists(r)
 	writeJSON(w, http.StatusOK, map[string]any{
-		"accounts_enabled": true,
-		"admin_token":      s.cfg.AdminEnabled(),
-		"self_hosted":      s.selfHosted(),
-		"signed_in":        true,
-		"user_id":          acc.ID,
-		"name":             acc.Name,
-		"email":            acc.Email,
-		"role":             acc.Role,
-		"email_verified":   acc.EmailVerifiedAt != nil,
-		"created_at":       acc.CreatedAt,
-		"csrf_header":      accountsCSRFHeader,
-		"providers":        s.cfg.SocialProviders(),
-		"stats":            stats,
-		"devices":          devices,
-		"csrf":             s.csrfToken(r),
+		"signed_in":       true,
+		"user_id":         acc.ID,
+		"name":            acc.Name,
+		"email":           acc.Email,
+		"role":            role,
+		"email_verified":  acc.EmailVerifiedAt != nil,
+		"created_at":      acc.CreatedAt,
+		"csrf_header":     accountsCSRFHeader,
+		"csrf":            s.csrfToken(r),
+		"stats":           stats,
+		"devices":         devices,
+		"providers":       s.cfg.SocialProviders(),
+		"admin_email":     s.cfg.AdminEmail,
+		"operator_exists": operator,
+		// Set when this person is the address the operator is expected to be but
+		// nobody has claimed the role yet. The server can only fix that on the
+		// next start, so the console says so rather than pretending.
+		"awaiting_operator": s.awaitingOperator(r, acc),
 	})
+}
+
+// operatorExists reports whether anybody on this deployment is an operator.
+func (s *Server) operatorExists(r *http.Request) bool {
+	n, err := s.store.CountAdmins(r.Context())
+	return err == nil && n > 0
+}
+
+// awaitingOperator is true for the account whose address is TABVERSED_ADMIN_EMAIL
+// on a deployment that has no operator yet.
+func (s *Server) awaitingOperator(r *http.Request, acc store.Account) bool {
+	if s.cfg.AdminEmail == "" {
+		return false
+	}
+	if !strings.EqualFold(strings.TrimSpace(acc.Email), s.cfg.AdminEmail) {
+		return false
+	}
+	return !s.operatorExists(r)
 }
 
 func (s *Server) handleConsoleSignOut(w http.ResponseWriter, r *http.Request) {
@@ -126,4 +142,50 @@ func indexByte(s string, b byte) int {
 		}
 	}
 	return -1
+}
+
+// BootstrapOperator runs the operator bootstrap at startup: an account that
+// already uses TABVERSED_ADMIN_EMAIL becomes the operator, so setting the
+// variable on an existing deployment and restarting is all it takes (adr/0013).
+func (s *Server) BootstrapOperator(ctx context.Context) error {
+	return s.accounts.PromoteAdminEmail(ctx)
+}
+
+// handleConsoleSigninLink asks the server to email a sign-in link, and is what
+// the console's form posts to.
+//
+// The account is created *here*, before the library sends anything, because the
+// order matters: the library derives a stable subject from the address and puts
+// it in the session claim, and a session is checked against our accounts before
+// the claim is mapped to one - so an account that does not exist yet would have
+// its first request refused. Asking for the link creates the account; following
+// the link is what proves the address.
+//
+// The rest is the library's: this rewrites the path into the shape its handler
+// dispatches on and hands over, so token issuance, the message and the redirect
+// all stay where they are.
+func (s *Server) handleConsoleSigninLink(w http.ResponseWriter, r *http.Request) {
+	email := strings.TrimSpace(r.URL.Query().Get("address"))
+	if email == "" {
+		writeErr(w, http.StatusBadRequest, "bad_request", "address is required")
+		return
+	}
+	// The account and the identity the session will resolve to, both created
+	// before the link goes out: a session is checked against our accounts before
+	// the claim is mapped to one, so an account that did not exist yet would have
+	// its first request refused.
+	if _, err := s.accounts.EnsureAccount(r.Context(), email, r.URL.Query().Get("user")); err != nil {
+		writeStoreErr(w, err)
+		return
+	}
+	hijack := r.Clone(r.Context())
+	// `from` is what the library redirects to once the link is followed. It is
+	// set *here*, server side, to the console's own address rather than taken
+	// from the request: the point of the sign-in is to end up in the console, and
+	// a value that arrived in the query would be a redirect an attacker chose.
+	q := hijack.URL.Query()
+	q.Set("from", s.accounts.ConsoleURL())
+	hijack.URL.RawQuery = q.Encode()
+	hijack.URL.Path = "/" + accounts.ProviderEmail + "/login"
+	s.accounts.Handlers().ServeHTTP(w, hijack)
 }

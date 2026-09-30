@@ -6,18 +6,22 @@ info:
     Contract for `tabversed`, the Tabverse sync server.
 
     ## Authentication
-    All endpoints except `/healthz`, `POST /api/v1/auth/bootstrap`,
-    `POST /api/v1/auth/pair` and `GET /api/v1/admin/config` require
-    `Authorization: Bearer <token>`. A device token and the *admin* token are
-    different credentials, and neither is accepted where the other belongs.
+    Two credentials, and they are not interchangeable.
+
+    * **The extension** sends `Authorization: Bearer <device token>` on
+      `/api/v1/sync`, `/api/v1/entities/*` and `/api/v1/search`. It pairs
+      (`POST /api/v1/auth/pair`) and never signs in: no password, no session,
+      no cookie (ADR 0002).
+    * **The console** (`/api/v1/admin/*`, `/api/v1/console/*`) uses the session
+      cookie set by the auth library, plus an `X-XSRF-Token` header on every
+      state changing request. A device token is refused there (ADR 0013).
 
     ## Accounts
-    Without `TABVERSED_ADMIN_TOKEN` the deployment is single tenant:
-    `POST /api/v1/auth/bootstrap` is open only while it holds no account, and
-    that account owns everything afterwards. With the admin token set, an
-    operator provisions any number of accounts through `/api/v1/admin/users`,
-    each isolated by `user_id` exactly as the devices of one account already
-    were, and `POST /api/v1/auth/bootstrap` requires the admin token too.
+    Accounts are always on; there is no master credential. People register with
+    a single-use email link (or a configured social provider) and manage their
+    own account; the first registration with `TABVERSED_ADMIN_EMAIL` becomes the
+    operator, and an operator may name others. `POST /api/v1/auth/bootstrap` is
+    refused as soon as the deployment has a user or an account.
 
     ## Revisions
     The server keeps a per-user monotonic revision counter (`rev_seq`). Every
@@ -324,7 +328,19 @@ paths:
   /api/v1/admin/users:
     get:
       tags: [admin]
-      summary: List accounts with their counters
+      summary: "The operator's directory: every account, with its counters"
+      description: |
+        Operator-only. A person signing in sees their own account and nothing
+        else, which is why this is a forbidden view for them. The address and
+        the role are here because without them a row is an opaque id (ADR
+        0014).
+      parameters:
+        - {
+            name: q,
+            in: query,
+            schema: { type: string },
+            description: substring of the name or the email address
+          }
       responses:
         '200':
           description: accounts
@@ -339,26 +355,9 @@ paths:
                     items: { $ref: '#/components/schemas/UserSummary' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/AdminDisabled' }
-    post:
-      tags: [admin]
-      summary: Create an account
-      description: |
-        This is what makes a deployment multi tenant. Pass `device_name` to
-        also issue that device's token right away (the console's "create and
-        pair in one go" path); like every token, it is returned only once.
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name: { type: string, maxLength: 120 }
-                device_name: { type: string }
-      responses:
-        '201':
-          description: the account, or its credentials when device_name was given
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '404': { $ref: '#/components/responses/AdminDisabled' }
+  # There is no POST /api/v1/admin/users: registration is the only way an
+  # account is created (ADR 0014), so there is exactly one path that can prove
+  # an address.
 
   /api/v1/admin/users/{user_id}:
     parameters: [{ $ref: '#/components/parameters/userId' }]
@@ -679,6 +678,9 @@ components:
     bearerToken:
       type: http
       scheme: bearer
+      description: |
+        A **device token** - the extension's credential, issued by pairing. It is
+        not accepted on the console routes, which use a session cookie instead.
 
   parameters:
     entity:
@@ -799,10 +801,20 @@ components:
 
     UserSummary:
       type: object
-      required: [id, name, created_at, rev_seq, device_count, token_count, record_count]
+      required: [id, name, email, role, created_at, rev_seq, device_count, token_count, record_count]
       properties:
         id: { type: string }
         name: { type: string }
+        email:
+          type: string
+          description: |
+            The address this account signs in with. It is what the directory is
+            read by - a row without it is an opaque id - and the only way an
+            account can have been proven (ADR 0014).
+        role:
+          type: string
+          enum: [user, admin]
+          description: '`admin` may see and act on every account; `user` only on their own.' 
         created_at: { type: string, format: date-time }
         rev_seq: { type: integer, description: the account's current revision tip }
         device_count: { type: integer }

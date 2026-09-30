@@ -134,10 +134,14 @@ a {
   font-family: var(--mono);
 }
 
-.banner {
+/* The operator hint: not an error, so not red - a person is signed in and
+   working, they just cannot reach the operator views yet. */
+.operator-hint {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   padding: 10px 18px;
-  background: var(--danger-soft);
-  color: var(--danger);
+  background: var(--accent-soft);
   border-bottom: 1px solid var(--border);
   font-size: 13px;
 }
@@ -256,18 +260,7 @@ a.provider:hover {
 /* ---- layout ------------------------------------------------------------- */
 
 .app {
-  display: grid;
-  grid-template-columns: 260px 1fr;
-  align-items: start;
   min-height: calc(100vh - 49px);
-}
-.sidebar {
-  border-right: 1px solid var(--border);
-  padding: 16px 12px;
-  position: sticky;
-  top: 49px;
-  max-height: calc(100vh - 49px);
-  overflow-y: auto;
 }
 .content {
   padding: 18px 22px 60px;
@@ -306,30 +299,12 @@ a.provider:hover {
   align-items: start;
 }
 @media (max-width: 900px) {
-  .app {
-    grid-template-columns: 1fr;
-  }
-  .sidebar {
-    position: static;
-    max-height: none;
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-  }
   .panel-grid {
     grid-template-columns: 1fr;
   }
 }
 
 /* ---- account list ------------------------------------------------------- */
-
-.user-list {
-  list-style: none;
-  margin: 0 0 12px;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
 .user-list li {
   border-radius: 6px;
 }
@@ -403,6 +378,39 @@ a.provider:hover {
 }
 .assume-bar button:hover {
   border-color: #14161a;
+}
+
+/* ---- the operator's directory ------------------------------------------- */
+/*
+ * A table rather than a card list: these are rows an operator *acts* on, and
+ * the numbers beside the name (devices, records, last active) are how they
+ * decide which row to act on.
+ */
+#directory-table {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+#directory-table th:first-child,
+#directory-table td:first-child {
+  padding-left: 14px;
+}
+#directory-table th:last-child,
+#directory-table td:last-child {
+  padding-right: 14px;
+}
+#directory-table td:first-child .badge {
+  margin-left: 8px;
+}
+#directory-table .actions {
+  justify-content: flex-end;
+}
+#directory-empty {
+  background: var(--bg-raised);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
 }
 
 /* ---- account tabs: rail on the left, panels on the right ---------------- */

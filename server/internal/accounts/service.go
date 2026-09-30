@@ -3,11 +3,15 @@ package accounts
 import (
 	"context"
 	"crypto/rand"
+	"crypto/sha1"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"time"
 
@@ -54,7 +58,20 @@ type Service struct {
 	// authErr surfaces the reason the guard refused a request, for logging. The
 	// library's own reporting is a bare 401.
 	authErr error
+	// sendOverride replaces the mail sender in tests, so the whole sign-in
+	// journey - form, link, session - can be walked without an SMTP server.
+	sendOverride func(address, text string) error
+	// secureCookies is the resolved value: false when the public URL is plain
+	// http, because a browser drops a Secure cookie there.
+	secureCookies bool
+	// publicURL is where the console lives, as configured. The sign-in link and
+	// the post-sign-in redirect are both built from it, so a person who follows
+	// the link ends up in the console rather than staring at JSON.
+	publicURL string
 }
+
+// ConsoleURL is the address the console is reached at, as configured.
+func (s *Service) ConsoleURL() string { return s.publicURL }
 
 // New builds the account service.
 //
@@ -85,7 +102,21 @@ func New(cfg config.Config, st *store.Store, logger *slog.Logger) (*Service, err
 			publicURL + ", which a remote browser cannot reach")
 	}
 
-	s := &Service{store: st, cfg: cfg, log: logger}
+	// A Secure cookie is dropped by the browser over plain http, which turns a
+	// successful sign-in into a redirect that lands on the console still signed
+	// out - the most confusing possible failure, and the default on a LAN. So
+	// the attribute follows the scheme of the public URL, loudly.
+	secureCookies := cfg.SecureCookies
+	if strings.HasPrefix(publicURL, "http://") {
+		if secureCookies {
+			logger.Warn("the console is served over plain http, so session cookies cannot be " +
+				"Secure; they will travel in the clear. Put https:// in " +
+				"TABVERSED_PUBLIC_URL for anything but a network you trust.")
+		}
+		secureCookies = false
+	}
+
+	s := &Service{store: st, cfg: cfg, log: logger, publicURL: publicURL, secureCookies: secureCookies}
 
 	svc := auth.NewService(auth.Opts{
 		SecretReader:  token.SecretFunc(func(string) (string, error) { return secret, nil }),
@@ -95,7 +126,7 @@ func New(cfg config.Config, st *store.Store, logger *slog.Logger) (*Service, err
 		CookieDuration: 30 * 24 * time.Hour,
 		Issuer:         "tabversed",
 		URL:            publicURL,
-		SecureCookies:  cfg.SecureCookies,
+		SecureCookies:  secureCookies,
 		SameSiteCookie: http.SameSiteLaxMode,
 		JWTCookieName:  sessionCookie,
 		XSRFCookieName: xsrfCookie,
@@ -106,20 +137,39 @@ func New(cfg config.Config, st *store.Store, logger *slog.Logger) (*Service, err
 		// library documents for that, and it is not the reason the binary grew:
 		// the avatar package is imported by the top-level auth package whatever
 		// we pass (ADR 0012).
-		AvatarStore:          avatar.NewNoOp(),
-		UseGravatar:          false,
-		ClaimsUpd:            token.ClaimsUpdFunc(s.claimRoles),
-		Validator:            token.ValidatorFunc(s.validate),
-		AllowedRedirectHosts: token.AllowedHostsFunc(func() ([]string, error) { return nil, nil }),
-		Logger:               loggerAdapter{logger},
+		AvatarStore: avatar.NewNoOp(),
+		UseGravatar: false,
+		ClaimsUpd:   token.ClaimsUpdFunc(s.claimRoles),
+		Validator:   token.ValidatorFunc(s.validate),
+		// The post-sign-in redirect is checked against this list by the
+		// library. It holds our own host, so the only place a sign-in can send
+		// somebody is the console itself - a crafted `?from=` in a link cannot
+		// walk a person off to another site after they authenticate.
+		AllowedRedirectHosts: token.AllowedHostsFunc(func() ([]string, error) {
+			if u, err := url.Parse(publicURL); err == nil && u.Hostname() != "" {
+				return []string{u.Hostname()}, nil
+			}
+			return nil, nil
+		}),
+		Logger: loggerAdapter{logger},
 	})
 
 	s.auth = svc
 	// Passwordless email: the person is sent a link, the link signs them in.
 	// No password to choose, forget, reuse or leak, and the library already
 	// treats the address as proven because it owns the send.
+	// The library's default message is a bare JWT, which is not something a
+	// person can click. The template is where the sign-in link is built, so it
+	// is ours to write - and the 30 minute expiry is the library's, so it
+	// belongs in the message.
 	mail := newSender(cfg, logger, publicURL)
-	svc.AddVerifProvider(ProviderEmail, "", provider.SenderFunc(mail.Send))
+	svc.AddVerifProvider(ProviderEmail, signInEmailTemplate(publicURL),
+		provider.SenderFunc(func(address, text string) error {
+			if s.sendOverride != nil {
+				return s.sendOverride(address, text)
+			}
+			return mail.Send(address, text)
+		}))
 	// The credential checker exists for a future password login and for
 	// deployments that want one; with passwordless it is never reached.
 	svc.AddDirectProvider("password", provider.CredCheckerFunc(func(string, string) (bool, error) {
@@ -211,23 +261,62 @@ func (s *Service) claimRoles(c token.Claims) token.Claims {
 // single indexed read and why the mapping lives in one function.
 func (s *Service) updater(u token.User) token.User {
 	ctx := context.Background()
-	userID, _, err := s.store.UpsertIdentity(ctx, s.providerOf(u.ID), u.ID, u.Email, u.Name, s.cfg.LinkByEmail)
+	// Kept because u.ID is rewritten to our account id below, and the provider
+	// prefix - which decides which login this was, and whether the address it
+	// implies has been proven - only exists on the claim.
+	claimID := u.ID
+	// This is where an external login becomes one of our accounts: the subject
+	// is looked up, and if the server has never seen it, the account is created
+	// now. It runs on the first authenticated request of a new registration and
+	// on every request after that.
+	userID, known, err := ResolveAccountID(ctx, s.store, claimID)
 	if err != nil {
-		// A login we cannot place is a login we do not attribute to anybody. The
-		// guard will refuse it, and the console shows the sign-in error.
+		// A retired subject: the account it belonged to is gone and this
+		// session has nothing to attach to.
 		u.ID = ""
 		u.Email = ""
 		return u
 	}
+	if !known {
+		newID, _, err := s.store.UpsertIdentity(ctx, s.providerOf(claimID), claimID, u.Email, u.Name, s.cfg.LinkByEmail)
+		if err != nil {
+			// A login we cannot place is a login we do not attribute to anybody.
+			u.ID = ""
+			u.Email = ""
+			return u
+		}
+		userID, known = newID, true
+	}
 	u.ID = userID
+	// The operator bootstrap runs on the way past, so the first person to
+	// register with the admin address is the operator from their very first
+	// request (adr/0013).
+	if _, err := s.promoteIfFirstOperator(ctx, userID, u.Email); err != nil {
+		s.log.Warn("operator bootstrap failed", "err", err)
+	}
 	acc, err := s.store.AccountByID(ctx, userID)
+	// The email provider proves the address by the fact that this request
+	// carries a session: the only way to have one is to have followed the link
+	// that was sent to it. The claim does not even carry the address, so this is
+	// the only place the proof exists.
+	if err == nil && acc.EmailVerifiedAt == nil && s.cfg.RequireEmailVerification &&
+		s.providerOf(claimID) == ProviderEmail {
+		if err := s.store.MarkEmailVerified(ctx, userID); err != nil {
+			s.log.Warn("cannot record email verification", "err", err)
+		} else {
+			acc.EmailVerifiedAt = &time.Time{}
+			_ = s.store.AppendAudit(ctx, store.AuditEntry{
+				Actor: userID, Target: userID, Action: store.AuditEmailVerified,
+				Detail: "proved by following the emailed sign-in link",
+			})
+		}
+	}
 	switch {
 	case err != nil:
 		u.ID = ""
-	case s.cfg.RequireEmailVerification && acc.EmailVerifiedAt == nil && s.providerOf(u.ID) == ProviderEmail:
-		// An address the server has not proven yet cannot sign in. The
-		// passwordless flow proves it every time, so this only bites an account
-		// an operator created by hand.
+	case s.cfg.RequireEmailVerification && acc.EmailVerifiedAt == nil:
+		// Still unproven: an account an operator created by hand, or one whose
+		// link was never followed.
 		u.ID = ""
 	case !acc.CanLogin():
 		u.ID = ""
@@ -322,10 +411,38 @@ func signingSecret(cfg config.Config, st *store.Store) (string, bool, error) {
 	return value, value == base64.RawURLEncoding.EncodeToString(raw), nil
 }
 
+// signInEmailTemplate is the message the sender delivers. The link points at
+// the library's own verify endpoint, which is what turns the token in it into a
+// session; the wording says the link is single use and short lived, because both
+// are true and neither is obvious.
+func signInEmailTemplate(publicURL string) string {
+	// The library dispatches on the path *suffix*, so the sign-in link is
+	// /auth/<provider>/login - without the /login the handler 404s, and the
+	// person gets a link to nothing.
+	link := strings.TrimRight(publicURL, "/") + "/auth/" + ProviderEmail + "/login?token={{.Token}}"
+	return fmt.Sprintf(`Sign in to Tabverse
+
+Hello {{.User}},
+
+Use this link to sign in to your Tabverse console:
+
+%s
+
+The link works once and expires in 30 minutes. If you did not ask to sign in,
+ignore this: nothing has changed.
+`, link)
+}
+
 // Middleware exposes the authenticator for callers that need the raw library
 // surface (signing a session in a test, reading claims). Route handlers should
 // use Guard, which composes the two middlewares in the right order.
 func (s *Service) Middleware() middleware.Authenticator { return s.mw }
+
+// SetSenderOverride replaces the sign-in mail sender. Test only: it is the only
+// way to see the link that a person would have received.
+func (s *Service) SetSenderOverride(fn func(address, text string) error) {
+	s.sendOverride = fn
+}
 
 // Assume mints a short-lived, read-only identity for an operator looking at
 // somebody else's account, in its own cookie so the operator's own session
@@ -335,6 +452,16 @@ func (s *Service) Middleware() middleware.Authenticator { return s.mw }
 // is a real session rather than a server-side flag: if the cookie is lost, the
 // assumed identity is lost with it, which is the right failure direction.
 func (s *Service) Assume(w http.ResponseWriter, accountID, actorID string, until time.Time) error {
+	// The claim has to carry the account's *identity subject*, not its row id: a
+	// session id that does not resolve back to the account is a session that
+	// does not work, and the resolver goes through the identities table.
+	subject, ok, err := s.store.SubjectForAccount(context.Background(), accountID, ProviderEmail)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return store.ErrNotFound
+	}
 	now := time.Now()
 	claims := token.Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -344,7 +471,7 @@ func (s *Service) Assume(w http.ResponseWriter, accountID, actorID string, until
 			ExpiresAt: jwt.NewNumericDate(until),
 		},
 		User: &token.User{
-			ID:       ProviderEmail + "_" + accountID,
+			ID:       ProviderEmail + "_" + subject,
 			Name:     accountID,
 			Audience: testAudienceForClaims,
 			Attributes: map[string]any{
@@ -370,7 +497,7 @@ func (s *Service) Assume(w http.ResponseWriter, accountID, actorID string, until
 			Value:    c.Value,
 			Path:     "/",
 			HttpOnly: true,
-			Secure:   s.cfg.SecureCookies,
+			Secure:   s.secureCookies,
 			SameSite: http.SameSiteLaxMode,
 			Expires:  until,
 			MaxAge:   int(time.Until(until).Seconds()),
@@ -395,9 +522,11 @@ func (s *Service) AssumedAccountID(r *http.Request) (string, error) {
 	if err != nil || claims.User == nil {
 		return "", store.ErrNotFound
 	}
-	accountID, err := ResolveAccountID(context.Background(), s.store, claims.User.ID)
-	if err != nil {
-		return "", err
+	accountID, known, err := ResolveAccountID(context.Background(), s.store, claims.User.ID)
+	if err != nil || !known {
+		// An assumed identity is minted against an account that exists, so an
+		// unknown subject here means the cookie is not ours.
+		return "", store.ErrNotFound
 	}
 	// The cookie's own expiry is enforced by the browser, but a replayed one
 	// must not outlive it either.
@@ -463,4 +592,112 @@ func AssumedFrom(claims token.Claims) string {
 // SignOut clears the session cookies.
 func (s *Service) SignOut(w http.ResponseWriter) {
 	s.mw.JWTService.Reset(w)
+}
+
+// EnsureAccount makes sure the account behind an email address exists, together
+// with the identity row the session will resolve to.
+//
+// It has to happen *before* the link is sent, and it has to use the same
+// subject the library will put in the claim, because a session is checked
+// against our accounts before the claim is mapped to one. The passwordless
+// provider derives that subject by hashing the address, so the same derivation
+// is applied here; the journey test in internal/api walks the whole flow, so a
+// change in the library's derivation fails there rather than silently at
+// someone's first sign-in.
+func (s *Service) EnsureAccount(ctx context.Context, email, name string) (string, error) {
+	// Hash exactly the string that was given: the library hashes whatever
+	// arrives in the `address` parameter, so normalising it here and not there
+	// would derive a different subject, and the first sign-in would create a
+	// second account instead of finding this one. The console lowercases the
+	// address before sending, so the two always see the same string.
+	email = strings.TrimSpace(email)
+	if email == "" {
+		return "", fmt.Errorf("email is required")
+	}
+	// The subject alone: the claim is "<provider>_<subject>", and the resolver
+	// splits on the first underscore, so storing the prefix here would make the
+	// row unmatchable and quietly create a second account on first sign-in.
+	subject := token.HashID(sha1.New(), email)
+	userID, _, err := s.store.UpsertIdentity(ctx, ProviderEmail, subject, email, name, s.cfg.LinkByEmail)
+	return userID, err
+}
+
+// IsAdminEmail reports whether an address is the one the operator is expected
+// to be. Case and surrounding space are ignored, because a person types their
+// own address and gets it subtly wrong.
+func (s *Service) IsAdminEmail(email string) bool {
+	email = strings.ToLower(strings.TrimSpace(email))
+	return email != "" && s.cfg.AdminEmail != "" && email == s.cfg.AdminEmail
+}
+
+// promoteIfFirstOperator makes the account an operator when it is the admin
+// address and nobody is one yet. It is the whole bootstrap (adr/0013): there is
+// no secret to hand out, and once an operator exists the address grants nothing,
+// so leaving the variable set cannot become a stale privilege.
+//
+// Returns whether a promotion happened, so the caller can log and audit it.
+func (s *Service) promoteIfFirstOperator(ctx context.Context, userID, email string) (bool, error) {
+	// The passwordless provider does not put the address in the claim - it
+	// hashes it into the subject - so the account is asked for its own when the
+	// claim has none. The account row is the authority on who this is.
+	if email == "" {
+		acc, err := s.store.AccountByID(ctx, userID)
+		if err != nil {
+			return false, nil
+		}
+		email = acc.Email
+	}
+	if !s.IsAdminEmail(email) {
+		return false, nil
+	}
+	admins, err := s.store.CountAdmins(ctx)
+	if err != nil {
+		return false, err
+	}
+	if admins > 0 {
+		return false, nil
+	}
+	if err := s.store.SetRole(ctx, userID, store.RoleAdmin); err != nil {
+		return false, err
+	}
+	_ = s.store.AppendAudit(ctx, store.AuditEntry{
+		Actor: userID, Target: userID, Action: store.AuditRoleChanged,
+		Detail: "first operator: registered with TABVERSED_ADMIN_EMAIL",
+	})
+	s.log.Info("first operator", "user", userID)
+	return true, nil
+}
+
+// PromoteAdminEmail runs the bootstrap against an account that already exists,
+// which is how a deployment that already had accounts gains its operator: set
+// the variable and restart.
+func (s *Service) PromoteAdminEmail(ctx context.Context) error {
+	if s.cfg.AdminEmail == "" {
+		return nil
+	}
+	admins, err := s.store.CountAdmins(ctx)
+	if err != nil {
+		return err
+	}
+	if admins > 0 {
+		return nil
+	}
+	acc, err := s.store.AccountByEmail(ctx, s.cfg.AdminEmail)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			// Not an error: the operator has simply not registered yet, and the
+			// startup log already says so.
+			return nil
+		}
+		return err
+	}
+	promoted, err := s.promoteIfFirstOperator(ctx, acc.ID, acc.Email)
+	if err != nil {
+		return err
+	}
+	if promoted {
+		s.log.Info("promoted the existing account to operator, because its address is "+
+			"TABVERSED_ADMIN_EMAIL", "user", acc.ID, "email", acc.Email)
+	}
+	return nil
 }

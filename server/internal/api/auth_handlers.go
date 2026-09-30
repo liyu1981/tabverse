@@ -26,20 +26,28 @@ func deviceIDFrom(ctx context.Context) string {
 
 // handleBootstrap creates the very first account of a deployment.
 //
-// It is only open while no user exists, which makes a fresh, internet
-// reachable server safe by default: whoever pairs first owns it. Once
-// TABVERSED_ADMIN_TOKEN is set, the admin token is required here too (an
-// operator with the token does not need bootstrap, the console creates
-// accounts, but a leaked port must not hand out account #1 to a scanner);
-// further accounts come from POST /api/v1/admin/users (adr/0009).
+// It is open only in the window before this deployment has anybody: once a user
+// or an account exists, registering in the console is the way, and this
+// endpoint refuses so an exposed port cannot be used to hand out accounts
+// behind the operator's back (adr/0013). It stays for the one case the console
+// cannot serve - pairing the very first device from a script, before there is an
+// account to sign in with.
 func (s *Server) handleBootstrap(w http.ResponseWriter, r *http.Request) {
-	if s.cfg.AdminEnabled() {
-		token, ok := s.extractToken(r)
-		if !ok || !adminTokenMatches(s.cfg.AdminToken, token) {
-			writeErr(w, http.StatusUnauthorized, "invalid_token",
-				"this deployment requires the admin token to bootstrap")
-			return
-		}
+	ctx := r.Context()
+	users, err := s.store.CountUsers(ctx)
+	if err != nil {
+		writeStoreErr(w, err)
+		return
+	}
+	accounts, err := s.store.CountAccounts(ctx)
+	if err != nil {
+		writeStoreErr(w, err)
+		return
+	}
+	if users > 0 || accounts > 0 {
+		writeErr(w, http.StatusConflict, "already_bootstrapped",
+			"this server is in use: pair a device with a code, or register in the console")
+		return
 	}
 
 	var req struct {
@@ -51,17 +59,6 @@ func (s *Server) handleBootstrap(w http.ResponseWriter, r *http.Request) {
 	}
 	if req.Name == "" {
 		req.Name = "default"
-	}
-
-	n, err := s.store.CountUsers(r.Context())
-	if err != nil {
-		writeErr(w, http.StatusInternalServerError, "internal", err.Error())
-		return
-	}
-	if n > 0 {
-		writeErr(w, http.StatusConflict, "already_bootstrapped",
-			"this server already has an account; use a pairing code instead")
-		return
 	}
 
 	user, err := s.store.CreateUser(r.Context(), newID("usr_"), req.Name)

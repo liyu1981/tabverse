@@ -27,6 +27,15 @@
     </header>
 
     <div id="banner" class="banner" hidden></div>
+    <div id="operator-hint" class="operator-hint" hidden>
+      <strong>You are the operator address, but nobody has claimed the role
+        yet.</strong>
+      <span
+        >Restart the server and the first account registered with this address
+        becomes the operator. Until then you can still use everything that is
+        yours - your devices, your tabverses, your pairing codes.</span
+      >
+    </div>
     <!-- Read only while an operator looks through somebody else's account. It
          is not dismissible on purpose: the page underneath is not theirs. -->
     <div id="assume-bar" class="assume-bar" hidden>
@@ -61,15 +70,16 @@
     </main>
 
     <!-- The console proper. -->
-    <!-- Sign in with an account. The server owns the form: it posts to
-         /auth/tabverse with an email and the library sends a link. -->
+    <!-- Shown instead of the app when the session is gone, and when the
+         deployment says this account is the operator address but nobody has
+         claimed the role yet. -->
     <main id="view-signin" class="login" hidden>
       <form id="signin-form" class="card login-card">
         <h1>Sign in</h1>
-        <p class="muted">
-          Enter your email address and we will send you a sign-in link. No
-          password to remember, and nothing to store on this device but the
-          session cookie.
+        <p class="muted" id="signin-intro">
+          Enter your email address and we will send you a single-use link. There
+          is no password: the link signs you in, and only the server can read
+          your data.
         </p>
         <label for="signin-email">Email</label>
         <input
@@ -81,61 +91,34 @@
           required
         />
         <button type="submit" class="primary">Send sign-in link</button>
-        <!-- Only the providers the deployment configured; the page asks the
-             server rather than guessing, so a button never leads nowhere. -->
         <div id="signin-providers" class="providers" hidden></div>
         <p class="muted small" id="signin-note"></p>
         <p class="error" id="signin-error" hidden></p>
-        <a class="muted small" id="signin-admin" href="#" hidden
-          >Use the operator token instead</a
-        >
       </form>
     </main>
 
     <div id="app" class="app" hidden>
-      <nav class="sidebar">
-        <div class="sidebar-section" id="sidebar-accounts">
-          <h2>Accounts</h2>
-          <ul id="user-list" class="user-list"></ul>
-          <form id="create-user-form" class="stack">
-            <input
-              id="new-user-name"
-              type="text"
-              placeholder="new account name"
-              maxlength="120"
-              autocomplete="off"
-            />
-            <button type="submit" class="primary small">Create account</button>
-          </form>
-        </div>
-      </nav>
-
       <main class="content">
-        <div id="empty-state" class="empty">
-          <p>Pick an account on the left.</p>
-        </div>
 
         <section id="view-account" class="view" hidden>
-          <div class="view-head">
+          <div class="view-head" id="account-head">
             <div>
               <h1 id="account-name">Account</h1>
               <p class="muted small" id="account-id"></p>
             </div>
             <div class="view-actions">
               <span class="badge" id="account-role" hidden></span>
-              <button id="impersonate" class="ghost" type="button" hidden
-                >Look as them</button
-              >
               <button id="rename-user" class="ghost" type="button">Rename</button>
               <button id="delete-user" class="danger" type="button">Delete account</button>
               <button id="sign-out" class="ghost" type="button" hidden>Sign out</button>
             </div>
           </div>
 
-          <!-- Three things an operator does with an account, one tab each: add
+          <!-- Three things a person does with their account, one tab each: add
                a device, look at the credentials, look at the data. The rail is
-               on the left and the panels on the right, so the account sidebar
-               and the tab rail stack without either one scrolling away. -->
+               on the left and the panel on the right, and it belongs to the
+               account being viewed - so an operator sees it only while looking
+               through somebody else's (ADR 0014). -->
           <div class="tabbed">
             <nav class="tab-rail" aria-label="Account sections">
               <button
@@ -167,6 +150,23 @@
               >
                 <span class="rail-label">Stored data</span>
                 <span class="rail-note" id="rail-note-data"></span>
+              </button>
+              <!-- Operators only: the accounts, and what can be done to them.
+                   It is a tab rather than a separate page so the three account
+                   tabs stay exactly where they were - the operator's own data is
+                   always one click away, and an assumed identity is one click to
+                   leave (adr/0014). -->
+              <button
+                class="rail-item"
+                type="button"
+                data-tab="admin"
+                id="rail-admin"
+                aria-controls="panel-admin"
+                aria-pressed="false"
+                hidden
+              >
+                <span class="rail-label">Admin</span>
+                <span class="rail-note" id="rail-note-admin"></span>
               </button>
             </nav>
 
@@ -261,6 +261,47 @@
                     <tbody></tbody>
                   </table>
                 </section>
+              </section>
+
+              <!-- Admin: the operator's directory. -->
+              <section
+                class="tab-panel"
+                id="panel-admin"
+                data-panel="admin"
+                hidden
+              >
+                <div class="panel-head">
+                  <div>
+                    <h2>Accounts</h2>
+                    <p class="muted small" id="directory-subtitle"></p>
+                  </div>
+                </div>
+                <div class="toolbar">
+                  <input
+                    id="directory-filter"
+                    type="search"
+                    placeholder="filter by name or email"
+                    autocomplete="off"
+                  />
+                </div>
+                <div id="directory-empty" class="empty" hidden></div>
+                <table class="table" id="directory-table">
+                  <thead>
+                    <tr>
+                      <th>Account</th>
+                      <th>Email</th>
+                      <th>Devices</th>
+                      <th>Records</th>
+                      <th>Last active</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+                <p class="muted small" style="margin-top: 12px">
+                  Accounts are created by registering, not from here: an operator
+                  could only make an account nobody can prove they own.
+                </p>
               </section>
 
               <!-- Stored data: the read only browser, unchanged inside. -->

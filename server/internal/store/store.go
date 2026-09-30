@@ -121,6 +121,15 @@ func (s *Store) migrate(ctx context.Context) error {
 			used_at    INTEGER
 		)`,
 		`CREATE INDEX IF NOT EXISTS email_tokens_hash ON email_tokens(purpose, token_hash)`,
+		// Subjects whose account was deleted. A session outlives its account, and
+		// without these a stale session would register a brand new one on its
+		// next request.
+		`CREATE TABLE IF NOT EXISTS retired_subjects (
+			provider TEXT NOT NULL,
+			subject  TEXT NOT NULL,
+			at       INTEGER NOT NULL,
+			PRIMARY KEY (provider, subject)
+		)`,
 		// "Who did what", including every impersonation, in and out. Never
 		// pruned automatically: it is the record of who had access.
 		`CREATE TABLE IF NOT EXISTS audit_log (

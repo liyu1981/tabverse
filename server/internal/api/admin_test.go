@@ -1,74 +1,64 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"path/filepath"
 	"strings"
 	"testing"
 
-	"github.com/liyu1981/tabverse/server/internal/config"
-	"github.com/liyu1981/tabverse/server/internal/hub"
-	"github.com/liyu1981/tabverse/server/internal/store"
+	"github.com/liyu1981/tabverse/server/internal/accounts"
 )
 
-const testAdminToken = "admin-secret-token"
+const testAdminEmail = "operator@example.com"
 
-func newAdminServer(t *testing.T) *httptest.Server {
+// newAdminServer is a deployment with an operator already signed in, which is
+// what the console tests need now that there is no master credential
+// (adr/0013).
+func newAdminServer(t *testing.T) (*httptest.Server, *sessionClient) {
 	t.Helper()
-	cfg := config.Config{
-		Addr:           ":0",
-		DBPath:         filepath.Join(t.TempDir(), "admin.db"),
-		MaxRecordBytes: 1 << 20,
-		SyncBatchLimit: 100,
-		SearchLimit:    50,
-		Version:        "test",
-		AdminToken:     testAdminToken,
-	}
-	st, err := store.Open(cfg.DBPath)
+	ts, srv := newAccountServer(t)
+	return ts, operatorSession(t, ts, srv)
+}
+
+// adminDo is doJSON for a signed-in operator session.
+func adminDo(t *testing.T, op *sessionClient, method, path string, body any) apiResp {
+	t.Helper()
+	return op.doJSON(t, method, path, body)
+}
+
+// createAccount registers an account the way a person does, since registration
+// is now the only way one comes into existence (ADR 0014): the row and the
+// identity its session resolves through, plus the address proof.
+func createAccount(t *testing.T, op *sessionClient, name string) string {
+	t.Helper()
+	ctx := context.Background()
+	email := name + "@example.com"
+	id, _, err := op.srv.store.UpsertIdentity(ctx, accounts.ProviderEmail,
+		"subject-"+name, email, name, true)
 	if err != nil {
-		t.Fatalf("open store: %v", err)
+		t.Fatalf("register: %v", err)
 	}
-	t.Cleanup(func() { st.Close() })
-
-	ts := httptest.NewServer(New(cfg, st, hub.New(), nil).Handler())
-	t.Cleanup(ts.Close)
-	return ts
-}
-
-func adminDo(t *testing.T, ts *httptest.Server, method, path, token string, body any) apiResp {
-	t.Helper()
-	return doJSON(t, method, ts.URL+path, token, body)
-}
-
-// createAccount makes an account through the admin API and returns its id.
-func createAccount(t *testing.T, ts *httptest.Server, name string) string {
-	t.Helper()
-	r := adminDo(t, ts, http.MethodPost, "/api/v1/admin/users", testAdminToken,
-		map[string]string{"name": name})
-	r.mustStatus(t, http.StatusCreated)
-	user, _ := r.body["user"].(map[string]any)
-	id, _ := user["id"].(string)
-	if id == "" {
-		t.Fatalf("create account returned no id: %s", r.raw)
+	if err := op.srv.store.MarkEmailVerified(ctx, id); err != nil {
+		t.Fatalf("verify: %v", err)
 	}
 	return id
 }
 
 // seedUser pushes a full tabverse worth of records as a device of the account.
-func seedUser(t *testing.T, ts *httptest.Server, name string) (userID, token string) {
+func seedUser(t *testing.T, op *sessionClient, name string) (userID, token string) {
 	t.Helper()
-	userID = createAccount(t, ts, name)
+	userID = createAccount(t, op, name)
 
 	// an account created by an admin has no device yet: pair one through an
 	// invite, exactly like the extension would.
-	r := adminDo(t, ts, http.MethodPost, "/api/v1/admin/users/"+userID+"/invites",
-		testAdminToken, map[string]int{"ttl_seconds": 300})
+	r := adminDo(t, op, http.MethodPost, "/api/v1/admin/users/"+userID+"/invites",
+		map[string]int{"ttl_seconds": 300})
 	r.mustStatus(t, http.StatusCreated)
 	code, _ := r.body["code"].(string)
 
-	r = adminDo(t, ts, http.MethodPost, "/api/v1/auth/pair", "", map[string]string{
+	r = doJSON(t, http.MethodPost, op.ts.URL+"/api/v1/auth/pair", "", map[string]string{
 		"invite_code": code, "device_name": name + " laptop",
 	})
 	r.mustStatus(t, http.StatusCreated)
@@ -79,64 +69,12 @@ func seedUser(t *testing.T, ts *httptest.Server, name string) (userID, token str
 	return userID, token
 }
 
-// ---- admin authentication -------------------------------------------------
-
-func TestAdminDisabledByDefault(t *testing.T) {
-	ts, _ := newTestServer(t) // no AdminToken configured
-
-	r := adminDo(t, ts, http.MethodGet, "/api/v1/admin/users", "", nil)
-	r.mustStatus(t, http.StatusNotFound)
-	if r.body["error"] != "admin_disabled" {
-		t.Fatalf("unexpected error: %s", r.raw)
-	}
-
-	// The console still loads, and is told why it cannot ask for a token.
-	page := doJSON(t, http.MethodGet, ts.URL+"/", "", nil)
-	page.mustStatus(t, http.StatusOK)
-	cfg := adminDo(t, ts, http.MethodGet, "/api/v1/admin/config", "", nil)
-	cfg.mustStatus(t, http.StatusOK)
-	if cfg.body["admin_enabled"] != false {
-		t.Fatalf("config should report admin disabled: %s", cfg.raw)
-	}
-}
-
-func TestAdminRequiresTheToken(t *testing.T) {
-	ts := newAdminServer(t)
-
-	// No token at all, then a wrong one.
-	for _, token := range []string{"", "nope", testAdminToken + "x"} {
-		r := adminDo(t, ts, http.MethodGet, "/api/v1/admin/users", token, nil)
-		r.mustStatus(t, http.StatusUnauthorized)
-	}
-
-	adminDo(t, ts, http.MethodGet, "/api/v1/admin/users", testAdminToken, nil).
-		mustStatus(t, http.StatusOK)
-
-	// The ?access_token= form is for the WebSocket handshake only: an admin
-	// token in a URL would end up in access logs, so it is not accepted.
-	adminDo(t, ts, http.MethodGet,
-		"/api/v1/admin/users?access_token="+testAdminToken, "", nil).
-		mustStatus(t, http.StatusUnauthorized)
-}
-
-// A deployment with an admin token must not hand its first account to whoever
-// happens to be scanning the port.
-func TestBootstrapNeedsAdminTokenWhenConfigured(t *testing.T) {
-	ts := newAdminServer(t)
-
-	adminDo(t, ts, http.MethodPost, "/api/v1/auth/bootstrap", "", map[string]string{"name": "sneaky"}).
-		mustStatus(t, http.StatusUnauthorized)
-
-	adminDo(t, ts, http.MethodPost, "/api/v1/auth/bootstrap", testAdminToken, map[string]string{"name": "me"}).
-		mustStatus(t, http.StatusCreated)
-}
-
-// ---- multi tenancy --------------------------------------------------------
+// ---- accounts and sessions -----------------------------------------------
 
 func TestAccountsAreIsolated(t *testing.T) {
-	ts := newAdminServer(t)
-	alice, aliceToken := seedUser(t, ts, "alice")
-	_, bobToken := seedUser(t, ts, "bob")
+	ts, op := newAdminServer(t)
+	alice, aliceToken := seedUser(t, op, "alice")
+	_, bobToken := seedUser(t, op, "bob")
 
 	now := int64(1700000000000)
 	push(t, ts, aliceToken, []pushedRecord{
@@ -151,7 +89,7 @@ func TestAccountsAreIsolated(t *testing.T) {
 	})
 
 	// Alice's tabverse list shows her tabverse and only hers.
-	r := adminDo(t, ts, http.MethodGet, "/api/v1/admin/users/"+alice+"/tabspaces", testAdminToken, nil)
+	r := adminDo(t, op, http.MethodGet, "/api/v1/admin/users/"+alice+"/tabspaces", nil)
 	r.mustStatus(t, http.StatusOK)
 	list, _ := r.body["tabspaces"].([]any)
 	if len(list) != 1 {
@@ -163,8 +101,8 @@ func TestAccountsAreIsolated(t *testing.T) {
 	}
 
 	// And the raw record listing does not leak across accounts either.
-	bobID := createAccount(t, ts, "bob2")
-	leak := adminDo(t, ts, http.MethodGet, "/api/v1/admin/users/"+bobID+"/records", testAdminToken, nil)
+	bobID := createAccount(t, op, "bob2")
+	leak := adminDo(t, op, http.MethodGet, "/api/v1/admin/users/"+bobID+"/records", nil)
 	leak.mustStatus(t, http.StatusOK)
 	if total, _ := leak.body["total"].(float64); total != 0 {
 		t.Fatalf("a fresh account should hold no records, got %v: %s", leak.body["total"], leak.raw)
@@ -172,44 +110,56 @@ func TestAccountsAreIsolated(t *testing.T) {
 }
 
 func TestConsoleListsAccountsWithCounters(t *testing.T) {
-	ts := newAdminServer(t)
-	seedUser(t, ts, "alice")
+	_, op := newAdminServer(t)
+	alice, _ := seedUser(t, op, "alice")
 
-	r := adminDo(t, ts, http.MethodGet, "/api/v1/admin/users", testAdminToken, nil)
+	// The deployment already holds the operator, so this looks for the account
+	// it just made rather than counting.
+	r := adminDo(t, op, http.MethodGet, "/api/v1/admin/users", nil)
 	r.mustStatus(t, http.StatusOK)
-	users, _ := r.body["users"].([]any)
-	if len(users) != 1 {
-		t.Fatalf("want 1 account, got %d: %s", len(users), r.raw)
+	usersList, _ := r.body["users"].([]any)
+	var row map[string]any
+	for _, u := range usersList {
+		if m, _ := u.(map[string]any); m["id"] == alice {
+			row = m
+		}
 	}
-	row, _ := users[0].(map[string]any)
+	if row == nil {
+		t.Fatalf("the account is not in the list: %s", r.raw)
+	}
 	if row["name"] != "alice" {
-		t.Fatalf("unexpected account row: %s", r.raw)
+		t.Fatalf("unexpected account row: %v", row)
 	}
 	if devices, _ := row["device_count"].(float64); devices != 1 {
 		t.Fatalf("device_count = %v, want 1: %s", row["device_count"], r.raw)
 	}
 
-	// The deployment counters, for the console header.
-	r = adminDo(t, ts, http.MethodGet, "/api/v1/admin/totals", testAdminToken, nil)
+	// The deployment counters, for the console header. The deployment also
+	// holds its operator, so this checks the header against the list rather than
+	// against a fixed number.
+	r = adminDo(t, op, http.MethodGet, "/api/v1/admin/totals", nil)
 	r.mustStatus(t, http.StatusOK)
-	if users, _ := r.body["users"].(float64); users != 1 {
-		t.Fatalf("totals.users = %v, want 1: %s", r.body["users"], r.raw)
+	if users, _ := r.body["users"].(float64); int(users) != len(usersList) {
+		t.Fatalf("totals.users = %v, want %d: %s", users, len(usersList), r.raw)
 	}
 }
 
 // ---- token management -----------------------------------------------------
 
 func TestRevokeTokenAndDevice(t *testing.T) {
-	ts := newAdminServer(t)
-	userID, token := seedUser(t, ts, "alice")
+	ts, op := newAdminServer(t)
+	userID, token := seedUser(t, op, "alice")
+	_ = ts
 
-	// The token works.
-	adminDo(t, ts, http.MethodGet, "/api/v1/sync?since=0", token, nil).mustStatus(t, http.StatusOK)
+	// The device token works on the sync API - it is the extension's credential,
+	// not the console's.
+	doJSON(t, http.MethodGet, op.ts.URL+"/api/v1/sync?since=0", token, nil).
+		mustStatus(t, http.StatusOK)
 
 	// ...and that request stamped it, so the console can say when the device
 	// was last seen.
 	stamp := func() map[string]any {
-		r := adminDo(t, ts, http.MethodGet, "/api/v1/admin/users/"+userID, testAdminToken, nil)
+		r := adminDo(t, op, http.MethodGet, "/api/v1/admin/users/"+userID, nil)
 		r.mustStatus(t, http.StatusOK)
 		toks, _ := r.body["tokens"].([]any)
 		tok, _ := toks[0].(map[string]any)
@@ -220,7 +170,7 @@ func TestRevokeTokenAndDevice(t *testing.T) {
 	}
 
 	detail := func() (devices, tokens []any) {
-		r := adminDo(t, ts, http.MethodGet, "/api/v1/admin/users/"+userID, testAdminToken, nil)
+		r := adminDo(t, op, http.MethodGet, "/api/v1/admin/users/"+userID, nil)
 		r.mustStatus(t, http.StatusOK)
 		devices, _ = r.body["devices"].([]any)
 		tokens, _ = r.body["tokens"].([]any)
@@ -241,12 +191,12 @@ func TestRevokeTokenAndDevice(t *testing.T) {
 		t.Fatal("the console must not be handed a plaintext token")
 	}
 
-	adminDo(t, ts, http.MethodDelete,
-		"/api/v1/admin/users/"+userID+"/tokens/"+hash, testAdminToken, nil).
+	adminDo(t, op, http.MethodDelete,
+		"/api/v1/admin/users/"+userID+"/tokens/"+hash, nil).
 		mustStatus(t, http.StatusNoContent)
 
 	// The device's token is dead: sync is 401, and it says revoked.
-	adminDo(t, ts, http.MethodGet, "/api/v1/sync?since=0", token, nil).
+	adminDo(t, op, http.MethodGet, "/api/v1/sync?since=0", nil).
 		mustStatus(t, http.StatusUnauthorized)
 	_, tokens = detail()
 	tok, _ = tokens[0].(map[string]any)
@@ -255,15 +205,15 @@ func TestRevokeTokenAndDevice(t *testing.T) {
 	}
 
 	// A second device for the same account, revoked as a whole.
-	r := adminDo(t, ts, http.MethodPost, "/api/v1/admin/users/"+userID+"/invites",
-		testAdminToken, map[string]int{"ttl_seconds": 300})
+	r := adminDo(t, op, http.MethodPost, "/api/v1/admin/users/"+userID+"/invites",
+		map[string]int{"ttl_seconds": 300})
 	r.mustStatus(t, http.StatusCreated)
 	code, _ := r.body["code"].(string)
-	r = adminDo(t, ts, http.MethodPost, "/api/v1/auth/pair", "", map[string]string{
+	r = doJSON(t, http.MethodPost, op.ts.URL+"/api/v1/auth/pair", "", map[string]string{
 		"invite_code": code, "device_name": "phone",
 	})
 	r.mustStatus(t, http.StatusCreated)
-	phoneToken, _ := r.body["token"].(string)
+	phoneToken := r.body["token"].(string)
 
 	devices, _ := detail()
 	var phoneID string
@@ -277,37 +227,18 @@ func TestRevokeTokenAndDevice(t *testing.T) {
 		t.Fatalf("second device not listed: %v", devices)
 	}
 
-	adminDo(t, ts, http.MethodDelete,
-		"/api/v1/admin/users/"+userID+"/devices/"+phoneID, testAdminToken, nil).
+	adminDo(t, op, http.MethodDelete,
+		"/api/v1/admin/users/"+userID+"/devices/"+phoneID, nil).
 		mustStatus(t, http.StatusNoContent)
-	adminDo(t, ts, http.MethodGet, "/api/v1/sync?since=0", phoneToken, nil).
+	doJSON(t, http.MethodGet, op.ts.URL+"/api/v1/sync?since=0", phoneToken, nil).
 		mustStatus(t, http.StatusUnauthorized)
 
 	// An unknown device is a 404, not a silent success.
-	adminDo(t, ts, http.MethodDelete,
-		"/api/v1/admin/users/"+userID+"/devices/dev_nope", testAdminToken, nil).
+	adminDo(t, op, http.MethodDelete,
+		"/api/v1/admin/users/"+userID+"/devices/dev_nope", nil).
 		mustStatus(t, http.StatusNotFound)
 }
 
-func TestAdminMintedDeviceTokenWorks(t *testing.T) {
-	ts := newAdminServer(t)
-	// "create account + first device in one call" is the console's fast path.
-	r := adminDo(t, ts, http.MethodPost, "/api/v1/admin/users", testAdminToken,
-		map[string]string{"name": "alice", "device_name": "server-issued"})
-	r.mustStatus(t, http.StatusCreated)
-	token, _ := r.body["token"].(string)
-	userID, _ := r.body["user_id"].(string)
-	if token == "" || userID == "" {
-		t.Fatalf("expected credentials: %s", r.raw)
-	}
-	adminDo(t, ts, http.MethodGet, "/api/v1/sync?since=0", token, nil).mustStatus(t, http.StatusOK)
-}
-
-// ---- read only data browsing ---------------------------------------------
-
-// seedTabverse pushes a tabverse the way the extension would: the tabverse with
-// its tabIds, its tabs, and the ordered aggregates that keep the user's
-// ordering on the server.
 func seedTabverse(t *testing.T, ts *httptest.Server, token string, id, name string, tabs [][2]string) {
 	t.Helper()
 	now := int64(1700000000000)
@@ -368,11 +299,11 @@ func jsonList(tabs [][2]string) string {
 }
 
 func TestTabspaceBundleUsesTheClientOrdering(t *testing.T) {
-	ts := newAdminServer(t)
-	userID, token := seedUser(t, ts, "alice")
+	ts, op := newAdminServer(t)
+	userID, token := seedUser(t, op, "alice")
 	seedTabverse(t, ts, token, "ts1", "Research", [][2]string{{"t1", "First tab"}, {"t2", "Second tab"}})
 
-	r := adminDo(t, ts, http.MethodGet, "/api/v1/admin/users/"+userID+"/tabspaces", testAdminToken, nil)
+	r := adminDo(t, op, http.MethodGet, "/api/v1/admin/users/"+userID+"/tabspaces", nil)
 	r.mustStatus(t, http.StatusOK)
 	list, _ := r.body["tabspaces"].([]any)
 	if len(list) != 1 {
@@ -391,7 +322,7 @@ func TestTabspaceBundleUsesTheClientOrdering(t *testing.T) {
 		}
 	}
 
-	r = adminDo(t, ts, http.MethodGet, "/api/v1/admin/users/"+userID+"/tabspaces/ts1", testAdminToken, nil)
+	r = adminDo(t, op, http.MethodGet, "/api/v1/admin/users/"+userID+"/tabspaces/ts1", nil)
 	r.mustStatus(t, http.StatusOK)
 
 	ids := func(field string) []string {
@@ -433,17 +364,17 @@ func TestTabspaceBundleUsesTheClientOrdering(t *testing.T) {
 	}
 
 	// An unknown tabverse is a 404 for a typo, not an empty page.
-	adminDo(t, ts, http.MethodGet, "/api/v1/admin/users/"+userID+"/tabspaces/nope", testAdminToken, nil).
+	adminDo(t, op, http.MethodGet, "/api/v1/admin/users/"+userID+"/tabspaces/nope", nil).
 		mustStatus(t, http.StatusNotFound)
 }
 
 func TestRecordBrowserFilters(t *testing.T) {
-	ts := newAdminServer(t)
-	userID, token := seedUser(t, ts, "alice")
+	ts, op := newAdminServer(t)
+	userID, token := seedUser(t, op, "alice")
 	seedTabverse(t, ts, token, "ts1", "Research", [][2]string{{"t1", "Alpha"}})
 
 	// every record of the account
-	r := adminDo(t, ts, http.MethodGet, "/api/v1/admin/users/"+userID+"/records", testAdminToken, nil)
+	r := adminDo(t, op, http.MethodGet, "/api/v1/admin/users/"+userID+"/records", nil)
 	r.mustStatus(t, http.StatusOK)
 	all, _ := r.body["records"].([]any)
 	if len(all) == 0 || len(all) != int(r.body["total"].(float64)) {
@@ -451,7 +382,7 @@ func TestRecordBrowserFilters(t *testing.T) {
 	}
 
 	// one entity
-	r = adminDo(t, ts, http.MethodGet, "/api/v1/admin/users/"+userID+"/records?entity=tab", testAdminToken, nil)
+	r = adminDo(t, op, http.MethodGet, "/api/v1/admin/users/"+userID+"/records?entity=tab", nil)
 	r.mustStatus(t, http.StatusOK)
 	records, _ := r.body["records"].([]any)
 	if len(records) != 1 {
@@ -459,32 +390,32 @@ func TestRecordBrowserFilters(t *testing.T) {
 	}
 
 	// one tabverse
-	r = adminDo(t, ts, http.MethodGet, "/api/v1/admin/users/"+userID+"/records?entity=note&tabspace_id=ts1", testAdminToken, nil)
+	r = adminDo(t, op, http.MethodGet, "/api/v1/admin/users/"+userID+"/records?entity=note&tabspace_id=ts1", nil)
 	r.mustStatus(t, http.StatusOK)
 	if total, _ := r.body["total"].(float64); total != 3 {
 		t.Fatalf("tabspace filter: total = %v, want 3: %s", r.body["total"], r.raw)
 	}
 	// ...and a tabspace filter that matches nothing is empty, not everything
-	r = adminDo(t, ts, http.MethodGet, "/api/v1/admin/users/"+userID+"/records?tabspace_id=ts_other", testAdminToken, nil)
+	r = adminDo(t, op, http.MethodGet, "/api/v1/admin/users/"+userID+"/records?tabspace_id=ts_other", nil)
 	r.mustStatus(t, http.StatusOK)
 	if total, _ := r.body["total"].(float64); total != 0 {
 		t.Fatalf("foreign tabspace id matched %v records: %s", r.body["total"], r.raw)
 	}
 
 	// substring over the payload; a LIKE metacharacter is not a wildcard
-	r = adminDo(t, ts, http.MethodGet, "/api/v1/admin/users/"+userID+"/records?q=Research", testAdminToken, nil)
+	r = adminDo(t, op, http.MethodGet, "/api/v1/admin/users/"+userID+"/records?q=Research", nil)
 	r.mustStatus(t, http.StatusOK)
 	if total, _ := r.body["total"].(float64); total != 1 {
 		t.Fatalf("q=Research matched %v records, want 1: %s", r.body["total"], r.raw)
 	}
-	r = adminDo(t, ts, http.MethodGet, "/api/v1/admin/users/"+userID+"/records?q=%25", testAdminToken, nil)
+	r = adminDo(t, op, http.MethodGet, "/api/v1/admin/users/"+userID+"/records?q=%25", nil)
 	r.mustStatus(t, http.StatusOK)
 	if total, _ := r.body["total"].(float64); total != 0 {
 		t.Fatalf("q=%% matched %v records, want 0: %s", r.body["total"], r.raw)
 	}
 
 	// paging reports the full total, not the page size
-	r = adminDo(t, ts, http.MethodGet, "/api/v1/admin/users/"+userID+"/records?limit=2&offset=0", testAdminToken, nil)
+	r = adminDo(t, op, http.MethodGet, "/api/v1/admin/users/"+userID+"/records?limit=2&offset=0", nil)
 	r.mustStatus(t, http.StatusOK)
 	records, _ = r.body["records"].([]any)
 	if len(records) != 2 {
@@ -495,16 +426,16 @@ func TestRecordBrowserFilters(t *testing.T) {
 	}
 
 	// an unknown entity is rejected, not silently ignored
-	adminDo(t, ts, http.MethodGet, "/api/v1/admin/users/"+userID+"/records?entity=nope", testAdminToken, nil).
+	adminDo(t, op, http.MethodGet, "/api/v1/admin/users/"+userID+"/records?entity=nope", nil).
 		mustStatus(t, http.StatusBadRequest)
 }
 
 func TestAdminSearch(t *testing.T) {
-	ts := newAdminServer(t)
-	userID, token := seedUser(t, ts, "alice")
+	ts, op := newAdminServer(t)
+	userID, token := seedUser(t, op, "alice")
 	seedTabverse(t, ts, token, "ts1", "Research", [][2]string{{"t1", "Alpha"}})
 
-	r := adminDo(t, ts, http.MethodGet, "/api/v1/admin/users/"+userID+"/search?q=Research", testAdminToken, nil)
+	r := adminDo(t, op, http.MethodGet, "/api/v1/admin/users/"+userID+"/search?q=Research", nil)
 	r.mustStatus(t, http.StatusOK)
 	hits, _ := r.body["hits"].([]any)
 	if len(hits) != 1 {
@@ -519,7 +450,7 @@ func TestAdminSearch(t *testing.T) {
 	}
 
 	// An empty query is not a "match everything" backdoor.
-	r = adminDo(t, ts, http.MethodGet, "/api/v1/admin/users/"+userID+"/search?q=", testAdminToken, nil)
+	r = adminDo(t, op, http.MethodGet, "/api/v1/admin/users/"+userID+"/search?q=", nil)
 	r.mustStatus(t, http.StatusOK)
 	if hits, _ := r.body["hits"].([]any); len(hits) != 0 {
 		t.Fatalf("empty query returned %d hits: %s", len(hits), r.raw)
@@ -529,51 +460,60 @@ func TestAdminSearch(t *testing.T) {
 // ---- account lifecycle ----------------------------------------------------
 
 func TestRenameAndDeleteAccount(t *testing.T) {
-	ts := newAdminServer(t)
-	userID, token := seedUser(t, ts, "alice")
+	ts, op := newAdminServer(t)
+	userID, token := seedUser(t, op, "alice")
 	seedTabverse(t, ts, token, "ts1", "Research", [][2]string{{"t1", "Alpha"}})
 
-	adminDo(t, ts, http.MethodPut, "/api/v1/admin/users/"+userID, testAdminToken,
+	adminDo(t, op, http.MethodPut, "/api/v1/admin/users/"+userID,
 		map[string]string{"name": "alice (work)"}).mustStatus(t, http.StatusNoContent)
-	r := adminDo(t, ts, http.MethodGet, "/api/v1/admin/users/"+userID, testAdminToken, nil)
+	r := adminDo(t, op, http.MethodGet, "/api/v1/admin/users/"+userID, nil)
 	r.mustStatus(t, http.StatusOK)
 	user, _ := r.body["user"].(map[string]any)
 	if user["name"] != "alice (work)" {
 		t.Fatalf("rename did not stick: %s", r.raw)
 	}
 
+	// Taken *before* the delete, so the comparison afterwards means something.
+	beforeTotals := adminDo(t, op, http.MethodGet, "/api/v1/admin/totals", nil)
+	beforeTotals.mustStatus(t, http.StatusOK)
+	usersBefore, _ := beforeTotals.body["users"].(float64)
+	liveBefore, _ := beforeTotals.body["live_records"].(float64)
+
 	// deleting an account now needs the id back as a confirmation
-	r = adminDo(t, ts, http.MethodDelete, "/api/v1/admin/users/"+userID, testAdminToken, nil)
+	r = adminDo(t, op, http.MethodDelete, "/api/v1/admin/users/"+userID, nil)
 	r.mustStatus(t, http.StatusBadRequest)
 	if r.body["error"] != "confirmation_required" {
 		t.Fatalf("unconfirmed delete = %s, want confirmation_required", r.raw)
 	}
-	adminDo(t, ts, http.MethodDelete,
-		"/api/v1/admin/users/"+userID+"?confirm="+userID, testAdminToken, nil).
+	adminDo(t, op, http.MethodDelete,
+		"/api/v1/admin/users/"+userID+"?confirm="+userID, nil).
 		mustStatus(t, http.StatusNoContent)
 
 	// The account is gone, and so is every trace of its data: the token that
 	// used to reach it is dead.
-	adminDo(t, ts, http.MethodGet, "/api/v1/admin/users/"+userID, testAdminToken, nil).
+	adminDo(t, op, http.MethodGet, "/api/v1/admin/users/"+userID, nil).
 		mustStatus(t, http.StatusNotFound)
-	adminDo(t, ts, http.MethodGet, "/api/v1/sync?since=0", token, nil).
+	doJSON(t, http.MethodGet, op.ts.URL+"/api/v1/sync?since=0", token, nil).
 		mustStatus(t, http.StatusUnauthorized)
 	// The search index rows went with it: a fresh account with the same id
-	// cannot inherit stale hits.
-	before := adminDo(t, ts, http.MethodGet, "/api/v1/admin/totals", testAdminToken, nil)
-	before.mustStatus(t, http.StatusOK)
-	if live, _ := before.body["live_records"].(float64); live != 0 {
-		t.Fatalf("records survived the account delete: %s", before.raw)
-	}
-	if users, _ := before.body["users"].(float64); users != 0 {
-		t.Fatalf("account survived the delete: %s", before.raw)
+	// cannot inherit stale hits. The operator is still on the deployment, so
+	// this compares rather than asserting an absolute number.
+	after := adminDo(t, op, http.MethodGet, "/api/v1/admin/totals", nil)
+	after.mustStatus(t, http.StatusOK)
+	usersAfter, _ := after.body["users"].(float64)
+	liveAfter, _ := after.body["live_records"].(float64)
+	// Every record here belonged to the account that just went, and the
+	// operator has none of their own, so nothing should be left.
+	if usersAfter != usersBefore-1 || liveAfter != 0 {
+		t.Fatalf("the account or its records survived the delete: users %v->%v, records %v->%v",
+			usersBefore, usersAfter, liveBefore, liveAfter)
 	}
 }
 
 // ---- the console itself ---------------------------------------------------
 
 func TestConsoleIsServed(t *testing.T) {
-	ts := newAdminServer(t)
+	ts, op := newAdminServer(t)
 
 	page := doJSON(t, http.MethodGet, ts.URL+"/", "", nil)
 	page.mustStatus(t, http.StatusOK)
@@ -587,19 +527,29 @@ func TestConsoleIsServed(t *testing.T) {
 			t.Fatalf("%s is empty", asset)
 		}
 	}
-	// A client side route falls back to the shell rather than 404ing.
-	adminDo(t, ts, http.MethodGet, "/anything/else", "", nil).mustStatus(t, http.StatusOK)
+	// A client side route falls back to the shell rather than 404ing. The
+	// response is HTML, so this cannot go through the JSON helper.
+	res, err := http.Get(op.ts.URL + "/anything/else")
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	res.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		t.Fatalf("a client side route = %d, want 200", res.StatusCode)
+	}
 }
 
 // The console is public, the data behind it is not: a device token must not
-// open the admin API.
-func TestDeviceTokenIsNotAnAdminToken(t *testing.T) {
-	ts := newAdminServer(t)
-	_, token := seedUser(t, ts, "alice")
+// A device token is the extension's credential and must not open the console:
+// the console has no bearer token any more (adr/0013), so this is the shape of
+// "wrong credential" now.
+func TestADeviceTokenIsNotAConsoleCredential(t *testing.T) {
+	ts, op := newAdminServer(t)
+	_, token := seedUser(t, op, "alice")
 
-	adminDo(t, ts, http.MethodGet, "/api/v1/admin/users", token, nil).
+	doJSON(t, http.MethodGet, ts.URL+"/api/v1/admin/users", token, nil).
 		mustStatus(t, http.StatusUnauthorized)
-	adminDo(t, ts, http.MethodGet, "/api/v1/admin/users", testAdminToken, nil).
+	adminDo(t, op, http.MethodGet, "/api/v1/admin/users", nil).
 		mustStatus(t, http.StatusOK)
 }
 
@@ -621,10 +571,10 @@ func equalStrings(got, want []string) bool {
 
 // archiveFlow pairs a device, revokes its token, and returns the ids the
 // console needs to archive it and its records.
-func archiveFlow(t *testing.T, ts *httptest.Server) (userID, deviceID, tokenHash string) {
+func archiveFlow(t *testing.T, op *sessionClient) (userID, deviceID, tokenHash, deviceToken string) {
 	t.Helper()
-	userID, token := seedUser(t, ts, "alice")
-	r := adminDo(t, ts, http.MethodGet, "/api/v1/admin/users/"+userID, testAdminToken, nil)
+	userID, deviceToken = seedUser(t, op, "alice")
+	r := adminDo(t, op, http.MethodGet, "/api/v1/admin/users/"+userID, nil)
 	r.mustStatus(t, http.StatusOK)
 	devices, _ := r.body["devices"].([]any)
 	if len(devices) != 1 {
@@ -638,21 +588,21 @@ func archiveFlow(t *testing.T, ts *httptest.Server) (userID, deviceID, tokenHash
 
 	// the device wrote something, so there are records to archive
 	now := int64(1700000000000)
-	if _, r := push(t, ts, token, []pushedRecord{
+	if _, r := push(t, op.ts, deviceToken, []pushedRecord{
 		{Entity: "tabspace", ID: "ts1", UpdatedAt: now, Payload: `{"id":"ts1","name":"work","tabIds":[]}`},
 	}); r.status != http.StatusOK {
 		t.Fatalf("seed push: %s", r.raw)
 	}
-	adminDo(t, ts, http.MethodDelete,
-		"/api/v1/admin/users/"+userID+"/tokens/"+tokenHash, testAdminToken, nil).
+	adminDo(t, op, http.MethodDelete,
+		"/api/v1/admin/users/"+userID+"/tokens/"+tokenHash, nil).
 		mustStatus(t, http.StatusNoContent)
-	return userID, deviceID, tokenHash
+	return userID, deviceID, tokenHash, deviceToken
 }
 
 func TestArchiveRefusesWhileStillUsable(t *testing.T) {
-	ts := newAdminServer(t)
-	userID, _ := seedUser(t, ts, "alice")
-	r := adminDo(t, ts, http.MethodGet, "/api/v1/admin/users/"+userID, testAdminToken, nil)
+	_, op := newAdminServer(t)
+	userID, _ := seedUser(t, op, "alice")
+	r := adminDo(t, op, http.MethodGet, "/api/v1/admin/users/"+userID, nil)
 	r.mustStatus(t, http.StatusOK)
 	tokens, _ := r.body["tokens"].([]any)
 	tok, _ := tokens[0].(map[string]any)
@@ -664,15 +614,15 @@ func TestArchiveRefusesWhileStillUsable(t *testing.T) {
 	// A live token cannot be archived: revoking is how access is cut, and
 	// archiving a usable credential would hide it from the console while it
 	// still syncs. 409 carries the reason so the UI can say what to do.
-	r = adminDo(t, ts, http.MethodPut,
-		"/api/v1/admin/users/"+userID+"/tokens/"+hash+"/archive", testAdminToken, nil)
+	r = adminDo(t, op, http.MethodPut,
+		"/api/v1/admin/users/"+userID+"/tokens/"+hash+"/archive", nil)
 	r.mustStatus(t, http.StatusConflict)
 	if r.body["error"] != "not_revoked" {
 		t.Fatalf("error = %v, want not_revoked: %s", r.body["error"], r.raw)
 	}
 	// the same for a device that still has a usable token
-	r = adminDo(t, ts, http.MethodPut,
-		"/api/v1/admin/users/"+userID+"/devices/"+deviceID+"/archive", testAdminToken, nil)
+	r = adminDo(t, op, http.MethodPut,
+		"/api/v1/admin/users/"+userID+"/devices/"+deviceID+"/archive", nil)
 	r.mustStatus(t, http.StatusConflict)
 	if r.body["error"] != "not_revoked" {
 		t.Fatalf("device error = %v: %s", r.body["error"], r.raw)
@@ -680,39 +630,39 @@ func TestArchiveRefusesWhileStillUsable(t *testing.T) {
 }
 
 func TestArchiveDeviceAndItsRecords(t *testing.T) {
-	ts := newAdminServer(t)
-	userID, deviceID, _ := archiveFlow(t, ts)
+	_, op := newAdminServer(t)
+	userID, deviceID, _, _ := archiveFlow(t, op)
 
 	// records archive first, then the device itself
-	r := adminDo(t, ts, http.MethodPut,
+	r := adminDo(t, op, http.MethodPut,
 		"/api/v1/admin/users/"+userID+"/devices/"+deviceID+"/records/archive",
-		testAdminToken, nil)
+		nil)
 	r.mustStatus(t, http.StatusOK)
 	if archived, _ := r.body["archived"].(float64); archived != 1 {
 		t.Fatalf("archived = %v, want 1: %s", r.body["archived"], r.raw)
 	}
 
-	r = adminDo(t, ts, http.MethodPut,
-		"/api/v1/admin/users/"+userID+"/devices/"+deviceID+"/archive", testAdminToken, nil)
+	r = adminDo(t, op, http.MethodPut,
+		"/api/v1/admin/users/"+userID+"/devices/"+deviceID+"/archive", nil)
 	r.mustStatus(t, http.StatusOK)
 
 	// the console's default listing hides the record...
-	r = adminDo(t, ts, http.MethodGet,
-		"/api/v1/admin/users/"+userID+"/tabspaces", testAdminToken, nil)
+	r = adminDo(t, op, http.MethodGet,
+		"/api/v1/admin/users/"+userID+"/tabspaces", nil)
 	r.mustStatus(t, http.StatusOK)
 	if total, _ := r.body["total"].(float64); total != 0 {
 		t.Fatalf("tabverses still listed: %s", r.raw)
 	}
 	// ...and ?archived=1 shows it again
-	r = adminDo(t, ts, http.MethodGet,
-		"/api/v1/admin/users/"+userID+"/tabspaces?archived=1", testAdminToken, nil)
+	r = adminDo(t, op, http.MethodGet,
+		"/api/v1/admin/users/"+userID+"/tabspaces?archived=1", nil)
 	r.mustStatus(t, http.StatusOK)
 	if total, _ := r.body["total"].(float64); total != 1 {
 		t.Fatalf("archived tabverse not listed: %s", r.raw)
 	}
 
 	// the device shows as archived, with its record count
-	r = adminDo(t, ts, http.MethodGet, "/api/v1/admin/users/"+userID, testAdminToken, nil)
+	r = adminDo(t, op, http.MethodGet, "/api/v1/admin/users/"+userID, nil)
 	r.mustStatus(t, http.StatusOK)
 	devices, _ := r.body["devices"].([]any)
 	dev, _ := devices[0].(map[string]any)
@@ -723,22 +673,25 @@ func TestArchiveDeviceAndItsRecords(t *testing.T) {
 		t.Fatalf("archived_records = %v, want 1: %s", dev["archived_records"], r.raw)
 	}
 
-	// the user's own sync is untouched: archiving is an operator flag
-	r = adminDo(t, ts, http.MethodGet, "/api/v1/sync?since=0", "", nil)
-	if r.status != http.StatusUnauthorized {
-		t.Fatalf("unauthenticated sync should still be 401, got %d", r.status)
+	// The records are still there, just hidden from the default view: archiving
+	// is a view, not a delete (the store test pins the sync side of that).
+	r = adminDo(t, op, http.MethodGet,
+		"/api/v1/admin/users/"+userID+"/records?archived=1", nil)
+	r.mustStatus(t, http.StatusOK)
+	if rows, _ := r.body["records"].([]any); len(rows) == 0 {
+		t.Fatalf("the archived record is gone rather than hidden: %s", r.raw)
 	}
 
 	// everything comes back
-	r = adminDo(t, ts, http.MethodDelete,
+	r = adminDo(t, op, http.MethodDelete,
 		"/api/v1/admin/users/"+userID+"/devices/"+deviceID+"/records/archive",
-		testAdminToken, nil)
+		nil)
 	r.mustStatus(t, http.StatusOK)
 	if n, _ := r.body["unarchived"].(float64); n != 1 {
 		t.Fatalf("unarchived = %v, want 1: %s", r.body["unarchived"], r.raw)
 	}
-	r = adminDo(t, ts, http.MethodGet,
-		"/api/v1/admin/users/"+userID+"/tabspaces", testAdminToken, nil)
+	r = adminDo(t, op, http.MethodGet,
+		"/api/v1/admin/users/"+userID+"/tabspaces", nil)
 	r.mustStatus(t, http.StatusOK)
 	if total, _ := r.body["total"].(float64); total != 1 {
 		t.Fatalf("tabverse did not come back: %s", r.raw)
@@ -746,14 +699,14 @@ func TestArchiveDeviceAndItsRecords(t *testing.T) {
 }
 
 func TestArchiveTokenAndUnarchive(t *testing.T) {
-	ts := newAdminServer(t)
-	userID, _, tokenHash := archiveFlow(t, ts)
+	_, op := newAdminServer(t)
+	userID, _, tokenHash, _ := archiveFlow(t, op)
 
-	r := adminDo(t, ts, http.MethodPut,
-		"/api/v1/admin/users/"+userID+"/tokens/"+tokenHash+"/archive", testAdminToken, nil)
+	r := adminDo(t, op, http.MethodPut,
+		"/api/v1/admin/users/"+userID+"/tokens/"+tokenHash+"/archive", nil)
 	r.mustStatus(t, http.StatusOK)
 
-	r = adminDo(t, ts, http.MethodGet, "/api/v1/admin/users/"+userID, testAdminToken, nil)
+	r = adminDo(t, op, http.MethodGet, "/api/v1/admin/users/"+userID, nil)
 	r.mustStatus(t, http.StatusOK)
 	tokens, _ := r.body["tokens"].([]any)
 	tok, _ := tokens[0].(map[string]any)
@@ -761,10 +714,10 @@ func TestArchiveTokenAndUnarchive(t *testing.T) {
 		t.Fatalf("token not listed as archived: %v", tok)
 	}
 	// unarchiving does not un-revoke
-	adminDo(t, ts, http.MethodDelete,
-		"/api/v1/admin/users/"+userID+"/tokens/"+tokenHash+"/archive", testAdminToken, nil).
+	adminDo(t, op, http.MethodDelete,
+		"/api/v1/admin/users/"+userID+"/tokens/"+tokenHash+"/archive", nil).
 		mustStatus(t, http.StatusOK)
-	r = adminDo(t, ts, http.MethodGet, "/api/v1/admin/users/"+userID, testAdminToken, nil)
+	r = adminDo(t, op, http.MethodGet, "/api/v1/admin/users/"+userID, nil)
 	r.mustStatus(t, http.StatusOK)
 	tokens, _ = r.body["tokens"].([]any)
 	tok, _ = tokens[0].(map[string]any)
@@ -777,16 +730,16 @@ func TestArchiveTokenAndUnarchive(t *testing.T) {
 }
 
 func TestTotalsCountArchived(t *testing.T) {
-	ts := newAdminServer(t)
-	userID, deviceID, _ := archiveFlow(t, ts)
-	adminDo(t, ts, http.MethodPut,
-		"/api/v1/admin/users/"+userID+"/devices/"+deviceID+"/archive", testAdminToken, nil).
+	_, op := newAdminServer(t)
+	userID, deviceID, _, _ := archiveFlow(t, op)
+	adminDo(t, op, http.MethodPut,
+		"/api/v1/admin/users/"+userID+"/devices/"+deviceID+"/archive", nil).
 		mustStatus(t, http.StatusOK)
-	adminDo(t, ts, http.MethodPut,
+	adminDo(t, op, http.MethodPut,
 		"/api/v1/admin/users/"+userID+"/devices/"+deviceID+"/records/archive",
-		testAdminToken, nil).mustStatus(t, http.StatusOK)
+		nil).mustStatus(t, http.StatusOK)
 
-	r := adminDo(t, ts, http.MethodGet, "/api/v1/admin/totals", testAdminToken, nil)
+	r := adminDo(t, op, http.MethodGet, "/api/v1/admin/totals", nil)
 	r.mustStatus(t, http.StatusOK)
 	for field, want := range map[string]float64{
 		"archived_devices": 1, "archived_records": 1, "archived_tokens": 0,
@@ -802,20 +755,20 @@ func TestTotalsCountArchived(t *testing.T) {
 // The console's search must agree with the console's listings; the extension's
 // must not be dragged along (ADR 0011).
 func TestConsoleSearchHidesArchivedUnlessAsked(t *testing.T) {
-	ts := newAdminServer(t)
-	userID, deviceID, _ := archiveFlow(t, ts)
-	adminDo(t, ts, http.MethodPut,
+	_, op := newAdminServer(t)
+	userID, deviceID, _, _ := archiveFlow(t, op)
+	adminDo(t, op, http.MethodPut,
 		"/api/v1/admin/users/"+userID+"/devices/"+deviceID+"/records/archive",
-		testAdminToken, nil).mustStatus(t, http.StatusOK)
+		nil).mustStatus(t, http.StatusOK)
 
-	r := adminDo(t, ts, http.MethodGet,
-		"/api/v1/admin/users/"+userID+"/search?q=work", testAdminToken, nil)
+	r := adminDo(t, op, http.MethodGet,
+		"/api/v1/admin/users/"+userID+"/search?q=work", nil)
 	r.mustStatus(t, http.StatusOK)
 	if hits, _ := r.body["hits"].([]any); len(hits) != 0 {
 		t.Fatalf("console search surfaced an archived record: %s", r.raw)
 	}
-	r = adminDo(t, ts, http.MethodGet,
-		"/api/v1/admin/users/"+userID+"/search?q=work&archived=1", testAdminToken, nil)
+	r = adminDo(t, op, http.MethodGet,
+		"/api/v1/admin/users/"+userID+"/search?q=work&archived=1", nil)
 	r.mustStatus(t, http.StatusOK)
 	if hits, _ := r.body["hits"].([]any); len(hits) != 1 {
 		t.Fatalf("archived=1 should surface it: %s", r.raw)

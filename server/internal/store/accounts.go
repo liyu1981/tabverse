@@ -189,13 +189,18 @@ func (s *Store) SetEmail(ctx context.Context, userID, email string) error {
 	return nil
 }
 
-// MarkEmailVerified proves the address and revokes sessions that predate the
-// proof, so a session opened before verification stops working.
+// MarkEmailVerified proves the address.
+//
+// It deliberately does *not* move the revocation cut-off. The cut-off exists to
+// invalidate sessions issued before a *credential* change - a new password - and
+// proving an email address is not that: the account could not sign in at all
+// until the address was proven, so there is no earlier session to invalidate.
+// Bumping it here instead invalidated the very first sign-in, because that
+// session is issued in the same millisecond the proof happens.
 func (s *Store) MarkEmailVerified(ctx context.Context, userID string) error {
 	now := nowMS()
 	res, err := s.db.ExecContext(ctx,
-		`UPDATE users SET email_verified_at = ?, tokens_valid_after = ? WHERE id = ?`,
-		now, now, userID)
+		`UPDATE users SET email_verified_at = ? WHERE id = ?`, now, userID)
 	if err != nil {
 		return err
 	}
@@ -364,15 +369,48 @@ func (s *Store) UpsertIdentity(ctx context.Context, provider, subject, email, na
 		}
 	}
 	if linked == "" {
-		// A brand new account, and a brand new sync account with it: a person
-		// who registers has no tabverses yet, and the sync protocol needs
-		// somewhere to put them.
-		created = true
-		if linked, err = s.createUserTx(ctx, tx, newAccountID(), name, email); err != nil {
+		// Before creating a row, is there an abandoned one to adopt? A server
+		// that predates accounts has sync users with no email: they got there
+		// through the old bootstrap or a pairing code. With exactly one such
+		// user it is obviously the person registering now, and adopting the row
+		// keeps their id - so every record they already synced stays attached
+		// instead of being orphaned on an account the console cannot show.
+		//
+		// With more than one it is a guess, and a wrong guess would hand one
+		// person another person's browsing history, so nothing is adopted and
+		// the caller is expected to say so out loud.
+		adoptable, err := adoptableUserTx(ctx, tx)
+		if err != nil {
 			return "", false, err
 		}
+		if adoptable != "" {
+			// The name is *not* taken from the provider: an adopted row was
+			// named when the server was bootstrapped or paired, and a GitHub
+			// display name is no reason to throw that away. The address is
+			// what makes it an account.
+			if _, err := tx.ExecContext(ctx,
+				`UPDATE users SET name = CASE WHEN name IS NULL OR name = '' THEN ? ELSE name END,
+				        email = ? WHERE id = ?`,
+				name, email, adoptable); err != nil {
+				return "", false, err
+			}
+			linked = adoptable
+		} else {
+			// A brand new account, and a brand new sync account with it: a person
+			// who registers has no tabverses yet, and the sync protocol needs
+			// somewhere to put them.
+			created = true
+			if linked, err = s.createUserTx(ctx, tx, newAccountID(), name, email); err != nil {
+				return "", false, err
+			}
+		}
 	} else if name != "" {
-		if _, err := tx.ExecContext(ctx, `UPDATE users SET name = ? WHERE id = ?`, name, linked); err != nil {
+		// A provider's display name is a fine *initial* name and a bad
+		// replacement: the person may have named the account themselves, and
+		// this runs on every login, not just the first.
+		if _, err := tx.ExecContext(ctx,
+			`UPDATE users SET name = CASE WHEN name IS NULL OR name = '' THEN ? ELSE name END WHERE id = ?`,
+			name, linked); err != nil {
 			return "", false, err
 		}
 	}
@@ -558,7 +596,39 @@ func (s *Store) PutServerSecret(ctx context.Context, name, value string) (string
 // operator in the console.
 func newAccountID() string { return newID("usr_") }
 
-// createUserTx inserts a user inside a caller's transaction.
+// adoptableUserTx returns the id of the single pre-account user a registration
+// may take over, or "" when there is nothing obvious to adopt.
+//
+// "Pre-account" means a user row with no email: nobody has ever signed in as
+// them. Anything else (an existing account, several candidates, a deployment
+// with no users at all) is left alone.
+func adoptableUserTx(ctx context.Context, tx *sql.Tx) (string, error) {
+	var id string
+	var count int
+	err := tx.QueryRowContext(ctx, `
+		SELECT COUNT(*), COALESCE(MIN(id), '') FROM users
+		WHERE email IS NULL OR email = ''`).Scan(&count, &id)
+	if err != nil {
+		return "", err
+	}
+	if count != 1 {
+		return "", nil
+	}
+	return id, nil
+}
+
+// UnclaimedUserCount is how many sync users have no account. The console and
+// the startup log use it to say "there is data here that no account owns",
+// which is the failure mode adoption cannot fix on its own.
+func (s *Store) UnclaimedUserCount(ctx context.Context) (int, error) {
+	var n int
+	err := s.db.QueryRowContext(ctx,
+		`SELECT COUNT(*) FROM users WHERE email IS NULL OR email = ''`).Scan(&n)
+	return n, err
+}
+
+// createUserTx inserts a user inside a caller's transaction. The caller has
+// already linked any row it means to adopt, so a new row here is genuinely new.
 func (s *Store) createUserTx(ctx context.Context, tx *sql.Tx, id, name, email string) (string, error) {
 	if name == "" {
 		name = email
@@ -576,4 +646,151 @@ func (s *Store) createUserTx(ctx context.Context, tx *sql.Tx, id, name, email st
 		return "", err
 	}
 	return id, nil
+}
+
+// CountAccounts is how many people have registered. It is what closes the
+// bootstrap window: once somebody has, accounts come from the console and
+// nowhere else (adr/0013).
+func (s *Store) CountAccounts(ctx context.Context) (int64, error) {
+	var n int64
+	err := s.db.QueryRowContext(ctx,
+		`SELECT COUNT(*) FROM users WHERE email IS NOT NULL AND email <> ''`).Scan(&n)
+	return n, err
+}
+
+// EnsureAccountForEmail returns the account for an address, creating it if this
+// is the first time it is seen.
+//
+// It exists because of the order the sign-in flow happens in. The library's
+// verify provider derives a stable subject from the address and puts it in the
+// session claim, and the session is checked against our accounts *before* the
+// claim is mapped to one - so an account that does not exist yet would have its
+// very first request refused. Asking for the link therefore creates the account,
+// and following the link is what proves the address.
+//
+// The row is inert until then: it holds an address nobody has confirmed and no
+// session can reach, so a stranger who submits somebody else's address gains
+// nothing but a row.
+func (s *Store) EnsureAccountForEmail(ctx context.Context, email, name string) (string, error) {
+	email = strings.ToLower(strings.TrimSpace(email))
+	if email == "" {
+		return "", fmt.Errorf("email is required")
+	}
+	if acc, err := s.AccountByEmail(ctx, email); err == nil {
+		return acc.ID, nil
+	} else if !errors.Is(err, ErrNotFound) {
+		return "", err
+	}
+	id := newAccountID()
+	if _, err := s.createUser(ctx, id, name, email); err != nil {
+		// A concurrent request for the same address may have won the race; that
+		// is the answer we wanted anyway.
+		if acc, err2 := s.AccountByEmail(ctx, email); err2 == nil {
+			return acc.ID, nil
+		}
+		return "", err
+	}
+	return id, nil
+}
+
+// createUser inserts a user outside a transaction, for the paths that are not
+// part of an identity upsert.
+func (s *Store) createUser(ctx context.Context, id, name, email string) (User, error) {
+	if name == "" {
+		name = email
+	}
+	if _, err := s.db.ExecContext(ctx,
+		`INSERT INTO users (id, name, email, role, created_at, rev_seq) VALUES (?, ?, ?, ?, ?, 0)`,
+		id, name, email, RoleUser, nowMS()); err != nil {
+		return User{}, err
+	}
+	return User{ID: id, Name: name, CreatedAt: time.Now().UTC()}, nil
+}
+
+// AccountIDForIdentity resolves the session id the library mints
+// ("<provider>_<subject>") to the account that owns the data.
+//
+// This is a lookup rather than an arithmetic trick on purpose: the subject is
+// the *provider's* identifier (a hash of the address for the passwordless
+// login, a numeric id for GitHub), and only the identities table knows which
+// account a given one belongs to. It is also what lets two providers share one
+// account.
+//
+// A subject with no identity row is a *new registration* rather than an unknown
+// one - it cannot have been forged, since forging it needs the signing secret -
+// so the caller may create the account. A subject that has been retired (its
+// account was deleted) is refused, which is what stops an old session from
+// resurrecting a deleted account.
+func (s *Store) AccountIDForIdentity(ctx context.Context, provider, subject string) (userID string, known bool, retired bool, err error) {
+	var user sql.NullString
+	err = s.db.QueryRowContext(ctx,
+		`SELECT user_id FROM identities WHERE provider = ? AND subject = ?`,
+		provider, subject).Scan(&user)
+	switch {
+	case err == nil && user.Valid && user.String != "":
+		return user.String, true, false, nil
+	case err == nil:
+		// A row without an account: a registration that was never completed.
+		return "", true, true, nil
+	case !errors.Is(err, sql.ErrNoRows):
+		return "", false, false, err
+	}
+	var n int
+	if err := s.db.QueryRowContext(ctx,
+		`SELECT COUNT(*) FROM retired_subjects WHERE provider = ? AND subject = ?`,
+		provider, subject).Scan(&n); err != nil {
+		return "", false, false, err
+	}
+	if n > 0 {
+		return "", false, true, nil
+	}
+	return "", false, false, nil
+}
+
+// Retires every identity of an account, so a session that outlives the account
+// it belonged to is refused instead of creating a new one.
+func (s *Store) retireIdentitiesTx(ctx context.Context, tx *sql.Tx, userID string) error {
+	rows, err := tx.QueryContext(ctx, `SELECT provider, subject FROM identities WHERE user_id = ?`, userID)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	type key struct{ provider, subject string }
+	var keys []key
+	for rows.Next() {
+		var k key
+		if err := rows.Scan(&k.provider, &k.subject); err != nil {
+			return err
+		}
+		keys = append(keys, k)
+	}
+	if err := rows.Err(); err != nil {
+		return err
+	}
+	for _, k := range keys {
+		if _, err := tx.ExecContext(ctx,
+			`INSERT OR IGNORE INTO retired_subjects (provider, subject, at) VALUES (?, ?, ?)`,
+			k.provider, k.subject, nowMS()); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// SubjectForAccount is the identity subject a session carries for an account
+// under a given provider - the other half of AccountIDForIdentity, and what an
+// assumed identity has to be minted with: a session id that does not resolve
+// back to the account is a session that does not work.
+func (s *Store) SubjectForAccount(ctx context.Context, userID, provider string) (string, bool, error) {
+	var subject string
+	err := s.db.QueryRowContext(ctx,
+		`SELECT subject FROM identities WHERE user_id = ? AND provider = ?`,
+		userID, provider).Scan(&subject)
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", false, nil
+	}
+	if err != nil {
+		return "", false, err
+	}
+	return subject, true, nil
 }
