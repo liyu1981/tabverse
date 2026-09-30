@@ -124,6 +124,54 @@ Realtime: `ws://host/api/v1/sync/stream?access_token=<token>` receives
   hashes; pairing codes are single use with a TTL; the bootstrap endpoint
   permanently locks itself after the first account exists.
 
+## Accounts (ADR 0012)
+
+The extension keeps pairing with a device token; the *console* signs in with an
+account, so a person can add devices and see their own data without an operator
+in the loop.
+
+```sh
+TABVERSED_AUTH=accounts \
+TABVERSED_PUBLIC_URL=https://tabs.example.com \
+TABVERSED_SMTP_HOST=smtp.example.com TABVERSED_SMTP_FROM=tabs@example.com \
+  pnpm run server:dev
+```
+
+- **Sign in with a link.** Enter an email address; the server emails a
+  single-use link. No password exists to forget, reuse or leak. With no
+  `TABVERSED_SMTP_HOST` the link is printed to the server log, which is what a
+  LAN-only deployment wants.
+- **Sign in with GitHub or Google** when `TABVERSED_GITHUB_CLIENT_ID`/
+  `_SECRET` (or the Google pair) is set. A self hosted OpenID Connect provider
+  is *not* wired: the auth library's custom provider speaks plain OAuth2, not
+  OIDC discovery with id_token validation, and a login button that half-works
+  is worse than none.
+- **Add your own devices.** A signed-in person mints pairing codes from the
+  console's Pair Code tab. This is what removes the operator from the critical
+  path: pairing used to need `curl` on the server.
+- **Operators** get the account list, the deployment totals, a role switch, and
+  "look as them": a 15 minute, **read only**, audited view of somebody else's
+  console. Everything that would change anything answers 403 while it is on.
+- **The admin token still works** everywhere, as the break-glass path for a
+  deployment that has locked itself out.
+
+| Variable | Default | Meaning |
+| -------- | ------- | ------- |
+| `TABVERSED_AUTH` | `off` | `accounts` to let people sign in to the console |
+| `TABVERSED_AUTH_SECRET` | generated once | signs session cookies; stored in the database if unset |
+| `TABVERSED_PUBLIC_URL` | _(unset)_ | absolute base for login links and social callbacks |
+| `TABVERSED_SECURE_COOKIES` | `true` | turn off only for plain http on a trusted LAN |
+| `TABVERSED_LINK_BY_EMAIL` | `true` | link a social login to an account with the same address; `0` refuses instead |
+| `TABVERSED_REQUIRE_EMAIL_VERIFICATION` | `true` | refuse a session for an unproven address |
+| `TABVERSED_SMTP_HOST` / `_PORT` / `_USER` / `_PASS` / `_FROM` | _(none)_ | where sign-in links go |
+| `TABVERSED_GITHUB_CLIENT_ID` / `_SECRET` | _(none)_ | enable the GitHub button |
+| `TABVERSED_GOOGLE_CLIENT_ID` / `_SECRET` | _(none)_ | enable the Google button |
+| `TABVERSED_DEV_MODE` | `false` | the library's fake OAuth provider, for local development |
+
+Sign-out ends the session in that browser only; a password change or an operator
+disabling the account invalidates every session everywhere, through a revocation
+cut-off rather than a session table.
+
 ## Multi tenancy and the console (ADR 0009)
 
 By default the server is single tenant: `/api/v1/auth/bootstrap` is open only

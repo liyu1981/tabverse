@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"crypto/subtle"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -30,29 +31,221 @@ import (
 // ?access_token= form exists for the WebSocket handshake, where browsers
 // cannot set headers; an admin token is typed into a form, so there is no
 // reason to also accept it in a URL, where it would end up in access logs.
+// Two credentials reach the console API, and neither is a password in a URL:
+//
+//   - a session cookie, from a signed-in account (adr/0012). This is the way a
+//     person uses the console.
+//   - TABVERSED_ADMIN_TOKEN as a bearer header, which stays as the break-glass
+//     path: a locked-out deployment can still reach its own data.
+//
+// A session is scoped to the account that owns it. The admin token is not
+// scoped at all, which is exactly why it is for operators and nothing else.
 func (s *Server) admin(next http.HandlerFunc) http.HandlerFunc {
+	return s.consoleCredential(next, false)
+}
+
+// consoleCredential resolves the caller's credential once and then hands over.
+//
+// The session is resolved by the library's *soft* guard first, which puts the
+// signed-in account in the request context when the session is valid and lets
+// the request through untouched when it is not. That is what lets one route
+// accept either credential: after the soft guard, a valid session is visible in
+// the context, and anything else falls through to the admin token. A hard guard
+// here would write its own 401 and never reach the break-glass path.
+func (s *Server) consoleCredential(next http.HandlerFunc, operatorOnly bool) http.HandlerFunc {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// An assumed identity replaces the session's account for this request,
+		// and only for reads: the operator is looking through somebody else's
+		// console, and every mutating route is refused.
+		if assumed := s.assumedAccountID(r); assumed != "" {
+			if actor, err := s.accounts.AssumedActor(r); err == nil && actor != "" {
+				r = withAssume(r, actor, s.assumeDeadline(r))
+			}
+			if s.refuseIfAssumedAndMutating(w, r) {
+				return
+			}
+			if s.adminTokenValid(r) || s.signedIn(r) {
+				next(w, r)
+				return
+			}
+			s.refuse(w, r)
+			return
+		}
+		// A signed-in person may act on their own account, so a session is
+		// enough to be here; resolveScope decides which account.
+		if s.signedIn(r) && (!operatorOnly || s.isOperator(r)) {
+			next(w, r)
+			return
+		}
+		if s.adminTokenValid(r) {
+			next(w, r)
+			return
+		}
+		s.refuse(w, r)
+	})
+	if !s.accountsAllowed() {
+		return handler
+	}
 	return func(w http.ResponseWriter, r *http.Request) {
-		if !s.cfg.AdminEnabled() {
-			writeErr(w, http.StatusNotFound, "admin_disabled",
-				"the admin API is disabled: set TABVERSED_ADMIN_TOKEN to enable it")
-			return
-		}
-		header := r.Header.Get("Authorization")
-		if !strings.HasPrefix(header, "Bearer ") {
-			writeErr(w, http.StatusUnauthorized, "missing_token",
-				"provide Authorization: Bearer <admin token>")
-			return
-		}
-		if !adminTokenMatches(s.cfg.AdminToken, strings.TrimSpace(strings.TrimPrefix(header, "Bearer "))) {
-			writeErr(w, http.StatusUnauthorized, "invalid_token", "not the admin token")
-			return
-		}
-		next(w, r)
+		s.accounts.Trace(handler).ServeHTTP(w, r)
 	}
 }
 
+// refuse explains why a request did not carry a usable credential. The three
+// answers are deliberately different, because they need different fixes:
+// nothing configured at all (404, the operator has a setup problem), no
+// credential (401, sign in), and a credential that is real but not an operator
+// (403, this view is not for you).
+func (s *Server) refuse(w http.ResponseWriter, r *http.Request) {
+	signedIn := s.accountsAllowed() && s.hasSession(r)
+	if !s.cfg.AdminEnabled() && !signedIn {
+		writeErr(w, http.StatusNotFound, "admin_disabled",
+			"the console API is disabled: set TABVERSED_ADMIN_TOKEN, or TABVERSED_AUTH=accounts to let people sign in")
+		return
+	}
+	if signedIn {
+		writeErr(w, http.StatusForbidden, "forbidden",
+			"this view is for operator accounts")
+		return
+	}
+	header := r.Header.Get("Authorization")
+	if !strings.HasPrefix(header, "Bearer ") {
+		writeErr(w, http.StatusUnauthorized, "missing_token",
+			"sign in, or provide Authorization: Bearer <admin token>")
+		return
+	}
+	if !adminTokenMatches(s.cfg.AdminToken, strings.TrimSpace(strings.TrimPrefix(header, "Bearer "))) {
+		writeErr(w, http.StatusUnauthorized, "invalid_token", "not the admin token")
+		return
+	}
+	// Only reachable if the token matched, which the callers already handled.
+	writeErr(w, http.StatusUnauthorized, "invalid_token", "not accepted")
+}
+
+// adminOnly is admin plus the operator role: the user query interface and the
+// account list. A plain user's session stops here.
+func (s *Server) adminOnly(next http.HandlerFunc) http.HandlerFunc {
+	return s.consoleCredential(next, true)
+}
+
+// signedIn reports whether the request carries a session that resolved to an
+// account. The soft guard has already run by the time this is called, so the
+// answer is "is the user in the context", not "is there a cookie".
+func (s *Server) signedIn(r *http.Request) bool {
+	if s.accounts == nil {
+		return false
+	}
+	_, err := s.accounts.AccountFromRequest(r)
+	return err == nil
+}
+
+func (s *Server) isOperator(r *http.Request) bool {
+	return s.accounts != nil && s.accounts.IsAdminRequest(r)
+}
+
+func (s *Server) adminTokenValid(r *http.Request) bool {
+	if !s.cfg.AdminEnabled() {
+		return false
+	}
+	header := r.Header.Get("Authorization")
+	if !strings.HasPrefix(header, "Bearer ") {
+		return false
+	}
+	return adminTokenMatches(s.cfg.AdminToken, strings.TrimSpace(strings.TrimPrefix(header, "Bearer ")))
+}
+
+// accountsAllowed reports whether the account layer is switched on.
+func (s *Server) accountsAllowed() bool { return s.accounts != nil }
+
+// hasSession reports whether the request carries a session cookie at all. The
+// presence of a cookie is not proof of a valid one, so this only decides which
+// refusal to send; validity is settled by signedIn.
+func (s *Server) hasSession(r *http.Request) bool {
+	if s.accounts == nil {
+		return false
+	}
+	if c, err := r.Cookie(accountsSessionCookie); err == nil && c.Value != "" {
+		return true
+	}
+	return r.Header.Get(accountsCSRFHeader) != ""
+}
+
+// resolveScope answers the only question the console handlers need: which
+// account is this request about?
+//
+//   - an operator may name any account
+//   - a signed-in person may only name their own
+//   - the break-glass admin token may name any
+//
+// A person-signed request with somebody else's id is a 403, not a silent
+// rewrite: quietly serving the caller's own data would make a broken console
+// look like it works.
+func (s *Server) resolveScope(w http.ResponseWriter, r *http.Request, requested string) (string, bool) {
+	// An assumed identity is the subject: the operator asked to see *this*
+	// account, so the account they named is the one every route should act on.
+	if assumed := s.assumedAccountID(r); assumed != "" {
+		if requested == "" || requested == assumed {
+			return assumed, true
+		}
+		writeErr(w, http.StatusBadRequest, "impersonating",
+			"you are looking at another account; stop impersonating to act on this one")
+		return "", false
+	}
+	if s.adminTokenValid(r) {
+		return requested, true
+	}
+	own := ""
+	if s.accounts != nil {
+		if acc, err := s.accounts.AccountFromRequest(r); err == nil {
+			own = acc.ID
+		}
+	}
+	if own == "" {
+		writeErr(w, http.StatusUnauthorized, "unauthorized", "sign in to continue")
+		return "", false
+	}
+	if requested == "" || requested == own {
+		return own, true
+	}
+	if s.accounts != nil && s.accounts.IsAdminRequest(r) {
+		return requested, true
+	}
+	writeErr(w, http.StatusForbidden, "forbidden",
+		"this account is not yours")
+	return "", false
+}
+
+// discardRecorder is a ResponseWriter that records only whether the guard let
+// the request through, for sessionAllowed's probe.
+type discardRecorder struct {
+	header  http.Header
+	allowed bool
+	code    int
+}
+
+func newDiscardRecorder() *discardRecorder {
+	return &discardRecorder{header: http.Header{}}
+}
+
+func (d *discardRecorder) Header() http.Header         { return d.header }
+func (d *discardRecorder) Write(b []byte) (int, error) { return len(b), nil }
+func (d *discardRecorder) WriteHeader(code int)        { d.code = code }
+
+// actorOf names the account behind the current session, for the audit log. The
+// break-glass token has no account, so it is recorded empty rather than faked:
+// "the admin token did this" is a different - and more interesting - fact than
+// any account id.
+func (s *Server) actorOf(r *http.Request) string {
+	if s.accounts != nil {
+		if acc, err := s.accounts.AccountFromRequest(r); err == nil {
+			return acc.ID
+		}
+	}
+	return ""
+}
+
 // adminTokenMatches compares in constant time over the SHA-256 of both sides,
-// so the comparison is not length-or-content dependent.
+// so the comparison does not leak the token through timing.
 func adminTokenMatches(configured, presented string) bool {
 	want := sha256.Sum256([]byte(configured))
 	got := sha256.Sum256([]byte(presented))
@@ -84,7 +277,9 @@ func (s *Server) handleAdminTotals(w http.ResponseWriter, r *http.Request) {
 
 // ---- accounts -------------------------------------------------------------
 
-// handleAdminListUsers lists every account with its counters.
+// handleAdminListUsers lists every account with its counters. Operator-only
+// (routed through adminOnly): a person signing in sees their own account and
+// nothing else, so the user query interface is the operator's.
 func (s *Server) handleAdminListUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := s.store.ListUsers(r.Context())
 	if err != nil {
@@ -94,7 +289,9 @@ func (s *Server) handleAdminListUsers(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"users": users})
 }
 
-// handleAdminCreateUser creates an account. This is the multi tenant entry
+// handleAdminCreateUser creates an account. Operator-only, because a person
+// creates their own by signing in.
+// This is the multi tenant entry
 // point: with an admin token a deployment can hold any number of accounts, and
 // they are isolated from each other by user_id exactly like devices are.
 func (s *Server) handleAdminCreateUser(w http.ResponseWriter, r *http.Request) {
@@ -136,7 +333,10 @@ func (s *Server) handleAdminCreateUser(w http.ResponseWriter, r *http.Request) {
 // handleAdminGetUser is the console's account page: the account, its stats,
 // its devices and its tokens in one response.
 func (s *Server) handleAdminGetUser(w http.ResponseWriter, r *http.Request) {
-	userID := r.PathValue("user_id")
+	userID, ok := s.resolveScope(w, r, r.PathValue("user_id"))
+	if !ok {
+		return
+	}
 	ctx := r.Context()
 	if err := s.store.RequireUser(ctx, userID); err != nil {
 		writeStoreErr(w, err)
@@ -184,10 +384,47 @@ func (s *Server) handleAdminRenameUser(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusBadRequest, "bad_request", "name must not be empty")
 		return
 	}
-	if err := s.store.RenameUser(r.Context(), r.PathValue("user_id"), name); err != nil {
+	userID, ok := s.resolveScope(w, r, r.PathValue("user_id"))
+	if !ok {
+		return
+	}
+	if err := s.store.RenameUser(r.Context(), userID, name); err != nil {
 		writeStoreErr(w, err)
 		return
 	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// handleAdminSetRole promotes or demotes an account. Operator-only, and it
+// exists because there has to be a way to *make* the first operator: the
+// bootstrap admin token is not an account, so without this nobody would ever be
+// able to see the user query interface.
+func (s *Server) handleAdminSetRole(w http.ResponseWriter, r *http.Request) {
+	userID, ok := s.resolveScope(w, r, r.PathValue("user_id"))
+	if !ok {
+		return
+	}
+	var req struct {
+		Role string `json:"role"`
+	}
+	if err := decodeJSON(w, r, &req); err != nil {
+		writeErr(w, http.StatusBadRequest, "bad_request", err.Error())
+		return
+	}
+	if err := s.store.SetRole(r.Context(), userID, req.Role); err != nil {
+		// SetRole refuses to demote the last admin; that is a conflict, not a
+		// malformed request.
+		if strings.Contains(err.Error(), "last admin") {
+			writeErr(w, http.StatusConflict, "last_admin", err.Error())
+			return
+		}
+		writeStoreErr(w, err)
+		return
+	}
+	_ = s.store.AppendAudit(r.Context(), store.AuditEntry{
+		Actor: s.actorOf(r), Target: userID, Action: store.AuditRoleChanged,
+		IP: clientIP(r), Detail: req.Role,
+	})
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -195,8 +432,19 @@ func (s *Server) handleAdminRenameUser(w http.ResponseWriter, r *http.Request) {
 // and tokens. The console asks for a typed confirmation; the server does not
 // implement a trash, so a mistake here is only recoverable from a backup.
 func (s *Server) handleAdminDeleteUser(w http.ResponseWriter, r *http.Request) {
-	userID := r.PathValue("user_id")
+	userID, ok := s.resolveScope(w, r, r.PathValue("user_id"))
+	if !ok {
+		return
+	}
 	ctx := r.Context()
+	// Deleting an account is irreversible, so the request has to carry the id
+	// back as a typed confirmation. Without it, a mis-clicked button in a
+	// console that is one tab away from the wrong account is unrecoverable.
+	if confirm := r.URL.Query().Get("confirm"); confirm != userID {
+		writeErr(w, http.StatusBadRequest, "confirmation_required",
+			"pass ?confirm="+userID+" to delete this account and everything it stored")
+		return
+	}
 	user, err := s.store.GetUser(ctx, userID)
 	if err != nil {
 		writeStoreErr(w, err)
@@ -215,7 +463,10 @@ func (s *Server) handleAdminDeleteUser(w http.ResponseWriter, r *http.Request) {
 // is a bearer credential for that account's data, so this is the endpoint the
 // admin token guards most tightly.
 func (s *Server) handleAdminCreateInvite(w http.ResponseWriter, r *http.Request) {
-	userID := r.PathValue("user_id")
+	userID, ok := s.resolveScope(w, r, r.PathValue("user_id"))
+	if !ok {
+		return
+	}
 	var req struct {
 		TTLSeconds int `json:"ttl_seconds"`
 	}
@@ -244,6 +495,15 @@ func (s *Server) handleAdminCreateInvite(w http.ResponseWriter, r *http.Request)
 		writeStoreErr(w, err)
 		return
 	}
+	// Minting a code is how a device gets in, and a person can now do it for
+	// themselves, so it is audited with the actor - not just the account.
+	_ = s.store.AppendAudit(ctx, store.AuditEntry{
+		Actor:  s.actorOf(r),
+		Target: userID,
+		Action: store.AuditPairingCode,
+		IP:     clientIP(r),
+		Detail: "ttl " + strconv.Itoa(req.TTLSeconds) + "s",
+	})
 	writeJSON(w, http.StatusCreated, map[string]any{
 		"user_id":    userID,
 		"code":       display,
@@ -254,25 +514,39 @@ func (s *Server) handleAdminCreateInvite(w http.ResponseWriter, r *http.Request)
 // handleAdminRevokeToken marks one token unusable. The raw token is not known
 // to the server, so the console sends the stored hash it listed earlier.
 func (s *Server) handleAdminRevokeToken(w http.ResponseWriter, r *http.Request) {
-	userID := r.PathValue("user_id")
+	userID, ok := s.resolveScope(w, r, r.PathValue("user_id"))
+	if !ok {
+		return
+	}
 	hash := r.PathValue("hash")
 	if err := s.store.RevokeToken(r.Context(), userID, hash); err != nil {
 		writeStoreErr(w, err)
 		return
 	}
+	_ = s.store.AppendAudit(r.Context(), store.AuditEntry{
+		Actor: s.actorOf(r), Target: userID, Action: store.AuditTokenRevoked,
+		IP: clientIP(r), Detail: "token " + hash[:min(len(hash), 8)],
+	})
 	s.logger.Info("admin revoked token", "user", userID, "fingerprint", hash[:min(len(hash), 8)])
 	w.WriteHeader(http.StatusNoContent)
 }
 
 // handleAdminRevokeDevice revokes every live token of one device.
 func (s *Server) handleAdminRevokeDevice(w http.ResponseWriter, r *http.Request) {
-	userID := r.PathValue("user_id")
+	userID, ok := s.resolveScope(w, r, r.PathValue("user_id"))
+	if !ok {
+		return
+	}
 	deviceID := r.PathValue("device_id")
 	n, err := s.store.RevokeDevice(r.Context(), userID, deviceID)
 	if err != nil {
 		writeStoreErr(w, err)
 		return
 	}
+	_ = s.store.AppendAudit(r.Context(), store.AuditEntry{
+		Actor: s.actorOf(r), Target: userID, Action: store.AuditDeviceRevoked,
+		IP: clientIP(r), Detail: fmt.Sprintf("%s, %d token(s)", deviceID, n),
+	})
 	s.logger.Info("admin revoked device", "user", userID, "device", deviceID, "tokens", n)
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -295,7 +569,10 @@ func (s *Server) handleAdminUnarchiveToken(w http.ResponseWriter, r *http.Reques
 }
 
 func (s *Server) archiveToken(w http.ResponseWriter, r *http.Request, archive bool) {
-	userID := r.PathValue("user_id")
+	userID, ok := s.resolveScope(w, r, r.PathValue("user_id"))
+	if !ok {
+		return
+	}
 	hash := r.PathValue("hash")
 	var outcome store.ArchiveOutcome
 	var err error
@@ -323,7 +600,10 @@ func (s *Server) handleAdminUnarchiveDevice(w http.ResponseWriter, r *http.Reque
 }
 
 func (s *Server) archiveDevice(w http.ResponseWriter, r *http.Request, archive bool) {
-	userID := r.PathValue("user_id")
+	userID, ok := s.resolveScope(w, r, r.PathValue("user_id"))
+	if !ok {
+		return
+	}
 	deviceID := r.PathValue("device_id")
 	var outcome store.ArchiveOutcome
 	var err error
@@ -353,7 +633,10 @@ func (s *Server) handleAdminUnarchiveDeviceRecords(w http.ResponseWriter, r *htt
 }
 
 func (s *Server) archiveDeviceRecords(w http.ResponseWriter, r *http.Request, archive bool) {
-	userID := r.PathValue("user_id")
+	userID, ok := s.resolveScope(w, r, r.PathValue("user_id"))
+	if !ok {
+		return
+	}
 	deviceID := r.PathValue("device_id")
 	var outcome store.ArchiveOutcome
 	var err error
@@ -405,7 +688,10 @@ func (s *Server) logArchive(kind, userID, subject string, archive bool, outcome 
 // handleAdminListTabspaces is the tabverse list: one row per saved tabverse
 // with its counts, newest first.
 func (s *Server) handleAdminListTabspaces(w http.ResponseWriter, r *http.Request) {
-	userID := r.PathValue("user_id")
+	userID, ok := s.resolveScope(w, r, r.PathValue("user_id"))
+	if !ok {
+		return
+	}
 	ctx := r.Context()
 	if err := s.store.RequireUser(ctx, userID); err != nil {
 		writeStoreErr(w, err)
@@ -430,8 +716,11 @@ func (s *Server) handleAdminListTabspaces(w http.ResponseWriter, r *http.Request
 // the stored order, plus the notes, todos, bookmarks and closed tabs that hang
 // off it, ordered by the client's own aggregates.
 func (s *Server) handleAdminGetTabspace(w http.ResponseWriter, r *http.Request) {
-	bundle, err := s.store.GetTabspaceBundle(r.Context(),
-		r.PathValue("user_id"), r.PathValue("tabspace_id"))
+	userID, ok := s.resolveScope(w, r, r.PathValue("user_id"))
+	if !ok {
+		return
+	}
+	bundle, err := s.store.GetTabspaceBundle(r.Context(), userID, r.PathValue("tabspace_id"))
 	if err != nil {
 		writeStoreErr(w, err)
 		return
@@ -443,7 +732,10 @@ func (s *Server) handleAdminGetTabspace(w http.ResponseWriter, r *http.Request) 
 // filtered to one tabverse, with a substring search over the payload. It is
 // the escape hatch for a record the rendered views cannot make sense of.
 func (s *Server) handleAdminListRecords(w http.ResponseWriter, r *http.Request) {
-	userID := r.PathValue("user_id")
+	userID, ok := s.resolveScope(w, r, r.PathValue("user_id"))
+	if !ok {
+		return
+	}
 	ctx := r.Context()
 	if err := s.store.RequireUser(ctx, userID); err != nil {
 		writeStoreErr(w, err)
@@ -480,7 +772,10 @@ func (s *Server) handleAdminListRecords(w http.ResponseWriter, r *http.Request) 
 // extension queries, scoped to one account, with the display title filled in
 // so the hits can be listed.
 func (s *Server) handleAdminSearch(w http.ResponseWriter, r *http.Request) {
-	userID := r.PathValue("user_id")
+	userID, ok := s.resolveScope(w, r, r.PathValue("user_id"))
+	if !ok {
+		return
+	}
 	q := r.URL.Query().Get("q")
 	if strings.TrimSpace(q) == "" {
 		writeJSON(w, http.StatusOK, map[string]any{"query": q, "hits": []store.AdminSearchHit{}})

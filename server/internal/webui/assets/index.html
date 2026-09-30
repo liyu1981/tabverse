@@ -27,6 +27,13 @@
     </header>
 
     <div id="banner" class="banner" hidden></div>
+    <!-- Read only while an operator looks through somebody else's account. It
+         is not dismissible on purpose: the page underneath is not theirs. -->
+    <div id="assume-bar" class="assume-bar" hidden>
+      <span class="assume-dot"></span>
+      <span id="assume-text"></span>
+      <button id="assume-stop" class="tiny" type="button">Stop looking</button>
+    </div>
 
     <!-- Sign in: the admin token is the only credential there is. -->
     <main id="view-login" class="login" hidden>
@@ -54,9 +61,40 @@
     </main>
 
     <!-- The console proper. -->
+    <!-- Sign in with an account. The server owns the form: it posts to
+         /auth/tabverse with an email and the library sends a link. -->
+    <main id="view-signin" class="login" hidden>
+      <form id="signin-form" class="card login-card">
+        <h1>Sign in</h1>
+        <p class="muted">
+          Enter your email address and we will send you a sign-in link. No
+          password to remember, and nothing to store on this device but the
+          session cookie.
+        </p>
+        <label for="signin-email">Email</label>
+        <input
+          id="signin-email"
+          type="email"
+          autocomplete="email"
+          spellcheck="false"
+          placeholder="you@example.com"
+          required
+        />
+        <button type="submit" class="primary">Send sign-in link</button>
+        <!-- Only the providers the deployment configured; the page asks the
+             server rather than guessing, so a button never leads nowhere. -->
+        <div id="signin-providers" class="providers" hidden></div>
+        <p class="muted small" id="signin-note"></p>
+        <p class="error" id="signin-error" hidden></p>
+        <a class="muted small" id="signin-admin" href="#" hidden
+          >Use the operator token instead</a
+        >
+      </form>
+    </main>
+
     <div id="app" class="app" hidden>
       <nav class="sidebar">
-        <div class="sidebar-section">
+        <div class="sidebar-section" id="sidebar-accounts">
           <h2>Accounts</h2>
           <ul id="user-list" class="user-list"></ul>
           <form id="create-user-form" class="stack">
@@ -84,8 +122,13 @@
               <p class="muted small" id="account-id"></p>
             </div>
             <div class="view-actions">
+              <span class="badge" id="account-role" hidden></span>
+              <button id="impersonate" class="ghost" type="button" hidden
+                >Look as them</button
+              >
               <button id="rename-user" class="ghost" type="button">Rename</button>
               <button id="delete-user" class="danger" type="button">Delete account</button>
+              <button id="sign-out" class="ghost" type="button" hidden>Sign out</button>
             </div>
           </div>
 

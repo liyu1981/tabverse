@@ -10,6 +10,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -17,6 +18,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/liyu1981/tabverse/server/internal/accounts"
 	"github.com/liyu1981/tabverse/server/internal/api"
 	"github.com/liyu1981/tabverse/server/internal/config"
 	"github.com/liyu1981/tabverse/server/internal/hub"
@@ -55,6 +57,26 @@ func run() error {
 	h := hub.New()
 	srv := api.New(cfg, st, h, logger)
 
+	// The console's account layer (adr/0012). Off unless TABVERSED_AUTH says
+	// otherwise, in which case the console keeps using the admin token and the
+	// extension keeps pairing exactly as before.
+	if cfg.AccountsEnabled() {
+		accountsSvc, err := accounts.New(cfg, st, logger)
+		if err != nil {
+			return fmt.Errorf("account layer: %w", err)
+		}
+		srv.WithAccounts(accountsSvc)
+		if cfg.DevMode {
+			logger.Warn("TABVERSED_DEV_MODE is on: the library's fake OAuth provider is " +
+				"mounted, which is for local development only")
+		}
+		if !cfg.SMTPConfigured() {
+			logger.Warn("no TABVERSED_SMTP_HOST: sign-in links will be printed to this log " +
+				"instead of emailed")
+		}
+		logger.Info("accounts enabled: sign in at / (or /auth/ for the login providers)")
+	}
+
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
@@ -76,7 +98,8 @@ func run() error {
 		logger.Info("tabversed listening",
 			"addr", cfg.Addr, "db", cfg.DBPath, "version", cfg.Version)
 		if cfg.AdminEnabled() {
-			logger.Info("admin API and console enabled: GET / (admin token required)")
+			logger.Info("admin API enabled: Authorization: Bearer <admin token> still works, " +
+				"as the break-glass path")
 		}
 		if cfg.Exposed() {
 			logger.Warn("listening on a non-loopback address: the pairing/bootstrap " +

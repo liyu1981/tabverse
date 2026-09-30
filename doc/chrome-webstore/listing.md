@@ -30,7 +30,13 @@ All requested permissions below exist to serve that one purpose.
 Consistent with `adr/0002-privacy-posture.md`:
 
 - **Local-only by default.** No data leaves the device until the user
-  explicitly pairs a device with a sync server in the settings dialog.
+  explicitly pairs a device with a sync server in the settings dialog. If that
+  server has accounts enabled, the *web console* can be signed into with a
+  single-use email link or a configured social provider; the extension itself
+  never signs in and never holds a password or a session cookie.
+- **Email address, only if the operator enabled console accounts.** It is used
+  to send the sign-in link, stored on the user's own server, never sent
+  elsewhere. Without accounts the extension collects no email address at all.
 - **When sync is enabled**, the user chooses the server (self-hosted
   `tabversed` by default). The extension sends: tab URLs and titles, saved
   tab groups, notes, todos and bookmarks. Setting up the connection sends the

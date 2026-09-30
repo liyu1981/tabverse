@@ -141,6 +141,21 @@ browser ── GET / ───┤                        └─ read only: tabve
   there is no endpoint that edits a user's records, because a record written
   outside the extension would lose the next LWW comparison anyway
 
+**Accounts (`adr/0012`) are for the console; pairing stays with the extension.**
+`internal/accounts` holds the account layer - the account row, the Argon2id
+hash (for the password path), the cut-off that revokes sessions, the one function
+that bridges the auth library's `<provider>_<subject>` id to our `usr_...` rows,
+and the assumed-identity minting behind impersonation. The OAuth2 dance, the JWT
+cookie, the XSRF echo and the provider allow-list are go-pkgz/auth/v2's; the
+extension is untouched and still pairs with a device token.
+
+A signed-in person lands on their own account and mints their own pairing codes,
+which is what removes the operator from the critical path. An operator gets the
+account list, a role switch, and **"look as them"**: a 15 minute read-only assumed
+identity in its own cookie, so the operator's own session survives, every mutating
+route answers 403 while it is on, and entering and leaving are both in
+`audit_log`. `TABVERSED_ADMIN_TOKEN` remains as the break-glass path.
+
 `internal/webui` embeds three hand written files (HTML, CSS, JS - no framework,
 no build step) and serves them with a strict CSP. Since there is no bundler
 and no type checker between the script and the page - it reaches the DOM by

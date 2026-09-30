@@ -2,7 +2,9 @@ package store
 
 import (
 	"context"
+	"crypto/rand"
 	"database/sql"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"strings"
@@ -164,4 +166,16 @@ func (s *Store) ServerRev(ctx context.Context, userID string) (int64, error) {
 		return 0, ErrNotFound
 	}
 	return rev, err
+}
+
+// newID mints an identifier with the given prefix. It is the same shape the API
+// layer uses, kept here so account creation (which happens inside a store
+// transaction) can mint ids without importing the API package.
+func newID(prefix string) string {
+	raw := make([]byte, 16)
+	if _, err := rand.Read(raw); err != nil {
+		// crypto/rand failure is not recoverable, and an id is not optional.
+		panic(err)
+	}
+	return prefix + hex.EncodeToString(raw)
 }

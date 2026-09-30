@@ -542,7 +542,14 @@ func TestRenameAndDeleteAccount(t *testing.T) {
 		t.Fatalf("rename did not stick: %s", r.raw)
 	}
 
-	adminDo(t, ts, http.MethodDelete, "/api/v1/admin/users/"+userID, testAdminToken, nil).
+	// deleting an account now needs the id back as a confirmation
+	r = adminDo(t, ts, http.MethodDelete, "/api/v1/admin/users/"+userID, testAdminToken, nil)
+	r.mustStatus(t, http.StatusBadRequest)
+	if r.body["error"] != "confirmation_required" {
+		t.Fatalf("unconfirmed delete = %s, want confirmation_required", r.raw)
+	}
+	adminDo(t, ts, http.MethodDelete,
+		"/api/v1/admin/users/"+userID+"?confirm="+userID, testAdminToken, nil).
 		mustStatus(t, http.StatusNoContent)
 
 	// The account is gone, and so is every trace of its data: the token that

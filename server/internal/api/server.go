@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/liyu1981/tabverse/server/internal/accounts"
 	"github.com/liyu1981/tabverse/server/internal/auth"
 	"github.com/liyu1981/tabverse/server/internal/config"
 	"github.com/liyu1981/tabverse/server/internal/hub"
@@ -29,6 +30,10 @@ type Server struct {
 	store  *store.Store
 	hub    *hub.Hub
 	logger *slog.Logger
+	// accounts is the console's account layer, or nil when TABVERSED_AUTH is
+	// not "accounts". The console API accepts either a session from it or the
+	// break-glass admin token, so a nil here simply means "no sessions yet".
+	accounts *accounts.Service
 }
 
 func New(cfg config.Config, st *store.Store, h *hub.Hub, logger *slog.Logger) *Server {
@@ -37,6 +42,22 @@ func New(cfg config.Config, st *store.Store, h *hub.Hub, logger *slog.Logger) *S
 	}
 	return &Server{cfg: cfg, store: st, hub: h, logger: logger}
 }
+
+// WithAccounts attaches the account layer. It is separate from New because the
+// service needs a *store (for the signing secret) and a logger, and because a
+// deployment that keeps TABVERSED_AUTH=off must build without one.
+func (s *Server) WithAccounts(svc *accounts.Service) *Server {
+	s.accounts = svc
+	return s
+}
+
+// The cookie and header names the console's JavaScript needs. They are exported
+// by the accounts package rather than duplicated here, because a mismatch shows
+// up as a 401 on every request and nothing else.
+const (
+	accountsSessionCookie = "tv_session"
+	accountsCSRFHeader    = "X-XSRF-Token"
+)
 
 // Handler builds the route table. Route patterns use the Go 1.22+ method
 // aware syntax on purpose: no router dependency, no magic.
@@ -64,11 +85,12 @@ func (s *Server) Handler() http.Handler {
 	// deployment has no admin attack surface at all.
 	admin := func(h http.HandlerFunc) http.HandlerFunc { return s.admin(h) }
 	mux.HandleFunc("GET /api/v1/admin/config", s.handleAdminConfig) // unauthenticated: tells the console whether to ask for a token
-	mux.HandleFunc("GET /api/v1/admin/totals", admin(s.handleAdminTotals))
-	mux.HandleFunc("GET /api/v1/admin/users", admin(s.handleAdminListUsers))
-	mux.HandleFunc("POST /api/v1/admin/users", admin(s.handleAdminCreateUser))
+	mux.HandleFunc("GET /api/v1/admin/totals", s.adminOnly(s.handleAdminTotals))
+	mux.HandleFunc("GET /api/v1/admin/users", s.adminOnly(s.handleAdminListUsers))
+	mux.HandleFunc("POST /api/v1/admin/users", s.adminOnly(s.handleAdminCreateUser))
 	mux.HandleFunc("GET /api/v1/admin/users/{user_id}", admin(s.handleAdminGetUser))
 	mux.HandleFunc("PUT /api/v1/admin/users/{user_id}", admin(s.handleAdminRenameUser))
+	mux.HandleFunc("PUT /api/v1/admin/users/{user_id}/role", s.adminOnly(s.handleAdminSetRole))
 	mux.HandleFunc("DELETE /api/v1/admin/users/{user_id}", admin(s.handleAdminDeleteUser))
 	mux.HandleFunc("POST /api/v1/admin/users/{user_id}/invites", admin(s.handleAdminCreateInvite))
 	mux.HandleFunc("DELETE /api/v1/admin/users/{user_id}/devices/{device_id}", admin(s.handleAdminRevokeDevice))
@@ -88,8 +110,26 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/v1/admin/users/{user_id}/records", admin(s.handleAdminListRecords))
 	mux.HandleFunc("GET /api/v1/admin/users/{user_id}/search", admin(s.handleAdminSearch))
 
-	// The console itself: embedded static files, no auth (the login screen has
-	// to be loadable to exist; every API call it makes is admin authorized).
+	// The library's login routes, mounted where the console expects them. Only
+	// present when the account layer is on; without it the paths are ours and
+	// unknown, which is the honest answer for a deployment with no accounts.
+	if s.accounts != nil {
+		mux.Handle("/auth/", http.StripPrefix("/auth", s.accounts.Handlers()))
+		// The soft guard, because these two are what the page calls before it
+		// knows whether anyone is signed in.
+		mux.Handle("GET /api/v1/console/me", s.accounts.Trace(http.HandlerFunc(s.handleConsoleMe)))
+		mux.Handle("POST /api/v1/console/signout", s.accounts.Trace(http.HandlerFunc(s.handleConsoleSignOut)))
+		mux.Handle("GET /api/v1/console/impersonation", s.accounts.Trace(http.HandlerFunc(s.handleConsoleImpersonation)))
+		mux.Handle("POST /api/v1/console/impersonate/stop", s.accounts.Trace(http.HandlerFunc(s.handleConsoleImpersonateStop)))
+		// Starting an assumed identity is an operator action, so it goes
+		// through the same gate as the operator views.
+		mux.Handle("POST /api/v1/admin/users/{user_id}/impersonate",
+			s.adminOnly(http.HandlerFunc(s.handleConsoleImpersonateStart).ServeHTTP))
+	}
+
+	// The console itself: embedded static files. The page is public (a login
+	// screen has to be loadable to exist) and every API call it makes is
+	// authorized by a session or the admin token.
 	mux.Handle("/", webui.Handler())
 
 	return withCORS(mux)

@@ -228,6 +228,27 @@ select:focus {
   flex-direction: column;
   gap: 10px;
 }
+.providers {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  margin-top: 2px;
+}
+a.provider {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 12px;
+  text-decoration: none;
+  color: var(--text);
+  font-size: 13px;
+}
+a.provider:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
 .login-card button {
   margin-top: 6px;
 }
@@ -347,6 +368,41 @@ select:focus {
 }
 .row input[type='number'] {
   width: 110px;
+}
+
+/* The read only bar. Deliberately loud and deliberately not dismissible: the
+   page underneath belongs to somebody else, and an operator who forgets they
+   are looking through it is exactly the failure this feature has to prevent. */
+.assume-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 18px;
+  background: var(--warn);
+  color: #14161a;
+  font-weight: 600;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+.assume-bar .assume-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #14161a;
+  flex: 0 0 auto;
+}
+.assume-bar button {
+  margin-left: auto;
+  background: rgba(0, 0, 0, 0.12);
+  border-color: rgba(0, 0, 0, 0.25);
+  color: #14161a;
+  font-weight: 600;
+}
+.assume-bar button:hover {
+  border-color: #14161a;
 }
 
 /* ---- account tabs: rail on the left, panels on the right ---------------- */

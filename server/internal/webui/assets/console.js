@@ -51,10 +51,23 @@ function writeHash(patch) {
   );
 }
 
+// Two credentials, and the page has to know which one it is holding (adr/0012):
+//
+//   - a session cookie, when accounts are on: the XSRF token comes out of a
+//     readable cookie and has to be echoed in a header, or the request is refused
+//   - the admin token in localStorage, the break-glass path for a deployment
+//     with no accounts
+//
+// Same-origin requests carry the cookie automatically, which is why
+// credentials is not set: 'include' would break a plain http deployment.
 const api = {
   async call(method, path, body) {
-    const headers = { Authorization: 'Bearer ' + state.token };
+    const headers = {};
+    if (state.token) headers['Authorization'] = 'Bearer ' + state.token;
     if (body !== undefined) headers['Content-Type'] = 'application/json';
+    if (state.csrfHeader && method !== 'GET' && method !== 'HEAD') {
+      headers[state.csrfHeader] = state.csrf;
+    }
     const res = await fetch(path, {
       method,
       headers,
@@ -112,6 +125,11 @@ const state = {
   // which of the account's three tabs is open: 'pair' | 'credentials' | 'data'.
   // null until an account is opened, so the first visit can pick a sensible one.
   tab: null,
+  // the signed-in account, from /api/v1/console/me
+  me: null,
+  // the XSRF echo token and the header it goes in
+  csrf: '',
+  csrfHeader: '',
 };
 
 // ---- copy to clipboard ----------------------------------------------------
@@ -258,15 +276,135 @@ function banner(message) {
   node.hidden = false;
 }
 
+// whoAmI asks the server who the caller is. It answers for all three states -
+// signed in, signed out, accounts disabled - so the page never has to guess.
+async function whoAmI() {
+  try {
+    return await api.get('/api/v1/console/me');
+  } catch (e) {
+    if (e.status === 401) {
+      return null;
+    }
+    // A deployment too old to have the endpoint falls back to the token flow.
+    return { accounts_enabled: false, signed_in: false, admin_token: true };
+  }
+}
+
+function showSignIn(me) {
+  $('#view-login').hidden = true;
+  $('#view-signin').hidden = false;
+  $('#app').hidden = true;
+  $('#login-hint').textContent =
+    'This server has accounts enabled, so people sign in with a link sent to ' +
+    'their email address.';
+  const adminLink = $('#signin-admin');
+  if (me.admin_token) {
+    adminLink.hidden = false;
+  }
+  renderSignInProviders(me.providers || []);
+  const note = $('#signin-note');
+  note.textContent = me.self_hosted
+    ? 'The link comes from the server, so check your spam folder.'
+    : 'No mail server is configured, so the server prints the link in its own log.';
+  $('#signin-email').focus();
+}
+
+// renderSignInProviders draws one button per configured provider, pointing at
+// the library's own login start for that provider.
+function renderSignInProviders(providers) {
+  const box = $('#signin-providers');
+  clear(box);
+  if (!providers || !providers.length) {
+    box.hidden = true;
+    return;
+  }
+  box.hidden = false;
+  box.append(el('span', { class: 'muted small' }, 'or continue with'));
+  for (const name of providers) {
+    box.append(
+      el(
+        'a',
+        { class: 'provider', href: '/auth/' + name },
+        name === 'github' ? 'GitHub' : name === 'google' ? 'Google' : name,
+      ),
+    );
+  }
+}
+
+$('#signin-form').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const email = $('#signin-email').value.trim();
+  if (!email) return;
+  const err = $('#signin-error');
+  err.hidden = true;
+  const button = $('#signin-form button[type=submit]');
+  button.disabled = true;
+  try {
+    // The library owns the form and the send; posting to its endpoint is the
+    // whole integration.
+    const res = await fetch('/auth/tabverse', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ user: email }).toString(),
+    });
+    if (!res.ok && res.status !== 200) {
+      throw new Error('HTTP ' + res.status);
+    }
+    $('#signin-error').hidden = false;
+    $('#signin-error').className = 'muted small';
+    $('#signin-error').textContent =
+      'Check your email for the sign-in link. It works once and expires.';
+    $('#signin-email').value = '';
+  } catch (e) {
+    err.hidden = false;
+    err.className = 'error';
+    err.textContent = 'Could not send the link: ' + e.message;
+  } finally {
+    button.disabled = false;
+  }
+});
+
+$('#signin-admin').addEventListener('click', (ev) => {
+  ev.preventDefault();
+  showLogin();
+});
+
+$('#sign-out').addEventListener('click', async () => {
+  try {
+    await api.post('/api/v1/console/signout');
+  } catch {
+    // Even if the call fails, drop what this page holds.
+  }
+  state.me = null;
+  state.csrf = '';
+  state.token = '';
+  localStorage.removeItem(TOKEN_KEY);
+  location.reload();
+});
+
 // ---- session --------------------------------------------------------------
 
 async function boot() {
   askConfig();
   const params = readHash();
   state.token = state.token || localStorage.getItem(TOKEN_KEY) || '';
-  if (!state.token) {
+
+  // Who am I? This decides between the three front doors: a signed-in account,
+  // the operator token, or nothing. Asking first is what lets a person skip the
+  // token screen entirely.
+  const me = await whoAmI();
+  if (!me) {
     showLogin();
     return;
+  }
+  if (me.accounts_enabled && !me.signed_in) {
+    showSignIn(me);
+    return;
+  }
+  if (me.signed_in) {
+    state.me = me;
+    state.csrf = me.csrf || '';
+    state.csrfHeader = me.csrf_header || '';
   }
   try {
     await refreshTotals();
@@ -302,6 +440,7 @@ async function boot() {
 
 function showLogin(error) {
   $('#view-login').hidden = false;
+  $('#view-signin').hidden = true;
   $('#app').hidden = true;
   $('#logout').hidden = true;
   const err = $('#login-error');
@@ -309,12 +448,6 @@ function showLogin(error) {
   err.textContent = error || '';
   $('#admin-token').value = state.token;
   $('#admin-token').focus();
-}
-
-function showApp() {
-  $('#view-login').hidden = true;
-  $('#app').hidden = false;
-  $('#logout').hidden = false;
 }
 
 // askConfig is the one admin call that needs no token: it says whether this
@@ -382,12 +515,147 @@ $('#logout').addEventListener('click', () => {
   showLogin();
 });
 
+// showApp reveals the app shell, whichever front door was used to get here.
+function showApp() {
+  $('#view-login').hidden = true;
+  $('#view-signin').hidden = true;
+  $('#app').hidden = false;
+  $('#logout').hidden = !state.token;
+}
+
 $('#refresh').addEventListener('click', async () => {
   await refreshTotals();
   await loadUsers();
   if (state.selected) await openAccount(state.selected.id);
   toast('Reloaded', 'good');
 });
+
+// openMyAccount is what a signed-in person lands on. An operator sees the
+// account list; everyone else goes straight to their own account and the
+// sidebar is hidden, because a person has exactly one account and showing them
+// a list they cannot use is just a route to a 403.
+async function openMyAccount() {
+  const operator = state.me && state.me.role === 'admin';
+  const roleBadge = $('#account-role');
+  roleBadge.hidden = !operator;
+  roleBadge.textContent = 'operator';
+  $('#sign-out').hidden = !(state.me && state.me.signed_in);
+  $('#sidebar-accounts').hidden = !operator;
+
+  await refreshAssumption();
+
+  if (operator) {
+    await refreshTotals().catch(() => {});
+    await loadUsers();
+    const users = state.users;
+    if (users.length === 1) {
+      await openAccount(users[0].id);
+      return;
+    }
+    if (users.length > 1) {
+      showAccountList();
+      return;
+    }
+  }
+  if (state.me && state.me.user_id) {
+    await openAccount(state.me.user_id);
+    await refreshAssumption();
+    return;
+  }
+  // The break-glass token with accounts enabled but no session: the old flow.
+  await refreshTotals().catch(() => {});
+  await loadUsers();
+  if (state.users.length === 1) {
+    await openAccount(state.users[0].id);
+  } else {
+    showAccountList();
+  }
+}
+
+function showAccountList() {
+  $('#empty-state').hidden = false;
+  $('#view-account').hidden = true;
+  $('#view-tabspace').hidden = true;
+  renderUserList();
+}
+
+// ---- impersonation (adr/0012) --------------------------------------------
+//
+// An operator can look at an account as its owner sees it. The server enforces
+// read only; this half is the banner, because a read only view that looks like
+// a normal one is how an operator walks away believing they changed something.
+
+let assumeTimer = null;
+
+async function refreshAssumption() {
+  if (!state.me || !state.me.signed_in) return;
+  let info;
+  try {
+    info = await api.get('/api/v1/console/impersonation');
+  } catch {
+    return;
+  }
+  const bar = $('#assume-bar');
+  if (!info || !info.assuming) {
+    bar.hidden = true;
+    clearInterval(assumeTimer);
+    assumeTimer = null;
+    // back to being ourselves: the account list and the operator's own
+    // account are the right things to show
+    if (state.me.role === 'admin') {
+      await loadUsers();
+    }
+    return;
+  }
+  bar.hidden = false;
+  const until = info.until ? new Date(info.until) : null;
+  const left = until ? Math.max(0, Math.round((until - Date.now()) / 1000)) : 0;
+  $('#assume-text').textContent =
+    'Read only — you are looking at ' +
+    (info.as || info.user_id) +
+    ' as they see it' +
+    (info.as_by ? ', as ' + info.as_by : '') +
+    (left ? ' · ' + Math.floor(left / 60) + 'm ' + (left % 60) + 's left' : '');
+  // tick the countdown
+  clearInterval(assumeTimer);
+  assumeTimer = setInterval(refreshAssumption, 1000);
+}
+
+$('#assume-stop').addEventListener('click', async () => {
+  try {
+    await api.post('/api/v1/console/impersonate/stop');
+  } catch (e) {
+    toast('Could not stop: ' + e.message, 'bad');
+    return;
+  }
+  $('#assume-bar').hidden = true;
+  clearInterval(assumeTimer);
+  assumeTimer = null;
+  await loadUsers();
+  toast('Stopped looking', 'good');
+});
+
+async function startImpersonation(userID) {
+  if (
+    !confirm(
+      'Look at this account exactly as its owner sees it?\n\n' +
+        'Read only: nothing can be changed while you do, and both the start and ' +
+        'the stop are recorded. The window is 15 minutes.',
+    )
+  ) {
+    return;
+  }
+  try {
+    await api.post(
+      '/api/v1/admin/users/' + encodeURIComponent(userID) + '/impersonate',
+    );
+    await refreshAssumption();
+    await openAccount(userID);
+    toast('Read only — banner at the top', 'good');
+  } catch (e) {
+    toast(e.message, 'bad');
+  }
+}
 
 // ---- account list ---------------------------------------------------------
 
@@ -444,6 +712,16 @@ async function openAccount(userID) {
     deleted: false,
     archived: false,
   };
+  // The "look as them" button is an operator's tool and only makes sense for
+  // somebody else's account, and never while already assuming one.
+  const operator = state.me && state.me.role === 'admin';
+  const isSelf = state.me && state.me.signed_in && state.me.user_id === userID;
+  const btn = $('#impersonate');
+  btn.hidden = !operator || isSelf || isAssumed();
+  if (operator && !isSelf && !isAssumed()) {
+    btn.textContent = 'Look as them';
+  }
+
   // a new account starts from the default view, with nothing archived shown
   state.tabspaces.archived = false;
   $('#record-archived').checked = false;
@@ -962,6 +1240,14 @@ function selectText(node) {
   selection.removeAllRanges();
   selection.addRange(range);
 }
+
+function isAssumed() {
+  return !$('#assume-bar').hidden;
+}
+
+$('#impersonate').addEventListener('click', () => {
+  if (state.selected) startImpersonation(state.selected.id);
+});
 
 $('#rename-user').addEventListener('click', async () => {
   const name = prompt('New account name', state.detail.user.name);
