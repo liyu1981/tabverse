@@ -113,6 +113,9 @@ const state = {
   openTabspace: null, // bundle
   // the operator's directory filter
   directoryQuery: '',
+  // "show archived" for the devices and tokens tables (the stored-data panel
+  // has its own, because it filters a different set of rows)
+  credentialsArchived: false,
   // the account an active impersonation is looking at, and who started it
   assuming: null,
   // which of the account's three tabs is open: 'pair' | 'credentials' | 'data'.
@@ -741,7 +744,9 @@ async function openAccount(userID) {
   };
   // a new account starts from the default view, with nothing archived shown
   state.tabspaces.archived = false;
+  state.credentialsArchived = false;
   $('#record-archived').checked = false;
+  $('#credentials-archived').checked = false;
   state.openTabspace = null;
   await Promise.all([loadTabspaces(), loadRecords()]);
 }
@@ -794,6 +799,19 @@ function renderAccount() {
   const d = state.detail;
   if (!d) return;
 
+  // Archived rows are hidden unless asked for, in *both* tables. Archiving that
+  // leaves the row on screen is the same bug in both directions: a control that
+  // reports success and changes nothing, and rows that are retired but still
+  // cluttering the list (adr/0011).
+  const devices = state.credentialsArchived
+    ? d.devices
+    : d.devices.filter((dev) => !dev.archived);
+  const tokens = state.credentialsArchived
+    ? d.tokens
+    : d.tokens.filter((tok) => !tok.archived);
+  const hiddenDevices = d.devices.length - devices.length;
+  const hiddenTokens = d.tokens.length - tokens.length;
+
   // While an operator is looking through this account, the header says so. It
   // is in the title and not only in the banner, because a screenshot or a
   // "what did you see" question should carry the answer with it.
@@ -836,18 +854,25 @@ function renderAccount() {
   const credAdd = statRow($('#credential-stats'));
   const dataAdd = statRow($('#data-stats'));
 
-  const liveTokens = d.tokens.filter((t) => !t.revoked).length;
+  const liveTokens = tokens.filter((t) => !t.revoked).length;
   const archivedDevices = d.devices.filter((dev) => dev.archived).length;
   const archivedRecords = d.devices.reduce(
     (n, dev) => n + dev.archived_records,
     0,
   );
 
-  credAdd('devices', d.devices.length);
+  // The counters count the rows in the tables, not the rows in the account: a
+  // count that includes a hidden row is the same lie as showing it.
+  credAdd('devices', devices.length);
   credAdd('live tokens', liveTokens);
-  if (d.tokens.length > liveTokens)
-    credAdd('revoked', d.tokens.length - liveTokens);
-  if (archivedDevices) credAdd('archived', archivedDevices);
+  if (tokens.length > liveTokens)
+    credAdd('revoked', tokens.length - liveTokens);
+  if (archivedDevices) {
+    credAdd(
+      'archived',
+      state.credentialsArchived ? archivedDevices : hiddenDevices,
+    );
+  }
 
   dataAdd('records', d.stats.live);
   if (d.stats.total > d.stats.live)
@@ -866,9 +891,9 @@ function renderAccount() {
     ? d.devices.length + ' paired'
     : 'none yet';
   $('#rail-note-credentials').textContent =
-    liveTokens +
-    ' live' +
-    (archivedDevices ? ' · ' + archivedDevices + ' archived' : '');
+    devices.length +
+    ' paired' +
+    (liveTokens ? ' · ' + liveTokens + ' live' : '');
   $('#rail-note-data').textContent = d.stats.live + ' records';
 
   // devices
@@ -883,7 +908,7 @@ function renderAccount() {
       ),
     );
   }
-  for (const dev of d.devices) {
+  for (const dev of devices) {
     const name = el('div', {}, dev.name);
     if (dev.archived) {
       // Archived is the operator's tidying, not a security state: the rows stay
@@ -989,16 +1014,21 @@ function renderAccount() {
       );
     }
     const buttons = el('div', { class: 'actions' });
+    // The label, the tooltip, the confirmation *and* the call have to be driven
+    // by the same flag. They were not: the label said "Archive" while the call
+    // was hardcoded to unarchive, so a live device offered Archive and then
+    // asked "bring it back from archive" - and archived nothing.
     buttons.append(
       el(
         'button',
         {
           class: 'tiny',
           type: 'button',
-          title:
-            'Hide this device from the default views. Its records stay stored and ' +
-            'keep syncing to your devices, and this is reversible (ADR 0011).',
-          onclick: () => archiveDevice(dev, false),
+          title: dev.archived
+            ? 'Bring this device back into the default views. It stays revoked.'
+            : 'Hide this device from the default views. Its records stay stored and ' +
+              'keep syncing to your devices, and this is reversible (ADR 0011).',
+          onclick: () => archiveDevice(dev, !dev.archived),
         },
         dev.archived ? 'Unarchive' : 'Archive',
       ),
@@ -1116,12 +1146,22 @@ function renderAccount() {
   // tokens
   const tbody = $('#token-table tbody');
   clear(tbody);
-  if (!d.tokens.length) {
+  if (!tokens.length) {
     tbody.append(
-      el('tr', { class: 'empty-row' }, el('td', { colspan: '5' }, 'no tokens')),
+      el(
+        'tr',
+        { class: 'empty-row' },
+        el(
+          'td',
+          { colspan: '5' },
+          hiddenTokens
+            ? 'no tokens here - the archived ones are hidden'
+            : 'no tokens',
+        ),
+      ),
     );
   }
-  for (const tok of d.tokens) {
+  for (const tok of tokens) {
     tbody.append(
       el(
         'tr',
@@ -1263,6 +1303,11 @@ function selectText(node) {
 function isAssumed() {
   return !$('#assume-bar').hidden;
 }
+
+$('#credentials-archived').addEventListener('change', () => {
+  state.credentialsArchived = $('#credentials-archived').checked;
+  renderAccount();
+});
 
 $('#rename-user').addEventListener('click', async () => {
   const name = prompt('New account name', state.detail.user.name);

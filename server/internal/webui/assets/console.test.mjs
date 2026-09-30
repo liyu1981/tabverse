@@ -20,6 +20,17 @@ const here = (name) => fileURLToPath(new URL(name, import.meta.url));
 const html = readFileSync(here('index.html'), 'utf8');
 const script = readFileSync(here('console.js'), 'utf8');
 
+/** The first element whose rendered text is exactly `wanted`. */
+function findByText(node, wanted) {
+  if (!node || typeof node !== 'object') return null;
+  if (node.addEventListener && node.textContent === wanted) return node;
+  for (const kid of node.children || []) {
+    const hit = findByText(kid, wanted);
+    if (hit) return hit;
+  }
+  return null;
+}
+
 const pageIds = new Set([...html.matchAll(/id="([^"]+)"/g)].map((m) => m[1]));
 
 // The page's own classes, so `querySelectorAll('.tab-panel')` returns the real
@@ -60,10 +71,24 @@ function makeElement(id) {
   const listeners = {};
   const el = {
     id,
+    // a real element: without this the script's own `el()` helper treats
+    // anything it is handed as a *text* value, because it decides with
+    // `child.nodeType`, and every nested element turns into "[object Object]"
+    nodeType: 1,
     hidden: false,
     value: attrs.value || '',
     checked: 'checked' in attrs,
-    textContent: '',
+    _text: '',
+    // textContent aggregates descendants, the way the DOM's does - so reading it
+    // back finds what a person would see rendered.
+    get textContent() {
+      if (this.children.length)
+        return this.children.map((c) => c.textContent ?? String(c)).join('');
+      return this._text;
+    },
+    set textContent(v) {
+      this._text = String(v);
+    },
     innerHTML: '',
     className: attrs.class || '',
     disabled: 'disabled' in attrs,
@@ -108,7 +133,13 @@ function makeElement(id) {
     },
     focus() {},
     append(...kids) {
-      el.children.push(...kids);
+      // A real browser turns a string into a text node, so the stub has to as
+      // well: anything that reads back a child's text goes through this.
+      for (const kid of kids) {
+        el.children.push(
+          kid && kid.nodeType ? kid : { nodeType: 3, textContent: String(kid) },
+        );
+      }
     },
     get firstChild() {
       return el.children[0] ?? null;
@@ -133,9 +164,15 @@ function elementFor(selector) {
 }
 
 /** Answers the two calls boot() makes, for a visitor who is not signed in. */
+/** Every path the script asked for, in order: which action a button fired. */
+let called = [];
+/** What the next confirm() answers, so a test can decline a destructive one. */
+let confirmAnswer = true;
+
 function stubFetch(routes, problems) {
-  return async (url) => {
+  return async (url, init) => {
     const path = String(url).split('?')[0];
+    called.push((init && init.method) || 'GET', path);
     if (!(path in routes) && problems) {
       problems.push('unstubbed route: ' + path);
     }
@@ -158,6 +195,7 @@ function stubFetch(routes, problems) {
  */
 async function run(routes) {
   elements.clear();
+  called = [];
   const problems = [];
   const onRejection = (reason) =>
     problems.push(String((reason && reason.message) || reason));
@@ -199,7 +237,11 @@ async function run(routes) {
       },
     },
     fetch: stubFetch(routes, problems),
-    confirm: () => true,
+    confirm: () => {
+      const answer = confirmAnswer;
+      confirmAnswer = true;
+      return answer;
+    },
     alert: () => {},
     navigator: {},
     setTimeout,
@@ -395,6 +437,107 @@ test('an operator gets their own account, plus a fourth tab for the accounts', a
 test('a person does not get the Admin tab', async () => {
   await run(ME_PERSON);
   expect(elements.get('rail-admin').hidden).toBe(true);
+});
+
+test('a device button says what it does', async () => {
+  // The label, the tooltip, the confirmation and the request all derive from one
+  // flag. They did not: the label said "Archive" while the call was hardcoded
+  // to unarchive, so a live device offered Archive and then asked "bring it
+  // back from archive" - which is exactly what a person reported seeing.
+  const withRevokedDevice = {
+    ...ME_PERSON,
+    '/api/v1/admin/users/usr_me': {
+      user: { id: 'usr_me', name: 'Yuli', created_at: '2026-01-01T00:00:00Z' },
+      stats: { live: 1, total: 1, by_entity: {} },
+      // a revoked, not-yet-archived device: the state the report was about
+      devices: [{ id: 'dev_x', name: 'chrome test', active_tokens: 0 }],
+      tokens: [
+        {
+          hash: 'h',
+          fingerprint: 'abcdef01',
+          device_name: 'chrome test',
+          revoked: true,
+        },
+      ],
+    },
+  };
+  expect(await run(withRevokedDevice)).toEqual([]);
+
+  // the devices table is the stub element the rows were appended to
+  const button = findByText(elements.get('device-table'), 'Archive');
+  expect(button, 'the device row has no Archive button').toBeTruthy();
+  expect(button.textContent).toBe('Archive');
+  expect(called).not.toContain(
+    '/api/v1/admin/users/usr_me/devices/dev_x/archive',
+  );
+
+  // clicking a button labelled "Archive" must archive, not unarchive
+  confirmAnswer = true;
+  await button.fire('click');
+  expect(called).toContain('PUT');
+  expect(called).toContain('/api/v1/admin/users/usr_me/devices/dev_x/archive');
+});
+
+test('archived devices and tokens are hidden until asked for', async () => {
+  // Archiving a device used to toast "archived" and leave the row exactly where
+  // it was, because neither table had a filter and the token table showed
+  // archived rows permanently. Both are the same bug: the tables have to agree
+  // with the account they describe (adr/0011).
+  const withRetired = {
+    ...ME_PERSON,
+    '/api/v1/admin/users/usr_me': {
+      user: { id: 'usr_me', name: 'Yuli', created_at: '2026-01-01T00:00:00Z' },
+      stats: { live: 3, total: 3, by_entity: {} },
+      devices: [
+        { id: 'dev_1', name: 'laptop', active_tokens: 1 },
+        {
+          id: 'dev_2',
+          name: 'lost phone',
+          active_tokens: 0,
+          archived: true,
+          archived_records: 7,
+        },
+      ],
+      tokens: [
+        {
+          hash: 'a',
+          fingerprint: 'aaaaaaaa',
+          device_name: 'laptop',
+          revoked: false,
+        },
+        {
+          hash: 'b',
+          fingerprint: 'bbbbbbbb',
+          device_name: 'lost phone',
+          revoked: true,
+          archived: true,
+        },
+      ],
+    },
+  };
+
+  // Unticked: one device row and one token row, not two and two.
+  expect(await run(withRetired)).toEqual([]);
+  expect(elements.get('device-table').children.length).toBe(1);
+  expect(elements.get('token-table').children.length).toBe(1);
+  // the counters agree with the tables rather than with the account
+  // ...and the rail's count follows the table rather than the account: one
+  // device on screen, not two
+  const note = elements.get('rail-note-credentials').textContent;
+  expect(note).toContain('1 paired');
+  expect(note).not.toContain('2 paired');
+
+  // ...and ticking the box brings the retired rows back, so hiding them is a
+  // choice rather than a loss. The box is ticked the way a person does it -
+  // after the page has loaded, because opening an account resets the view.
+  const box = elements.get('credentials-archived');
+  box.checked = true;
+  await box.fire('change');
+  expect(elements.get('device-table').children.length).toBe(2);
+  expect(elements.get('token-table').children.length).toBe(2);
+  expect(elements.get('rail-note-credentials').textContent).toContain(
+    '2 paired',
+  );
 });
 
 test('an operator looking at somebody sees that account, titled as such', async () => {

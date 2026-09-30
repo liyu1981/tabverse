@@ -218,15 +218,28 @@
                 data-panel="credentials"
                 hidden
               >
+                <div class="panel-head">
+                  <div>
+                    <h2>Devices &amp; Tokens</h2>
+                    <p class="muted small">
+                      Revoking cuts a device off. Archiving retires it from
+                      these tables, and it never deletes anything: the row stays
+                      stored and keeps syncing to the user's own devices.
+                    </p>
+                  </div>
+                  <!-- One control for both tables, because archived is the same
+                       question of each: hidden while it is off, labelled when it
+                       is on. -->
+                  <label class="check"
+                    ><input id="credentials-archived" type="checkbox" /> show
+                    archived</label
+                  >
+                </div>
+
                 <div class="stat-row" id="credential-stats"></div>
 
                 <section class="card">
                   <h3>Devices</h3>
-                  <p class="muted small">
-                    Revoking cuts a device off; archiving retires it from these
-                    views. Archiving never deletes anything - the rows stay
-                    stored and keep syncing to the user's own devices.
-                  </p>
                   <table class="table" id="device-table">
                     <thead>
                       <tr>

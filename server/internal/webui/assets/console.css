@@ -494,6 +494,14 @@ a.provider:hover {
   flex-wrap: wrap;
 }
 
+/* The archived toggle reads as a view switch, so it is kept out of the flow of
+   the text next to it. */
+.panel-head > .check {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  margin-top: 2px;
+}
+
 /* Narrow: the rail goes horizontal above the panel, so the console still
    works in a half-width window without a second layout to maintain. */
 @media (max-width: 760px) {
