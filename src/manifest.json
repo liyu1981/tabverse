@@ -33,6 +33,6 @@
   ],
   "host_permissions": ["<all_urls>"],
   "content_security_policy": {
-    "extension_pages": "default-src 'self'; script-src 'self'; connect-src 'self' https: wss: http://localhost:* http://127.0.0.1:* ws://localhost:* ws://127.0.0.1:*; img-src * data: blob:; frame-src 'self' http: https:; object-src 'self'"
+    "extension_pages": "default-src 'self'; script-src 'self'; connect-src 'self' https: wss: http: ws:; img-src * data: blob:; frame-src 'self' http: https:; object-src 'self'"
   }
 }

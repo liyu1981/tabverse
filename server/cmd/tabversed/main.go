@@ -75,10 +75,18 @@ func run() error {
 	go func() {
 		logger.Info("tabversed listening",
 			"addr", cfg.Addr, "db", cfg.DBPath, "version", cfg.Version)
+		if cfg.AdminEnabled() {
+			logger.Info("admin API and console enabled: GET / (admin token required)")
+		}
 		if cfg.Exposed() {
 			logger.Warn("listening on a non-loopback address: the pairing/bootstrap " +
 				"endpoint is reachable from the network, and whoever pairs first owns " +
 				"this server (set TABVERSED_ADDR=127.0.0.1:8223 to keep it local)")
+			if !cfg.AdminEnabled() {
+				logger.Warn("no TABVERSED_ADMIN_TOKEN set: the deployment is single tenant " +
+					"(one account, whoever bootstraps it first) and the console is off; " +
+					"set the admin token to manage accounts and browse their data")
+			}
 		}
 		if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			errCh <- err

@@ -238,6 +238,22 @@ export class ServerApiClient {
 
 /** Helper for the two unauthenticated POSTs. */
 class ServerApiRaw {
+  /**
+   * A rejected fetch is ambiguous, and these are the two calls a user makes
+   * right after typing a server URL by hand: no route to that host, a closed
+   * port, a name that does not resolve, a CORS rejection, or the browser
+   * refusing the request outright. Chrome reports the last one (a CSP
+   * violation) as the same "Failed to fetch" as the others, which is how a
+   * blocked host ends up looking like a dead server. So say what to check.
+   */
+  static networkHint(): string {
+    return (
+      ' — check the server URL is reachable from this browser (scheme, host and ' +
+      'port, not 127.0.0.1 unless the server is on this machine); a CSP violation ' +
+      'in the console means the extension is an older build'
+    );
+  }
+
   static async post<T>(
     baseUrl: string,
     path: string,
@@ -256,7 +272,8 @@ class ServerApiRaw {
       throw new ServerApiError(
         0,
         'network',
-        `network error for POST ${path}: ${err && err.message}`,
+        `network error for POST ${path}: ${err && err.message}` +
+          ServerApiRaw.networkHint(),
       );
     }
     if (res.status >= 400) {

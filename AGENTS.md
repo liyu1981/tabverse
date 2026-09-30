@@ -16,6 +16,18 @@ addition to anything in `ARCHITECTURE.md` and `adr/`.
   (lockfile + CI + README scripts) or stay on npm for that change - say which
   you did, and never leave both lockfiles behind.
 
+## Verification
+
+- Run what is automatable: `npm test` (vitest), `npm run typecheck`, biome
+  `format`/`lint`, and the Go suite (`go vet`, `go test -race ./...` in
+  `server/`). Fix what they report, and state plainly which checks you ran.
+- **Do not drive a headless browser to verify UI.** The user checks the UI
+  (extension pages, the tabversed console) themselves. Report what to look for
+  instead, and say plainly what is unverified - do not imply a UI was checked
+  when only the tests were.
+- Do not install a browser-automation dependency (puppeteer, playwright, jsdom)
+  for this repo to do so either.
+
 ## Git commits
 
 - **Never commit unless explicitly asked.** No "just committing while I was

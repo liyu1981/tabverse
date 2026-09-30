@@ -34,7 +34,20 @@ type Config struct {
 	// Empty means any origin may connect; authentication with a bearer token
 	// is still mandatory before the upgrade succeeds.
 	WSOrigins []string
+	// AdminToken gates the admin API and the web console: creating users,
+	// minting their pairing codes, revoking devices/tokens and the read only
+	// data browser. Empty (the default) disables all of it.
+	//
+	// Without it a deployment is single tenant: the bootstrap endpoint is
+	// open until the first user exists, and after that only that user's own
+	// devices can do anything (see adr/0009). With it, an admin provisions
+	// any number of users and each user's data is reachable only through the
+	// admin token.
+	AdminToken string
 }
+
+// AdminEnabled reports whether the admin API and web console are available.
+func (c Config) AdminEnabled() bool { return c.AdminToken != "" }
 
 func Getenv(name, fallback string) string {
 	if v := os.Getenv(name); v != "" {
@@ -83,6 +96,7 @@ func Load(version string) (Config, error) {
 		MaxRecordBytes: 1 << 20, // 1 MiB
 		SyncBatchLimit: 500,
 		SearchLimit:    50,
+		AdminToken:     Getenv("TABVERSED_ADMIN_TOKEN", ""),
 	}
 
 	var err error

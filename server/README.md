@@ -18,6 +18,12 @@ server authoritative sync protocol.
   is in the FTS index; the aggregates are id lists. Every hit comes back with
   the `tabspace_id` it belongs to, because the client lists tabverses (ADR
   0008), and identifier fields are not indexed at all
+- **Accounts:** one account per deployment by default (open bootstrap, first
+  pairer wins). Set `TABVERSED_ADMIN_TOKEN` and an operator provisions any
+  number of accounts through the admin API instead (ADR 0009)
+- **Console:** `GET /` serves an embedded, dependency free operator console
+  (read only over user data: tabverses, records, search; mutable: accounts,
+  devices, tokens). Same env var, same secret, no build step
 
 ## Run
 
@@ -36,7 +42,8 @@ extension is usually loaded on a different machine than the server. The server
 logs a warning when it listens on a non-loopback address, because the
 bootstrap/pairing endpoint is then reachable from the network and whoever pairs
 first owns the deployment (ADR 0002). Set `TABVERSED_ADDR=127.0.0.1:8223` to
-keep it local.
+keep it local, or set `TABVERSED_ADMIN_TOKEN` to take the pairing endpoint
+behind a secret and to be able to run more than one account (ADR 0009).
 
 Cross compile (no cgo):
 
@@ -65,6 +72,7 @@ pnpm run server:fmt:check   # lists unformatted files (CI asserts the list is em
 | `TABVERSED_SYNC_BATCH_LIMIT` | `500`               | max records per sync request                                |
 | `TABVERSED_SEARCH_LIMIT`     | `50`                | max search hits                                             |
 | `TABVERSED_WS_ORIGINS`       | _(any)_             | comma separated Origin allow list for the WebSocket upgrade |
+| `TABVERSED_ADMIN_TOKEN`      | _(unset)_           | enables the admin API and the console; without it the deployment is single tenant (ADR 0009) |
 
 ## API
 
@@ -114,3 +122,59 @@ Realtime: `ws://host/api/v1/sync/stream?access_token=<token>` receives
 - **Security** — tokens are 32 bytes of CSPRNG entropy stored as SHA-256
   hashes; pairing codes are single use with a TTL; the bootstrap endpoint
   permanently locks itself after the first account exists.
+
+## Multi tenancy and the console (ADR 0009)
+
+By default the server is single tenant: `/api/v1/auth/bootstrap` is open only
+while the database holds no account, and that account owns the deployment
+afterwards. Every tenant scoped table already carried `user_id`, so making a
+second account possible was a matter of letting an operator create one.
+
+```sh
+TABVERSED_ADMIN_TOKEN=$(openssl rand -base32 24) pnpm run server:dev
+# then open http://localhost:8223/ and paste the token
+```
+
+With the token set:
+
+- **multi tenant** — `POST /api/v1/admin/users` creates accounts, each isolated
+  by `user_id` exactly as the devices of one account already were, and
+  `/api/v1/auth/bootstrap` now requires the admin token too (no more
+  first-payer-wins on an exposed port)
+- **read only data browser** — the console lists an account's tabverses, opens
+  one the way the extension does (tabs in `tabIds` order, notes/todos/bookmarks
+  in their aggregate order, closed tabs newest first), plus a raw record
+  browser and the same FTS search the extension uses
+- **accounts and tokens** — rename, delete (records, devices, tokens, invites
+  and search index rows), mint a pairing code for a given account, revoke one
+  token by fingerprint or every token of one device
+
+There is deliberately **no way to edit a user's records from the console**: a
+record written there would carry no device and no trustworthy client clock, so
+the next honest sync from the real device would win the LWW comparison. The
+admin surface is for operator state; the data stays the extension's to write.
+
+The console is three embedded files under `internal/webui/assets/` (HTML, CSS,
+JS - no framework, no build step) served with a strict CSP. It keeps the admin
+token in `localStorage`, so treat that browser profile like the token itself.
+Without `TABVERSED_ADMIN_TOKEN` the routes answer `404` and the login screen
+explains that the deployment is single tenant.
+
+The pairing code and the server URL next to it each get a copy button. Copying
+falls back through three steps on purpose, because a self-hosted console is
+usually opened over plain `http://` on a LAN, which is *not* a secure context:
+`navigator.clipboard` does not exist there, so the button uses it only when it
+is available, then `execCommand('copy')`, and as a last resort selects the text
+and says "press Ctrl+C" instead of silently doing nothing.
+
+```sh
+# what the console does, by hand
+A='Authorization: Bearer $TABVERSED_ADMIN_TOKEN'
+curl -s localhost:8223/api/v1/admin/users -H "$A"
+curl -s -X POST localhost:8223/api/v1/admin/users -H "$A" -d '{"name":"alice"}'
+curl -s -X POST localhost:8223/api/v1/admin/users/usr_.../invites -H "$A" -d '{"ttl_seconds":300}'
+curl -s 'localhost:8223/api/v1/admin/users/usr_.../tabspaces' -H "$A"
+curl -s 'localhost:8223/api/v1/admin/users/usr_.../tabspaces/ts_...' -H "$A"
+curl -s 'localhost:8223/api/v1/admin/users/usr_.../search?q=hello' -H "$A"
+curl -s -X DELETE localhost:8223/api/v1/admin/users/usr_.../devices/dev_... -H "$A"
+```

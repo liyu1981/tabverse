@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	_ "modernc.org/sqlite" // pure Go SQLite driver (no cgo -> easy cross compile)
@@ -118,6 +119,21 @@ func (s *Store) migrate(ctx context.Context) error {
 	}
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit migration: %w", err)
+	}
+	// Additive migrations: SQLite has no "ADD COLUMN IF NOT EXISTS", so each
+	// one is attempted outside the schema transaction and a duplicate column
+	// error is the expected result of running it against a database that
+	// already has it.
+	for _, stmt := range []string{
+		// When a device token was last seen, for the console's device list.
+		`ALTER TABLE tokens ADD COLUMN last_used INTEGER NOT NULL DEFAULT 0`,
+	} {
+		if _, err := s.db.ExecContext(ctx, stmt); err != nil {
+			if strings.Contains(err.Error(), "duplicate column name") {
+				continue
+			}
+			return fmt.Errorf("migration %q: %w", stmt, err)
+		}
 	}
 	return nil
 }

@@ -19,7 +19,13 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['src/**/__tests__/**/*.test.{ts,tsx}', 'src/**/*.test.{ts,tsx}'],
+    include: [
+      'src/**/__tests__/**/*.test.{ts,tsx}',
+      'src/**/*.test.{ts,tsx}',
+      // build time policy that decides which server the extension may talk to
+      // (ADR 0010); it lives in tools/ because it never ships in the bundle
+      'tools/**/*.test.mts',
+    ],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],

@@ -13,6 +13,7 @@ import (
 	"github.com/liyu1981/tabverse/server/internal/config"
 	"github.com/liyu1981/tabverse/server/internal/hub"
 	"github.com/liyu1981/tabverse/server/internal/store"
+	"github.com/liyu1981/tabverse/server/internal/webui"
 )
 
 type ctxKey int
@@ -58,6 +59,30 @@ func (s *Server) Handler() http.Handler {
 	// a WebSocket handshake, so a query parameter is also accepted).
 	mux.HandleFunc("GET /api/v1/sync/stream", s.handleStream)
 
+	// Admin API: the operator surface behind the console (adr/0009). Every
+	// route answers 404 while TABVERSED_ADMIN_TOKEN is unset, so a personal
+	// deployment has no admin attack surface at all.
+	admin := func(h http.HandlerFunc) http.HandlerFunc { return s.admin(h) }
+	mux.HandleFunc("GET /api/v1/admin/config", s.handleAdminConfig) // unauthenticated: tells the console whether to ask for a token
+	mux.HandleFunc("GET /api/v1/admin/totals", admin(s.handleAdminTotals))
+	mux.HandleFunc("GET /api/v1/admin/users", admin(s.handleAdminListUsers))
+	mux.HandleFunc("POST /api/v1/admin/users", admin(s.handleAdminCreateUser))
+	mux.HandleFunc("GET /api/v1/admin/users/{user_id}", admin(s.handleAdminGetUser))
+	mux.HandleFunc("PUT /api/v1/admin/users/{user_id}", admin(s.handleAdminRenameUser))
+	mux.HandleFunc("DELETE /api/v1/admin/users/{user_id}", admin(s.handleAdminDeleteUser))
+	mux.HandleFunc("POST /api/v1/admin/users/{user_id}/invites", admin(s.handleAdminCreateInvite))
+	mux.HandleFunc("DELETE /api/v1/admin/users/{user_id}/devices/{device_id}", admin(s.handleAdminRevokeDevice))
+	mux.HandleFunc("DELETE /api/v1/admin/users/{user_id}/tokens/{hash}", admin(s.handleAdminRevokeToken))
+	// read only data browsing
+	mux.HandleFunc("GET /api/v1/admin/users/{user_id}/tabspaces", admin(s.handleAdminListTabspaces))
+	mux.HandleFunc("GET /api/v1/admin/users/{user_id}/tabspaces/{tabspace_id}", admin(s.handleAdminGetTabspace))
+	mux.HandleFunc("GET /api/v1/admin/users/{user_id}/records", admin(s.handleAdminListRecords))
+	mux.HandleFunc("GET /api/v1/admin/users/{user_id}/search", admin(s.handleAdminSearch))
+
+	// The console itself: embedded static files, no auth (the login screen has
+	// to be loadable to exist; every API call it makes is admin authorized).
+	mux.Handle("/", webui.Handler())
+
 	return withCORS(mux)
 }
 
@@ -71,7 +96,8 @@ func (s *Server) auth(next http.HandlerFunc) http.HandlerFunc {
 			writeErr(w, http.StatusUnauthorized, "missing_token", "provide Authorization: Bearer <token>")
 			return
 		}
-		userID, deviceID, err := s.store.LookupToken(r.Context(), auth.HashToken(token))
+		hash := auth.HashToken(token)
+		userID, deviceID, err := s.store.LookupToken(r.Context(), hash)
 		if err != nil {
 			if errors.Is(err, store.ErrNotFound) {
 				writeErr(w, http.StatusUnauthorized, "invalid_token", "token unknown or revoked")
@@ -79,6 +105,11 @@ func (s *Server) auth(next http.HandlerFunc) http.HandlerFunc {
 			}
 			writeErr(w, http.StatusInternalServerError, "internal", err.Error())
 			return
+		}
+		// Record device activity for the console. Best effort: a failed
+		// telemetry write must not fail a request that is already authorized.
+		if err := s.store.TouchToken(r.Context(), hash); err != nil {
+			s.logger.Debug("token touch failed", "err", err)
 		}
 		ctx := r.Context()
 		ctx = contextWith(ctx, ctxKeyUser, userID)

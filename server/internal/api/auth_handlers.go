@@ -25,9 +25,23 @@ func deviceIDFrom(ctx context.Context) string {
 // ---- auth handlers --------------------------------------------------------
 
 // handleBootstrap creates the very first account of a deployment.
+//
 // It is only open while no user exists, which makes a fresh, internet
-// reachable server safe by default: whoever pairs first owns it.
+// reachable server safe by default: whoever pairs first owns it. Once
+// TABVERSED_ADMIN_TOKEN is set, the admin token is required here too (an
+// operator with the token does not need bootstrap, the console creates
+// accounts, but a leaked port must not hand out account #1 to a scanner);
+// further accounts come from POST /api/v1/admin/users (adr/0009).
 func (s *Server) handleBootstrap(w http.ResponseWriter, r *http.Request) {
+	if s.cfg.AdminEnabled() {
+		token, ok := s.extractToken(r)
+		if !ok || !adminTokenMatches(s.cfg.AdminToken, token) {
+			writeErr(w, http.StatusUnauthorized, "invalid_token",
+				"this deployment requires the admin token to bootstrap")
+			return
+		}
+	}
+
 	var req struct {
 		Name string `json:"name"`
 	}

@@ -28,7 +28,9 @@ For v1:
    longer records snapshots at all (`adr/0006`); retention remains for older
    clients and can go with the `session` entity.
 5. **No third parties.** The extension talks to exactly one server, the one
-   the user typed.
+   the user typed. Which servers it is *allowed* to reach is scheme-scoped by
+   default (`connect-src 'self' https: wss: http: ws:`), narrowed on request by
+   `TABVERSE_ALLOWED_SERVERS` - see [ADR 0010](0010-extension-may-talk-to-any-server.md).
 
 ## Consequences
 

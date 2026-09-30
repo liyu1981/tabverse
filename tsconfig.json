@@ -17,6 +17,10 @@
     "useDefineForClassFields": true,
     "forceConsistentCasingInFileNames": true,
     "esModuleInterop": true,
+    // vite.config.mts (typechecked, never emitted - tsc runs with --noEmit and
+    // Vite does the emitting) imports the build time manifest policy by its
+    // explicit .mts path, which is what this flag allows.
+    "allowImportingTsExtensions": true,
     // TypeScript 7 no longer auto-includes every package under node_modules/@types
     // for the program; without this the `chrome.*` globals vanish and 111 errors
     // cascade out of it. Listed explicitly, in the order tsc would have used.

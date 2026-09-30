@@ -9,6 +9,7 @@
 │ background service worker               │  WS  │  internal/store  SQLite+FTS5   │
 │  ├─ background.ts  (tab events, sync)   │◄────►│  internal/auth   pairing       │
 │  └─ repo/backgroundSync (sync runtime)  │      │  internal/retention (legacy)   │
+                                                 │  internal/webui   console (UI) │
 └─────────────────────────────────────────┘      └────────────────────────────────┘
 ```
 
@@ -100,6 +101,15 @@ curl -X POST localhost:8223/api/v1/auth/invites \
      -H 'Authorization: Bearer <token>' -d '{"ttl_seconds":300}'
 ```
 
+The pasted URL is the machine's address as the *browser* can reach it -
+`http://192.168.0.221:8223` from another laptop, not `127.0.0.1`, which would
+be the laptop itself. The extension may talk to any http/https/ws/wss server
+(`adr/0010`); narrow that at build time with
+`TABVERSE_ALLOWED_SERVERS=http://192.168.0.221:8223,https://tv.example.com`.
+Note that a device token is a bearer credential: over plaintext `http` on a LAN
+it is readable by anything on that network, so use `https://` or a trusted
+network.
+
 The server has no Makefile: every build, test and cross-compile target is an
 npm script (`server:dev`, `server:build`, `server:test`, `server:vet`,
 `server:fmt`, `server:cross`, `server:docker`). It binds `0.0.0.0:8223` by
@@ -108,10 +118,40 @@ default so the extension can be loaded on another machine; set
 
 See `server/README.md` for configuration, deployment and protocol semantics.
 
+## Accounts, the admin API and the console (`adr/0009`)
+
+The server's data model was tenant scoped from the start (`user_id` on
+`records`, `tokens`, `devices`, `invites`, `records_fts`; a per account
+`rev_seq`; a per account WebSocket topic; retention over `AllUserIDs()`), but
+the only way to create the *first* account was an open `bootstrap` endpoint, so
+a deployment could hold exactly one.
+
+`TABVERSED_ADMIN_TOKEN` is what makes it multi tenant, and it gates one
+operator surface:
+
+```
+                    ┌─ TABVERSED_ADMIN_TOKEN ─┬─ /api/v1/admin/*  (accounts, devices, tokens)
+browser ── GET / ───┤                        └─ read only: tabverses, records, search
+```
+
+- **unset** (the default) — single tenant, open bootstrap until the first pairer,
+  every admin route `404`
+- **set** — the console at `/` provisions accounts, hands out pairing codes,
+  revokes leaked devices, and shows what each account stored, **read only**:
+  there is no endpoint that edits a user's records, because a record written
+  outside the extension would lose the next LWW comparison anyway
+
+`internal/webui` embeds three hand written files (HTML, CSS, JS - no framework,
+no build step) and serves them with a strict CSP; the admin API is
+`internal/api/admin.go` and its queries are `internal/store/admin.go`. A device
+token and the admin token are not interchangeable, and both directions are
+tested.
+
 ## Status
 
 - [x] Go server (`tabversed`): auth, delta sync, LWW, tombstones, WebSocket
       fan-out, FTS5 search, retention, tests (`-race`), cross-compile, Docker
+- [x] Multi tenant admin API + embedded read only console (`adr/0009`)
 - [x] Wire contract (`api/openapi.yaml`)
 - [x] Client sync layer: outbox, delta engine, realtime, Dexie bridge,
       change feed, pairing dialog (8 test suites)

@@ -28,10 +28,14 @@ func (s *Server) handleStream(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, http.StatusUnauthorized, "missing_token", "provide access_token query parameter")
 		return
 	}
-	userID, _, err := s.store.LookupToken(r.Context(), auth.HashToken(token))
+	hash := auth.HashToken(token)
+	userID, _, err := s.store.LookupToken(r.Context(), hash)
 	if err != nil {
 		writeErr(w, http.StatusUnauthorized, "invalid_token", "token unknown or revoked")
 		return
+	}
+	if err := s.store.TouchToken(r.Context(), hash); err != nil {
+		s.logger.Debug("token touch failed", "err", err)
 	}
 
 	opts := &websocket.AcceptOptions{CompressionMode: websocket.CompressionDisabled}

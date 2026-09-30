@@ -6,8 +6,18 @@ info:
     Contract for `tabversed`, the Tabverse sync server.
 
     ## Authentication
-    All endpoints except `/healthz`, `POST /api/v1/auth/bootstrap` and
-    `POST /api/v1/auth/pair` require `Authorization: Bearer <token>`.
+    All endpoints except `/healthz`, `POST /api/v1/auth/bootstrap`,
+    `POST /api/v1/auth/pair` and `GET /api/v1/admin/config` require
+    `Authorization: Bearer <token>`. A device token and the *admin* token are
+    different credentials, and neither is accepted where the other belongs.
+
+    ## Accounts
+    Without `TABVERSED_ADMIN_TOKEN` the deployment is single tenant:
+    `POST /api/v1/auth/bootstrap` is open only while it holds no account, and
+    that account owns everything afterwards. With the admin token set, an
+    operator provisions any number of accounts through `/api/v1/admin/users`,
+    each isolated by `user_id` exactly as the devices of one account already
+    were, and `POST /api/v1/auth/bootstrap` requires the admin token too.
 
     ## Revisions
     The server keeps a per-user monotonic revision counter (`rev_seq`). Every
@@ -39,6 +49,11 @@ tags:
   - name: auth
   - name: sync
   - name: search
+  - name: admin
+    description: |
+      Operator surface behind the web console (`GET /`), see ADR 0009. Gated
+      by `TABVERSED_ADMIN_TOKEN`; every route answers `404` while it is unset.
+      Read only over user data by design.
 
 paths:
   /healthz:
@@ -272,6 +287,291 @@ paths:
         '101': { description: switching protocols }
         '401': { $ref: '#/components/responses/Unauthorized' }
 
+  /api/v1/admin/config:
+    get:
+      tags: [admin]
+      security: []
+      summary: What this deployment allows (unauthenticated)
+      description: |
+        Lets the console explain itself before it asks for a token, so an
+        operator staring at a login form knows whether the admin API is simply
+        not configured.
+      responses:
+        '200':
+          description: deployment capabilities
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [admin_enabled, version]
+                properties:
+                  admin_enabled: { type: boolean }
+                  version: { type: string }
+
+  /api/v1/admin/totals:
+    get:
+      tags: [admin]
+      summary: Deployment wide counters (the console header)
+      responses:
+        '200':
+          description: totals
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Totals' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/AdminDisabled' }
+
+  /api/v1/admin/users:
+    get:
+      tags: [admin]
+      summary: List accounts with their counters
+      responses:
+        '200':
+          description: accounts
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [users]
+                properties:
+                  users:
+                    type: array
+                    items: { $ref: '#/components/schemas/UserSummary' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/AdminDisabled' }
+    post:
+      tags: [admin]
+      summary: Create an account
+      description: |
+        This is what makes a deployment multi tenant. Pass `device_name` to
+        also issue that device's token right away (the console's "create and
+        pair in one go" path); like every token, it is returned only once.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string, maxLength: 120 }
+                device_name: { type: string }
+      responses:
+        '201':
+          description: the account, or its credentials when device_name was given
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/AdminDisabled' }
+
+  /api/v1/admin/users/{user_id}:
+    parameters: [{ $ref: '#/components/parameters/userId' }]
+    get:
+      tags: [admin]
+      summary: One account with its stats, devices and tokens
+      responses:
+        '200':
+          description: account detail (user, stats, devices, tokens)
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [admin]
+      summary: Rename an account (its data is untouched)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+      responses:
+        '204': { description: renamed }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [admin]
+      summary: Delete an account and everything it stored
+      description: |
+        Records, devices, tokens, invites and the account's search index rows
+        all go. There is no trash; the console asks for a typed confirmation.
+      responses:
+        '204': { description: deleted }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/admin/users/{user_id}/invites:
+    parameters: [{ $ref: '#/components/parameters/userId' }]
+    post:
+      tags: [admin]
+      summary: Mint a pairing code for this account
+      description: |
+        Lets an operator add a device to an account they did not create. The
+        code is single use and short lived; `POST /api/v1/auth/pair` exchanges
+        it for a device token.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ttl_seconds: { type: integer, minimum: 60, maximum: 86400 }
+      responses:
+        '201':
+          description: the code, shown once
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user_id: { type: string }
+                  code: { type: string }
+                  expires_at: { type: integer }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/admin/users/{user_id}/devices/{device_id}:
+    parameters:
+      - { $ref: '#/components/parameters/userId' }
+      - { name: device_id, in: path, required: true, schema: { type: string } }
+    delete:
+      tags: [admin]
+      summary: Revoke every live token of one device
+      responses:
+        '204': { description: revoked }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/admin/users/{user_id}/tokens/{hash}:
+    parameters:
+      - { $ref: '#/components/parameters/userId' }
+      - name: hash
+        in: path
+        required: true
+        schema: { type: string }
+        description: the stored hash from the account's token listing
+    delete:
+      tags: [admin]
+      summary: Revoke one device token
+      description: |
+        Tokens are stored only as a SHA-256 hash, so the console can show a
+        token by fingerprint and revoke it by hash, but never display it again.
+      responses:
+        '204': { description: revoked }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/admin/users/{user_id}/tabspaces:
+    parameters: [{ $ref: '#/components/parameters/userId' }]
+    get:
+      tags: [admin]
+      summary: The account's tabverses, newest first
+      description: |
+        Read only. Each row is one `tabspace` record plus the child counts the
+        console's card shows, resolved server side.
+      parameters:
+        - { name: q, in: query, schema: { type: string }, description: literal substring of the payload }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 200 } }
+        - { name: offset, in: query, schema: { type: integer, minimum: 0 } }
+      responses:
+        '200':
+          description: tabverse list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tabspaces:
+                    type: array
+                    items: { $ref: '#/components/schemas/TabspaceSummary' }
+                  total: { type: integer }
+                  limit: { type: integer }
+                  offset: { type: integer }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/admin/users/{user_id}/tabspaces/{tabspace_id}:
+    parameters:
+      - { $ref: '#/components/parameters/userId' }
+      - { name: tabspace_id, in: path, required: true, schema: { type: string } }
+    get:
+      tags: [admin]
+      summary: One tabverse with its tabs, notes, todos, bookmarks and history
+      description: |
+        The read only equivalent of the extension's tabverse view. The order is
+        the client's: tabs follow the tabverse's own `tabIds`, the rest follow
+        the `allnote` / `alltodo` / `allbookmark` aggregates, and closed tabs
+        follow their own `closedAt`, newest first. Rows no list mentions are
+        still returned, after the listed ones.
+      responses:
+        '200':
+          description: the tabverse bundle
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TabspaceBundle' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/admin/users/{user_id}/records:
+    parameters: [{ $ref: '#/components/parameters/userId' }]
+    get:
+      tags: [admin]
+      summary: Raw record browser
+      description: |
+        The escape hatch for a record the rendered views cannot make sense of:
+        any entity, optionally one tabverse, with a literal substring search
+        over the payload (`%` is not a wildcard) and tombstones hidden by
+        default.
+      parameters:
+        - { name: entity, in: query, schema: { $ref: '#/components/schemas/Entity' } }
+        - { name: tabspace_id, in: query, schema: { type: string } }
+        - { name: q, in: query, schema: { type: string } }
+        - { name: deleted, in: query, schema: { type: string, enum: ['0', '1'] } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 200 } }
+        - { name: offset, in: query, schema: { type: integer, minimum: 0 } }
+      responses:
+        '200':
+          description: a page of records
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  records:
+                    type: array
+                    items: { $ref: '#/components/schemas/Record' }
+                  total: { type: integer }
+                  limit: { type: integer }
+                  offset: { type: integer }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/admin/users/{user_id}/search:
+    parameters: [{ $ref: '#/components/parameters/userId' }]
+    get:
+      tags: [admin]
+      summary: Full text search over one account, with display titles
+      description: |
+        The same FTS index the extension queries, scoped to one account, with
+        the record's title filled in so hits can be listed. An empty `q` is an
+        empty result, not "everything".
+      parameters:
+        - { name: q, in: query, required: true, schema: { type: string } }
+        - { name: entity, in: query, schema: { $ref: '#/components/schemas/Entity' } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 200 } }
+      responses:
+        '200':
+          description: ranked hits
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  query: { type: string }
+                  hits:
+                    type: array
+                    items: { $ref: '#/components/schemas/AdminSearchHit' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
 components:
   securitySchemes:
     bearerToken:
@@ -284,6 +584,12 @@ components:
       in: path
       required: true
       schema: { $ref: '#/components/schemas/Entity' }
+    userId:
+      name: user_id
+      in: path
+      required: true
+      schema: { type: string }
+      description: the account the admin acts on
 
   schemas:
     Entity:
@@ -378,6 +684,122 @@ components:
             record's own id. Absent only for a malformed record payload.
           example: ts-1a2b3c
 
+    UserSummary:
+      type: object
+      required: [id, name, created_at, rev_seq, device_count, token_count, record_count]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        created_at: { type: string, format: date-time }
+        rev_seq: { type: integer, description: the account's current revision tip }
+        device_count: { type: integer }
+        token_count: { type: integer, description: tokens that are not revoked }
+        revoked_token_count: { type: integer }
+        record_count: { type: integer, description: live records, tombstones excluded }
+        last_activity:
+          type: integer
+          description: newest updated_at among live records, 0 if never synced
+
+    TokenInfo:
+      type: object
+      required: [hash, fingerprint, device_id, created_at, revoked]
+      properties:
+        hash: { type: string, description: the stored hash; pass it to revoke this token }
+        fingerprint: { type: string, description: first 8 characters, for display }
+        device_id: { type: string }
+        device_name: { type: string }
+        created_at: { type: string, format: date-time }
+        revoked: { type: boolean }
+        last_used: { type: integer, description: unix ms of the last authenticated request, 0 if never }
+
+    DeviceInfo:
+      type: object
+      required: [id, name, created_at, active_tokens]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        created_at: { type: string, format: date-time }
+        active_tokens: { type: integer }
+        last_used: { type: integer }
+
+    TabspaceSummary:
+      type: object
+      required: [id, name, updated_at, rev, tab_count]
+      properties:
+        id: { type: string }
+        name:
+          type: string
+          description: "(untitled) when the stored payload has no name"
+        created_at: { type: integer }
+        updated_at: { type: integer }
+        rev: { type: integer }
+        tab_count: { type: integer, description: "len(tabIds) of the stored payload" }
+        groups: { type: integer, description: tab groups the tabverse remembers }
+        notes: { type: integer }
+        todos: { type: integer }
+        bookmarks: { type: integer }
+        closed_tabs: { type: integer }
+
+    BundleRow:
+      type: object
+      required: [id, rev, updated_at, position, data]
+      properties:
+        id: { type: string }
+        rev: { type: integer }
+        updated_at: { type: integer }
+        server_at: { type: integer }
+        position: { type: integer, description: index in the client's own ordering }
+        data: { type: object, description: the record payload, decoded }
+
+    TabspaceBundle:
+      type: object
+      required: [tabspace, tabs, notes, todos, bookmarks, closed_tabs, aggregates]
+      properties:
+        tabspace: { $ref: '#/components/schemas/TabspaceSummary' }
+        tabspace_data:
+          type: object
+          description: the tabverse's own payload, decoded (tab groups live here)
+        tabs:
+          type: array
+          items: { $ref: '#/components/schemas/BundleRow' }
+        notes:
+          type: array
+          items: { $ref: '#/components/schemas/BundleRow' }
+        todos:
+          type: array
+          items: { $ref: '#/components/schemas/BundleRow' }
+        bookmarks:
+          type: array
+          items: { $ref: '#/components/schemas/BundleRow' }
+        closed_tabs:
+          type: array
+          items: { $ref: '#/components/schemas/BundleRow' }
+        aggregates:
+          type: object
+          description: the raw allnote / alltodo / allbookmark payloads
+          additionalProperties: { type: string }
+
+    AdminSearchHit:
+      allOf:
+        - $ref: '#/components/schemas/SearchHit'
+        - type: object
+          properties:
+            title: { type: string, description: the record's display title, for listing }
+            url: { type: string }
+
+    Totals:
+      type: object
+      required: [users, devices, active_tokens, live_records, tombstones]
+      properties:
+        users: { type: integer }
+        devices: { type: integer }
+        active_tokens: { type: integer }
+        live_records: { type: integer }
+        tombstones: { type: integer }
+        by_entity:
+          type: object
+          additionalProperties: { type: integer }
+
     Error:
       type: object
       required: [error, message]
@@ -402,7 +824,12 @@ components:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
     NotFound:
-      description: unknown entity or record
+      description: unknown entity, record or account
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    AdminDisabled:
+      description: TABVERSED_ADMIN_TOKEN is not set, so the admin API does not exist
       content:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }

@@ -133,6 +133,26 @@ test('network failure maps to status 0 / code network', async () => {
   expect(caught.isAuthError).toBe(false);
 });
 
+test('a rejected fetch on the pairing call says what to check', async () => {
+  // Chrome reports a CSP-blocked host as the same "Failed to fetch" as a dead
+  // server, and pairing is the one call where the user has just typed a URL by
+  // hand (ADR 0010), so the message has to name the likely causes.
+  const fetchFn: FetchLike = async () => {
+    throw new Error('Failed to fetch');
+  };
+
+  let caught: any;
+  try {
+    await ServerApiClient.pair(BASE, 'AAAA-BBBB-CCCC-DDDD', 'laptop', fetchFn);
+  } catch (err) {
+    caught = err;
+  }
+  expect(caught.code).toBe('network');
+  expect(caught.message).toContain('network error for POST /api/v1/auth/pair');
+  expect(caught.message).toContain('scheme, host and port');
+  expect(caught.message).toContain('older build');
+});
+
 test('search encodes the query and optional filters', async () => {
   const { fetchFn, calls } = makeFetch([
     () => jsonResponse({ query: 'a b', hits: [] }),

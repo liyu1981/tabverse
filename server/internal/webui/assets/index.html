@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>tabversed console</title>
+    <link rel="stylesheet" href="/assets/console.css" />
+    <link rel="icon" href="data:," />
+  </head>
+  <body>
+    <!-- The whole console. Four views over one account: the account list, the
+         read only tabverse browser, the record browser, and the account page
+         (devices, tokens, invites). No framework, no build step: the server
+         embeds these three files. -->
+    <header class="topbar">
+      <div class="brand">
+        <span class="logo">◆</span>
+        <span>tabversed</span>
+        <span class="version" id="server-version"></span>
+      </div>
+      <div class="topbar-right">
+        <span class="totals" id="totals"></span>
+        <button id="refresh" class="ghost" type="button" title="Reload everything">Refresh</button>
+        <button id="logout" class="ghost" type="button" hidden>Sign out</button>
+      </div>
+    </header>
+
+    <div id="banner" class="banner" hidden></div>
+
+    <!-- Sign in: the admin token is the only credential there is. -->
+    <main id="view-login" class="login" hidden>
+      <form id="login-form" class="card login-card">
+        <h1>tabversed console</h1>
+        <p class="muted">
+          Operator access to this server: the accounts it holds, the data they
+          stored, and the device tokens that reach it.
+        </p>
+        <label for="admin-token">Admin token</label>
+        <input
+          id="admin-token"
+          type="password"
+          autocomplete="off"
+          spellcheck="false"
+          placeholder="TABVERSED_ADMIN_TOKEN"
+        />
+        <p class="muted small" id="login-hint">
+          Set <code>TABVERSED_ADMIN_TOKEN</code> on the server to enable this.
+          It is stored in this browser's localStorage only.
+        </p>
+        <button type="submit" class="primary">Sign in</button>
+        <p class="error" id="login-error" hidden></p>
+      </form>
+    </main>
+
+    <!-- The console proper. -->
+    <div id="app" class="app" hidden>
+      <nav class="sidebar">
+        <div class="sidebar-section">
+          <h2>Accounts</h2>
+          <ul id="user-list" class="user-list"></ul>
+          <form id="create-user-form" class="stack">
+            <input
+              id="new-user-name"
+              type="text"
+              placeholder="new account name"
+              maxlength="120"
+              autocomplete="off"
+            />
+            <button type="submit" class="primary small">Create account</button>
+          </form>
+        </div>
+      </nav>
+
+      <main class="content">
+        <div id="empty-state" class="empty">
+          <p>Pick an account on the left.</p>
+        </div>
+
+        <section id="view-account" class="view" hidden>
+          <div class="view-head">
+            <div>
+              <h1 id="account-name">Account</h1>
+              <p class="muted small" id="account-id"></p>
+            </div>
+            <div class="view-actions">
+              <button id="rename-user" class="ghost" type="button">Rename</button>
+              <button id="delete-user" class="danger" type="button">Delete account</button>
+            </div>
+          </div>
+
+          <div class="stat-row" id="account-stats"></div>
+
+          <div class="panel-grid">
+            <section class="card">
+              <h3>Devices</h3>
+              <table class="table" id="device-table">
+                <thead>
+                  <tr>
+                    <th>Device</th>
+                    <th>Paired</th>
+                    <th>Last seen</th>
+                    <th>Tokens</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </section>
+
+            <section class="card">
+              <h3>Pairing codes</h3>
+              <p class="muted small">
+                A code adds a device to this account. It works once and expires;
+                the device exchanges it for its own token.
+              </p>
+              <form id="invite-form" class="row">
+                <input
+                  id="invite-ttl"
+                  type="number"
+                  min="60"
+                  max="86400"
+                  value="900"
+                  aria-label="code lifetime in seconds"
+                />
+                <button type="submit" class="primary small">New code</button>
+              </form>
+              <div id="invite-result" class="code-box" hidden></div>
+              <div id="server-url-box" class="server-url-box" hidden></div>
+            </section>
+          </div>
+
+          <section class="card">
+            <h3>Device tokens</h3>
+            <p class="muted small">
+              Every device holds a token. The server only stores its hash, so a
+              token cannot be shown again - revoking one is final, and the
+              device has to pair again.
+            </p>
+            <table class="table" id="token-table">
+              <thead>
+                <tr>
+                  <th>Token</th>
+                  <th>Device</th>
+                  <th>Issued</th>
+                  <th>Last used</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </section>
+        </section>
+
+        <section id="view-data" class="view" hidden>
+          <div class="view-head">
+            <div>
+              <h1>Stored data</h1>
+              <p class="muted small" id="data-subtitle"></p>
+            </div>
+            <div class="tabs" role="tablist">
+              <button class="tab active" data-view="tabverses" type="button">Tabverses</button>
+              <button class="tab" data-view="search" type="button">Search</button>
+              <button class="tab" data-view="records" type="button">Records</button>
+            </div>
+          </div>
+
+          <div id="data-tabverses">
+            <div class="toolbar">
+              <input
+                id="tabspace-search"
+                type="search"
+                placeholder="filter tabverses"
+                autocomplete="off"
+              />
+            </div>
+            <div id="tabspace-list" class="tabspace-list"></div>
+            <div class="pager" id="tabspace-pager"></div>
+          </div>
+
+          <div id="data-records" hidden>
+            <div class="toolbar">
+              <input
+                id="record-search"
+                type="search"
+                placeholder="substring search in payloads"
+                autocomplete="off"
+              />
+              <select id="record-entity">
+                <option value="">all entities</option>
+              </select>
+              <label class="check"
+                ><input id="record-deleted" type="checkbox" /> show tombstones</label
+              >
+            </div>
+            <div id="record-list" class="record-list"></div>
+            <div class="pager" id="record-pager"></div>
+          </div>
+
+          <!-- Full text search, the same index the extension queries. -->
+          <div id="data-search" hidden>
+            <div class="toolbar">
+              <input
+                id="fts-search"
+                type="search"
+                placeholder="full text search (every term must match, the last one is a prefix)"
+                autocomplete="off"
+              />
+              <select id="fts-entity">
+                <option value="">all entities</option>
+              </select>
+            </div>
+            <div id="search-list" class="record-list"></div>
+          </div>
+        </section>
+
+        <!-- Tabverse detail, drawn over the data view. -->
+        <section id="view-tabspace" class="view" hidden>
+          <div class="view-head">
+            <div>
+              <button id="tabspace-back" class="link" type="button">← all tabverses</button>
+              <h1 id="tabspace-name">Tabverse</h1>
+              <p class="muted small" id="tabspace-meta"></p>
+            </div>
+          </div>
+          <div id="tabspace-body"></div>
+        </section>
+      </main>
+    </div>
+
+    <div id="toast" class="toast" hidden></div>
+
+    <script src="/assets/console.js"></script>
+  </body>
+</html>
