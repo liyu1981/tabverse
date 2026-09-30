@@ -65,6 +65,16 @@ export class MemorySyncStateStore implements SyncStateStore {
   }
 }
 
+/**
+ * The persisted sync state of this device: the delta cursor and when a sync
+ * last completed (the dialog shows that time; nothing else needs it).
+ */
+export async function loadSyncState(
+  storage: StorageAreaLike = new ChromeStorageArea(),
+): Promise<SyncState> {
+  return new ChromeSyncStateStore(storage).get();
+}
+
 export interface SyncHooks {
   /** Apply server records to the local cache (upsert; tombstones included). */
   onRecords?: (records: SyncRecord[]) => void | Promise<void>;

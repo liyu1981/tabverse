@@ -12,6 +12,7 @@ import { AboutDialog } from '../../dialog/AboutDialog';
 import { ServerSyncDialog } from '../../dialog/ServerSyncDialog';
 import { SettingDialog } from '../../dialog/SettingDialog';
 import { useSidebarCollapsed } from '../../common/SidebarContainer';
+import { useSyncActivity } from '../../common/useSyncActivity';
 import { TABSPACE_VERSION } from '../../../global';
 import classes from './BottomNav.module.scss';
 import clsx from 'clsx';
@@ -21,6 +22,9 @@ export const BottomNav = (props) => {
   const [aboutOpened, setAboutOpened] = useState(false);
   const [syncOpened, setSyncOpened] = useState(false);
   const collapsed = useSidebarCollapsed();
+  // the syncs that matter usually run in the service worker, not in this page;
+  // the notice arrives from there (see data/repo/syncActivity.ts)
+  const syncing = useSyncActivity();
 
   // Blueprint's Navbar has no vertical mode, so the collapsed rail renders the
   // same two controls (same dark bar, same rounded buttons) as a plain column.
@@ -34,11 +38,14 @@ export const BottomNav = (props) => {
       onClick={() => setAboutOpened(true)}
     />
   );
+  // the icon spins while a sync is going on, so the button reports it
+  const syncLabel = syncing ? 'Syncing…' : 'Server sync';
   const syncButton = (
     <Button
       icon="refresh"
-      title={collapsed ? undefined : 'Server sync'}
-      aria-label="Server sync"
+      className={clsx(syncing && 'tv-syncing')}
+      title={collapsed ? undefined : syncLabel}
+      aria-label={syncLabel}
       onClick={() => setSyncOpened(true)}
     />
   );
@@ -49,7 +56,7 @@ export const BottomNav = (props) => {
       <Tooltip content={aboutLabel} placement="right">
         {aboutButton}
       </Tooltip>
-      <Tooltip content="Server sync" placement="right">
+      <Tooltip content={syncLabel} placement="right">
         {syncButton}
       </Tooltip>
     </>

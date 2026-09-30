@@ -115,3 +115,10 @@
   font-size: 0.85em;
   line-height: 1.6;
 }
+
+/* "Last sync: 3 minutes ago", with the icon spinning while a sync runs */
+.identity :global(.bp6-icon) {
+  vertical-align: middle;
+  margin-right: 4px;
+  color: global.$color-d;
+}

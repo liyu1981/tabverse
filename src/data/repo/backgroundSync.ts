@@ -28,6 +28,7 @@ import {
   SyncConfig,
   loadSyncConfig,
 } from './syncConfig';
+import { withSyncActivity } from './syncActivity';
 import { SyncRecord } from './types';
 import { logger } from '../../global';
 
@@ -88,9 +89,10 @@ export function createSyncRuntime(
   const engine = new SyncEngine(api, outbox, stateStore, hooks);
 
   // Debounced trigger: realtime events and the interval both funnel through
-  // the engine's own "already syncing" guard.
+  // the engine's own "already syncing" guard. The activity wrapper is what
+  // makes the open pages spin their sync icon (see syncActivity.ts).
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-  const syncNow = () => engine.syncOnce();
+  const syncNow = () => withSyncActivity(() => engine.syncOnce());
   const triggerSync = () => {
     if (debounceTimer !== null) {
       clearTimeout(debounceTimer);
@@ -229,6 +231,13 @@ export interface UploadOptions {
  * dialog runs when the user leaves the "also upload" box ticked).
  */
 export async function uploadAllLocalRecords(
+  engine: SyncEngine,
+  options: UploadOptions = {},
+): Promise<UploadResult> {
+  return withSyncActivity(() => pushAllLocalRecords(engine, options));
+}
+
+async function pushAllLocalRecords(
   engine: SyncEngine,
   options: UploadOptions = {},
 ): Promise<UploadResult> {

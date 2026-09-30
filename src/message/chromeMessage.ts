@@ -3,6 +3,7 @@ import {
   BackgroundMsg,
   ChromeTabId,
   ILocalTablesChangedPayload,
+  SyncMsg,
   TabSpaceDBMsg,
   TabSpaceMsg,
 } from './message';
@@ -56,6 +57,21 @@ handlers[BackgroundMsg.LocalTablesChanged] = function (
     message.payload,
   );
   sendPubSubMessage(TabSpaceDBMsg.Changed, message.payload.tables);
+  sendResponse && sendResponse();
+};
+
+handlers[BackgroundMsg.SyncActivityChanged] = function (
+  message: {
+    type: BackgroundMsg.SyncActivityChanged;
+    payload: boolean;
+  },
+  sender: chrome.runtime.MessageSender,
+  sendResponse: (response?: any) => void,
+) {
+  // another context (usually the service worker) started or finished a sync;
+  // re-publish locally so this page's sync icon reacts
+  logger.log('chromeMessage got:', BackgroundMsg.SyncActivityChanged);
+  sendPubSubMessage(SyncMsg.Activity, message.payload === true);
   sendResponse && sendResponse();
 };
 

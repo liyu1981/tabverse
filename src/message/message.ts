@@ -24,6 +24,16 @@ export enum BackgroundMsg {
    * can re-read (see data/repo/localTables.ts).
    */
   LocalTablesChanged = 'background_localtableschanged',
+  /**
+   * Sent by a context that started or finished a server sync so the *other*
+   * manager pages can spin their sync icon (see data/repo/syncActivity.ts).
+   */
+  SyncActivityChanged = 'background_syncactivitychanged',
+}
+
+/** In-process "a sync is running" notice; payload is a boolean. */
+export enum SyncMsg {
+  Activity = 'sync_activity',
 }
 
 export type TabSpaceId = string;
@@ -48,6 +58,11 @@ export async function sendChromeMessage(msgPayload: {
 }): Promise<any>;
 
 export async function sendChromeMessage(msgPayload: {
+  type: BackgroundMsg.SyncActivityChanged;
+  payload: boolean;
+}): Promise<any>;
+
+export async function sendChromeMessage(msgPayload: {
   type: string;
   payload:
     | TabSpaceId
@@ -55,6 +70,7 @@ export async function sendChromeMessage(msgPayload: {
     | ChromeTabId
     | AuditLogs
     | ILocalTablesChangedPayload
+    | boolean
     | NotNeed;
 }): Promise<any> {
   const result = await new Promise((resolve, _reject) => {
@@ -91,8 +107,13 @@ export function sendPubSubMessage(
 ): void;
 
 export function sendPubSubMessage(
+  type: SyncMsg.Activity,
+  payload: boolean,
+): void;
+
+export function sendPubSubMessage(
   type: string,
-  payload: string[] | ITabSpaceMsgPayload,
+  payload: string[] | ITabSpaceMsgPayload | boolean,
 ): void {
   PubSub.publish(type, payload);
 }
@@ -100,16 +121,26 @@ export function sendPubSubMessage(
 export function subscribePubSubMessage(
   type: TabSpaceMsg.ChangeID,
   callback: (message: string, data: any) => void,
-): void;
+): string;
 
 export function subscribePubSubMessage(
   type: TabSpaceDBMsg.Changed,
   callback: (message: string, data: any) => void,
-): void;
+): string;
+
+export function subscribePubSubMessage(
+  type: SyncMsg.Activity,
+  callback: (message: string, data: boolean) => void,
+): string;
 
 export function subscribePubSubMessage(
   type: string,
   callback: (message: string, data: any) => void,
-): void {
-  PubSub.subscribe(type, callback);
+): string {
+  return PubSub.subscribe(type, callback);
+}
+
+/** Stops a listener started by `subscribePubSubMessage`. */
+export function unsubscribePubSubMessage(token: string): void {
+  PubSub.unsubscribe(token);
 }

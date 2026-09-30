@@ -118,3 +118,30 @@
 .tv-icon-button.bp6-button:disabled {
   opacity: 0.4;
 }
+
+/**
+ * A control that is busy: the icon spins until the work is done. Used by the
+ * sync button (bottom nav) and the sync dialog's own indicator, so "syncing
+ * right now" looks the same wherever it is shown.
+ */
+.tv-syncing .bp6-icon,
+.tv-syncing.bp6-icon {
+  animation: tv-spin 1.1s linear infinite;
+}
+
+@keyframes tv-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tv-syncing .bp6-icon,
+  .tv-syncing.bp6-icon {
+    animation-duration: 3s;
+  }
+}

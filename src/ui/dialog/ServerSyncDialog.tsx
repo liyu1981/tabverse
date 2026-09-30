@@ -5,14 +5,17 @@ import {
   Dialog,
   DialogBody,
   FormGroup,
+  Icon,
   InputGroup,
   Intent,
   Spinner,
 } from '@blueprintjs/core';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { logger } from '../../global';
+import { formatDateTime, fromNow } from '../../time';
 import classes from './ServerSyncDialog.module.scss';
+import { useSyncActivity } from '../common/useSyncActivity';
 import {
   SyncRuntime,
   startBackgroundSync,
@@ -20,6 +23,7 @@ import {
   uploadAllLocalRecords,
 } from '../../data/repo/backgroundSync';
 import { countLocalRecords, LocalRecordCounts } from '../../data/repo/dbBridge';
+import { loadSyncState } from '../../data/repo/repo';
 import {
   SyncConfig,
   clearSyncConfig,
@@ -61,8 +65,22 @@ export const ServerSyncDialog = (props: {
     done: number;
     total: number;
   } | null>(null);
+  // when the last sync cycle finished, read from the cursor the engine keeps
+  const [lastSyncAt, setLastSyncAt] = useState<number | null>(null);
+  const syncing = useSyncActivity();
 
   const hasLocalData = (localCounts ? localCounts.total : 0) > 0;
+
+  const refreshLastSync = useCallback(async () => {
+    try {
+      const state = await loadSyncState();
+      setLastSyncAt(
+        typeof state.last_sync_at === 'number' ? state.last_sync_at : null,
+      );
+    } catch (err) {
+      logger.log('sync dialog: cannot read the sync state', err);
+    }
+  }, []);
 
   useEffect(() => {
     if (!isOpen) {
@@ -81,6 +99,7 @@ export const ServerSyncDialog = (props: {
             intent: Intent.SUCCESS,
             text: `Connected to ${cfg.baseUrl}`,
           });
+          void refreshLastSync();
         } else {
           // Not paired yet: measure what an upload would send, so the size of
           // the default is visible before the user commits to it.
@@ -105,7 +124,7 @@ export const ServerSyncDialog = (props: {
     return () => {
       cancelled = true;
     };
-  }, [isOpen]);
+  }, [isOpen, refreshLastSync]);
 
   const runAction = async (fn: () => Promise<void>) => {
     setBusy(true);
@@ -137,6 +156,9 @@ export const ServerSyncDialog = (props: {
       );
       setConfig(cfg);
       setInviteCode('');
+      // the pair itself triggers a first sync cycle, so the time is worth
+      // reading as soon as the credentials are in
+      void refreshLastSync();
       // start syncing right away (the background worker does the same on its
       // next wake up; both are idempotent)
       const runtime = await startBackgroundSync();
@@ -202,6 +224,7 @@ export const ServerSyncDialog = (props: {
         return;
       }
       const outcome = await runtime.syncNow();
+      await refreshLastSync();
       if (outcome.status === 'ok') {
         setStatus({
           intent: Intent.SUCCESS,
@@ -240,6 +263,7 @@ export const ServerSyncDialog = (props: {
         onProgress: (done, total) => setUploadProgress({ done, total }),
       });
       setUploadProgress(null);
+      await refreshLastSync();
       setStatus({
         intent: result.stale > 0 ? Intent.WARNING : Intent.SUCCESS,
         text:
@@ -255,6 +279,7 @@ export const ServerSyncDialog = (props: {
       stopBackgroundSync();
       await clearSyncConfig();
       setConfig(null);
+      setLastSyncAt(null);
       setStatus({
         intent: Intent.NONE,
         text: 'Disconnected. Your data stays on this device.',
@@ -355,6 +380,22 @@ export const ServerSyncDialog = (props: {
                 Device: <code>{config.deviceId || 'unknown'}</code>
                 <br />
                 Account: <code>{config.userId || 'unknown'}</code>
+                <br />
+                {syncing ? (
+                  <Icon
+                    icon="refresh"
+                    size={12}
+                    className="tv-syncing"
+                    aria-label="Syncing"
+                  />
+                ) : null}
+                {lastSyncAt === null ? (
+                  'Not synced yet'
+                ) : (
+                  <span title={formatDateTime(lastSyncAt)}>
+                    Last sync: {fromNow(lastSyncAt)}
+                  </span>
+                )}
               </p>
             </Callout>
             <div className={classes.buttonRow}>

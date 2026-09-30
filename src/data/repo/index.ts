@@ -21,6 +21,7 @@ export * from './repo';
 export * from './realtime';
 export * from './syncConfig';
 export * from './localTables';
+export * from './syncActivity';
 export * from './dbBridge';
 export * from './changeFeed';
 export * from './backgroundSync';
