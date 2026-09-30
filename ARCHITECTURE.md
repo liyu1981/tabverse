@@ -170,7 +170,11 @@ route answers 403 while it is on, and entering and leaving are both in
 `audit_log`. `TABVERSED_ADMIN_TOKEN` remains as the break-glass path.
 
 `internal/webui` embeds three hand written files (HTML, CSS, JS - no framework,
-no build step) and serves them with a strict CSP. Since there is no bundler
+no build step) and serves them with a strict CSP. Its stylesheet is the
+extension's look - the palette, the 18px cards, the pill buttons and inputs are
+transcribed from `src/global.scss` and `src/ui/theme.scss` (nothing imports
+them here, so the tokens carry the name of the file each came from), and the
+console is light only for the same reason the extension is. Since there is no bundler
 and no type checker between the script and the page - it reaches the DOM by
 string id - `webui_test.go` asserts the contract between them (every selector
 resolves, ids are unique, every tab has a panel); the look of it is still the

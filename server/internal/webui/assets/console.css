@@ -1,39 +1,52 @@
 /* tabversed console - one hand written stylesheet, no framework, no build.
-   Dark by default (it lives next to a terminal more often than not), with a
-   light scheme when the OS asks for one. */
+
+   The look is the extension's: the palette, the rounding and the control
+   shapes are the ones in src/global.scss and src/ui/theme.scss, so the console
+   and the popup look like the same product. There is no build step to import
+   those files from (the server embeds this one), so the tokens below are
+   transcribed, with their source named.
+
+     --brand    $color-d          the main brand, and the primary button
+     --bg       $color-c          the page behind the cards
+     --sunken   $color-light-shade  inputs, wells, inactive chips
+     --border   #ededed and up    the hairlines between list rows
+     --text     $color-text       color.adjust($color-d, lightness -15%)
+     --text-muted  $color-a
+     --radius   18px              .bp6-card, .bp6-callout, .bp6-dialog
+     inputs    28px              .bp6-input in theme.scss
+     chips      8px              .bp6-tag and the checkbox in theme.scss
+
+   The console is light only, like the extension, and for the same reason: it
+   should not change appearance because the machine it runs on does. */
 
 :root {
-  --bg: #14161a;
-  --bg-raised: #1c1f25;
-  --bg-sunken: #101216;
-  --border: #2b2f37;
-  --text: #e6e8eb;
-  --text-muted: #949aa4;
-  --accent: #5aa9ff;
-  --accent-soft: rgba(90, 169, 255, 0.14);
-  --danger: #ff6b6b;
-  --danger-soft: rgba(255, 107, 107, 0.13);
-  --ok: #5fd28a;
-  --warn: #e8c05a;
-  --radius: 8px;
+  --brand: #54617a;
+  /* color.adjust($color-d, lightness -5%): the extension's nav bar */
+  --brand-bar: #4a556b;
+  /* color.adjust($color-d, lightness -8%): .tv-primary-button:hover */
+  --brand-hover: #434e62;
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --sunken: #f0f1f2;
+  --sunken-hover: #e4e5e7;
+  --border: #e8e9ec;
+  --border-strong: #c5c6c7;
+  --text: #353d4d;
+  --text-muted: #797a7a;
+  --danger: #c92a2a;
+  --danger-soft: #fdf0f0;
+  --ok: #2f855a;
+  --ok-soft: #eef7f1;
+  --warn: #a2761a;
+  --warn-soft: #fdf6e3;
+  --brand-soft: #eceef4;
+  --radius: 18px;
+  --radius-chip: 8px;
+  --radius-input: 28px;
+  /* the extension's soft shadows (theme.scss, .stickyOn .header) */
+  --shadow: 0 2px 10px -5px rgb(16 22 26 / 60%);
+  --shadow-lift: 0 8px 24px rgb(16 22 26 / 20%);
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    --bg: #f6f7f9;
-    --bg-raised: #ffffff;
-    --bg-sunken: #eceef1;
-    --border: #d8dce2;
-    --text: #1b1e24;
-    --text-muted: #5f6672;
-    --accent: #1f6feb;
-    --accent-soft: rgba(31, 111, 235, 0.1);
-    --danger: #c92a2a;
-    --danger-soft: rgba(201, 42, 42, 0.1);
-    --ok: #1f9d55;
-    --warn: #a2761a;
-  }
 }
 
 * {
@@ -62,11 +75,12 @@ body {
 h1 {
   font-size: 20px;
   margin: 4px 0 2px;
+  color: var(--brand);
 }
 h2 {
   font-size: 12px;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   color: var(--text-muted);
   margin: 0 0 10px;
 }
@@ -77,12 +91,12 @@ h3 {
 code {
   font-family: var(--mono);
   font-size: 0.92em;
-  background: var(--bg-sunken);
+  background: var(--sunken);
   padding: 1px 4px;
   border-radius: 4px;
 }
 a {
-  color: var(--accent);
+  color: var(--brand);
 }
 .muted {
   color: var(--text-muted);
@@ -96,14 +110,16 @@ a {
 
 /* ---- chrome ------------------------------------------------------------- */
 
+/* The brand bar is the one piece of the extension's chrome that reads as a
+   frame around everything else: the bottom nav is the same colour, so the
+   console is the extension's window with its content swapped. */
 .topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
   padding: 10px 18px;
-  background: var(--bg-raised);
-  border-bottom: 1px solid var(--border);
+  background: var(--brand-bar);
   position: sticky;
   top: 0;
   z-index: 20;
@@ -114,12 +130,13 @@ a {
   gap: 8px;
   font-weight: 600;
   letter-spacing: 0.01em;
+  color: #fff;
 }
 .brand .logo {
-  color: var(--accent);
+  color: #fff;
 }
 .version {
-  color: var(--text-muted);
+  color: rgb(255 255 255 / 70%);
   font-weight: 400;
   font-size: 12px;
 }
@@ -129,7 +146,7 @@ a {
   gap: 10px;
 }
 .totals {
-  color: var(--text-muted);
+  color: rgb(255 255 255 / 70%);
   font-size: 12px;
   font-family: var(--mono);
 }
@@ -141,37 +158,44 @@ a {
   flex-direction: column;
   gap: 2px;
   padding: 10px 18px;
-  background: var(--accent-soft);
+  background: var(--brand-soft);
   border-bottom: 1px solid var(--border);
   font-size: 13px;
 }
 
 /* ---- controls ----------------------------------------------------------- */
 
+/* Pill shaped, like every .bp6-button in theme.scss, and filled with the same
+   light grey the extension's default button uses. */
 button {
   font: inherit;
-  cursor: pointer;
-  border-radius: 6px;
-  border: 1px solid var(--border);
-  background: var(--bg-sunken);
   color: var(--text);
-  padding: 6px 12px;
+  cursor: pointer;
+  border-radius: 18px;
+  border: 1px solid transparent;
+  background: var(--sunken);
+  padding: 6px 14px;
 }
 button:hover:not(:disabled) {
-  border-color: var(--accent);
+  background: var(--sunken-hover);
+  border-color: transparent;
 }
 button:disabled {
   opacity: 0.5;
   cursor: default;
 }
 button.primary {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--brand);
+  border-color: var(--brand);
   color: #fff;
   font-weight: 500;
 }
+button.primary:hover:not(:disabled) {
+  background: var(--brand-hover);
+  border-color: var(--brand-hover);
+}
 button.primary.small {
-  padding: 5px 10px;
+  padding: 5px 12px;
   font-size: 13px;
 }
 button.ghost {
@@ -182,32 +206,64 @@ button.danger {
   border-color: transparent;
   background: var(--danger-soft);
 }
+button.danger:hover:not(:disabled) {
+  background: #f8dcdc;
+}
 button.link {
   background: none;
   border: none;
-  color: var(--accent);
+  color: var(--brand);
   padding: 0;
   font-size: 12px;
 }
+button.link:hover:not(:disabled) {
+  background: none;
+  text-decoration: underline;
+}
 button.tiny {
-  padding: 2px 8px;
+  padding: 3px 10px;
   font-size: 12px;
 }
 
+/* On the brand bar the controls are the extension's minimal buttons: no fill,
+   white text, and only a lighter fill under the pointer. It lives here, below
+   the button rules it has to beat, rather than with the bar's own layout. */
+.topbar button,
+.topbar button.ghost {
+  background: transparent;
+  border-color: transparent;
+  color: #fff;
+}
+.topbar button:hover:not(:disabled),
+.topbar button.ghost:hover:not(:disabled) {
+  background: rgb(255 255 255 / 14%);
+  border-color: transparent;
+  color: #fff;
+}
+
+/* The pill input of theme.scss, including the focus ring. A select keeps the
+   smaller pill: in the extension only text inputs are fully rounded. */
 input,
 select {
   font: inherit;
   color: var(--text);
-  background: var(--bg-sunken);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 6px 10px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-input);
+  padding: 6px 12px;
   min-width: 0;
+}
+select {
+  border-radius: var(--radius);
 }
 input:focus,
 select:focus {
-  outline: 2px solid var(--accent-soft);
-  border-color: var(--accent);
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgb(84 97 122 / 20%);
+}
+input[type='checkbox'] {
+  accent-color: var(--brand);
 }
 .check {
   display: flex;
@@ -231,6 +287,12 @@ select:focus {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  margin-bottom: 0;
+}
+.login-card label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--brand);
 }
 .providers {
   display: flex;
@@ -242,16 +304,17 @@ select:focus {
   margin-top: 2px;
 }
 a.provider {
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 5px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 18px;
+  padding: 5px 14px;
   text-decoration: none;
   color: var(--text);
   font-size: 13px;
 }
 a.provider:hover {
-  border-color: var(--accent);
-  color: var(--accent);
+  background: var(--sunken);
+  border-color: var(--brand);
+  color: var(--brand);
 }
 .login-card button {
   margin-top: 6px;
@@ -272,8 +335,10 @@ a.provider:hover {
   text-align: center;
 }
 
+/* A white card with the extension's 18px radius, on its page coloured
+   background - the same figure the History view and the dialogs use. */
 .card {
-  background: var(--bg-raised);
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 16px;
@@ -306,24 +371,25 @@ a.provider:hover {
 
 /* ---- account list ------------------------------------------------------- */
 .user-list li {
-  border-radius: 6px;
+  border-radius: var(--radius);
 }
 .user-list button {
   width: 100%;
   text-align: left;
   background: none;
   border: none;
-  padding: 7px 10px;
+  padding: 9px 12px;
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 .user-list li.selected button {
-  background: var(--accent-soft);
-  border-color: var(--accent);
+  background: var(--brand-soft);
+  border-color: transparent;
 }
 .user-list .u-name {
   font-weight: 500;
+  color: var(--brand);
 }
 .user-list .u-meta {
   color: var(--text-muted);
@@ -347,17 +413,18 @@ a.provider:hover {
 
 /* The read only bar. Deliberately loud and deliberately not dismissible: the
    page underneath belongs to somebody else, and an operator who forgets they
-   are looking through it is exactly the failure this feature has to prevent. */
+   are looking through it is exactly the failure this feature has to prevent.
+   It is the one place that keeps a warning colour, in the light palette. */
 .assume-bar {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 9px 18px;
-  background: var(--warn);
-  color: #14161a;
+  background: var(--warn-soft);
+  color: var(--warn);
   font-weight: 600;
   font-size: 13px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid #e6d3a0;
   position: sticky;
   top: 0;
   z-index: 30;
@@ -366,18 +433,19 @@ a.provider:hover {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #14161a;
+  background: var(--warn);
   flex: 0 0 auto;
 }
 .assume-bar button {
   margin-left: auto;
-  background: rgba(0, 0, 0, 0.12);
-  border-color: rgba(0, 0, 0, 0.25);
-  color: #14161a;
+  background: transparent;
+  border-color: #e6d3a0;
+  color: var(--warn);
   font-weight: 600;
 }
 .assume-bar button:hover {
-  border-color: #14161a;
+  background: #f7ecd0;
+  border-color: var(--warn);
 }
 
 /* ---- the operator's directory ------------------------------------------- */
@@ -387,7 +455,7 @@ a.provider:hover {
  * decide which row to act on.
  */
 #directory-table {
-  background: var(--bg-raised);
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden;
@@ -407,8 +475,8 @@ a.provider:hover {
   justify-content: flex-end;
 }
 #directory-empty {
-  background: var(--bg-raised);
-  border: 1px dashed var(--border);
+  background: var(--surface);
+  border: 1px dashed var(--border-strong);
   border-radius: var(--radius);
   padding: 28px;
 }
@@ -442,22 +510,23 @@ a.provider:hover {
   background: none;
   border: 1px solid transparent;
   border-left: 3px solid transparent;
-  border-radius: 6px;
-  padding: 8px 10px;
+  border-radius: 12px;
+  padding: 8px 12px;
   color: var(--text-muted);
 }
 .rail-item:hover:not(.disabled) {
-  background: var(--bg-raised);
+  background: var(--surface);
   color: var(--text);
 }
 /* the selected tab is marked on its left edge, so the rail reads as a
    navigation column rather than three more buttons */
 .rail-item.active {
-  background: var(--bg-raised);
+  background: var(--surface);
   border-color: var(--border);
-  border-left-color: var(--accent);
-  color: var(--text);
+  border-left-color: var(--brand);
+  color: var(--brand);
   font-weight: 500;
+  box-shadow: var(--shadow);
 }
 .rail-label {
   font-size: 13px;
@@ -469,7 +538,7 @@ a.provider:hover {
   font-weight: 400;
 }
 .rail-item.active .rail-note {
-  color: var(--accent);
+  color: var(--brand);
 }
 
 .tab-panels {
@@ -518,7 +587,7 @@ a.provider:hover {
     border-bottom: 3px solid transparent;
   }
   .rail-item.active {
-    border-bottom-color: var(--accent);
+    border-bottom-color: var(--brand);
   }
 }
 
@@ -531,15 +600,16 @@ a.provider:hover {
   margin-bottom: 16px;
 }
 .stat {
-  background: var(--bg-raised);
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 8px 12px;
+  padding: 8px 14px;
   min-width: 96px;
 }
 .stat .v {
   font-size: 18px;
   font-weight: 600;
+  color: var(--brand);
 }
 .stat .k {
   color: var(--text-muted);
@@ -566,12 +636,15 @@ a.provider:hover {
   border-bottom: 1px solid var(--border);
 }
 .table td {
-  padding: 7px 8px;
+  padding: 9px 8px;
   border-bottom: 1px solid var(--border);
   vertical-align: top;
 }
 .table tr:last-child td {
   border-bottom: none;
+}
+.table tr:hover td {
+  background: var(--brand-soft);
 }
 .table .mono {
   font-family: var(--mono);
@@ -582,28 +655,30 @@ a.provider:hover {
   text-align: center;
   padding: 14px;
 }
+/* the tag of theme.scss, so a status in the console is the same chip as a tag
+   in the extension */
 .badge {
   display: inline-block;
-  font-size: 11px;
-  padding: 1px 7px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
+  font-size: 0.75em;
+  padding: 1px 8px;
+  border-radius: var(--radius-chip);
+  background: var(--sunken);
   color: var(--text-muted);
   font-family: var(--mono);
 }
 .badge.live {
   color: var(--ok);
-  border-color: var(--ok);
+  background: var(--ok-soft);
 }
 .badge.revoked {
   color: var(--danger);
-  border-color: var(--danger);
+  background: var(--danger-soft);
 }
 /* archived: the operator's tidying, deliberately not a danger colour - nothing
    is lost, the row is only out of the default way (ADR 0011) */
 .badge.archived {
   color: var(--warn);
-  border-color: var(--warn);
+  background: var(--warn-soft);
   margin-left: 6px;
 }
 tr.archived-row td:not(:last-child) {
@@ -619,9 +694,9 @@ tr.archived-row td:not(:last-child) {
 
 .code-box {
   margin-top: 12px;
-  padding: 12px;
-  background: var(--bg-sunken);
-  border: 1px dashed var(--accent);
+  padding: 16px;
+  background: var(--bg);
+  border: 1px dashed var(--brand);
   border-radius: var(--radius);
   text-align: center;
 }
@@ -640,6 +715,7 @@ tr.archived-row td:not(:last-child) {
   user-select: all;
   /* a stray click should not deselect the code we just offered to copy */
   cursor: text;
+  color: var(--brand);
 }
 .code-box .expiry {
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -654,8 +730,7 @@ tr.archived-row td:not(:last-child) {
   flex-wrap: wrap;
   margin-top: 10px;
   padding: 8px 10px;
-  background: var(--bg-sunken);
-  border: 1px solid var(--border);
+  background: var(--sunken);
   border-radius: var(--radius);
 }
 .server-url {
@@ -674,29 +749,32 @@ button.copy:hover {
 }
 button.copy.done {
   color: var(--ok);
-  border-color: var(--ok);
+  background: var(--ok-soft);
 }
 
 /* ---- tabs & toolbars --------------------------------------------------- */
 
+/* The pill segmented control: a grey well with a white pill for the current
+   one, which is what the extension's tag inputs do. */
 .tabs {
   display: flex;
   gap: 4px;
-  background: var(--bg-sunken);
+  background: var(--sunken);
   padding: 3px;
-  border-radius: 8px;
+  border-radius: 18px;
 }
 .tab {
   background: none;
   border: none;
   padding: 5px 12px;
-  border-radius: 6px;
+  border-radius: 15px;
   color: var(--text-muted);
 }
 .tab.active {
-  background: var(--bg-raised);
-  color: var(--text);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  background: var(--surface);
+  color: var(--brand);
+  font-weight: 500;
+  box-shadow: var(--shadow);
 }
 .toolbar {
   display: flex;
@@ -727,7 +805,7 @@ button.copy.done {
   gap: 12px;
 }
 .tabspace-card {
-  background: var(--bg-raised);
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 14px;
@@ -737,9 +815,16 @@ button.copy.done {
   gap: 8px;
   min-height: 96px;
 }
+/* the lift an interactive card gets in the extension: no repaint, only a
+   shadow to say the row is under the pointer */
+.tabspace-card:hover:not(:disabled) {
+  background: var(--surface);
+  box-shadow: var(--shadow-lift);
+}
 .tabspace-card .name {
   font-weight: 600;
   font-size: 15px;
+  color: var(--brand);
   overflow-wrap: anywhere;
 }
 .tabspace-card .counts {
@@ -760,6 +845,7 @@ button.copy.done {
   display: flex;
   align-items: center;
   gap: 8px;
+  color: var(--brand);
 }
 .count-pill {
   font-size: 11px;
@@ -780,9 +866,9 @@ button.copy.done {
   display: flex;
   align-items: baseline;
   gap: 10px;
-  padding: 6px 10px;
-  border-radius: 6px;
-  background: var(--bg-raised);
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--surface);
   border: 1px solid var(--border);
 }
 .tab-row .fav {
@@ -818,7 +904,7 @@ button.copy.done {
 
 .note-body {
   padding: 10px 12px;
-  background: var(--bg-raised);
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow-wrap: anywhere;
@@ -826,6 +912,7 @@ button.copy.done {
 .note-body .n {
   font-weight: 600;
   margin-bottom: 4px;
+  color: var(--brand);
 }
 .note-body .d {
   color: var(--text-muted);
@@ -851,7 +938,7 @@ li.done .n {
   gap: 8px;
 }
 .record {
-  background: var(--bg-raised);
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 10px 12px;
@@ -866,7 +953,7 @@ li.done .n {
 .record .head .e {
   font-family: var(--mono);
   font-size: 11px;
-  color: var(--accent);
+  color: var(--brand);
 }
 .record pre {
   margin: 0;
@@ -880,7 +967,7 @@ li.done .n {
 }
 details > summary {
   cursor: pointer;
-  color: var(--accent);
+  color: var(--brand);
   font-size: 12px;
 }
 
@@ -891,14 +978,14 @@ details > summary {
   bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
-  background: var(--bg-raised);
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-left: 3px solid var(--accent);
+  border-left: 3px solid var(--brand);
   border-radius: var(--radius);
   padding: 10px 16px;
   z-index: 50;
   max-width: 80vw;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--shadow-lift);
 }
 .toast.bad {
   border-left-color: var(--danger);

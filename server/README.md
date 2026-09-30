@@ -257,7 +257,10 @@ admin surface is for operator state; the data stays the extension's to write.
 The console is three embedded files under `internal/webui/assets/` (HTML, CSS,
 JS - no framework, no build step) served with a strict CSP. It holds no secret
 at all: the session is an httpOnly cookie, and the page only ever sees the XSRF
-token it has to echo back.
+token it has to echo back. `console.css` is styled after the extension's own UI
+(the palette in `src/global.scss`, the control shapes in `src/ui/theme.scss`),
+so both look like the same product; because nothing imports those files into
+the server, each token in it names the file it was taken from.
 
 The pairing code and the server URL next to it each get a copy button. Copying
 falls back through three steps on purpose, because a self-hosted console is
