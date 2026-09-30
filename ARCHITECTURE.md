@@ -169,8 +169,9 @@ tested.
       vet/race/cross-compile
 - [x] Store disclosure notes (`doc/chrome-webstore/listing.md`) and the
       privacy policy's "Optional server sync" section
-- [ ] Existing users' local data upload is a **manual, explicit** button
-      (see ADR 0002 §3) — no silent migration
+- [x] Existing users' local data uploads when sync is set up, **ticked by
+      default and informed**: the dialog counts what would go, unticking keeps
+      everything local, and the separate button remains for later (ADR 0002 §3)
 - [ ] `strictNullChecks` (428 errors) + `noImplicitAny` (227) — staged pass,
       count first with `npx tsc --noEmit --strict`
 - [x] Cross-window machinery deleted: each manager page owns one window, so

@@ -58,6 +58,35 @@
   flex: 1 1 8em;
 }
 
+/* the "also upload" option: the checkbox carries the decision, the line under
+   it carries the consequence (how much goes, and where) */
+.uploadOption {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid global.$color-light-shade;
+  border-radius: 6px;
+  background-color: global.$color-c;
+}
+
+.uploadOption :global(.bp6-control) {
+  margin: 0;
+}
+
+.uploadHint {
+  margin: 0 0 0 24px;
+  font-size: 0.8em;
+  line-height: 1.5;
+  color: global.$color-a;
+}
+
+.uploadProgress {
+  margin: 4px 0 0;
+  font-size: 0.8em;
+  color: global.$color-a;
+}
+
 /* the pill and the icon buttons come from ../theme.scss; only the row layout
    and the states of this dialog are its own */
 .status {

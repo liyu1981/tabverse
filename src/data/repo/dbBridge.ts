@@ -81,6 +81,25 @@ export function rowUpdatedAt(row: any): number {
 }
 
 /**
+ * Whether a local row belongs in a sync payload at all. Shared by the upload
+ * and the count the pairing dialog shows, so the number of records the user is
+ * asked to consent to is the number that actually goes.
+ */
+export function isSyncableRow(entity: EntityName, row: any): boolean {
+  if (!row || typeof row.id !== 'string' || isIdNotSaved(row.id)) {
+    // Never saved (ids prefixed with `~`): a UI store row, not data.
+    return false;
+  }
+  if (entity === 'tabspace' && isEmptyTabSpaceRow(row)) {
+    // A tabverse is created the moment a Tabverse tab opens, so opening
+    // and immediately closing one would otherwise leave a synced, empty
+    // record behind. It uploads as soon as it holds a tab.
+    return false;
+  }
+  return true;
+}
+
+/**
  * Reads every syncable row out of the local database. Rows that were never
  * saved (ids prefixed with `~`) are skipped: they live in the UI store only.
  */
@@ -98,13 +117,7 @@ export async function listLocalRecords(
     }
     const rows: any[] = await db.table(binding.table).toArray();
     for (const row of rows) {
-      if (!row || typeof row.id !== 'string' || isIdNotSaved(row.id)) {
-        continue;
-      }
-      if (binding.entity === 'tabspace' && isEmptyTabSpaceRow(row)) {
-        // A tabverse is created the moment a Tabverse tab opens, so opening
-        // and immediately closing one would otherwise leave a synced, empty
-        // record behind. It uploads as soon as it holds a tab.
+      if (!isSyncableRow(binding.entity, row)) {
         continue;
       }
       out.push({
@@ -117,6 +130,33 @@ export async function listLocalRecords(
     }
   }
   return out;
+}
+
+export interface LocalRecordCounts {
+  total: number;
+  byEntity: Record<string, number>;
+}
+
+/**
+ * How much this device would upload, without building the payloads. The
+ * pairing dialog shows this *before* the user commits, because the upload is
+ * on by default (adr/0002 §3): a default the user cannot see the size of is
+ * consent by coincidence rather than by choice.
+ */
+export async function countLocalRecords(): Promise<LocalRecordCounts> {
+  const counts: LocalRecordCounts = { total: 0, byEntity: {} };
+  for (const binding of SYNC_TABLE_BINDINGS) {
+    const rows: any[] = await db.table(binding.table).toArray();
+    for (const row of rows) {
+      if (!isSyncableRow(binding.entity, row)) {
+        continue;
+      }
+      counts.total += 1;
+      counts.byEntity[binding.entity] =
+        (counts.byEntity[binding.entity] || 0) + 1;
+    }
+  }
+  return counts;
 }
 
 export interface ApplyResult {

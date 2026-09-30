@@ -2,6 +2,7 @@ import { db } from '../../../storage/db';
 import { resetTestDb } from '../../../dev/dbImplTest';
 import {
   applyServerRecords,
+  countLocalRecords,
   entityForTable,
   listLocalRecords,
   rowUpdatedAt,
@@ -36,6 +37,51 @@ test('entityForTable knows every syncable table', () => {
   expect(entityForTable(TAB)).toBe('tab');
   expect(entityForTable('SavedAllTodo')).toBe('alltodo');
   expect(entityForTable('nope')).toBeNull();
+});
+
+test('countLocalRecords agrees with what listLocalRecords would upload', async () => {
+  // The pairing dialog shows this count to the user before they consent to the
+  // default upload, so it has to be the same set of rows the upload pushes -
+  // not an approximation that quietly under- or over-states the size.
+  await db.table(TABSPACE).put({
+    id: 'ts1',
+    name: 'space one',
+    tabIds: ['t1'],
+    windowId: 3,
+    version: 7,
+    createdAt: 1000,
+    updatedAt: 2000,
+  });
+  await db.table(TABSPACE).put({
+    id: 'ts-empty',
+    name: '',
+    tabIds: [],
+    windowId: 3,
+    version: 7,
+    createdAt: 1000,
+    updatedAt: 2000,
+  });
+  await db.table(TAB).put({
+    id: 't1',
+    tabSpaceId: 'ts1',
+    title: 'a tab',
+    url: 'https://example.com/',
+    version: 7,
+    createdAt: 1000,
+    updatedAt: 2000,
+  });
+  await db.table(NOTE).bulkPut([
+    note('n1', 'ts1', 3000),
+    // unsaved (ids are prefixed with ~) and an empty tabspace: both skipped
+    { ...note('~draft', 'ts1', 4000), id: '~draft' },
+  ]);
+
+  const counts = await countLocalRecords();
+  const records = await listLocalRecords();
+
+  expect(counts.total).toBe(records.length);
+  expect(counts.total).toBe(3);
+  expect(counts.byEntity).toMatchObject({ tabspace: 1, tab: 1, note: 1 });
 });
 
 test('listLocalRecords reads saved rows and skips unsaved ones', async () => {

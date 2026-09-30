@@ -20,9 +20,19 @@ For v1:
    file on an encrypted volume.
 2. **Opt-in only.** No configuration means local-only operation, byte for
    byte the old behavior. Nothing is uploaded until the user pairs a device.
-3. **Explicit consent before the first upload.** The "Upload local data"
-   action in the sync dialog is a separate, deliberate button — pairing alone
-   does not move existing data.
+3. **An informed default, not a silent one.** Setting sync up uploads the data
+   already on the device, and the box is **ticked by default**. The requirement
+   this replaces ("a separate button, pairing alone does not move existing
+   data") made the first setup a surprising dead end: the user pairs, sees an
+   empty server, and has to discover a second button. The default is kept
+   *legible* instead of quiet: the dialog counts what would be sent ("this
+   device holds N records, M tabverses, T tabs"), the primary button says
+   "Pair & upload local data" while the box is ticked, the upload reports
+   progress, and unticking it is one click and says what it means ("your
+   existing data stays on this device"). The separate "Upload local data"
+   button stays, for data created while disconnected and for retrying a failed
+   upload. An upload that fails after a successful pairing is reported as a
+   failed *upload* - the device is paired and the local copy is intact.
 4. **Server side retention** defaults to pruning `session` snapshots after
    14 days (`TABVERSED_RETENTION_DAYS`, 0 = keep forever). The extension no
    longer records snapshots at all (`adr/0006`); retention remains for older

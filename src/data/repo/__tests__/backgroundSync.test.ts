@@ -200,8 +200,13 @@ test('uploadAllLocalRecords ships the local database', async () => {
   });
   runtime.stop();
 
-  const uploaded = await uploadAllLocalRecords(uploadRuntime.engine);
-  expect(uploaded).toBe(1);
+  const progress: Array<[number, number]> = [];
+  const uploaded = await uploadAllLocalRecords(uploadRuntime.engine, {
+    onProgress: (done, total) => progress.push([done, total]),
+  });
+  expect(uploaded).toEqual({ uploaded: 1, stale: 0, total: 1 });
+  // progress is reported per chunk, so a large first upload can show a count
+  expect(progress).toEqual([[1, 1]]);
   expect(pushes).toHaveLength(1);
   expect(pushes[0].records[0]).toMatchObject({
     entity: 'note',
@@ -212,6 +217,68 @@ test('uploadAllLocalRecords ships the local database', async () => {
   expect(JSON.parse(pushes[0].records[0].payload)).toMatchObject({
     name: 'ship me',
   });
+  uploadRuntime.stop();
+});
+
+test('uploadAllLocalRecords reports stale records and chunked progress', async () => {
+  // Pairing now uploads by default, and the dialog tells the user what
+  // happened. "Stale" is not a failure: the server already held a newer copy,
+  // so nothing was lost, but the count has to be reported separately from the
+  // number that was actually written.
+  await resetTestDb();
+  await db.table('SavedNote').bulkPut(
+    Array.from({ length: 250 }, (_, i) => ({
+      id: `n${i}`,
+      tabSpaceId: 'ts1',
+      name: `note ${i}`,
+      data: 'body',
+      version: 7,
+      createdAt: 1,
+      updatedAt: 2,
+    })),
+  );
+
+  const fetchFn: FetchLike = async (url, init) => {
+    if (init && init.method === 'POST') {
+      const body = JSON.parse(init.body!);
+      return jsonResponse({
+        // one stale per chunk, so the accounting is exercised more than once
+        results: body.records.map((r: any, i: number) => ({
+          entity: r.entity,
+          id: r.id,
+          status: i === 0 ? 'stale' : 'ok',
+          rev: 1,
+          updated_at: r.updated_at,
+        })),
+        server_rev: 1,
+      });
+    }
+    return jsonResponse({
+      records: [],
+      next_rev: 0,
+      has_more: false,
+      server_rev: 1,
+    });
+  };
+
+  const uploadRuntime = createSyncRuntime(CONFIG, {
+    storage: new MemoryStorageArea(),
+    fetchFn,
+    stateStore: new MemorySyncStateStore(),
+    autoSyncIntervalMs: 0,
+  });
+
+  const progress: Array<[number, number]> = [];
+  const result = await uploadAllLocalRecords(uploadRuntime.engine, {
+    onProgress: (done, total) => progress.push([done, total]),
+  });
+  expect(result).toEqual({ uploaded: 247, stale: 3, total: 250 });
+  // 250 records at 100 per chunk: 100, 200, 250
+  expect(progress).toEqual([
+    [100, 250],
+    [200, 250],
+    [250, 250],
+  ]);
   uploadRuntime.stop();
 });
 

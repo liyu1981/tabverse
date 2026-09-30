@@ -285,10 +285,14 @@ opened the tab.
    collapses per record).
 2. **Sync/privacy posture.** Born-saved means a newly opened tabverse uploads to
    the server (as soon as it has ≥1 tab) without a per-tabverse click. ADR 0002
-   §3 promises explicit consent before the first upload — that promise is about
-   *pre-existing local data* at pairing time, so this is compatible, but the
-   disclosure text should be re-read and ADR 0002 amended rather than left to
-   drift. The "Upload local data" button keeps its meaning (first pairing).
+   §3 promised explicit consent before the first upload — that promise was about
+   *pre-existing local data* at pairing time. ADR 0002 §3 has since been amended
+   to an informed default instead (pre-existing data uploads when sync is set
+   up, ticked by default, with the count shown and a box to untick), so this
+   item is now consistent with the ADR; the disclosure text in
+   `docs/privacy` and the store listing was updated with it. The "Upload local
+   data" button keeps its meaning for later: data created while disconnected,
+   or a retry.
 3. **Orphan tabverses.** Opening and instantly closing a tabverse creates a
    saved, synced, empty tabverse. Mitigation options: (a) accept it, (b) only
    push once the tabverse has ≥1 tab (`listLocalRecords` already filters

@@ -24,9 +24,12 @@ fully without an account or a network connection.
 **Optional server sync**
 
 You can choose to pair your browser with your own sync server (an open source
-Go program called `tabversed`). Only when you do this, and only after you
-press "Upload local data", the following is sent to **the server you
-configured** over an encrypted connection:
+Go program called `tabversed`). Only when you do this: setting up the
+connection sends the data already stored on this device - the dialog tells you
+how many tabverses, tabs, notes, todos and bookmarks that is before you
+confirm, and you can untick a box to connect without sending anything, keeping
+your existing data on the device. Either way, what reaches the server is sent
+to **the server you configured** over an encrypted connection:
 
 - tab URLs and titles, saved tab groups, notes, todos and bookmarks
 - periodically captured session snapshots (window/tab listings)

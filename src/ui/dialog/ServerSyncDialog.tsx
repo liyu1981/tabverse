@@ -1,6 +1,7 @@
 import {
   Button,
   Callout,
+  Checkbox,
   Dialog,
   DialogBody,
   FormGroup,
@@ -18,6 +19,7 @@ import {
   stopBackgroundSync,
   uploadAllLocalRecords,
 } from '../../data/repo/backgroundSync';
+import { countLocalRecords, LocalRecordCounts } from '../../data/repo/dbBridge';
 import {
   SyncConfig,
   clearSyncConfig,
@@ -48,6 +50,19 @@ export const ServerSyncDialog = (props: {
   const [deviceName, setDeviceName] = useState('chrome');
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<IStatus>(NOT_CONNECTED);
+  // Uploading what is already on this device is the default when setting sync
+  // up (adr/0002 §3); the box is there to turn it off, and the count below it
+  // is there so the default is an informed one.
+  const [uploadLocal, setUploadLocal] = useState(true);
+  const [localCounts, setLocalCounts] = useState<LocalRecordCounts | null>(
+    null,
+  );
+  const [uploadProgress, setUploadProgress] = useState<{
+    done: number;
+    total: number;
+  } | null>(null);
+
+  const hasLocalData = (localCounts ? localCounts.total : 0) > 0;
 
   useEffect(() => {
     if (!isOpen) {
@@ -66,6 +81,18 @@ export const ServerSyncDialog = (props: {
             intent: Intent.SUCCESS,
             text: `Connected to ${cfg.baseUrl}`,
           });
+        } else {
+          // Not paired yet: measure what an upload would send, so the size of
+          // the default is visible before the user commits to it.
+          countLocalRecords()
+            .then((counts) => {
+              if (!cancelled) {
+                setLocalCounts(counts);
+              }
+            })
+            .catch((err) => {
+              logger.log('sync dialog: cannot count local records', err);
+            });
         }
         setLoaded(true);
       })
@@ -110,13 +137,58 @@ export const ServerSyncDialog = (props: {
       );
       setConfig(cfg);
       setInviteCode('');
-      setStatus({
-        intent: Intent.SUCCESS,
-        text: `Paired with ${cfg.baseUrl}`,
-      });
       // start syncing right away (the background worker does the same on its
       // next wake up; both are idempotent)
-      await startBackgroundSync();
+      const runtime = await startBackgroundSync();
+
+      if (!uploadLocal || !hasLocalData) {
+        setStatus({
+          intent: Intent.SUCCESS,
+          text:
+            `Paired with ${cfg.baseUrl}. Your existing data stays on this ` +
+            'device; new and changed tabverses sync from now on.',
+        });
+        return;
+      }
+      if (!runtime) {
+        setStatus({
+          intent: Intent.WARNING,
+          text: `Paired with ${cfg.baseUrl}, but the upload was skipped: sync is not configured. Use "Upload local data" to retry.`,
+        });
+        return;
+      }
+
+      // Pairing already succeeded at this point, so an upload failure is
+      // reported as a failure of the upload and nothing else: the device is
+      // paired, the local copy is intact, and the button can retry.
+      try {
+        setStatus({
+          intent: Intent.PRIMARY,
+          text: `Paired with ${cfg.baseUrl}. Uploading the data on this device...`,
+        });
+        const result = await uploadAllLocalRecords(runtime.engine, {
+          onProgress: (done, total) => setUploadProgress({ done, total }),
+        });
+        setUploadProgress(null);
+        setStatus({
+          intent: result.stale > 0 ? Intent.WARNING : Intent.SUCCESS,
+          text:
+            `Paired with ${cfg.baseUrl}. Uploaded ${result.uploaded} of ` +
+            `${result.total} local record(s)` +
+            (result.stale > 0
+              ? `; ${result.stale} were already newer on the server.`
+              : '.'),
+        });
+      } catch (err: any) {
+        setUploadProgress(null);
+        setStatus({
+          intent: Intent.WARNING,
+          text:
+            `Paired with ${cfg.baseUrl}, but the upload failed: ` +
+            `${err && err.message ? err.message : String(err)}. ` +
+            'Your data is still on this device; use "Upload local data" to retry.',
+        });
+      }
     });
 
   const onSyncNow = () =>
@@ -159,10 +231,22 @@ export const ServerSyncDialog = (props: {
         });
         return;
       }
-      const uploaded = await uploadAllLocalRecords(runtime.engine);
+      setUploadProgress(null);
       setStatus({
-        intent: Intent.SUCCESS,
-        text: `Uploaded ${uploaded} local record(s) to the server.`,
+        intent: Intent.PRIMARY,
+        text: 'Uploading the data on this device...',
+      });
+      const result = await uploadAllLocalRecords(runtime.engine, {
+        onProgress: (done, total) => setUploadProgress({ done, total }),
+      });
+      setUploadProgress(null);
+      setStatus({
+        intent: result.stale > 0 ? Intent.WARNING : Intent.SUCCESS,
+        text:
+          `Uploaded ${result.uploaded} of ${result.total} local record(s)` +
+          (result.stale > 0
+            ? `; ${result.stale} were already newer on the server.`
+            : '.'),
       });
     });
 
@@ -228,11 +312,36 @@ export const ServerSyncDialog = (props: {
                 fill={true}
               />
             </FormGroup>
+            <div className={classes.uploadOption}>
+              <Checkbox
+                id="sync-upload-input"
+                checked={hasLocalData && uploadLocal}
+                disabled={!hasLocalData}
+                onChange={(event) =>
+                  setUploadLocal(event.currentTarget.checked)
+                }
+                label="Also upload the data already on this device"
+              />
+              <p className={classes.uploadHint}>
+                {hasLocalData && uploadLocal
+                  ? `This device holds ${localCounts?.total} record(s) ` +
+                    `(${(localCounts?.byEntity.tabspace || 0).toString()} tabverse(s), ` +
+                    `${(localCounts?.byEntity.tab || 0).toString()} tab(s)). ` +
+                    'They are sent to the server once, when you connect.'
+                  : hasLocalData
+                    ? 'Your existing data stays on this device. New and changed tabverses still sync from now on.'
+                    : 'Nothing stored on this device yet, so there is nothing to upload.'}
+              </p>
+            </div>
             <div className={classes.buttonRow}>
               <Button
                 className="tv-primary-button"
                 loading={busy}
-                text="Pair & connect"
+                text={
+                  uploadLocal && hasLocalData
+                    ? 'Pair & upload local data'
+                    : 'Pair & connect'
+                }
                 onClick={onPair}
               />
             </div>
@@ -258,7 +367,7 @@ export const ServerSyncDialog = (props: {
               <Button
                 loading={busy}
                 text="Upload local data"
-                title="Send everything stored on this device to the server (ADR 0002: pairing alone does not upload)"
+                title="Send everything stored on this device to the server. Setup does this for you unless you untick the box, so this is for later: data created while disconnected, or a retry after a failed upload."
                 onClick={onUpload}
               />
               <Button
@@ -274,6 +383,12 @@ export const ServerSyncDialog = (props: {
 
         <div className={classes.status}>
           <Callout intent={status.intent}>{status.text}</Callout>
+          {uploadProgress ? (
+            <p className={classes.uploadProgress}>
+              Uploading {uploadProgress.done} of {uploadProgress.total}{' '}
+              record(s) ...
+            </p>
+          ) : null}
         </div>
       </DialogBody>
     </Dialog>

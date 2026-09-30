@@ -33,7 +33,9 @@ Consistent with `adr/0002-privacy-posture.md`:
   explicitly pairs a device with a sync server in the settings dialog.
 - **When sync is enabled**, the user chooses the server (self-hosted
   `tabversed` by default). The extension sends: tab URLs and titles, saved
-  tab groups, notes, todos and bookmarks. (Browser session snapshots were
+  tab groups, notes, todos and bookmarks. Setting up the connection sends the
+  data already on the device by default, with the count shown first and a box
+  to untick; unticked, nothing is sent until the user changes something. (Browser session snapshots were
   collected by 0.5.x and are no longer sent; the server still prunes any that
   an older paired build uploaded.)
 - **Not sold, not shared** with third parties; the extension talks to exactly

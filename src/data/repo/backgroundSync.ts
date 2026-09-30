@@ -205,19 +205,48 @@ export function stopBackgroundSyncForTest(): void {
   stopBackgroundSync();
 }
 
-/** Helper used by migration tooling: upload the whole local database. */
+export interface UploadResult {
+  /** Records the server accepted. */
+  uploaded: number;
+  /** Records the server already had a newer copy of; nothing was lost. */
+  stale: number;
+  /** How many syncable records this device held when the upload started. */
+  total: number;
+}
+
+export interface UploadOptions {
+  /**
+   * Called after every chunk, so a first upload of a large profile can say
+   * "1,200 of 3,400" instead of appearing to hang. A local database can hold
+   * tens of thousands of rows.
+   */
+  onProgress?: (done: number, total: number) => void;
+}
+
+/**
+ * Uploads the whole local database to the server, bypassing the outbox (these
+ * rows were never queued; this is the migration path, and the one the pairing
+ * dialog runs when the user leaves the "also upload" box ticked).
+ */
 export async function uploadAllLocalRecords(
   engine: SyncEngine,
-): Promise<number> {
+  options: UploadOptions = {},
+): Promise<UploadResult> {
   const records = await listLocalRecords();
+  const result: UploadResult = { uploaded: 0, stale: 0, total: records.length };
   if (records.length === 0) {
-    return 0;
+    return result;
   }
   const CHUNK = 100;
-  let uploaded = 0;
+  let done = 0;
   for (let i = 0; i < records.length; i += CHUNK) {
-    const result = await engine.pushRecords(records.slice(i, i + CHUNK));
-    uploaded += result.results.filter((r) => r.status === 'ok').length;
+    const pushed = await engine.pushRecords(records.slice(i, i + CHUNK));
+    result.uploaded += pushed.results.filter((r) => r.status === 'ok').length;
+    result.stale += pushed.results.filter((r) => r.status === 'stale').length;
+    done += Math.min(CHUNK, records.length - i);
+    if (options.onProgress) {
+      options.onProgress(done, records.length);
+    }
   }
-  return uploaded;
+  return result;
 }
