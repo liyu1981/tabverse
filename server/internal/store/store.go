@@ -127,6 +127,14 @@ func (s *Store) migrate(ctx context.Context) error {
 	for _, stmt := range []string{
 		// When a device token was last seen, for the console's device list.
 		`ALTER TABLE tokens ADD COLUMN last_used INTEGER NOT NULL DEFAULT 0`,
+		// Archived = retired by an operator (ADR 0011). Not a deletion: the
+		// rows stay, keep syncing to the user's devices, and can be brought
+		// back. Only the console hides them.
+		`ALTER TABLE tokens ADD COLUMN archived_at INTEGER`,
+		`ALTER TABLE devices ADD COLUMN archived_at INTEGER`,
+		`ALTER TABLE records ADD COLUMN archived_at INTEGER`,
+		// The console lists a user's records "archived last" by default.
+		`CREATE INDEX IF NOT EXISTS records_archived ON records(user_id, archived_at)`,
 	} {
 		if _, err := s.db.ExecContext(ctx, stmt); err != nil {
 			if strings.Contains(err.Error(), "duplicate column name") {

@@ -89,132 +89,229 @@
             </div>
           </div>
 
-          <div class="stat-row" id="account-stats"></div>
-
-          <div class="panel-grid">
-            <section class="card">
-              <h3>Devices</h3>
-              <table class="table" id="device-table">
-                <thead>
-                  <tr>
-                    <th>Device</th>
-                    <th>Paired</th>
-                    <th>Last seen</th>
-                    <th>Tokens</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody></tbody>
-              </table>
-            </section>
-
-            <section class="card">
-              <h3>Pairing codes</h3>
-              <p class="muted small">
-                A code adds a device to this account. It works once and expires;
-                the device exchanges it for its own token.
-              </p>
-              <form id="invite-form" class="row">
-                <input
-                  id="invite-ttl"
-                  type="number"
-                  min="60"
-                  max="86400"
-                  value="900"
-                  aria-label="code lifetime in seconds"
-                />
-                <button type="submit" class="primary small">New code</button>
-              </form>
-              <div id="invite-result" class="code-box" hidden></div>
-              <div id="server-url-box" class="server-url-box" hidden></div>
-            </section>
-          </div>
-
-          <section class="card">
-            <h3>Device tokens</h3>
-            <p class="muted small">
-              Every device holds a token. The server only stores its hash, so a
-              token cannot be shown again - revoking one is final, and the
-              device has to pair again.
-            </p>
-            <table class="table" id="token-table">
-              <thead>
-                <tr>
-                  <th>Token</th>
-                  <th>Device</th>
-                  <th>Issued</th>
-                  <th>Last used</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </section>
-        </section>
-
-        <section id="view-data" class="view" hidden>
-          <div class="view-head">
-            <div>
-              <h1>Stored data</h1>
-              <p class="muted small" id="data-subtitle"></p>
-            </div>
-            <div class="tabs" role="tablist">
-              <button class="tab active" data-view="tabverses" type="button">Tabverses</button>
-              <button class="tab" data-view="search" type="button">Search</button>
-              <button class="tab" data-view="records" type="button">Records</button>
-            </div>
-          </div>
-
-          <div id="data-tabverses">
-            <div class="toolbar">
-              <input
-                id="tabspace-search"
-                type="search"
-                placeholder="filter tabverses"
-                autocomplete="off"
-              />
-            </div>
-            <div id="tabspace-list" class="tabspace-list"></div>
-            <div class="pager" id="tabspace-pager"></div>
-          </div>
-
-          <div id="data-records" hidden>
-            <div class="toolbar">
-              <input
-                id="record-search"
-                type="search"
-                placeholder="substring search in payloads"
-                autocomplete="off"
-              />
-              <select id="record-entity">
-                <option value="">all entities</option>
-              </select>
-              <label class="check"
-                ><input id="record-deleted" type="checkbox" /> show tombstones</label
+          <!-- Three things an operator does with an account, one tab each: add
+               a device, look at the credentials, look at the data. The rail is
+               on the left and the panels on the right, so the account sidebar
+               and the tab rail stack without either one scrolling away. -->
+          <div class="tabbed">
+            <nav class="tab-rail" aria-label="Account sections">
+              <button
+                class="rail-item"
+                type="button"
+                data-tab="pair"
+                aria-controls="panel-pair"
+                aria-pressed="false"
               >
-            </div>
-            <div id="record-list" class="record-list"></div>
-            <div class="pager" id="record-pager"></div>
-          </div>
+                <span class="rail-label">Pair Code</span>
+                <span class="rail-note" id="rail-note-pair">add a device</span>
+              </button>
+              <button
+                class="rail-item"
+                type="button"
+                data-tab="credentials"
+                aria-controls="panel-credentials"
+                aria-pressed="false"
+              >
+                <span class="rail-label">Devices &amp; Tokens</span>
+                <span class="rail-note" id="rail-note-credentials"></span>
+              </button>
+              <button
+                class="rail-item"
+                type="button"
+                data-tab="data"
+                aria-controls="panel-data"
+                aria-pressed="false"
+              >
+                <span class="rail-label">Stored data</span>
+                <span class="rail-note" id="rail-note-data"></span>
+              </button>
+            </nav>
 
-          <!-- Full text search, the same index the extension queries. -->
-          <div id="data-search" hidden>
-            <div class="toolbar">
-              <input
-                id="fts-search"
-                type="search"
-                placeholder="full text search (every term must match, the last one is a prefix)"
-                autocomplete="off"
-              />
-              <select id="fts-entity">
-                <option value="">all entities</option>
-              </select>
+            <div class="tab-panels">
+              <!-- Pair code: the one-shot action of adding a device. -->
+              <section
+                class="tab-panel"
+                id="panel-pair"
+                data-panel="pair"
+                hidden
+              >
+                <section class="card">
+                  <h3>Pair a new device</h3>
+                  <p class="muted small">
+                    A code adds a device to this account. It works once and
+                    expires; the device exchanges it for its own token, which is
+                    the only way into the account's data. Paste the code into the
+                    extension's sync dialog on the device you are adding.
+                  </p>
+                  <form id="invite-form" class="row">
+                    <label class="muted small" for="invite-ttl">
+                      valid for (seconds)
+                    </label>
+                    <input
+                      id="invite-ttl"
+                      type="number"
+                      min="60"
+                      max="86400"
+                      value="900"
+                    />
+                    <button type="submit" class="primary small">New code</button>
+                  </form>
+                  <div id="invite-result" class="code-box" hidden></div>
+                  <div id="server-url-box" class="server-url-box" hidden></div>
+                  <p class="muted small">
+                    The extension has to reach this server, and its own Content
+                    Security Policy decides which hosts it may talk to - a
+                    LAN address is allowed by default, and
+                    <code>TABVERSE_ALLOWED_SERVERS</code> narrows that at build
+                    time.
+                  </p>
+                </section>
+              </section>
+
+              <!-- Devices and tokens: everything that can reach the account. -->
+              <section
+                class="tab-panel"
+                id="panel-credentials"
+                data-panel="credentials"
+                hidden
+              >
+                <div class="stat-row" id="credential-stats"></div>
+
+                <section class="card">
+                  <h3>Devices</h3>
+                  <p class="muted small">
+                    Revoking cuts a device off; archiving retires it from these
+                    views. Archiving never deletes anything - the rows stay
+                    stored and keep syncing to the user's own devices.
+                  </p>
+                  <table class="table" id="device-table">
+                    <thead>
+                      <tr>
+                        <th>Device</th>
+                        <th>Paired</th>
+                        <th>Last seen</th>
+                        <th>Tokens</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </section>
+
+                <section class="card">
+                  <h3>Device tokens</h3>
+                  <p class="muted small">
+                    Every device holds a token. The server only stores its hash,
+                    so a token cannot be shown again - revoking one is final,
+                    and the device has to pair again.
+                  </p>
+                  <table class="table" id="token-table">
+                    <thead>
+                      <tr>
+                        <th>Token</th>
+                        <th>Device</th>
+                        <th>Issued</th>
+                        <th>Last used</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </section>
+              </section>
+
+              <!-- Stored data: the read only browser, unchanged inside. -->
+              <section
+                class="tab-panel"
+                id="panel-data"
+                data-panel="data"
+                hidden
+              >
+                <div class="panel-head">
+                  <div>
+                    <h2>Stored data</h2>
+                    <p class="muted small" id="data-subtitle"></p>
+                  </div>
+                  <div class="panel-head-actions">
+                    <!-- One toggle for the whole panel: archived rows are
+                         hidden from all three views, so it cannot live in any
+                         one of their toolbars. -->
+                    <label class="check"
+                      ><input id="record-archived" type="checkbox" /> show
+                      archived</label
+                    >
+                    <div class="tabs">
+                      <button
+                        class="tab active"
+                        data-view="tabverses"
+                        type="button"
+                      >
+                        Tabverses
+                      </button>
+                      <button class="tab" data-view="search" type="button">
+                        Search
+                      </button>
+                      <button class="tab" data-view="records" type="button">
+                        Records
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="stat-row" id="data-stats"></div>
+
+                <div id="data-tabverses">
+                  <div class="toolbar">
+                    <input
+                      id="tabspace-search"
+                      type="search"
+                      placeholder="filter tabverses"
+                      autocomplete="off"
+                    />
+                  </div>
+                  <div id="tabspace-list" class="tabspace-list"></div>
+                  <div class="pager" id="tabspace-pager"></div>
+                </div>
+
+                <div id="data-search" hidden>
+                  <div class="toolbar">
+                    <input
+                      id="fts-search"
+                      type="search"
+                      placeholder="full text search (every term must match, the last one is a prefix)"
+                      autocomplete="off"
+                    />
+                    <select id="fts-entity">
+                      <option value="">all entities</option>
+                    </select>
+                  </div>
+                  <div id="search-list" class="record-list"></div>
+                </div>
+
+                <div id="data-records" hidden>
+                  <div class="toolbar">
+                    <input
+                      id="record-search"
+                      type="search"
+                      placeholder="substring search in payloads"
+                      autocomplete="off"
+                    />
+                    <select id="record-entity">
+                      <option value="">all entities</option>
+                    </select>
+                    <label class="check"
+                      ><input id="record-deleted" type="checkbox" /> show
+                      tombstones</label
+                    >
+                  </div>
+                  <div id="record-list" class="record-list"></div>
+                  <div class="pager" id="record-pager"></div>
+                </div>
+              </section>
             </div>
-            <div id="search-list" class="record-list"></div>
           </div>
         </section>
 
-        <!-- Tabverse detail, drawn over the data view. -->
         <section id="view-tabspace" class="view" hidden>
           <div class="view-head">
             <div>

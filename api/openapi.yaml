@@ -458,6 +458,102 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
 
+  /api/v1/admin/users/{user_id}/tokens/{hash}/archive:
+    parameters:
+      - { $ref: '#/components/parameters/userId' }
+      - { name: hash, in: path, required: true, schema: { type: string } }
+    put:
+      tags: [admin]
+      summary: Archive a revoked token
+      description: |
+        Hides the token from the console's default lists. Requires it to be
+        revoked first: archiving is tidying, revoking is how access is cut.
+        The token stays revoked, and it stays in use or not exactly as it was
+        (ADR 0011).
+      responses:
+        '200': { description: archived, or a no-op if it already was }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: the token is not revoked yet
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+    delete:
+      tags: [admin]
+      summary: Unarchive a token (it stays revoked)
+      responses:
+        '200': { description: unarchived }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/admin/users/{user_id}/devices/{device_id}/archive:
+    parameters:
+      - { $ref: '#/components/parameters/userId' }
+      - { name: device_id, in: path, required: true, schema: { type: string } }
+    put:
+      tags: [admin]
+      summary: Archive a revoked, abandoned device
+      description: |
+        Requires no usable token left on the device **and** no successful
+        authentication for `TABVERSED_DEVICE_INACTIVE_DAYS` (default 30). A
+        device that never authenticated is exempt, so a mis-issued pairing code
+        revoked straight away can be tidied immediately. Hides the device from
+        the console's default lists; it stays stored (ADR 0011).
+      responses:
+        '200': { description: archived, or a no-op if it already was }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: still usable, or not silent for long enough
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+    delete:
+      tags: [admin]
+      summary: Unarchive a device (its tokens stay revoked)
+      responses:
+        '200': { description: unarchived }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/admin/users/{user_id}/devices/{device_id}/records/archive:
+    parameters:
+      - { $ref: '#/components/parameters/userId' }
+      - { name: device_id, in: path, required: true, schema: { type: string } }
+    put:
+      tags: [admin]
+      summary: Archive the records this device last wrote
+      description: |
+        The same preconditions as archiving the device. The records stay
+        stored and keep syncing to the user's own devices, and the extension's
+        search is not filtered - only this console's views are. A record edited
+        again un-archives itself. Tombstones are left alone.
+      responses:
+        '200':
+          description: how many records were archived
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ArchiveOutcome' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: still usable, or not silent for long enough
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+    delete:
+      tags: [admin]
+      summary: Unarchive the records this device wrote
+      responses:
+        '200':
+          description: how many records were restored
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ArchiveOutcome' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
   /api/v1/admin/users/{user_id}/tabspaces:
     parameters: [{ $ref: '#/components/parameters/userId' }]
     get:
@@ -465,11 +561,13 @@ paths:
       summary: The account's tabverses, newest first
       description: |
         Read only. Each row is one `tabspace` record plus the child counts the
-        console's card shows, resolved server side.
+        console's card shows, resolved server side. Archived tabverses are
+        hidden unless `archived=1` (ADR 0011).
       parameters:
         - { name: q, in: query, schema: { type: string }, description: literal substring of the payload }
         - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 200 } }
         - { name: offset, in: query, schema: { type: integer, minimum: 0 } }
+        - { name: archived, in: query, schema: { type: string, enum: ['0', '1'] }, description: include archived rows }
       responses:
         '200':
           description: tabverse list
@@ -524,6 +622,7 @@ paths:
         - { name: tabspace_id, in: query, schema: { type: string } }
         - { name: q, in: query, schema: { type: string } }
         - { name: deleted, in: query, schema: { type: string, enum: ['0', '1'] } }
+        - { name: archived, in: query, schema: { type: string, enum: ['0', '1'] } }
         - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 200 } }
         - { name: offset, in: query, schema: { type: integer, minimum: 0 } }
       responses:
@@ -552,11 +651,14 @@ paths:
       description: |
         The same FTS index the extension queries, scoped to one account, with
         the record's title filled in so hits can be listed. An empty `q` is an
-        empty result, not "everything".
+        empty result, not "everything". Archived records are hidden unless
+        `archived=1`, so this view agrees with the listings beside it; the
+        extension's own search never filters them (ADR 0011).
       parameters:
         - { name: q, in: query, required: true, schema: { type: string } }
         - { name: entity, in: query, schema: { $ref: '#/components/schemas/Entity' } }
         - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 200 } }
+        - { name: archived, in: query, schema: { type: string, enum: ['0', '1'] } }
       responses:
         '200':
           description: ranked hits
@@ -684,6 +786,17 @@ components:
             record's own id. Absent only for a malformed record payload.
           example: ts-1a2b3c
 
+    ArchiveOutcome:
+      type: object
+      description: what an archive or unarchive changed
+      required: [archived, unarchived, skipped]
+      properties:
+        archived: { type: integer, description: rows hidden from the default views }
+        unarchived: { type: integer }
+        skipped:
+          type: integer
+          description: rows already in the requested state, so a repeated call is a visible no-op
+
     UserSummary:
       type: object
       required: [id, name, created_at, rev_seq, device_count, token_count, record_count]
@@ -711,6 +824,8 @@ components:
         created_at: { type: string, format: date-time }
         revoked: { type: boolean }
         last_used: { type: integer, description: unix ms of the last authenticated request, 0 if never }
+        archived_at: { type: integer, description: 0 when not archived (ADR 0011) }
+        archived: { type: boolean }
 
     DeviceInfo:
       type: object
@@ -721,6 +836,9 @@ components:
         created_at: { type: string, format: date-time }
         active_tokens: { type: integer }
         last_used: { type: integer }
+        archived_at: { type: integer, description: 0 when not archived (ADR 0011) }
+        archived: { type: boolean }
+        archived_records: { type: integer, description: live records this device wrote that are archived }
 
     TabspaceSummary:
       type: object
@@ -796,6 +914,11 @@ components:
         active_tokens: { type: integer }
         live_records: { type: integer }
         tombstones: { type: integer }
+        archived_devices: { type: integer }
+        archived_tokens: { type: integer }
+        archived_records:
+          type: integer
+          description: still counted in live_records; archiving hides a row from the console, it does not unstore it
         by_entity:
           type: object
           additionalProperties: { type: integer }

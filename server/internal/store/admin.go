@@ -172,13 +172,18 @@ type TokenInfo struct {
 	CreatedAt   time.Time `json:"created_at"`
 	Revoked     bool      `json:"revoked"`
 	LastUsed    int64     `json:"last_used"`
+	// ArchivedAt is set when an operator retired this token from the console's
+	// lists (ADR 0011). It is tidiness, not access: a revoked token stays
+	// revoked, and an archived one is never re-enabled by unarchiving.
+	ArchivedAt int64 `json:"archived_at"`
+	Archived   bool  `json:"archived"`
 }
 
 // ListTokens returns a user's tokens, newest first.
 func (s *Store) ListTokens(ctx context.Context, userID string) ([]TokenInfo, error) {
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT t.hash, t.device_id, COALESCE(d.name, ''), t.created_at, t.revoked,
-		       COALESCE(t.last_used, 0)
+		       COALESCE(t.last_used, 0), COALESCE(t.archived_at, 0)
 		FROM tokens t LEFT JOIN devices d ON d.id = t.device_id
 		WHERE t.user_id = ? ORDER BY t.created_at DESC, t.hash ASC`, userID)
 	if err != nil {
@@ -192,11 +197,12 @@ func (s *Store) ListTokens(ctx context.Context, userID string) ([]TokenInfo, err
 		var createdAt int64
 		var revoked int
 		if err := rows.Scan(&t.Hash, &t.DeviceID, &t.DeviceName, &createdAt,
-			&revoked, &t.LastUsed); err != nil {
+			&revoked, &t.LastUsed, &t.ArchivedAt); err != nil {
 			return nil, err
 		}
 		t.CreatedAt = unixMS(createdAt)
 		t.Revoked = revoked != 0
+		t.Archived = t.ArchivedAt != 0
 		t.Fingerprint = fingerprint(t.Hash)
 		out = append(out, t)
 	}
@@ -279,6 +285,13 @@ type DeviceInfo struct {
 	// successful authentication of any of them.
 	ActiveTokens int   `json:"active_tokens"`
 	LastUsed     int64 `json:"last_used"`
+	// ArchivedAt is set when an operator retired this device (ADR 0011): it
+	// must have had no usable token left and been silent for a while.
+	ArchivedAt int64 `json:"archived_at"`
+	Archived   bool  `json:"archived"`
+	// ArchivedRecords counts the live records this device last wrote that are
+	// currently archived, so the console can offer the matching action.
+	ArchivedRecords int `json:"archived_records"`
 }
 
 // ListDevices returns a user's devices, oldest first.
@@ -286,7 +299,11 @@ func (s *Store) ListDevices(ctx context.Context, userID string) ([]DeviceInfo, e
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT d.id, d.name, d.created_at,
 		       (SELECT COUNT(*) FROM tokens t WHERE t.device_id = d.id AND t.revoked = 0),
-		       COALESCE((SELECT MAX(t.last_used) FROM tokens t WHERE t.device_id = d.id), 0)
+		       COALESCE((SELECT MAX(t.last_used) FROM tokens t WHERE t.device_id = d.id), 0),
+		       COALESCE(d.archived_at, 0),
+		       (SELECT COUNT(*) FROM records r
+		         WHERE r.user_id = d.user_id AND r.device_id = d.id
+		           AND r.deleted = 0 AND r.archived_at IS NOT NULL)
 		FROM devices d WHERE d.user_id = ?
 		ORDER BY d.created_at ASC, d.id ASC`, userID)
 	if err != nil {
@@ -298,10 +315,12 @@ func (s *Store) ListDevices(ctx context.Context, userID string) ([]DeviceInfo, e
 	for rows.Next() {
 		var d DeviceInfo
 		var createdAt int64
-		if err := rows.Scan(&d.ID, &d.Name, &createdAt, &d.ActiveTokens, &d.LastUsed); err != nil {
+		if err := rows.Scan(&d.ID, &d.Name, &createdAt, &d.ActiveTokens,
+			&d.LastUsed, &d.ArchivedAt, &d.ArchivedRecords); err != nil {
 			return nil, err
 		}
 		d.CreatedAt = unixMS(createdAt)
+		d.Archived = d.ArchivedAt != 0
 		out = append(out, d)
 	}
 	return out, rows.Err()
@@ -319,8 +338,13 @@ type RecordFilter struct {
 	Query string
 	// IncludeDeleted adds the tombstones to the result.
 	IncludeDeleted bool
-	Limit          int
-	Offset         int
+	// IncludeArchived adds records an operator archived (ADR 0011). They are
+	// hidden by default: archiving exists to keep the console's views about
+	// live data, and the record is still synced to the user's devices either
+	// way.
+	IncludeArchived bool
+	Limit           int
+	Offset          int
 }
 
 // ListRecords returns a page of a user's records, newest first, plus the total
@@ -337,6 +361,9 @@ func (s *Store) ListRecords(ctx context.Context, userID string, f RecordFilter) 
 	}
 	if !f.IncludeDeleted {
 		where = append(where, "deleted = 0")
+	}
+	if !f.IncludeArchived {
+		where = append(where, "archived_at IS NULL")
 	}
 	if f.TabspaceID != "" {
 		// Every entity except the aggregates carries a top level tabSpaceId;
@@ -414,10 +441,14 @@ type TabspaceSummary struct {
 	ClosedTabs int `json:"closed_tabs"`
 }
 
-// ListTabspaces returns the user's tabverses, newest first.
-func (s *Store) ListTabspaces(ctx context.Context, userID, query string, limit, offset int) ([]TabspaceSummary, int, error) {
+// ListTabspaces returns the user's tabverses, newest first. Archived tabverses
+// are hidden unless includeArchived is set (ADR 0011).
+func (s *Store) ListTabspaces(ctx context.Context, userID, query string, includeArchived bool, limit, offset int) ([]TabspaceSummary, int, error) {
 	where := []string{"r.user_id = ?", "r.entity = 'tabspace'", "r.deleted = 0"}
 	args := []any{userID}
+	if !includeArchived {
+		where = append(where, "r.archived_at IS NULL")
+	}
 	if q := strings.TrimSpace(query); q != "" {
 		where = append(where, "instr(lower(r.payload), lower(?)) > 0")
 		args = append(args, q)
@@ -437,8 +468,15 @@ func (s *Store) ListTabspaces(ctx context.Context, userID, query string, limit, 
 		offset = 0
 	}
 	childCount := func(entity string) string {
+		// The same visibility rule as the row itself, so a tabverse's card
+		// never counts tabs the list beside it is hiding.
+		visible := "1 = 1"
+		if !includeArchived {
+			visible = "n.archived_at IS NULL"
+		}
 		return `(SELECT COUNT(*) FROM records n
 		         WHERE n.user_id = r.user_id AND n.entity = '` + entity + `' AND n.deleted = 0
+		           AND ` + visible + `
 		           AND json_extract(n.payload, '$.tabSpaceId') = r.id)`
 	}
 	pageArgs := append(append([]any{}, args...), limit, offset)
@@ -563,7 +601,7 @@ func (s *Store) GetTabspaceBundle(ctx context.Context, userID, tabspaceID string
 	}
 	_ = decodePayload(rec.Payload, &tabspacePayload)
 
-	rows, err := s.recordsOfTabspace(ctx, userID, tabspaceID,
+	rows, err := s.recordsOfTabspace(ctx, userID, tabspaceID, false,
 		[]string{"tab", "note", "todo", "bookmark", "closedtab",
 			"allnote", "alltodo", "allbookmark"})
 	if err != nil {
@@ -678,7 +716,7 @@ func rankOf(order []string, aggregate map[string]int) func(string) int {
 
 // recordsOfTabspace reads every live record hanging off one tabverse, plus the
 // tabverse record itself (matched by id, since its own tabSpaceId is unset).
-func (s *Store) recordsOfTabspace(ctx context.Context, userID, tabspaceID string, entities []string) ([]Record, error) {
+func (s *Store) recordsOfTabspace(ctx context.Context, userID, tabspaceID string, includeArchived bool, entities []string) ([]Record, error) {
 	// Argument order has to follow the query: user, the entity list, then the
 	// tabspace id twice (payload and id).
 	args := []any{userID}
@@ -688,10 +726,14 @@ func (s *Store) recordsOfTabspace(ctx context.Context, userID, tabspaceID string
 		args = append(args, e)
 	}
 	args = append(args, tabspaceID, tabspaceID)
+	visible := "1 = 1"
+	if !includeArchived {
+		visible = "archived_at IS NULL"
+	}
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT entity, id, device_id, rev, deleted, updated_at, payload, server_at
 		FROM records
-		WHERE user_id = ? AND deleted = 0
+		WHERE user_id = ? AND deleted = 0 AND `+visible+`
 		  AND entity IN (`+strings.Join(placeholders, ",")+`)
 		  AND (json_extract(payload, '$.tabSpaceId') = ? OR id = ?)
 		ORDER BY entity ASC, id ASC`, args...)
@@ -779,6 +821,12 @@ type Totals struct {
 	LiveRecords  int            `json:"live_records"`
 	Tombstones   int            `json:"tombstones"`
 	ByEntity     map[string]int `json:"by_entity"`
+	// Archived* are the operator's retired rows (ADR 0011). They are still
+	// counted in LiveRecords: archiving hides a record from the console, it
+	// does not unstore it.
+	ArchivedDevices int `json:"archived_devices"`
+	ArchivedTokens  int `json:"archived_tokens"`
+	ArchivedRecords int `json:"archived_records"`
 }
 
 // Totals returns the deployment wide counters.
@@ -800,6 +848,15 @@ func (s *Store) Totals(ctx context.Context) (Totals, error) {
 		return out, err
 	}
 	if err := scalar(`SELECT COUNT(*) FROM records WHERE deleted = 1`, &out.Tombstones); err != nil {
+		return out, err
+	}
+	if err := scalar(`SELECT COUNT(*) FROM devices WHERE archived_at IS NOT NULL`, &out.ArchivedDevices); err != nil {
+		return out, err
+	}
+	if err := scalar(`SELECT COUNT(*) FROM tokens WHERE archived_at IS NOT NULL`, &out.ArchivedTokens); err != nil {
+		return out, err
+	}
+	if err := scalar(`SELECT COUNT(*) FROM records WHERE archived_at IS NOT NULL AND deleted = 0`, &out.ArchivedRecords); err != nil {
 		return out, err
 	}
 	rows, err := s.db.QueryContext(ctx,
@@ -831,11 +888,14 @@ type AdminSearchHit struct {
 // SearchFor is Search for the console: same FTS query, scoped to one account,
 // with a title extracted from the payload for display. Read only, it does not
 // need a device token, only the admin one.
-func (s *Store) SearchFor(ctx context.Context, userID, query, entity string, limit int) ([]AdminSearchHit, error) {
+func (s *Store) SearchFor(ctx context.Context, userID, query, entity string, limit int, includeArchived bool) ([]AdminSearchHit, error) {
 	if err := s.RequireUser(ctx, userID); err != nil {
 		return nil, err
 	}
-	hits, err := s.Search(ctx, userID, query, entity, limit)
+	// The console's view of the account, so it follows the same visibility rule
+	// as its listings: a record retired from the default views should not turn
+	// up in a search either (ADR 0011).
+	hits, err := s.search(ctx, userID, query, entity, limit, includeArchived)
 	if err != nil {
 		return nil, err
 	}

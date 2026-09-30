@@ -73,6 +73,15 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/v1/admin/users/{user_id}/invites", admin(s.handleAdminCreateInvite))
 	mux.HandleFunc("DELETE /api/v1/admin/users/{user_id}/devices/{device_id}", admin(s.handleAdminRevokeDevice))
 	mux.HandleFunc("DELETE /api/v1/admin/users/{user_id}/tokens/{hash}", admin(s.handleAdminRevokeToken))
+	// archiving a dead credential and the records it last wrote (adr/0011).
+	// Reversible, and never a delete: those rows keep syncing to the user's
+	// devices, they only stop showing up in the console's default views.
+	mux.HandleFunc("PUT /api/v1/admin/users/{user_id}/tokens/{hash}/archive", admin(s.handleAdminArchiveToken))
+	mux.HandleFunc("DELETE /api/v1/admin/users/{user_id}/tokens/{hash}/archive", admin(s.handleAdminUnarchiveToken))
+	mux.HandleFunc("PUT /api/v1/admin/users/{user_id}/devices/{device_id}/archive", admin(s.handleAdminArchiveDevice))
+	mux.HandleFunc("DELETE /api/v1/admin/users/{user_id}/devices/{device_id}/archive", admin(s.handleAdminUnarchiveDevice))
+	mux.HandleFunc("PUT /api/v1/admin/users/{user_id}/devices/{device_id}/records/archive", admin(s.handleAdminArchiveDeviceRecords))
+	mux.HandleFunc("DELETE /api/v1/admin/users/{user_id}/devices/{device_id}/records/archive", admin(s.handleAdminUnarchiveDeviceRecords))
 	// read only data browsing
 	mux.HandleFunc("GET /api/v1/admin/users/{user_id}/tabspaces", admin(s.handleAdminListTabspaces))
 	mux.HandleFunc("GET /api/v1/admin/users/{user_id}/tabspaces/{tabspace_id}", admin(s.handleAdminGetTabspace))

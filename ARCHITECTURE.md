@@ -142,10 +142,25 @@ browser ── GET / ───┤                        └─ read only: tabve
   outside the extension would lose the next LWW comparison anyway
 
 `internal/webui` embeds three hand written files (HTML, CSS, JS - no framework,
-no build step) and serves them with a strict CSP; the admin API is
+no build step) and serves them with a strict CSP. Since there is no bundler
+and no type checker between the script and the page - it reaches the DOM by
+string id - `webui_test.go` asserts the contract between them (every selector
+resolves, ids are unique, every tab has a panel); the look of it is still the
+user's to check (AGENTS.md); the admin API is
 `internal/api/admin.go` and its queries are `internal/store/admin.go`. A device
 token and the admin token are not interchangeable, and both directions are
 tested.
+
+**Archiving (`adr/0011`) is bookkeeping, never deletion.** `archived_at` on
+`devices`, `tokens` and `records` hides a row from the console's default views
+(tabverse list, record browser, console search, all with `?archived=1` to
+include). The record stays stored and keeps syncing to the user's own devices,
+and the extension's own search is not filtered - archiving is an operator's
+filing decision, not a retention policy. A token must be revoked before it can
+be archived, and a device additionally has to have no usable token and no
+successful authentication for `TABVERSED_DEVICE_INACTIVE_DAYS` (a device that
+never authenticated is exempt). Every accepted write clears `archived_at`,
+because a record somebody just changed is live again.
 
 ## Status
 

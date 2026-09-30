@@ -21,6 +21,10 @@ type Config struct {
 	// RetentionDays controls how long chrome session snapshots are kept.
 	// 0 disables server side retention.
 	RetentionDays int
+	// DeviceInactiveDays is how long a paired device must go without a
+	// successful authentication before an operator may archive it (adr/0011).
+	// 0 disables that check, leaving "has no usable token" as the only rule.
+	DeviceInactiveDays int
 	// MaxRecordBytes limits the size of one record payload.
 	MaxRecordBytes int64
 	// SyncBatchLimit is the max number of records per sync response/push.
@@ -109,6 +113,9 @@ func Load(version string) (Config, error) {
 		cfg.MaxRecordBytes = int64(v)
 	}
 	if cfg.SyncBatchLimit, err = GetenvInt("TABVERSED_SYNC_BATCH_LIMIT", cfg.SyncBatchLimit); err != nil {
+		return Config{}, err
+	}
+	if cfg.DeviceInactiveDays, err = GetenvInt("TABVERSED_DEVICE_INACTIVE_DAYS", 30); err != nil {
 		return Config{}, err
 	}
 	if cfg.SearchLimit, err = GetenvInt("TABVERSED_SEARCH_LIMIT", cfg.SearchLimit); err != nil {

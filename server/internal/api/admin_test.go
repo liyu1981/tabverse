@@ -609,3 +609,208 @@ func equalStrings(got, want []string) bool {
 	}
 	return true
 }
+
+// ---- archiving (ADR 0011) -------------------------------------------------
+
+// archiveFlow pairs a device, revokes its token, and returns the ids the
+// console needs to archive it and its records.
+func archiveFlow(t *testing.T, ts *httptest.Server) (userID, deviceID, tokenHash string) {
+	t.Helper()
+	userID, token := seedUser(t, ts, "alice")
+	r := adminDo(t, ts, http.MethodGet, "/api/v1/admin/users/"+userID, testAdminToken, nil)
+	r.mustStatus(t, http.StatusOK)
+	devices, _ := r.body["devices"].([]any)
+	if len(devices) != 1 {
+		t.Fatalf("want 1 device, got %d: %s", len(devices), r.raw)
+	}
+	device, _ := devices[0].(map[string]any)
+	deviceID, _ = device["id"].(string)
+	tokens, _ := r.body["tokens"].([]any)
+	tok, _ := tokens[0].(map[string]any)
+	tokenHash, _ = tok["hash"].(string)
+
+	// the device wrote something, so there are records to archive
+	now := int64(1700000000000)
+	if _, r := push(t, ts, token, []pushedRecord{
+		{Entity: "tabspace", ID: "ts1", UpdatedAt: now, Payload: `{"id":"ts1","name":"work","tabIds":[]}`},
+	}); r.status != http.StatusOK {
+		t.Fatalf("seed push: %s", r.raw)
+	}
+	adminDo(t, ts, http.MethodDelete,
+		"/api/v1/admin/users/"+userID+"/tokens/"+tokenHash, testAdminToken, nil).
+		mustStatus(t, http.StatusNoContent)
+	return userID, deviceID, tokenHash
+}
+
+func TestArchiveRefusesWhileStillUsable(t *testing.T) {
+	ts := newAdminServer(t)
+	userID, _ := seedUser(t, ts, "alice")
+	r := adminDo(t, ts, http.MethodGet, "/api/v1/admin/users/"+userID, testAdminToken, nil)
+	r.mustStatus(t, http.StatusOK)
+	tokens, _ := r.body["tokens"].([]any)
+	tok, _ := tokens[0].(map[string]any)
+	hash, _ := tok["hash"].(string)
+	devices, _ := r.body["devices"].([]any)
+	dev, _ := devices[0].(map[string]any)
+	deviceID, _ := dev["id"].(string)
+
+	// A live token cannot be archived: revoking is how access is cut, and
+	// archiving a usable credential would hide it from the console while it
+	// still syncs. 409 carries the reason so the UI can say what to do.
+	r = adminDo(t, ts, http.MethodPut,
+		"/api/v1/admin/users/"+userID+"/tokens/"+hash+"/archive", testAdminToken, nil)
+	r.mustStatus(t, http.StatusConflict)
+	if r.body["error"] != "not_revoked" {
+		t.Fatalf("error = %v, want not_revoked: %s", r.body["error"], r.raw)
+	}
+	// the same for a device that still has a usable token
+	r = adminDo(t, ts, http.MethodPut,
+		"/api/v1/admin/users/"+userID+"/devices/"+deviceID+"/archive", testAdminToken, nil)
+	r.mustStatus(t, http.StatusConflict)
+	if r.body["error"] != "not_revoked" {
+		t.Fatalf("device error = %v: %s", r.body["error"], r.raw)
+	}
+}
+
+func TestArchiveDeviceAndItsRecords(t *testing.T) {
+	ts := newAdminServer(t)
+	userID, deviceID, _ := archiveFlow(t, ts)
+
+	// records archive first, then the device itself
+	r := adminDo(t, ts, http.MethodPut,
+		"/api/v1/admin/users/"+userID+"/devices/"+deviceID+"/records/archive",
+		testAdminToken, nil)
+	r.mustStatus(t, http.StatusOK)
+	if archived, _ := r.body["archived"].(float64); archived != 1 {
+		t.Fatalf("archived = %v, want 1: %s", r.body["archived"], r.raw)
+	}
+
+	r = adminDo(t, ts, http.MethodPut,
+		"/api/v1/admin/users/"+userID+"/devices/"+deviceID+"/archive", testAdminToken, nil)
+	r.mustStatus(t, http.StatusOK)
+
+	// the console's default listing hides the record...
+	r = adminDo(t, ts, http.MethodGet,
+		"/api/v1/admin/users/"+userID+"/tabspaces", testAdminToken, nil)
+	r.mustStatus(t, http.StatusOK)
+	if total, _ := r.body["total"].(float64); total != 0 {
+		t.Fatalf("tabverses still listed: %s", r.raw)
+	}
+	// ...and ?archived=1 shows it again
+	r = adminDo(t, ts, http.MethodGet,
+		"/api/v1/admin/users/"+userID+"/tabspaces?archived=1", testAdminToken, nil)
+	r.mustStatus(t, http.StatusOK)
+	if total, _ := r.body["total"].(float64); total != 1 {
+		t.Fatalf("archived tabverse not listed: %s", r.raw)
+	}
+
+	// the device shows as archived, with its record count
+	r = adminDo(t, ts, http.MethodGet, "/api/v1/admin/users/"+userID, testAdminToken, nil)
+	r.mustStatus(t, http.StatusOK)
+	devices, _ := r.body["devices"].([]any)
+	dev, _ := devices[0].(map[string]any)
+	if dev["archived"] != true {
+		t.Fatalf("device not listed as archived: %v", dev)
+	}
+	if n, _ := dev["archived_records"].(float64); n != 1 {
+		t.Fatalf("archived_records = %v, want 1: %s", dev["archived_records"], r.raw)
+	}
+
+	// the user's own sync is untouched: archiving is an operator flag
+	r = adminDo(t, ts, http.MethodGet, "/api/v1/sync?since=0", "", nil)
+	if r.status != http.StatusUnauthorized {
+		t.Fatalf("unauthenticated sync should still be 401, got %d", r.status)
+	}
+
+	// everything comes back
+	r = adminDo(t, ts, http.MethodDelete,
+		"/api/v1/admin/users/"+userID+"/devices/"+deviceID+"/records/archive",
+		testAdminToken, nil)
+	r.mustStatus(t, http.StatusOK)
+	if n, _ := r.body["unarchived"].(float64); n != 1 {
+		t.Fatalf("unarchived = %v, want 1: %s", r.body["unarchived"], r.raw)
+	}
+	r = adminDo(t, ts, http.MethodGet,
+		"/api/v1/admin/users/"+userID+"/tabspaces", testAdminToken, nil)
+	r.mustStatus(t, http.StatusOK)
+	if total, _ := r.body["total"].(float64); total != 1 {
+		t.Fatalf("tabverse did not come back: %s", r.raw)
+	}
+}
+
+func TestArchiveTokenAndUnarchive(t *testing.T) {
+	ts := newAdminServer(t)
+	userID, _, tokenHash := archiveFlow(t, ts)
+
+	r := adminDo(t, ts, http.MethodPut,
+		"/api/v1/admin/users/"+userID+"/tokens/"+tokenHash+"/archive", testAdminToken, nil)
+	r.mustStatus(t, http.StatusOK)
+
+	r = adminDo(t, ts, http.MethodGet, "/api/v1/admin/users/"+userID, testAdminToken, nil)
+	r.mustStatus(t, http.StatusOK)
+	tokens, _ := r.body["tokens"].([]any)
+	tok, _ := tokens[0].(map[string]any)
+	if tok["archived"] != true {
+		t.Fatalf("token not listed as archived: %v", tok)
+	}
+	// unarchiving does not un-revoke
+	adminDo(t, ts, http.MethodDelete,
+		"/api/v1/admin/users/"+userID+"/tokens/"+tokenHash+"/archive", testAdminToken, nil).
+		mustStatus(t, http.StatusOK)
+	r = adminDo(t, ts, http.MethodGet, "/api/v1/admin/users/"+userID, testAdminToken, nil)
+	r.mustStatus(t, http.StatusOK)
+	tokens, _ = r.body["tokens"].([]any)
+	tok, _ = tokens[0].(map[string]any)
+	if tok["archived"] == true {
+		t.Fatalf("token still archived: %v", tok)
+	}
+	if tok["revoked"] != true {
+		t.Fatalf("unarchiving must not re-enable a token: %v", tok)
+	}
+}
+
+func TestTotalsCountArchived(t *testing.T) {
+	ts := newAdminServer(t)
+	userID, deviceID, _ := archiveFlow(t, ts)
+	adminDo(t, ts, http.MethodPut,
+		"/api/v1/admin/users/"+userID+"/devices/"+deviceID+"/archive", testAdminToken, nil).
+		mustStatus(t, http.StatusOK)
+	adminDo(t, ts, http.MethodPut,
+		"/api/v1/admin/users/"+userID+"/devices/"+deviceID+"/records/archive",
+		testAdminToken, nil).mustStatus(t, http.StatusOK)
+
+	r := adminDo(t, ts, http.MethodGet, "/api/v1/admin/totals", testAdminToken, nil)
+	r.mustStatus(t, http.StatusOK)
+	for field, want := range map[string]float64{
+		"archived_devices": 1, "archived_records": 1, "archived_tokens": 0,
+		// archiving hides a record from the console, it does not unstore it
+		"live_records": 1,
+	} {
+		if got, _ := r.body[field].(float64); got != want {
+			t.Errorf("%s = %v, want %v (%s)", field, got, want, r.raw)
+		}
+	}
+}
+
+// The console's search must agree with the console's listings; the extension's
+// must not be dragged along (ADR 0011).
+func TestConsoleSearchHidesArchivedUnlessAsked(t *testing.T) {
+	ts := newAdminServer(t)
+	userID, deviceID, _ := archiveFlow(t, ts)
+	adminDo(t, ts, http.MethodPut,
+		"/api/v1/admin/users/"+userID+"/devices/"+deviceID+"/records/archive",
+		testAdminToken, nil).mustStatus(t, http.StatusOK)
+
+	r := adminDo(t, ts, http.MethodGet,
+		"/api/v1/admin/users/"+userID+"/search?q=work", testAdminToken, nil)
+	r.mustStatus(t, http.StatusOK)
+	if hits, _ := r.body["hits"].([]any); len(hits) != 0 {
+		t.Fatalf("console search surfaced an archived record: %s", r.raw)
+	}
+	r = adminDo(t, ts, http.MethodGet,
+		"/api/v1/admin/users/"+userID+"/search?q=work&archived=1", testAdminToken, nil)
+	r.mustStatus(t, http.StatusOK)
+	if hits, _ := r.body["hits"].([]any); len(hits) != 1 {
+		t.Fatalf("archived=1 should surface it: %s", r.raw)
+	}
+}

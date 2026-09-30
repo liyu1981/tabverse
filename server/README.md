@@ -73,6 +73,7 @@ pnpm run server:fmt:check   # lists unformatted files (CI asserts the list is em
 | `TABVERSED_SEARCH_LIMIT`     | `50`                | max search hits                                             |
 | `TABVERSED_WS_ORIGINS`       | _(any)_             | comma separated Origin allow list for the WebSocket upgrade |
 | `TABVERSED_ADMIN_TOKEN`      | _(unset)_           | enables the admin API and the console; without it the deployment is single tenant (ADR 0009) |
+| `TABVERSED_DEVICE_INACTIVE_DAYS` | `30`           | silence required before a device may be archived (ADR 0011); a device that never authenticated is exempt, `0` disables the check |
 
 ## API
 
@@ -145,6 +146,13 @@ With the token set:
   one the way the extension does (tabs in `tabIds` order, notes/todos/bookmarks
   in their aggregate order, closed tabs newest first), plus a raw record
   browser and the same FTS search the extension uses
+
+The account view is three tabs, rail on the left, panel on the right: **Pair
+Code** (mint a code, copy it and the server URL), **Devices & Tokens** (revoke,
+archive, inspect) and **Stored data** (tabverses, search, records). Each tab
+carries its own counters in the rail, so an operator can see what is behind one
+without opening it, and the first visit on an account with no devices lands on
+Pair Code. `#token=…&user=…&tab=credentials` opens a specific tab directly.
 - **accounts and tokens** — rename, delete (records, devices, tokens, invites
   and search index rows), mint a pairing code for a given account, revoke one
   token by fingerprint or every token of one device
@@ -177,4 +185,28 @@ curl -s 'localhost:8223/api/v1/admin/users/usr_.../tabspaces' -H "$A"
 curl -s 'localhost:8223/api/v1/admin/users/usr_.../tabspaces/ts_...' -H "$A"
 curl -s 'localhost:8223/api/v1/admin/users/usr_.../search?q=hello' -H "$A"
 curl -s -X DELETE localhost:8223/api/v1/admin/users/usr_.../devices/dev_... -H "$A"
+
+# then retire the dead device (revoked + silent), and what it last wrote
+curl -s -X PUT localhost:8223/api/v1/admin/users/usr_.../devices/dev_.../archive -H "$A"
+curl -s -X PUT localhost:8223/api/v1/admin/users/usr_.../devices/dev_.../records/archive -H "$A"
+curl -s 'localhost:8223/api/v1/admin/users/usr_...?archived=1' -H "$A"   # show archived
 ```
+
+### Archiving (ADR 0011)
+
+Archiving is how a dead credential is tidied away, and it is deliberately
+**not** a delete: `archived_at` hides a row from this console's default views,
+while the record stays stored and keeps syncing to the user's own devices, and
+the extension's search is not filtered either. Reversible, and the user's data
+is never at risk - to remove data, delete the account.
+
+| Step | Endpoint | Precondition |
+| ---- | -------- | ------------ |
+| Archive a token | `PUT .../tokens/{hash}/archive` | the token must be revoked |
+| Archive a device | `PUT .../devices/{id}/archive` | no usable token left, **and** silent for `TABVERSED_DEVICE_INACTIVE_DAYS` (a device that never authenticated is exempt) |
+| Archive what it wrote | `PUT .../devices/{id}/records/archive` | the same two rules |
+| Undo any of the above | `DELETE` the same paths | - |
+
+Unarchiving never re-enables access: a revoked token stays revoked. A record
+that is edited again un-archives itself, because it is live again; tombstones
+are not restored.

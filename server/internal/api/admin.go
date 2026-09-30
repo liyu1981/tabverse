@@ -3,6 +3,7 @@ package api
 import (
 	"crypto/sha256"
 	"crypto/subtle"
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -276,6 +277,129 @@ func (s *Server) handleAdminRevokeDevice(w http.ResponseWriter, r *http.Request)
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// ---- archiving (ADR 0011) -------------------------------------------------
+//
+// Archiving is how a dead credential is tidied away, never how data is
+// removed: the rows keep syncing to the user's devices and can be brought
+// back. See adr/0011 for why it cannot be a delete.
+
+// handleAdminArchiveToken retires one revoked token from the console's lists.
+func (s *Server) handleAdminArchiveToken(w http.ResponseWriter, r *http.Request) {
+	s.archiveToken(w, r, true)
+}
+
+// handleAdminUnarchiveToken brings a retired token back into the lists. It
+// stays revoked: unarchiving does not re-enable access.
+func (s *Server) handleAdminUnarchiveToken(w http.ResponseWriter, r *http.Request) {
+	s.archiveToken(w, r, false)
+}
+
+func (s *Server) archiveToken(w http.ResponseWriter, r *http.Request, archive bool) {
+	userID := r.PathValue("user_id")
+	hash := r.PathValue("hash")
+	var outcome store.ArchiveOutcome
+	var err error
+	if archive {
+		outcome, err = s.store.ArchiveToken(r.Context(), userID, hash)
+	} else {
+		outcome, err = s.store.UnarchiveToken(r.Context(), userID, hash)
+	}
+	if err != nil {
+		writeArchiveErr(w, err)
+		return
+	}
+	s.logArchive("token", userID, hash, archive, outcome)
+	writeJSON(w, http.StatusOK, outcome)
+}
+
+// handleAdminArchiveDevice retires a revoked, abandoned device.
+func (s *Server) handleAdminArchiveDevice(w http.ResponseWriter, r *http.Request) {
+	s.archiveDevice(w, r, true)
+}
+
+// handleAdminUnarchiveDevice brings a retired device back into the lists.
+func (s *Server) handleAdminUnarchiveDevice(w http.ResponseWriter, r *http.Request) {
+	s.archiveDevice(w, r, false)
+}
+
+func (s *Server) archiveDevice(w http.ResponseWriter, r *http.Request, archive bool) {
+	userID := r.PathValue("user_id")
+	deviceID := r.PathValue("device_id")
+	var outcome store.ArchiveOutcome
+	var err error
+	if archive {
+		outcome, err = s.store.ArchiveDevice(r.Context(), userID, deviceID, s.cfg.DeviceInactiveDays)
+	} else {
+		outcome, err = s.store.UnarchiveDevice(r.Context(), userID, deviceID)
+	}
+	if err != nil {
+		writeArchiveErr(w, err)
+		return
+	}
+	s.logArchive("device", userID, deviceID, archive, outcome)
+	writeJSON(w, http.StatusOK, outcome)
+}
+
+// handleAdminArchiveDeviceRecords hides the records a retired device last
+// wrote from the console's default views. They keep syncing to the user's
+// devices, and "include archived" brings them back into the console.
+func (s *Server) handleAdminArchiveDeviceRecords(w http.ResponseWriter, r *http.Request) {
+	s.archiveDeviceRecords(w, r, true)
+}
+
+// handleAdminUnarchiveDeviceRecords is the way back.
+func (s *Server) handleAdminUnarchiveDeviceRecords(w http.ResponseWriter, r *http.Request) {
+	s.archiveDeviceRecords(w, r, false)
+}
+
+func (s *Server) archiveDeviceRecords(w http.ResponseWriter, r *http.Request, archive bool) {
+	userID := r.PathValue("user_id")
+	deviceID := r.PathValue("device_id")
+	var outcome store.ArchiveOutcome
+	var err error
+	if archive {
+		outcome, err = s.store.ArchiveDeviceRecords(r.Context(), userID, deviceID, s.cfg.DeviceInactiveDays)
+	} else {
+		outcome, err = s.store.UnarchiveDeviceRecords(r.Context(), userID, deviceID)
+	}
+	if err != nil {
+		writeArchiveErr(w, err)
+		return
+	}
+	action := "unarchived"
+	if archive {
+		action = "archived"
+	}
+	s.logger.Info("admin archived device records",
+		"user", userID, "device", deviceID, "action", action,
+		"records", outcome.Archived+outcome.Unarchived)
+	writeJSON(w, http.StatusOK, outcome)
+}
+
+// writeArchiveErr turns the archive preconditions into HTTP the console can act
+// on: 409 with the reason, so the UI can say "revoke it first" rather than
+// "something went wrong".
+func writeArchiveErr(w http.ResponseWriter, err error) {
+	switch {
+	case errors.Is(err, store.ErrNotRevoked):
+		writeErr(w, http.StatusConflict, "not_revoked", err.Error())
+	case errors.Is(err, store.ErrActive):
+		writeErr(w, http.StatusConflict, "still_active", err.Error())
+	default:
+		writeStoreErr(w, err)
+	}
+}
+
+func (s *Server) logArchive(kind, userID, subject string, archive bool, outcome store.ArchiveOutcome) {
+	action := "unarchived"
+	if archive {
+		action = "archived"
+	}
+	s.logger.Info("admin "+action+" "+kind,
+		"user", userID, kind, subject,
+		"archived", outcome.Archived, "unarchived", outcome.Unarchived)
+}
+
 // ---- data browsing (read only) -------------------------------------------
 
 // handleAdminListTabspaces is the tabverse list: one row per saved tabverse
@@ -289,7 +413,7 @@ func (s *Server) handleAdminListTabspaces(w http.ResponseWriter, r *http.Request
 	}
 	limit, offset := paging(r)
 	tabspaces, total, err := s.store.ListTabspaces(ctx, userID,
-		r.URL.Query().Get("q"), limit, offset)
+		r.URL.Query().Get("q"), flag(r, "archived"), limit, offset)
 	if err != nil {
 		writeStoreErr(w, err)
 		return
@@ -332,12 +456,13 @@ func (s *Server) handleAdminListRecords(w http.ResponseWriter, r *http.Request) 
 		includeDeleted = true
 	}
 	records, total, err := s.store.ListRecords(ctx, userID, store.RecordFilter{
-		Entity:         r.URL.Query().Get("entity"),
-		TabspaceID:     r.URL.Query().Get("tabspace_id"),
-		Query:          r.URL.Query().Get("q"),
-		IncludeDeleted: includeDeleted,
-		Limit:          limit,
-		Offset:         offset,
+		Entity:          r.URL.Query().Get("entity"),
+		TabspaceID:      r.URL.Query().Get("tabspace_id"),
+		Query:           r.URL.Query().Get("q"),
+		IncludeDeleted:  includeDeleted,
+		IncludeArchived: flag(r, "archived"),
+		Limit:           limit,
+		Offset:          offset,
 	})
 	if err != nil {
 		writeStoreErr(w, err)
@@ -365,7 +490,8 @@ func (s *Server) handleAdminSearch(w http.ResponseWriter, r *http.Request) {
 	if err != nil || limit <= 0 {
 		limit = s.cfg.SearchLimit
 	}
-	hits, err := s.store.SearchFor(r.Context(), userID, q, r.URL.Query().Get("entity"), limit)
+	hits, err := s.store.SearchFor(r.Context(), userID, q, r.URL.Query().Get("entity"),
+		limit, flag(r, "archived"))
 	if err != nil {
 		writeStoreErr(w, err)
 		return
@@ -374,6 +500,15 @@ func (s *Server) handleAdminSearch(w http.ResponseWriter, r *http.Request) {
 		hits = []store.AdminSearchHit{}
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"query": q, "hits": hits})
+}
+
+// flag reads a boolean query parameter in the 1/true/yes/on spellings.
+func flag(r *http.Request, name string) bool {
+	switch strings.ToLower(r.URL.Query().Get(name)) {
+	case "1", "true", "yes", "on":
+		return true
+	}
+	return false
 }
 
 // paging reads the shared limit/offset parameters, clamped to something a

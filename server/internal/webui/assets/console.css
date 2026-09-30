@@ -349,6 +349,107 @@ select:focus {
   width: 110px;
 }
 
+/* ---- account tabs: rail on the left, panels on the right ---------------- */
+
+.tabbed {
+  display: grid;
+  /* the rail is as wide as its longest label, and never steals room from the
+     tables and record payloads the panels hold */
+  grid-template-columns: minmax(150px, 200px) 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.tab-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  position: sticky;
+  top: 68px;
+}
+
+.rail-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 1px solid transparent;
+  border-left: 3px solid transparent;
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: var(--text-muted);
+}
+.rail-item:hover:not(.disabled) {
+  background: var(--bg-raised);
+  color: var(--text);
+}
+/* the selected tab is marked on its left edge, so the rail reads as a
+   navigation column rather than three more buttons */
+.rail-item.active {
+  background: var(--bg-raised);
+  border-color: var(--border);
+  border-left-color: var(--accent);
+  color: var(--text);
+  font-weight: 500;
+}
+.rail-label {
+  font-size: 13px;
+}
+.rail-note {
+  font-size: 11px;
+  font-family: var(--mono);
+  color: var(--text-muted);
+  font-weight: 400;
+}
+.rail-item.active .rail-note {
+  color: var(--accent);
+}
+
+.tab-panels {
+  min-width: 0;
+}
+
+.panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+.panel-head h2 {
+  margin-bottom: 0;
+}
+.panel-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Narrow: the rail goes horizontal above the panel, so the console still
+   works in a half-width window without a second layout to maintain. */
+@media (max-width: 760px) {
+  .tabbed {
+    grid-template-columns: 1fr;
+  }
+  .tab-rail {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .rail-item {
+    border-left-color: var(--border);
+    border-bottom: 3px solid transparent;
+  }
+  .rail-item.active {
+    border-bottom-color: var(--accent);
+  }
+}
+
 /* ---- stats -------------------------------------------------------------- */
 
 .stat-row {
@@ -425,6 +526,23 @@ select:focus {
 .badge.revoked {
   color: var(--danger);
   border-color: var(--danger);
+}
+/* archived: the operator's tidying, deliberately not a danger colour - nothing
+   is lost, the row is only out of the default way (ADR 0011) */
+.badge.archived {
+  color: var(--warn);
+  border-color: var(--warn);
+  margin-left: 6px;
+}
+tr.archived-row td:not(:last-child) {
+  opacity: 0.65;
+}
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .code-box {

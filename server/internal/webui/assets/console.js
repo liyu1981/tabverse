@@ -90,7 +90,14 @@ const state = {
   selected: null, // user summary
   detail: null, // { user, stats, devices, tokens }
   dataView: 'tabverses',
-  tabspaces: { items: [], total: 0, offset: 0, limit: 24, q: '' },
+  tabspaces: {
+    items: [],
+    total: 0,
+    offset: 0,
+    limit: 24,
+    q: '',
+    archived: false,
+  },
   records: {
     items: [],
     total: 0,
@@ -99,8 +106,12 @@ const state = {
     q: '',
     entity: '',
     deleted: false,
+    archived: false,
   },
   openTabspace: null, // bundle
+  // which of the account's three tabs is open: 'pair' | 'credentials' | 'data'.
+  // null until an account is opened, so the first visit can pick a sensible one.
+  tab: null,
 };
 
 // ---- copy to clipboard ----------------------------------------------------
@@ -265,6 +276,9 @@ async function boot() {
     const user = params.get('user');
     if (user && state.users.some((u) => u.id === user)) {
       await openAccount(user);
+      // a link can name the tab: #token=...&user=usr_...&tab=credentials
+      const tab = params.get('tab');
+      if (tab) setTab(tab);
       const view = params.get('view');
       if (view === 'records' || view === 'search') {
         if (view === 'search') $('#fts-search').value = params.get('q') || '';
@@ -338,7 +352,10 @@ async function refreshTotals() {
   $('#totals').textContent =
     `${t.users} accounts · ${t.devices} devices · ${t.active_tokens} live tokens · ` +
     `${t.live_records} records (${t.tombstones} tombstones)` +
-    (entities ? ' · ' + entities : '');
+    (entities ? ' · ' + entities : '') +
+    (t.archived_devices || t.archived_tokens || t.archived_records
+      ? ` · archived ${t.archived_devices} devices, ${t.archived_tokens} tokens, ${t.archived_records} records`
+      : '');
 }
 
 $('#login-form').addEventListener('submit', async (ev) => {
@@ -425,7 +442,11 @@ async function openAccount(userID) {
     q: '',
     entity: '',
     deleted: false,
+    archived: false,
   };
+  // a new account starts from the default view, with nothing archived shown
+  state.tabspaces.archived = false;
+  $('#record-archived').checked = false;
   state.openTabspace = null;
   await Promise.all([loadTabspaces(), loadRecords()]);
 }
@@ -460,10 +481,38 @@ function renderUserList() {
 function showAccount() {
   $('#empty-state').hidden = true;
   $('#view-account').hidden = false;
-  $('#view-data').hidden = false;
   $('#view-tabspace').hidden = true;
   renderAccount();
+  // An account with no device has nothing to look at in the other two tabs, so
+  // the first visit lands on Pair Code. After that the operator's choice wins,
+  // and switching accounts keeps the tab they were reading.
+  if (state.tab === null) {
+    state.tab = state.detail && state.detail.devices.length ? 'data' : 'pair';
+  }
+  setTab(state.tab);
 }
+
+/**
+ * The account's three tabs. The rail is on the left, the panel on the right;
+ * `hidden` on the others is what keeps the DOM (and the listeners already
+ * attached to those tables) alive across tab switches.
+ */
+function setTab(tab) {
+  state.tab = tab;
+  writeHash({ tab, tabspace: '' });
+  $$('.rail-item').forEach((item) => {
+    const active = item.dataset.tab === tab;
+    item.classList.toggle('active', active);
+    item.setAttribute('aria-pressed', active ? 'true' : 'false');
+  });
+  $$('.tab-panel').forEach((panel) => {
+    panel.hidden = panel.dataset.panel !== tab;
+  });
+}
+
+$$('.rail-item').forEach((item) => {
+  item.addEventListener('click', () => setTab(item.dataset.tab));
+});
 
 function renderAccount() {
   const d = state.detail;
@@ -472,27 +521,58 @@ function renderAccount() {
   $('#account-id').textContent =
     `${d.user.id} · created ${dateOf(+new Date(d.user.created_at))}`;
 
-  const stats = $('#account-stats');
-  clear(stats);
-  const add = (k, v) =>
-    stats.append(
-      el(
-        'div',
-        { class: 'stat' },
-        el('div', { class: 'v' }, v),
-        el('div', { class: 'k' }, k),
-      ),
-    );
-  add('records', d.stats.live);
+  // The counters belong to the tab they describe: how many credentials can
+  // reach the account on one side, how much it has stored on the other. One
+  // long strip above all three tabs answered neither.
+  const statRow = (node) => {
+    clear(node);
+    return (k, v) =>
+      node.append(
+        el(
+          'div',
+          { class: 'stat' },
+          el('div', { class: 'v' }, v),
+          el('div', { class: 'k' }, k),
+        ),
+      );
+  };
+  const credAdd = statRow($('#credential-stats'));
+  const dataAdd = statRow($('#data-stats'));
+
+  const liveTokens = d.tokens.filter((t) => !t.revoked).length;
+  const archivedDevices = d.devices.filter((dev) => dev.archived).length;
+  const archivedRecords = d.devices.reduce(
+    (n, dev) => n + dev.archived_records,
+    0,
+  );
+
+  credAdd('devices', d.devices.length);
+  credAdd('live tokens', liveTokens);
+  if (d.tokens.length > liveTokens)
+    credAdd('revoked', d.tokens.length - liveTokens);
+  if (archivedDevices) credAdd('archived', archivedDevices);
+
+  dataAdd('records', d.stats.live);
   if (d.stats.total > d.stats.live)
-    add('tombstones', d.stats.total - d.stats.live);
-  add('server rev', d.stats.rev_seq);
-  add('devices', d.devices.length);
+    dataAdd('tombstones', d.stats.total - d.stats.live);
+  if (archivedRecords) dataAdd('archived', archivedRecords);
+  dataAdd('server rev', d.stats.rev_seq);
   for (const [entity, n] of Object.entries(d.stats.by_entity || {}).sort(
     (a, b) => b[1] - a[1],
   )) {
-    add(entity, n);
+    dataAdd(entity, n);
   }
+
+  // The rail carries the same numbers, so an operator can see what is behind a
+  // tab without opening it.
+  $('#rail-note-pair').textContent = d.devices.length
+    ? d.devices.length + ' paired'
+    : 'none yet';
+  $('#rail-note-credentials').textContent =
+    liveTokens +
+    ' live' +
+    (archivedDevices ? ' · ' + archivedDevices + ' archived' : '');
+  $('#rail-note-data').textContent = d.stats.live + ' records';
 
   // devices
   const dbody = $('#device-table tbody');
@@ -507,16 +587,36 @@ function renderAccount() {
     );
   }
   for (const dev of d.devices) {
+    const name = el('div', {}, dev.name);
+    if (dev.archived) {
+      // Archived is the operator's tidying, not a security state: the rows stay
+      // and keep syncing (adr/0011), so the badge says so.
+      name.append(
+        el(
+          'span',
+          {
+            class: 'badge archived',
+            title:
+              'hidden from the default views; still stored and still synced',
+          },
+          'archived',
+        ),
+      );
+    }
+    if (dev.archived_records) {
+      name.append(
+        el(
+          'span',
+          { class: 'badge archived' },
+          dev.archived_records + ' archived',
+        ),
+      );
+    }
     dbody.append(
       el(
         'tr',
-        {},
-        el(
-          'td',
-          {},
-          el('div', {}, dev.name),
-          el('div', { class: 'mono muted' }, dev.id),
-        ),
+        { class: dev.archived ? 'archived-row' : '' },
+        el('td', {}, name, el('div', { class: 'mono muted' }, dev.id)),
         el('td', { class: 'muted' }, ago(+new Date(dev.created_at))),
         el(
           'td',
@@ -532,23 +632,188 @@ function renderAccount() {
             dev.active_tokens + ' live',
           ),
         ),
-        el(
-          'td',
-          {},
-          dev.active_tokens
-            ? el(
-                'button',
-                {
-                  class: 'tiny danger',
-                  type: 'button',
-                  onclick: () => revokeDevice(dev),
-                },
-                'Revoke',
-              )
-            : el('span', { class: 'muted small' }, 'revoked'),
-        ),
+        el('td', {}, deviceActions(dev)),
       ),
     );
+  }
+
+  /**
+   * The token row's buttons: revoke while it works, archive once it does not.
+   * The two are never offered together - archiving is tidying, revoking is
+   * access, and one button that does both is how an operator disables a
+   * credential by accident.
+   */
+  function tokenActions(tok) {
+    if (!tok.revoked) {
+      return el(
+        'button',
+        {
+          class: 'tiny danger',
+          type: 'button',
+          onclick: () => revokeToken(tok),
+        },
+        'Revoke',
+      );
+    }
+    return el(
+      'div',
+      { class: 'actions' },
+      el(
+        'button',
+        {
+          class: 'tiny',
+          type: 'button',
+          title:
+            'Hide this token from the default lists. It stays revoked (ADR 0011).',
+          onclick: () => archiveToken(tok, !tok.archived),
+        },
+        tok.archived ? 'Unarchive' : 'Archive',
+      ),
+      tok.archived ? null : el('span', { class: 'muted small' }, 'revoked'),
+    );
+  }
+
+  /**
+   * The device row's buttons, in the order the workflow goes: cut access, then
+   * retire it, then (optionally) retire what it last wrote. Archive is only
+   * offered once there is nothing left to revoke - the server enforces it too,
+   * with a 409 the console shows as a sentence rather than a failure.
+   */
+  function deviceActions(dev) {
+    if (dev.active_tokens) {
+      return el(
+        'button',
+        {
+          class: 'tiny danger',
+          type: 'button',
+          onclick: () => revokeDevice(dev),
+        },
+        'Revoke',
+      );
+    }
+    const buttons = el('div', { class: 'actions' });
+    buttons.append(
+      el(
+        'button',
+        {
+          class: 'tiny',
+          type: 'button',
+          title:
+            'Hide this device from the default views. Its records stay stored and ' +
+            'keep syncing to your devices, and this is reversible (ADR 0011).',
+          onclick: () => archiveDevice(dev, false),
+        },
+        dev.archived ? 'Unarchive' : 'Archive',
+      ),
+    );
+    if (dev.archived_records) {
+      buttons.append(
+        el(
+          'button',
+          {
+            class: 'tiny',
+            type: 'button',
+            onclick: () => archiveDeviceRecords(dev, false),
+          },
+          'Restore records',
+        ),
+      );
+    } else if (state.detail.stats.live) {
+      buttons.append(
+        el(
+          'button',
+          {
+            class: 'tiny',
+            type: 'button',
+            title:
+              'Hide the records this device last wrote from the default views. ' +
+              'They stay stored and keep syncing (ADR 0011).',
+            onclick: () => archiveDeviceRecords(dev, true),
+          },
+          'Archive its records',
+        ),
+      );
+    }
+    if (!dev.archived) {
+      buttons.append(el('span', { class: 'muted small' }, 'revoked'));
+    }
+    return buttons;
+  }
+
+  async function archiveDevice(dev, archive) {
+    const what = archive
+      ? 'Archiving hides "' +
+        dev.name +
+        '" from the default views. Nothing is deleted: ' +
+        'its records stay stored and keep syncing to your devices.'
+      : 'Bringing "' +
+        dev.name +
+        '" back into the default views. It stays revoked.';
+    if (!confirm(what)) return;
+    await runArchive(
+      'devices/' + encodeURIComponent(dev.id) + '/archive',
+      archive ? 'PUT' : 'DELETE',
+      archive ? 'Device archived' : 'Device restored',
+    );
+  }
+
+  async function archiveDeviceRecords(dev, archive) {
+    const what = archive
+      ? 'Archiving the records "' +
+        dev.name +
+        '" last wrote. They stay stored and keep ' +
+        "syncing to your devices; they only leave this console's default views. " +
+        'A record edited later comes back on its own.'
+      : 'Restoring the records "' +
+        dev.name +
+        '" last wrote. Deleted records stay deleted.';
+    if (!confirm(what)) return;
+    await runArchive(
+      'devices/' + encodeURIComponent(dev.id) + '/records/archive',
+      archive ? 'PUT' : 'DELETE',
+      archive ? 'Records archived' : 'Records restored',
+    );
+  }
+
+  async function archiveToken(tok, archive) {
+    const what = archive
+      ? 'Archiving token ' +
+        tok.fingerprint +
+        '. It stays revoked; it is only hidden from ' +
+        'the default lists.'
+      : 'Bringing token ' +
+        tok.fingerprint +
+        ' back into the lists. It stays revoked.';
+    if (!confirm(what)) return;
+    await runArchive(
+      'tokens/' + encodeURIComponent(tok.hash) + '/archive',
+      archive ? 'PUT' : 'DELETE',
+      archive ? 'Token archived' : 'Token restored',
+    );
+  }
+
+  /** Runs an archive call and reports what the server actually changed. */
+  async function runArchive(path, method, doneMessage) {
+    try {
+      const result = await api.call(
+        method,
+        '/api/v1/admin/users/' +
+          encodeURIComponent(state.selected.id) +
+          '/' +
+          path,
+      );
+      await openAccount(state.selected.id);
+      const n = result ? (result.archived || 0) + (result.unarchived || 0) : 0;
+      toast(doneMessage + (n > 1 ? ' (' + n + ' rows)' : ''), 'good');
+    } catch (e) {
+      // 409 is a precondition, not a failure: the server says what is missing
+      // ("revoke it first", "last active 2d ago, needs 30 days") and that is
+      // exactly what the operator needs to read.
+      toast(
+        e.status === 409 ? e.message : 'Archive failed: ' + e.message,
+        'bad',
+      );
+    }
   }
 
   // tokens
@@ -564,7 +829,21 @@ function renderAccount() {
       el(
         'tr',
         {},
-        el('td', { class: 'mono' }, tok.fingerprint),
+        el(
+          'td',
+          { class: 'mono' },
+          tok.fingerprint,
+          tok.archived
+            ? el(
+                'span',
+                {
+                  class: 'badge archived',
+                  title: 'hidden from the default lists; still revoked',
+                },
+                'archived',
+              )
+            : null,
+        ),
         el(
           'td',
           {},
@@ -576,21 +855,7 @@ function renderAccount() {
           { class: 'muted' },
           tok.last_used ? ago(tok.last_used) : 'never',
         ),
-        el(
-          'td',
-          {},
-          tok.revoked
-            ? el('span', { class: 'badge revoked' }, 'revoked')
-            : el(
-                'button',
-                {
-                  class: 'tiny danger',
-                  type: 'button',
-                  onclick: () => revokeToken(tok),
-                },
-                'Revoke',
-              ),
-        ),
+        el('td', {}, tokenActions(tok)),
       ),
     );
   }
@@ -729,7 +994,6 @@ $('#delete-user').addEventListener('click', async () => {
     state.detail = null;
     await loadUsers();
     $('#view-account').hidden = true;
-    $('#view-data').hidden = true;
     $('#empty-state').hidden = false;
     toast('Account deleted', 'good');
   } catch (e) {
@@ -852,8 +1116,8 @@ async function openTabspace(tabspaceID) {
     `/api/v1/admin/users/${encodeURIComponent(state.selected.id)}/tabspaces/${encodeURIComponent(tabspaceID)}`,
   );
   state.openTabspace = bundle;
+  // the detail view replaces the whole account view, tabs included
   $('#view-account').hidden = true;
-  $('#view-data').hidden = true;
   $('#view-tabspace').hidden = false;
   renderTabspace();
 }
@@ -863,7 +1127,6 @@ $('#tabspace-back').addEventListener('click', () => {
   writeHash({ tabspace: '' });
   $('#view-tabspace').hidden = true;
   $('#view-account').hidden = false;
-  $('#view-data').hidden = false;
 });
 
 function renderTabspace() {
@@ -1132,6 +1395,18 @@ $('#record-deleted').addEventListener('change', async () => {
   await loadRecords();
 });
 
+// Archived records are hidden by default; the toggle is how an operator looks
+// at what they have retired (ADR 0011). The tabverse list follows it, so the
+// two views never disagree about what is visible.
+$('#record-archived').addEventListener('change', async () => {
+  state.records.archived = $('#record-archived').checked;
+  state.tabspaces.archived = state.records.archived;
+  state.records.offset = 0;
+  state.tabspaces.offset = 0;
+  await Promise.all([loadRecords(), loadTabspaces()]);
+  if (state.dataView === 'search') await runSearch();
+});
+
 async function loadRecords() {
   if (!state.selected) return;
   const s = state.records;
@@ -1139,6 +1414,7 @@ async function loadRecords() {
   if (s.q) params.set('q', s.q);
   if (s.entity) params.set('entity', s.entity);
   if (s.deleted) params.set('deleted', '1');
+  if (s.archived) params.set('archived', '1');
   const data = await api.get(
     `/api/v1/admin/users/${encodeURIComponent(state.selected.id)}/records?` +
       params,
@@ -1220,6 +1496,9 @@ async function runSearch() {
   const params = new URLSearchParams({ q });
   const entity = $('#fts-entity').value;
   if (entity) params.set('entity', entity);
+  // the search view follows the same "show archived" toggle as the listings, so
+  // a search can never surface a record the list beside it is hiding
+  if ($('#record-archived').checked) params.set('archived', '1');
   let data;
   try {
     data = await api.get(
@@ -1287,7 +1566,9 @@ function setDataView(view) {
   state.dataView = view;
   writeHash({ view });
   $$('.tab').forEach((t) => {
-    t.classList.toggle('active', t.dataset.view === view);
+    const active = t.dataset.view === view;
+    t.classList.toggle('active', active);
+    t.setAttribute('aria-pressed', active ? 'true' : 'false');
   });
   $('#data-tabverses').hidden = view !== 'tabverses';
   $('#data-records').hidden = view !== 'records';

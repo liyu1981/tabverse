@@ -21,6 +21,16 @@ import (
 // records) is what keeps the client from having to fetch each matching tab,
 // note or todo just to learn which tabverse it hangs off.
 func (s *Store) Search(ctx context.Context, userID, query, entity string, limit int) ([]SearchHit, error) {
+	// The extension's own search sees everything the account holds: archiving
+	// is an operator's filing decision and must not hide a record from the
+	// user searching their own tabs (ADR 0011).
+	return s.search(ctx, userID, query, entity, limit, true)
+}
+
+// search is Search with a visibility rule. includeArchived=false is the
+// console's default view, so its listings and its search never disagree about
+// what is hidden.
+func (s *Store) search(ctx context.Context, userID, query, entity string, limit int, includeArchived bool) ([]SearchHit, error) {
 	match := buildMatchExpr(query)
 	if match == "" {
 		return nil, nil
@@ -41,6 +51,9 @@ func (s *Store) Search(ctx context.Context, userID, query, entity string, limit 
 		 AND r.id = records_fts.record_id
 		WHERE records_fts MATCH ? AND records_fts.user_id = ? AND r.deleted = 0`
 	args := []any{match, userID}
+	if !includeArchived {
+		sqlQuery += ` AND r.archived_at IS NULL`
+	}
 	if entity != "" {
 		if err := ValidateEntity(entity); err != nil {
 			return nil, err

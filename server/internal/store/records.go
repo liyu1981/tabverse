@@ -85,16 +85,22 @@ func (s *Store) ApplyRecords(
 			Deleted: in.Deleted, UpdatedAt: in.UpdatedAt, Payload: payload,
 			ServerAt: nowMS(),
 		}
+		// The INSERT above clears archived_at on every accepted write: a record
+		// somebody just changed is live again, so an operator's archive of it
+		// (ADR 0011) no longer describes reality. Otherwise archiving a device
+		// would permanently hide the user's tabverses just for being edited on
+		// another device.
 		if _, err := tx.ExecContext(ctx, `
-			INSERT INTO records (user_id, entity, id, device_id, rev, deleted, updated_at, payload, server_at)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+			INSERT INTO records (user_id, entity, id, device_id, rev, deleted, updated_at, payload, server_at, archived_at)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)
 			ON CONFLICT(user_id, entity, id) DO UPDATE SET
 				device_id = excluded.device_id,
 				rev = excluded.rev,
 				deleted = excluded.deleted,
 				updated_at = excluded.updated_at,
 				payload = excluded.payload,
-				server_at = excluded.server_at`,
+				server_at = excluded.server_at,
+				archived_at = NULL`,
 			userID, rec.Entity, rec.ID, rec.DeviceID, rec.Rev,
 			boolToInt(rec.Deleted), rec.UpdatedAt, rec.Payload, rec.ServerAt,
 		); err != nil {
