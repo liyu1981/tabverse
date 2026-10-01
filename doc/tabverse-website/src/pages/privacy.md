@@ -39,7 +39,9 @@ devices and look at your data. Signing in means either a single-use link sent to
 your email address - there is no password to store anywhere - or GitHub or
 Google, and only if the server operator configured that. Signing in adds your
 **email address** to that server's database, because it is what the link is sent
-to; it is never sent anywhere else. Sessions are cookies on that server only,
+to, or what the sign-in provider returns for the account (with Google, that is
+the address you gave Google, and whether Google reports it as verified); it is
+never sent anywhere else. Sessions are cookies on that server only,
 and an operator of a multi-user server can open a **read only, time limited,
 logged** view of your account to answer support questions; they cannot change
 anything that way. The console has no master password or token: the person who
@@ -127,7 +129,8 @@ I may update our Privacy Policy from time to time. Thus, you are advised to
 review this page periodically for any changes. I will notify you of any changes
 by posting the new Privacy Policy on this page.
 
-This policy is effective as of 2021-12-06; the server sync section was added in 2026.
+This policy is effective as of 2021-12-06; the server sync section was added in 2026,
+and the console accounts paragraph was updated when social sign-in was added.
 
 **Contact Us**
 

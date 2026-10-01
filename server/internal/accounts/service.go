@@ -194,7 +194,10 @@ func New(cfg config.Config, st *store.Store, logger *slog.Logger) (*Service, err
 		svc.AddProvider("github", cfg.GitHubClientID, cfg.GitHubClientSecret)
 	}
 	if cfg.GoogleClientID != "" {
-		svc.AddProvider("google", cfg.GoogleClientID, cfg.GoogleClientSecret)
+		// not svc.AddProvider("google", ...): the library's own preset asks for
+		// the profile scope only and so never receives an address, which this
+		// console cannot do without (see google.go).
+		addGoogleProvider(svc, cfg.GoogleClientID, cfg.GoogleClientSecret)
 	}
 	// A self hosted OpenID Connect provider is *not* wired, on purpose: the
 	// library's custom provider speaks plain OAuth2 against a bespoke userinfo
@@ -336,20 +339,38 @@ func (s *Service) updater(u token.User) token.User {
 		s.log.Warn("operator bootstrap failed", "err", err)
 	}
 	acc, err := s.store.AccountByID(ctx, userID)
-	// The email provider proves the address by the fact that this request
-	// carries a session: the only way to have one is to have followed the link
-	// that was sent to it. The claim does not even carry the address, so this is
-	// the only place the proof exists.
-	if err == nil && acc.EmailVerifiedAt == nil && s.cfg.RequireEmailVerification &&
-		s.providerOf(claimID) == ProviderEmail {
-		if err := s.store.MarkEmailVerified(ctx, userID); err != nil {
-			s.log.Warn("cannot record email verification", "err", err)
-		} else {
-			acc.EmailVerifiedAt = &time.Time{}
-			_ = s.store.AppendAudit(ctx, store.AuditEntry{
-				Actor: userID, Target: userID, Action: store.AuditEmailVerified,
-				Detail: "proved by following the emailed sign-in link",
-			})
+	// Two things can prove an address, and they are the same proof: the person
+	// received it at an address they control.
+	//
+	//   - the emailed link: the only way to have a session on this provider is to
+	//     have followed it, and the claim does not even carry the address, so the
+	//     session is the proof;
+	//   - a provider that says so itself: Google returns `email_verified` from
+	//     userinfo, and google.go carries that into the claim. Without this a
+	//     Google account would sit unproven forever and be refused on every
+	//     request (adr/0017).
+	//
+	// A provider that says nothing - the library's GitHub preset among them - is
+	// deliberately not trusted: the address exists, it is just unproven, and the
+	// account can still be proved by following a sign-in link to it.
+	if err == nil && acc.EmailVerifiedAt == nil && s.cfg.RequireEmailVerification {
+		proof := ""
+		switch {
+		case s.providerOf(claimID) == ProviderEmail:
+			proof = "proved by following the emailed sign-in link"
+		case u.BoolAttr(emailVerifiedAttr):
+			proof = "proved by the provider, which reported the address as verified"
+		}
+		if proof != "" {
+			if err := s.store.MarkEmailVerified(ctx, userID); err != nil {
+				s.log.Warn("cannot record email verification", "err", err)
+			} else {
+				acc.EmailVerifiedAt = &time.Time{}
+				_ = s.store.AppendAudit(ctx, store.AuditEntry{
+					Actor: userID, Target: userID, Action: store.AuditEmailVerified,
+					Detail: proof,
+				})
+			}
 		}
 	}
 	switch {

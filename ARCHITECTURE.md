@@ -161,6 +161,15 @@ and titled `alice (impersonated by admin)`, and the Admin tab stays put. There i
 no create-account path anywhere: registration is the only way an account exists,
 so there is one path that can prove an address.
 
+**The account *is* an address (`adr/0017`).** `TABVERSED_ADMIN_EMAIL` is matched
+against it to make the first registration the operator, `TABVERSED_LINK_BY_EMAIL`
+merges a social login with an existing account by it, and an address nobody has
+proved is refused. So Google is registered as a *custom* provider asking for
+`profile email` rather than through the auth library's preset, which asks for
+profile alone and hands back no address at all - and Google's `email_verified`
+proves the address the way following an emailed sign-in link does. GitHub is the
+remaining gap: its preset returns no address, so it is unproven.
+
 **Accounts (`adr/0012`, `adr/0013`) are for the console; pairing stays with
 the extension. The console has no master credential** - the first registration
 with `TABVERSED_ADMIN_EMAIL` is the operator, an operator names others, and every

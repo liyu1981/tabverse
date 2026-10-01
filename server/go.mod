@@ -7,6 +7,7 @@ require (
 	github.com/go-pkgz/auth/v2 v2.3.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	golang.org/x/crypto v0.55.0
+	golang.org/x/oauth2 v0.36.0
 	modernc.org/sqlite v1.59.0
 )
 
@@ -32,7 +33,6 @@ require (
 	go.etcd.io/bbolt v1.5.0 // indirect
 	go.mongodb.org/mongo-driver v1.17.9 // indirect
 	golang.org/x/image v0.45.0 // indirect
-	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/sync v0.22.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/text v0.41.0 // indirect

@@ -241,6 +241,22 @@ configured; a self hosted OpenID Connect provider is *not* wired (the auth
 library's custom provider speaks plain OAuth2, not OIDC discovery with id_token
 validation, and a button that half-works is worse than none).
 
+**Google asks for the address, and that is the point** (`adr/0017`). The auth
+library's own Google preset requests the profile scope only and never receives an
+address - which this console cannot do without, because the address is the
+account: it is what `TABVERSED_ADMIN_EMAIL` is matched against and what
+`TABVERSED_LINK_BY_EMAIL` merges accounts by. So Google is registered as a custom
+provider asking for `profile email`, and Google's `email_verified` marks the
+account proven exactly as following an emailed link does. The redirect URI is
+unchanged (`https://<your-host>/auth/google/callback`), and both scopes are basic
+profile scopes, so no app verification is needed.
+
+GitHub is the remaining gap, and it is a different shape of problem: the library's
+preset returns no address at all, so a GitHub sign-in leaves the account unproven
+and is refused unless `TABVERSED_REQUIRE_EMAIL_VERIFICATION=false`. Fixing it
+properly needs GitHub's `/user/emails` lookup and a decision about which of a
+person's addresses is the account's.
+
 A person then manages their own account: mint pairing codes, list and revoke
 their own devices, browse their own data. That is what removes the operator
 from the critical path.
@@ -261,7 +277,7 @@ person another person's browsing history - and the server says so in the log.
 | `TABVERSED_PUBLIC_URL` | _(unset)_ | absolute base for sign-in links and social callbacks |
 | `TABVERSED_SECURE_COOKIES` | `true` | turn off only for plain http on a trusted LAN |
 | `TABVERSED_LINK_BY_EMAIL` | `true` | link a social login to an account with the same address; `0` refuses instead |
-| `TABVERSED_REQUIRE_EMAIL_VERIFICATION` | `true` | refuse a session for an unproven address |
+| `TABVERSED_REQUIRE_EMAIL_VERIFICATION` | `true` | refuse a session for an unproven address. A Google sign-in proves itself (ADR 0017) and the emailed link does; a GitHub sign-in does not, and needs this off |
 | `TABVERSED_SMTP_HOST` / `_PORT` / `_USER` / `_PASS` / `_FROM` | _(none)_ | where sign-in links go |
 | `TABVERSED_GITHUB_CLIENT_ID` / `_SECRET` | _(none)_ | enable the GitHub button |
 | `TABVERSED_GOOGLE_CLIENT_ID` / `_SECRET` | _(none)_ | enable the Google button |
