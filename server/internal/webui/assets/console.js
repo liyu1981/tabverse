@@ -614,7 +614,7 @@ function directoryRow(user) {
         {
           class: 'tiny danger',
           type: 'button',
-          onclick: () => deleteAccount(user),
+          onclick: () => deleteAccountFromDirectory(user),
         },
         'Delete',
       ),
@@ -680,14 +680,29 @@ async function setRole(user, role) {
   }
 }
 
-async function deleteAccount(user) {
-  const who = user.name || user.email;
+/**
+ * Deleting an account is the most destructive thing the console can do, so the
+ * server asks for the id back as `?confirm=` before it will do anything, and the
+ * page asks for the name to be typed before it sends that.
+ *
+ * One function, both buttons. There used to be a second copy of this flow for
+ * the account header, and it did not send the confirmation - so that button
+ * always came back with `confirmation_required` and deleted nothing. Two copies
+ * of a destructive path is how that happened; the directory row and the header
+ * button now call this, and say what should happen afterwards themselves.
+ *
+ * `recordCount` differs by caller: a directory row carries it, the header has
+ * the account's own counters.
+ */
+async function deleteAccount(user, recordCount) {
+  const who = user.name || user.email || user.id;
+  const records = recordCount ?? user.record_count ?? 0;
   const typed = prompt(
-    `Deleting ${who} removes the account, its ${user.record_count ?? 0} record(s), its ` +
+    `Deleting ${who} removes the account, its ${records} record(s), its ` +
       `devices and its tokens. There is no undo.\n\nType ${who} to confirm:`,
   );
   if (typed !== who) {
-    return;
+    return false;
   }
   try {
     await api.del(
@@ -696,12 +711,37 @@ async function deleteAccount(user) {
         '?confirm=' +
         encodeURIComponent(user.id),
     );
-    await loadUsers();
-    renderDirectory();
-    toast(who + ' deleted', 'good');
+    return true;
   } catch (e) {
     toast(e.message, 'bad');
+    return false;
   }
+}
+
+/** The account header's delete: it takes the account away from under the page. */
+async function deleteAccountFromHeader() {
+  const user = state.detail.user;
+  if (!(await deleteAccount(user, state.detail.stats.total))) {
+    return;
+  }
+  // The console has nothing left to show without an account, and this page was
+  // your own: back to the sign-in form, which is the honest end state.
+  toast('Account deleted', 'good');
+  state.me = null;
+  state.selected = null;
+  state.detail = null;
+  $('#app').hidden = true;
+  $('#view-signin').hidden = false;
+}
+
+/** A directory row's delete: the account stays, the list refreshes. */
+async function deleteAccountFromDirectory(user) {
+  if (!(await deleteAccount(user, user.record_count))) {
+    return;
+  }
+  await loadUsers();
+  renderDirectory();
+  toast((user.name || user.email) + ' deleted', 'good');
 }
 
 // ---- account list ---------------------------------------------------------
@@ -1334,31 +1374,7 @@ $('#rename-user').addEventListener('click', async () => {
   }
 });
 
-$('#delete-user').addEventListener('click', async () => {
-  const name = state.detail.user.name;
-  const typed = prompt(
-    `Deleting "${name}" removes the account, its ${state.detail.stats.total} records, ` +
-      `its devices and its tokens. This cannot be undone.\n\nType the account name to confirm:`,
-  );
-  if (typed !== name) return;
-  try {
-    await api.del(
-      '/api/v1/admin/users/' + encodeURIComponent(state.selected.id),
-    );
-    state.selected = null;
-    state.detail = null;
-    // The console has nothing left to show without an account, and this page
-    // was your own: back to the sign-in form, which is the honest end state.
-    toast('Account deleted', 'good');
-    state.me = null;
-    state.selected = null;
-    state.detail = null;
-    $('#app').hidden = true;
-    $('#view-signin').hidden = false;
-  } catch (e) {
-    toast(e.message, 'bad');
-  }
-});
+$('#delete-user').addEventListener('click', deleteAccountFromHeader);
 
 // ---- tabverse browsing (read only) ----------------------------------------
 

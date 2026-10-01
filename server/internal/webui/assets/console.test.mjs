@@ -793,3 +793,36 @@ test('a tabverse that was deleted under the console does not open an empty drawe
   expect(elements.get('drawer').hidden).toBe(true);
   expect(elements.get('toast').hidden).toBe(false);
 });
+
+// ---- deleting an account --------------------------------------------------
+
+test('the account header deletes with the confirmation the server demands', async () => {
+  // The header's Delete button used to be its own copy of this flow and forgot
+  // the `?confirm=`, so the server answered `confirmation_required` and the
+  // button did nothing at all. Typed name in, DELETE with the id back out.
+  await run(ME_PERSON);
+  promptAnswer = 'nope';
+  await elements.get('delete-user').fire('click');
+  expect(
+    requests.some((r) => r.method === 'DELETE'),
+    'the wrong name deleted the account',
+  ).toBe(false);
+
+  promptAnswer = 'Yuli';
+  await elements.get('delete-user').fire('click');
+  const del = requests.find((r) => r.method === 'DELETE');
+  expect(del, 'the delete never left the page').toBeDefined();
+  expect(del.url).toBe('/api/v1/admin/users/usr_me?confirm=usr_me');
+  // ...and the account was the signed-in person's, so the console is empty now
+  expect(elements.get('app').hidden).toBe(true);
+  expect(elements.get('view-signin').hidden).toBe(false);
+});
+
+test('a directory row deletes with the same confirmation', async () => {
+  await run(ME_OPERATOR);
+  promptAnswer = 'alice';
+  await createdWithClass('danger').fire('click');
+  const del = requests.find((r) => r.method === 'DELETE');
+  expect(del, 'the delete never left the page').toBeDefined();
+  expect(del.url).toBe('/api/v1/admin/users/usr_alice?confirm=usr_alice');
+});
