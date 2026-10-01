@@ -52,11 +52,18 @@ tabversed service install|status|start|restart|stop|logs
 ```
 
 `service` is a **systemd user** unit (`systemctl --user`, no root, no sudo):
-`install` writes `~/.config/systemd/user/topicversed.service`, reloads and
-enables it, and stops there so starting stays a visible separate step. The unit
-runs `tabversed serve` with `WorkingDirectory` set to where the binary lives,
-because that is where the `.env` is - the binary reads it itself, so the file
-format has one parser rather than two. For a server that should survive a
+`install` writes `~/.config/systemd/user/tabversed.service`, reloads and enables
+it, and stops there so starting stays a visible separate step. The unit runs
+**`~/.local/bin/tabversed serve`** - a stable path, so replacing that file is the
+upgrade and nothing has to be re-installed (`--bin` points it elsewhere) - with
+its working directory at **`~/.tabversed`**, which is where the server reads
+`.env` from (the binary reads it itself, so the file format has one parser
+rather than two) and where the database lands by default -
+`~/.tabversed/data/tabversed.db`, unless `TABVERSED_DB` says otherwise
+(`--dir` moves both). A server meant to run for months should not depend on the
+directory somebody was standing in when they installed it. `install` refuses to
+point `ExecStart` at a path with no binary on it, because systemd's own answer to
+that is a bare "No such file or directory". For a server that should survive a
 logout, `loginctl enable-linger $USER` once.
 
 `service logs` follows the journal and passes anything after it to `journalctl`
@@ -65,7 +72,8 @@ logout, `loginctl enable-linger $USER` once.
 A full local install, start to finish:
 
 ```sh
-tabversed config                     # edit ./.env
+install -Dm755 <built binary> ~/.local/bin/tabversed
+tabversed config --dir ~/.tabversed   # settings where the service will look
 tabversed service install
 loginctl enable-linger $USER         # optional: keep it running when logged out
 tabversed service start

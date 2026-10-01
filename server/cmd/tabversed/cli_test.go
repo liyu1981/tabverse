@@ -135,9 +135,16 @@ func TestTemplateMatchesTheRepositoryCopy(t *testing.T) {
 func fakeManager(t *testing.T) (*serviceManager, *[]string) {
 	t.Helper()
 	var calls []string
+	bin := filepath.Join(t.TempDir(), "tabversed")
+	// install refuses to point ExecStart at nothing, so the fake needs a file
+	if err := os.WriteFile(bin, []byte("#!/bin/sh\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
 	m := &serviceManager{
 		unitDir: t.TempDir(),
-		binPath: "/usr/local/bin/tabversed",
+		binPath: bin,
+		// install writes to m.workDir, so the tests point it at a temp dir
+		// instead of the real ~/.tabversed
 		workDir: t.TempDir(),
 		run: func(name string, args ...string) error {
 			calls = append(calls, name+" "+strings.Join(args, " "))
@@ -164,7 +171,7 @@ func TestServiceInstallWritesAUnitThatRunsServe(t *testing.T) {
 	}
 	text := string(unit)
 	for _, want := range []string{
-		"ExecStart=/usr/local/bin/tabversed serve",
+		"ExecStart=" + m.binPath + " serve",
 		"WorkingDirectory=" + m.workDir,
 		"Restart=always",
 		"WantedBy=default.target",
@@ -182,14 +189,68 @@ func TestServiceInstallWritesAUnitThatRunsServe(t *testing.T) {
 	got := strings.Join(*calls, "\n")
 	for _, want := range []string{
 		"systemctl --user daemon-reload",
-		"systemctl --user enable topicversed.service",
+		"systemctl --user enable tabversed.service",
 	} {
 		if !strings.Contains(got, want) {
 			t.Errorf("install did not run %q; it ran:\n%s", want, got)
 		}
 	}
-	if strings.Contains(got, "start topicversed") {
+	if strings.Contains(got, "start tabversed") {
 		t.Error("install started the service; starting is meant to be a separate, visible step")
+	}
+}
+
+// The unit has to point at a binary that exists: a unit whose ExecStart is wrong
+// fails at start with a bare "No such file or directory" from systemd, which
+// says nothing about which path was wrong.
+func TestServiceInstallRefusesAMissingBinary(t *testing.T) {
+	m, _ := fakeManager(t)
+	missing := filepath.Join(t.TempDir(), "tabversed")
+
+	if err := m.install([]string{"--bin", missing}); err == nil {
+		t.Fatal("install accepted an ExecStart that points at nothing")
+	}
+	if _, err := os.Stat(filepath.Join(m.unitDir, unitName)); err == nil {
+		t.Error("the refused install still wrote a unit")
+	}
+}
+
+// ...and the default is ~/.local/bin/tabversed, a stable path: replacing that
+// file is the upgrade, with no re-install.
+func TestServiceInstallDefaultsToTheLocalBinBinary(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	want, err := installedBinaryPath()
+	if err != nil {
+		t.Fatalf("installedBinaryPath: %v", err)
+	}
+	if want != filepath.Join(home, ".local", "bin", "tabversed") {
+		t.Fatalf("installedBinaryPath() = %q", want)
+	}
+
+	m, _ := fakeManager(t)
+	m.binPath = want
+	// the binary is not there yet, which is the point: the check fires
+	if err := m.install(nil); err == nil {
+		t.Error("install accepted a default binary path that does not exist")
+	}
+	if err := os.MkdirAll(filepath.Join(home, ".local", "bin"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(want, []byte("#!/bin/sh\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	captureStdout(t, func() {
+		if err := m.install(nil); err != nil {
+			t.Errorf("install with the binary in place: %v", err)
+		}
+	})
+	unit, err := os.ReadFile(filepath.Join(m.unitDir, unitName))
+	if err != nil {
+		t.Fatalf("no unit written: %v", err)
+	}
+	if !strings.Contains(string(unit), "ExecStart="+want+" serve") {
+		t.Errorf("the unit does not run %s:\n%s", want, unit)
 	}
 }
 
@@ -215,6 +276,44 @@ func TestServiceInstallRefusesToReplaceAnEditedUnit(t *testing.T) {
 	})
 	if body, _ := os.ReadFile(target); strings.Contains(string(body), "/somewhere/else") {
 		t.Error("install --force did not replace the unit")
+	}
+}
+
+// A service install must not depend on where the user happened to be standing:
+// the unit points at ~/.tabversed, so the settings and the data stay where the
+// service can find them next month.
+func TestServiceInstallUsesTheHomeDirectoryByDefault(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	want, err := serviceDir()
+	if err != nil {
+		t.Fatalf("serviceDir: %v", err)
+	}
+	if want != filepath.Join(home, ".tabversed") {
+		t.Fatalf("serviceDir() = %q, want %q", want, filepath.Join(home, ".tabversed"))
+	}
+
+	m, _ := fakeManager(t)
+	m.workDir = want // what newServiceManager would have set
+	captureStdout(t, func() {
+		if err := m.install(nil); err != nil {
+			t.Fatalf("install: %v", err)
+		}
+	})
+	unit, err := os.ReadFile(filepath.Join(m.unitDir, unitName))
+	if err != nil {
+		t.Fatalf("no unit written: %v", err)
+	}
+	if !strings.Contains(string(unit), "WorkingDirectory="+want) {
+		t.Errorf("the unit does not point at %s:\n%s", want, unit)
+	}
+	// and the directory exists, private: it is about to hold two secrets
+	info, err := os.Stat(want)
+	if err != nil {
+		t.Fatalf("the service directory was not created: %v", err)
+	}
+	if perm := info.Mode().Perm(); perm != 0o700 {
+		t.Errorf("the service directory is %o, want 700", perm)
 	}
 }
 

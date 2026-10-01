@@ -23,6 +23,16 @@ import (
 //go:embed .env.example
 var envExample []byte
 
+// homeDirHint is the directory a service install will read, named in the help so
+// "config here, install there" cannot quietly produce a unit with no settings.
+func homeDirHint() string {
+	dir, err := serviceDir()
+	if err != nil {
+		return "~"
+	}
+	return dir
+}
+
 // printVersion answers "which binary is this", which is the first question
 // anybody asks a server they are trying to pin down.
 func printVersion() error {
@@ -77,5 +87,7 @@ func configCommand(args []string) error {
 	fmt.Fprintln(os.Stdout, "edit it - every variable is documented in the file - then either:")
 	fmt.Fprintln(os.Stdout, "  tabversed serve            run it in the foreground")
 	fmt.Fprintln(os.Stdout, "  tabversed service install  run it as a systemd user service")
+	fmt.Fprintf(os.Stdout, "\n(a service reads its .env from %s/.tabversed, so install\n", homeDirHint())
+	fmt.Fprintln(os.Stdout, " it with --dir or write the file there)")
 	return nil
 }

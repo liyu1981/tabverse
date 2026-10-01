@@ -22,9 +22,20 @@ import (
 // for that file format instead of two with subtly different quoting rules.
 
 const (
-	unitName    = "topicversed.service"
+	unitName    = "tabversed.service"
 	unitSubdir  = "systemd/user"
 	unitDirMode = 0o755
+	// serviceDirName is where a service install keeps its settings: ~/.tabversed,
+	// whatever directory the command was run from. A server that runs for months
+	// out of wherever somebody happened to be standing when they installed it is
+	// a server that stops working the next time they move it.
+	serviceDirName = ".tabversed"
+	serviceDirMode = 0o700
+	// binDirName is where the binary is assumed to live, and therefore what
+	// ExecStart points at. A stable path rather than the one this process
+	// happens to be, so replacing the file is the upgrade - no re-install.
+	binDirName = ".local/bin"
+	binName    = "tabversed"
 )
 
 // serviceManager is the whole systemctl surface, behind an injectable runner so
@@ -32,25 +43,19 @@ const (
 // systemd until a method is called.
 type serviceManager struct {
 	unitDir string // where the unit file is written
-	binPath string // ExecStart
-	workDir string // WorkingDirectory: where .env is found
+	binPath string // ExecStart: ~/.local/bin/tabversed unless --bin says otherwise
+	workDir string // WorkingDirectory: ~/.tabversed, where .env is found
 	run     func(name string, args ...string) error
 	out     *os.File
 	errOut  *os.File
 }
 
 func newServiceManager(out, errOut *os.File) (*serviceManager, error) {
-	binPath, err := os.Executable()
+	binPath, err := installedBinaryPath()
 	if err != nil {
-		return nil, fmt.Errorf("find this binary: %w", err)
+		return nil, err
 	}
-	// A binary reached through a symlink (a versioned name in /usr/local/bin,
-	// or `go run`'s temp build) would be written into the unit as the symlink,
-	// and ExecStart needs the real file.
-	if resolved, err := filepath.EvalSymlinks(binPath); err == nil {
-		binPath = resolved
-	}
-	workDir, err := os.Getwd()
+	workDir, err := serviceDir()
 	if err != nil {
 		return nil, err
 	}
@@ -68,6 +73,27 @@ func newServiceManager(out, errOut *os.File) (*serviceManager, error) {
 		return cmd.Run()
 	}
 	return m, nil
+}
+
+// serviceDir is ~/.tabversed, the home a service install keeps its settings and
+// (by the DB path's relative default) its data in.
+func serviceDir() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("no home directory: %w", err)
+	}
+	return filepath.Join(home, serviceDirName), nil
+}
+
+// installedBinaryPath is ~/.local/bin/tabversed: where the service expects the
+// binary to be. It is not os.Executable(), because ExecStart has to keep working
+// after this process is gone, and after somebody rebuilds the binary in place.
+func installedBinaryPath() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("no home directory: %w", err)
+	}
+	return filepath.Join(home, binDirName, binName), nil
 }
 
 // userUnitDir is ~/.config/systemd/user, honouring XDG_CONFIG_HOME.
@@ -135,16 +161,23 @@ func serviceCommand(args []string) error {
 
 const serviceUsage = `Usage: tabversed service <command>
 
-  install     Write and enable a systemd user unit for this binary.
-  status      systemctl --user status topicversed.service
-  start       systemctl --user start topicversed.service
-  restart     systemctl --user restart topicversed.service
-  stop        systemctl --user stop topicversed.service
-  logs        journalctl --user -u topicversed.service -f
+  install     Write and enable a systemd user unit for tabversed.
+  status      systemctl --user status tabversed.service
+  start       systemctl --user start tabversed.service
+  restart     systemctl --user restart tabversed.service
+  stop        systemctl --user stop tabversed.service
+  logs        journalctl --user -u tabversed.service -f
 
-"install" writes ~/.config/systemd/user/topicversed.service, runs
+"install" writes ~/.config/systemd/user/tabversed.service, runs
 "systemctl --user daemon-reload" and enables the unit. It does not start it, so
 starting stays a separate, visible step.
+
+The unit runs ~/.local/bin/tabversed (a stable path, so replacing that file is
+the upgrade; --bin points it somewhere else) with the working directory at
+~/.tabversed, which is where it looks for .env - and where the database lands
+too (~/.tabversed/data/tabversed.db) unless TABVERSED_DB says otherwise. --dir
+puts the settings and the data somewhere else. Neither is the directory you
+happened to be standing in when you installed it.
 
 "logs" follows the journal; anything after it goes to journalctl as it is, e.g.
 "tabversed service logs --since -1h" or "tabversed service logs -n 200 --no-pager".
@@ -155,8 +188,8 @@ To keep the server running while you are logged out, enable lingering once:
 
 To remove the service:
 
-    systemctl --user disable --now topicversed.service
-    rm ~/.config/systemd/user/topicversed.service
+    systemctl --user disable --now tabversed.service
+    rm ~/.config/systemd/user/tabversed.service
     systemctl --user daemon-reload
 `
 
@@ -173,9 +206,9 @@ func (m *serviceManager) systemctl(args ...string) error {
 // No EnvironmentFile line on purpose: the binary reads ./.env from its working
 // directory itself, so systemd and the program cannot disagree about what the
 // file said.
-func (m *serviceManager) unitText(workDir string) string {
+func (m *serviceManager) unitText(workDir, binPath string) string {
 	return fmt.Sprintf(`# Written by "tabversed service install". Edit it, or re-run install after
-# moving the binary; "install --force" replaces this file.
+# moving the binary or the data; "install --force" replaces this file.
 [Unit]
 Description=tabversed sync server
 After=network-online.target
@@ -185,7 +218,9 @@ Wants=network-online.target
 Type=simple
 ExecStart=%s serve
 WorkingDirectory=%s
-# Settings come from the .env in the working directory, read by the binary.
+# Settings come from the .env in the working directory, read by the binary;
+# with the default --dir that is ~/.tabversed/.env, and the database lands in
+# ~/.tabversed/data/ unless TABVERSED_DB says otherwise.
 Restart=always
 RestartSec=5
 StandardOutput=journal
@@ -195,14 +230,15 @@ PrivateTmp=true
 
 [Install]
 WantedBy=default.target
-`, m.binPath, workDir)
+`, binPath, workDir)
 }
 
 func (m *serviceManager) install(args []string) error {
 	fs := flag.NewFlagSet("service install", flag.ContinueOnError)
 	fs.SetOutput(os.Stderr)
 	force := fs.Bool("force", false, "replace an existing unit file")
-	dir := fs.String("dir", m.workDir, "working directory for the server (where .env is)")
+	dir := fs.String("dir", m.workDir, "where the server keeps its settings and data (where .env is)")
+	bin := fs.String("bin", m.binPath, "the tabversed binary the unit runs")
 	if err := fs.Parse(args); err != nil {
 		return errUsage
 	}
@@ -213,7 +249,17 @@ func (m *serviceManager) install(args []string) error {
 	if err != nil {
 		return err
 	}
-	text := m.unitText(workDir)
+	binPath, err := filepath.Abs(*bin)
+	if err != nil {
+		return err
+	}
+	// A unit file whose ExecStart points at nothing fails at start with a bare
+	// "No such file or directory" from systemd, which says nothing about which
+	// path was wrong. This is the one place to catch it.
+	if info, err := os.Stat(binPath); err != nil || info.IsDir() {
+		return fmt.Errorf("no tabversed binary at %s (install it there, or pass --bin)", binPath)
+	}
+	text := m.unitText(workDir, binPath)
 	target := filepath.Join(m.unitDir, unitName)
 
 	// A unit file is something that runs, unattended: replacing a hand-edited
@@ -229,6 +275,11 @@ func (m *serviceManager) install(args []string) error {
 	if err := os.MkdirAll(m.unitDir, unitDirMode); err != nil {
 		return err
 	}
+	// 0700: this directory is about to hold the session signing key and the
+	// OAuth client secret.
+	if err := os.MkdirAll(workDir, serviceDirMode); err != nil {
+		return err
+	}
 	if err := os.WriteFile(target, []byte(text), 0o644); err != nil {
 		return err
 	}
@@ -240,11 +291,13 @@ func (m *serviceManager) install(args []string) error {
 	if err := m.systemctl("enable", unitName); err != nil {
 		return err
 	}
-	fmt.Fprintf(m.out, "enabled %s (working directory: %s)\n", unitName, workDir)
+	fmt.Fprintf(m.out, "enabled %s\n", unitName)
+	fmt.Fprintf(m.out, "  binary:  %s\n", binPath)
+	fmt.Fprintf(m.out, "  settings and data: %s\n", workDir)
 
 	if _, err := os.Stat(filepath.Join(workDir, ".env")); err != nil {
-		fmt.Fprintf(m.out, "\nthere is no .env in %s yet: the server would run on its\n", workDir)
-		fmt.Fprintln(m.out, "defaults and print sign-in links to the journal. Write one with")
+		fmt.Fprintf(m.out, "\nthere is no %s/.env yet: the server would run on its defaults\n", workDir)
+		fmt.Fprintln(m.out, "and print sign-in links to the journal. Write one with")
 		fmt.Fprintf(m.out, "  tabversed config --dir %s\n", workDir)
 	}
 	fmt.Fprintln(m.out, "\nnext:")
