@@ -1,5 +1,6 @@
 import { TabSpace, insertTab, newEmptyTabSpace } from '../TabSpace';
 import { $tabSpace } from '../store';
+import { entryTabs, tabverseEntries } from '../tabEntries';
 import { getMockChrome } from '../../../dev/chromeMock';
 import { getNewId } from '../../common';
 import { loadTabSpaceByTabSpaceId, saveTabSpace } from '../util';
@@ -101,6 +102,126 @@ test('a tab of the tabverse that is already open here is not opened again', asyn
   expect(
     live.tabs.find((tab) => tab.title === 'Search').chromeTabId,
   ).toBeGreaterThan(0);
+});
+
+test('the window a split view is already open in comes back as a split', async () => {
+  const tabSpace = await savedTabSpace('work', [
+    { title: 'Docs', url: 'https://example.com/docs' },
+    { title: 'Search', url: 'https://example.com/search' },
+  ]);
+  const w = mockChrome.addWindow();
+  const manager = mockChrome.insertTabFromData(
+    { title: 'Tabverse', url: MANAGER_URL, favIconUrl: '', pinned: true },
+    w.id,
+  );
+  // the user has both of the tabverse's tabs open here, side by side in a
+  // split view - a split the restore keeps (it reopens neither tab) but, with
+  // no write path for splits, could never put back
+  mockChrome.insertTabFromData(
+    {
+      title: 'Docs',
+      url: 'https://example.com/docs',
+      favIconUrl: '',
+      pinned: false,
+      splitViewId: 77,
+    },
+    w.id,
+  );
+  mockChrome.insertTabFromData(
+    {
+      title: 'Search',
+      url: 'https://example.com/search',
+      favIconUrl: '',
+      pinned: false,
+      splitViewId: 77,
+    },
+    w.id,
+  );
+
+  await loadTabSpaceByTabSpaceId(tabSpace.id, manager.id, w.id);
+
+  // so the read-back at the end of the restore has to bring the split with it
+  const live = $tabSpace.getState();
+  expect(live.tabs.map((tab) => tab.splitViewId).toArray()).toEqual([77, 77]);
+  // and the list draws it as one split block, not two rows
+  const entries = tabverseEntries(live);
+  expect(entries.map((entry) => entry.kind)).toEqual(['split']);
+  expect(entryTabs(entries[0]).map((tab) => tab.url)).toEqual([
+    'https://example.com/docs',
+    'https://example.com/search',
+  ]);
+});
+
+test('a tab the window has unsplit is not left split in the tabverse', async () => {
+  const tabSpace = await savedTabSpace('work', [
+    { title: 'Docs', url: 'https://example.com/docs' },
+    { title: 'Search', url: 'https://example.com/search' },
+  ]);
+  const w = mockChrome.addWindow();
+  const manager = mockChrome.insertTabFromData(
+    { title: 'Tabverse', url: MANAGER_URL, favIconUrl: '', pinned: true },
+    w.id,
+  );
+  // both open here, but only one of them is in a split view
+  mockChrome.insertTabFromData(
+    {
+      title: 'Docs',
+      url: 'https://example.com/docs',
+      favIconUrl: '',
+      pinned: false,
+      splitViewId: 77,
+    },
+    w.id,
+  );
+  mockChrome.insertTabFromData(
+    {
+      title: 'Search',
+      url: 'https://example.com/search',
+      favIconUrl: '',
+      pinned: false,
+      // chrome says "not in a split" as a value, not as an absent field
+      splitViewId: mockChrome.tabs.SPLIT_VIEW_ID_NONE,
+    },
+    w.id,
+  );
+
+  await loadTabSpaceByTabSpaceId(tabSpace.id, manager.id, w.id);
+
+  // a partner that is not there is not a split: two plain rows
+  expect(tabverseEntries($tabSpace.getState()).map((e) => e.kind)).toEqual([
+    'tab',
+    'tab',
+  ]);
+});
+
+test('the tab the window has open wins over the row the tabverse saved', async () => {
+  const tabSpace = await savedTabSpace('work', [
+    { title: 'Docs', url: 'https://example.com/docs' },
+  ]);
+  const w = mockChrome.addWindow();
+  const manager = mockChrome.insertTabFromData(
+    { title: 'Tabverse', url: MANAGER_URL, favIconUrl: '', pinned: true },
+    w.id,
+  );
+  // the same page, but it has moved on since the tabverse was saved
+  const open = mockChrome.insertTabFromData(
+    {
+      title: 'Docs - Example',
+      url: 'https://example.com/docs',
+      favIconUrl: 'https://example.com/favicon.ico',
+      pinned: true,
+    },
+    w.id,
+  );
+
+  await loadTabSpaceByTabSpaceId(tabSpace.id, manager.id, w.id);
+
+  const docs = $tabSpace.getState().tabs.first();
+  expect(docs.chromeTabId).toBe(open.id);
+  expect(docs.title).toBe('Docs - Example');
+  expect(docs.favIconUrl).toBe('https://example.com/favicon.ico');
+  // pinned is the one field the tabverse owns, so the saved row still wins
+  expect(docs.pinned).toBe(false);
 });
 
 test('a tab the tabverse did not save is still opened', async () => {

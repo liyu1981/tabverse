@@ -52,6 +52,12 @@ interface IMockTabData {
   url: string;
   favIconUrl: string;
   pinned: boolean;
+  /**
+   * Chrome's split view id, or undefined for a tab that is not split. Optional
+   * because a mock tab is built from these four fields everywhere else; set it
+   * to put a tab in a split view, as the restore's read-back test does.
+   */
+  splitViewId?: number;
 }
 
 interface IMockTab extends IMockTabData {
@@ -114,6 +120,8 @@ class MockTabs {
 
 class MockTabsApi {
   chrome: MockChrome;
+  /** Chrome's own constant: a tab that is not in a split view. */
+  SPLIT_VIEW_ID_NONE = -1;
   onAttached: IMockListenable;
   onCreated: IMockListenable;
   onDetached: IMockListenable;

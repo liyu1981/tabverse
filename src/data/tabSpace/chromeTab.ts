@@ -6,10 +6,10 @@ import { debounce, isTabSpaceManagerPage, logger } from '../../global';
 import { eq, isEqual, omit } from 'lodash';
 import { getUnsavedNewId } from '../common';
 import { isJestTest } from '../../debug';
-import { produce } from 'immer';
 import { recordClosedTab } from '../closedTab/util';
 import { saveCurrentTabSpaceIfNeeded } from './util';
 import { captureTabGroups, startMonitorTabGroups } from './tabGroup';
+import { copyChromeTabFields } from './chromeTabFields';
 import { persistPreview } from './tabPreviewStore';
 
 const CHROME_TAB_DEBOUNCE_TIME = 500;
@@ -42,32 +42,9 @@ function isTabMetadataOnlyChange(oldTab: Tab, newTab: Tab): boolean {
   );
 }
 
-function copyChromeTabFields(chromeTab: chrome.tabs.Tab, targetTab: Tab): Tab {
-  return produce(targetTab, (draft) => {
-    if (chromeTab.title) {
-      draft.title = chromeTab.title;
-    }
-    if (chromeTab.url) {
-      draft.url = chromeTab.url;
-    }
-    if (chromeTab.favIconUrl) {
-      draft.favIconUrl = chromeTab.favIconUrl;
-    }
-    if (chromeTab.pinned) {
-      draft.pinned = chromeTab.pinned;
-    }
-    if (chromeTab.discarded) {
-      draft.suspended = chromeTab.discarded;
-    }
-    if (chromeTab.splitViewId !== undefined) {
-      draft.splitViewId =
-        chromeTab.splitViewId === chrome.tabs.SPLIT_VIEW_ID_NONE
-          ? undefined
-          : chromeTab.splitViewId;
-    }
-  });
-}
-
+// The chrome tab -> our tab field copy lives in ./chromeTabFields, because the
+// restore reads the same fields back out of a window it has just filled
+// (scanRestoredWindow, ./util) - the same question asked in reverse.
 export async function scanCurrentTabs() {
   const tabs = await chrome.tabs.query({ currentWindow: true });
   const newTabs: Tab[] = [];

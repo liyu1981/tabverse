@@ -21,13 +21,21 @@ import {
   sendPubSubMessage,
   subscribePubSubMessage,
 } from '../../message/message';
-import { debounce, hasOwn, logger, perfEnd, perfStart } from '../../global';
+import {
+  debounce,
+  hasOwn,
+  isTabSpaceManagerPage,
+  logger,
+  perfEnd,
+  perfStart,
+} from '../../global';
 import { isEqual, omit } from 'lodash';
 
 import { DEFAULT_SAVE_DEBOUNCE } from '../../storage/StorageOverview';
 import { orderWindowTabs, pinTabverseTabFirst } from './chromeUtil';
+import { copyChromeTabFields } from './chromeTabFields';
 import { planRestore } from './restorePlan';
-import { restoreTabGroups } from './tabGroup';
+import { captureTabGroups, restoreTabGroups } from './tabGroup';
 
 export function monitorDbChanges() {
   subscribePubSubMessage(
@@ -497,7 +505,88 @@ export async function loadTabSpaceByTabSpaceId(
   }
   tabSpaceStoreApi.update(tabSpace);
 
+  await scanRestoredWindow(
+    chromeWindowId,
+    plan.entries.flatMap((entry) =>
+      entry.reuseChromeTabId === undefined ? [] : [entry.reuseChromeTabId],
+    ),
+  );
+
   // focus tabspace tab
   const currentTab = await chrome.tabs.getCurrent();
   await chrome.tabs.update(currentTab.id, { active: true });
+}
+
+/**
+ * Reads the window back, once, at the end of a restore.
+ *
+ * `keptChromeTabIds` are the tabs the restore left where they were - the ones
+ * it reused rather than reopened. They are the gap this closes: keeping a tab
+ * open is the whole point of the restore (see restorePlan.ts), and a tab that
+ * is never closed and opened raises no tab event, so nothing else would ever
+ * correct the store's copy of it. Without this the tabverse describes a window
+ * that does not exist, and most visibly the split view: a pair of tabs the user
+ * has open side by side comes back into the tabverse as two ordinary tabs,
+ * because there is no write path to put a split back (Chrome 155+) and the one
+ * already in the window was never read. splitViewId is a read from Chrome 140
+ * on (see src/capabilities.ts), so showing it costs nothing.
+ *
+ * The tabs the restore *did* open are deliberately left to the tab event path:
+ * a tab that was created a moment ago has the url where its title will be until
+ * the page loads, and reading it back here would replace a good title with it.
+ *
+ * It is a scan and not a save: splitViewId, chromeTabId and chromeWindowId are
+ * live fields that are never written to the database, and a saved field the
+ * window disagrees about (a kept tab's title, a tab pinned here and saved
+ * loose) is picked up by the next real save, exactly like the metadata-only
+ * updates of the tab event path.
+ */
+export async function scanRestoredWindow(
+  windowId: number,
+  keptChromeTabIds: Iterable<number>,
+): Promise<void> {
+  const tabSpace = $tabSpace.getState();
+  const kept = new Set(keptChromeTabIds);
+  const chromeTabs = await chrome.tabs.query({ windowId });
+  const tabIdByChromeTabId = new Map<number, string>();
+  let refreshedTabSpace = tabSpace;
+  let refreshedCount = 0;
+  for (const chromeTab of chromeTabs) {
+    if (chromeTab.id === undefined || isTabSpaceManagerPage(chromeTab)) {
+      continue;
+    }
+    const existing = findTabByChromeTabId(chromeTab.id, tabSpace);
+    if (!existing) {
+      // not a tab of the tabverse: the manager tab, or one the user opened
+      // while the restore ran - the tab event path has it
+      continue;
+    }
+    tabIdByChromeTabId.set(chromeTab.id, existing.id);
+    if (!kept.has(chromeTab.id)) {
+      continue;
+    }
+    const refreshed = copyChromeTabFields(chromeTab, existing);
+    if (!isEqual(refreshed, existing)) {
+      refreshedTabSpace = updateTab(
+        { tid: existing.id, changes: refreshed },
+        refreshedTabSpace,
+      );
+      refreshedCount += 1;
+    }
+  }
+  if (refreshedCount > 0) {
+    tabSpaceStoreApi.update(refreshedTabSpace);
+  }
+
+  // the groups of the whole window, which is also how a group
+  // restoreTabGroups had to skip (too few tabs left, pinned mixed with loose)
+  // stops being claimed
+  const groups = await captureTabGroups(windowId, tabIdByChromeTabId);
+  if (groups) {
+    tabSpaceStoreApi.setTabGroups(groups);
+  }
+  logger.log(
+    `scanned the restored window: ${refreshedCount} kept tab(s) refreshed, ` +
+      `${groups?.length ?? 0} group(s)`,
+  );
 }
