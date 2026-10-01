@@ -47,17 +47,24 @@ const TabDetailPreviewPanel = (props) => {
         <div className={classes.previewWrapText}>{props.tab.url}</div>
       </div>
       {/* A thumbnail is a cache entry, not a promise: the popover opens before
-          one has been captured (and after a reaping, data/tabSpace/previewReaper),
-          so with no picture it is just the tab's own facts. */}
-      {props.tabPreview ? (
-        <div className={classes.previewImageContainer}>
+          one has been captured (and after a reaping, data/tabSpace/previewReaper).
+          What it says instead of the picture is the same "Preview Not Yet
+          Generated" box getPreview used to hand out as a dummyimage.com URL -
+          drawn here rather than fetched, because a tab's thumbnail is the one
+          thing that must never leave the machine. */}
+      <div className={classes.previewImageContainer}>
+        {props.tabPreview ? (
           <img
             alt={`Preview of ${props.tab.title}`}
             className={classes.previewImage}
             src={props.tabPreview}
           />
-        </div>
-      ) : null}
+        ) : (
+          <div className={classes.previewImagePlaceholder}>
+            Preview not generated yet
+          </div>
+        )}
+      </div>
     </Card>
   ) : null;
 };

@@ -1,3 +1,5 @@
+@use '../../../global.scss';
+
 .card {
   margin-top: 6px;
   padding: 8px 12px;
@@ -150,6 +152,26 @@
 .previewImageContainer {
   padding: 12px;
   border-radius: 0px 0px 38px 38px;
+}
+
+/*
+ * Stands in for a thumbnail that has not been captured yet, in the box the
+ * picture would have filled: 280px is the height of the 500x280 placeholder
+ * getPreview used to return, and close to the aspect a captureVisibleTab
+ * thumbnail lands on once .previewImage scales it down. The container is kept
+ * either way, so the popover does not change height when a capture arrives.
+ */
+.previewImagePlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 280px;
+  border: 1px solid #f1f1f1;
+  border-radius: 8px;
+  background-color: global.$color-light-shade;
+  color: global.$color-light-accent;
+  font-size: 14px;
+  text-align: center;
 }
 
 .previewImage {
