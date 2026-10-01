@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/liyu1981/tabverse/server/internal/auth"
+	"github.com/liyu1981/tabverse/server/internal/hub"
 	"github.com/liyu1981/tabverse/server/internal/store"
 )
 
@@ -642,6 +643,49 @@ func (s *Server) handleAdminGetTabspace(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	writeJSON(w, http.StatusOK, bundle)
+}
+
+// handleAdminDeleteTabspace removes one tabverse of an account, and everything
+// that hangs off it (adr/0015). It is the only route that writes user data:
+// it writes tombstones, which is what makes the removal real on every paired
+// device instead of a row quietly missing from this server.
+//
+// Deleting user content is irreversible from the console, so the request has to
+// carry the tabverse id back as a confirmation, exactly like deleting an
+// account does: a mis-clicked button one row away from the wrong tabverse is
+// not something a browser dialog should be able to cause.
+func (s *Server) handleAdminDeleteTabspace(w http.ResponseWriter, r *http.Request) {
+	userID, ok := s.resolveScope(w, r, r.PathValue("user_id"))
+	if !ok {
+		return
+	}
+	tabspaceID := r.PathValue("tabspace_id")
+	if confirm := r.URL.Query().Get("confirm"); confirm != tabspaceID {
+		writeErr(w, http.StatusBadRequest, "confirmation_required",
+			"pass ?confirm="+tabspaceID+" to delete this tabverse and everything in it")
+		return
+	}
+	ctx := r.Context()
+	res, err := s.store.DeleteTabspace(ctx, userID, tabspaceID, "", nowMillis(), s.cfg.MaxRecordBytes)
+	if err != nil {
+		writeStoreErr(w, err)
+		return
+	}
+	// The paired devices are not polling: without this they would keep the
+	// tabverse until their next cycle, and the console would claim it is gone
+	// while a device still has it open.
+	s.hub.Publish(userID, hub.Message{
+		Type: "records_changed", Rev: res.ServerRev, Entities: res.Entities,
+		ServerAt: nowMillis(),
+	})
+	_ = s.store.AppendAudit(ctx, store.AuditEntry{
+		Actor: s.actorOf(r), Target: userID, Action: store.AuditTabspaceDeleted,
+		IP:     clientIP(r),
+		Detail: tabspaceID + " (" + strconv.Itoa(res.Tombstoned) + " records)",
+	})
+	s.logger.Info("admin deleted tabspace", "user", userID, "tabspace", tabspaceID,
+		"records", res.Tombstoned)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // handleAdminListRecords is the raw record browser: any entity, optionally

@@ -141,6 +141,18 @@ browser ── GET / ───┤                        └─ read only: tabve
   there is no endpoint that edits a user's records, because a record written
   outside the extension would lose the next LWW comparison anyway
 
+**The one write over user data is deleting a tabverse (`adr/0015`).**
+`DELETE /api/v1/admin/users/{user_id}/tabspaces/{tabspace_id}?confirm=<id>`
+tombstones the tabverse and every record that hangs off it (its tabs, notes,
+todos, bookmarks, closed tabs and the three ordering aggregates) and tells the
+account's devices, so their next sync removes its copy too - a delete that only
+removed the row here would be put straight back by the next push from any
+paired browser. It is the extension's own delete widened to a whole tabverse,
+not a second implementation: a delete carries no payload to win a comparison
+against, so the reason ADR0009 gives for refusing edits does not apply to it.
+A typed confirmation is required, the assumed identity is refused it like every
+other write, and it is the one audit-log entry that removed somebody's content.
+
 **Operator powers are a fourth tab (`adr/0014`).** Everybody lands on their own
 account - Pair Code, Devices & Tokens, Stored data - and an operator also gets
 *Admin*: the accounts, with *impersonate*, *make/remove operator* and *delete*
@@ -170,7 +182,11 @@ route answers 403 while it is on, and entering and leaving are both in
 `audit_log`. `TABVERSED_ADMIN_TOKEN` remains as the break-glass path.
 
 `internal/webui` embeds three hand written files (HTML, CSS, JS - no framework,
-no build step) and serves them with a strict CSP. Its stylesheet is the
+no build step) and serves them with a strict CSP. A tabverse opens in a drawer
+over the account rather than a page that replaces it, and it is the extension's
+own tabverse view with its action buttons removed: a tab stored on this account
+cannot be opened in the browser running the console, and the one button that
+remains is the delete above. Its stylesheet is the
 extension's look - the palette, the 18px cards, the pill buttons and inputs are
 transcribed from `src/global.scss` and `src/ui/theme.scss` (nothing imports
 them here, so the tokens carry the name of the file each came from), and the
@@ -198,7 +214,9 @@ because a record somebody just changed is live again.
 
 - [x] Go server (`tabversed`): auth, delta sync, LWW, tombstones, WebSocket
       fan-out, FTS5 search, retention, tests (`-race`), cross-compile, Docker
-- [x] Multi tenant admin API + embedded read only console (`adr/0009`)
+- [x] Multi tenant admin API + embedded console, read only over user data
+      (`adr/0009`) with one exception: deleting a tabverse, as tombstones the
+      devices sync down (`adr/0015`)
 - [x] Wire contract (`api/openapi.yaml`)
 - [x] Client sync layer: outbox, delta engine, realtime, Dexie bridge,
       change feed, pairing dialog (8 test suites)

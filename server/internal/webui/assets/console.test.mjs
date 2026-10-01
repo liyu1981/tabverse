@@ -63,6 +63,11 @@ for (const m of html.matchAll(/<(\w+)((?:\s+[\w-]+(?:="[^"]*")?)*)\s*>/g)) {
   if (!id) continue;
   const attrs = {};
   for (const a of m[2].matchAll(/([\w-]+)="([^"]*)"/g)) attrs[a[1]] = a[2];
+  // ...and the bare ones, which carry no value at all: `hidden` and `checked`
+  // are written without one, so the run above cannot see them.
+  for (const a of m[2].matchAll(/\s([\w-]+)(?=["\s]|$)/g)) {
+    if (!(a[1] in attrs)) attrs[a[1]] = '';
+  }
   pageAttrs.set(id, attrs);
 }
 
@@ -75,7 +80,9 @@ function makeElement(id) {
     // anything it is handed as a *text* value, because it decides with
     // `child.nodeType`, and every nested element turns into "[object Object]"
     nodeType: 1,
-    hidden: false,
+    // the page's own `hidden` attribute, so a container that starts hidden
+    // (the drawer, the operator-only rail item) really does start hidden
+    hidden: 'hidden' in attrs,
     value: attrs.value || '',
     checked: 'checked' in attrs,
     _text: '',
@@ -163,16 +170,37 @@ function elementFor(selector) {
   return elements.get(id);
 }
 
+/**
+ * Everything the script built, so a test can reach a row it rendered rather
+ * than only the containers the page declares by id.
+ */
+const created = [];
+/** The first element the script created with this class, as the page would show it. */
+function createdWithClass(cls) {
+  return created.find((e) => String(e.className).split(/\s+/).includes(cls));
+}
+
+/** What the script registered on the document itself (Escape, and so on). */
+const documentListeners = {};
+
 /** Answers the two calls boot() makes, for a visitor who is not signed in. */
 /** Every path the script asked for, in order: which action a button fired. */
 let called = [];
+/**
+ * The same requests with their query string, for the few things that live in a
+ * parameter - the delete's typed confirmation, above all.
+ */
+let requests = [];
 /** What the next confirm() answers, so a test can decline a destructive one. */
 let confirmAnswer = true;
+/** What the next prompt() answers (the delete's typed confirmation). */
+let promptAnswer = null;
 
 function stubFetch(routes, problems) {
   return async (url, init) => {
     const path = String(url).split('?')[0];
     called.push((init && init.method) || 'GET', path);
+    requests.push({ method: (init && init.method) || 'GET', url: String(url) });
     if (!(path in routes) && problems) {
       problems.push('unstubbed route: ' + path);
     }
@@ -195,7 +223,9 @@ function stubFetch(routes, problems) {
  */
 async function run(routes) {
   elements.clear();
+  created.length = 0;
   called = [];
+  requests = [];
   const problems = [];
   const onRejection = (reason) =>
     problems.push(String((reason && reason.message) || reason));
@@ -203,13 +233,23 @@ async function run(routes) {
   const document = {
     querySelector: (sel) =>
       sel.startsWith('#') ? elementFor(sel) : makeElement(sel),
+    // the script listens on the document (Escape closes the drawer), which the
+    // stub has to answer like a real one or the script throws on load
+    addEventListener(type, fn) {
+      if (!documentListeners[type]) documentListeners[type] = [];
+      documentListeners[type].push(fn);
+    },
     querySelectorAll(sel) {
       if (!sel.startsWith('.')) return [];
       return (byClass.get(sel.slice(1)) || []).map((id) =>
         elementFor('#' + id),
       );
     },
-    createElement: (tag) => makeElement('<' + tag + '>'),
+    createElement: (tag) => {
+      const node = makeElement('<' + tag + '>');
+      created.push(node);
+      return node;
+    },
     createTextNode: (text) => ({ nodeType: 3, textContent: text }),
     body: makeElement('body'),
   };
@@ -242,8 +282,10 @@ async function run(routes) {
       confirmAnswer = true;
       return answer;
     },
+    prompt: () => promptAnswer,
     alert: () => {},
     navigator: {},
+    requestAnimationFrame: (fn) => setTimeout(fn, 0),
     setTimeout,
     clearTimeout,
     setInterval,
@@ -578,4 +620,176 @@ test('an operator looking at somebody sees that account, titled as such', async 
   expect(elements.get('delete-user').hidden).toBe(true);
   // the Admin tab stays available, so another account is one click away
   expect(elements.get('rail-admin').hidden).toBe(false);
+});
+
+// ---- the tabverse drawer --------------------------------------------------
+
+const TABVERSE_BUNDLE = {
+  tabspace: {
+    id: 'ts_1',
+    name: 'Window-3',
+    created_at: 1700000000000,
+    updated_at: 1700000500000,
+    rev: 7,
+    tab_count: 2,
+    groups: 1,
+    notes: 1,
+    todos: 0,
+    bookmarks: 0,
+    closed_tabs: 0,
+  },
+  tabspace_data: {
+    tabGroups: [{ id: 'g1', title: 'work', color: 'blue', tabIds: ['t2'] }],
+  },
+  tabs: [
+    {
+      id: 't1',
+      rev: 3,
+      position: 0,
+      data: {
+        title: 'Alpha',
+        url: 'https://a.example/',
+        favIconUrl: '',
+        pinned: true,
+        suspended: false,
+      },
+    },
+    {
+      id: 't2',
+      rev: 4,
+      position: 1,
+      data: {
+        title: 'Beta',
+        url: 'https://b.example/',
+        favIconUrl: '',
+        pinned: false,
+        suspended: false,
+      },
+    },
+  ],
+  notes: [],
+  todos: [],
+  bookmarks: [],
+  closed_tabs: [],
+  aggregates: {},
+};
+
+/** One account with one stored tabverse, and its bundle. */
+const WITH_A_TABVERSE = {
+  ...ME_PERSON,
+  '/api/v1/admin/users/usr_me/tabspaces': {
+    tabspaces: [TABVERSE_BUNDLE.tabspace],
+    total: 1,
+  },
+  '/api/v1/admin/users/usr_me/tabspaces/ts_1': TABVERSE_BUNDLE,
+};
+
+test('a tabverse is a row, and clicking it opens the drawer over the account', async () => {
+  const problems = await run(WITH_A_TABVERSE);
+  expect(problems, 'the script raised: ' + problems.join(' | ')).toEqual([]);
+
+  // A list of rows, not a grid of cards: the operator is comparing them.
+  const row = createdWithClass('tabverse-row');
+  expect(row, 'the tabverse list rendered no row').toBeDefined();
+  expect(row.textContent).toContain('Window-3');
+  expect(row.textContent).toContain('2 tabs');
+
+  // Nothing is open until a row is clicked.
+  expect(elements.get('drawer').hidden).toBe(true);
+
+  await row.fire('click');
+
+  expect(elements.get('drawer').hidden).toBe(false);
+  expect(elements.get('drawer-title').textContent).toBe('Window-3');
+  // the account view is still behind it, which is the point of a drawer
+  expect(elements.get('view-account').hidden).toBe(false);
+  // the extension's own line, and its tab cards, minus the action buttons
+  const summary = createdWithClass('drawer-summary');
+  expect(summary.textContent).toContain('Working on');
+  expect(summary.textContent).toContain('2 tabs');
+  expect(summary.textContent).toContain('1 group');
+  expect(createdWithClass('tab-card')).toBeDefined();
+  // the only button in here is the delete
+  expect(elements.get('drawer-delete').hidden).toBe(false);
+  // and the notes are folded away rather than taking the drawer over
+  expect(createdWithClass('drawer-more')).toBeDefined();
+});
+
+test('Escape closes the drawer', async () => {
+  await run(WITH_A_TABVERSE);
+  const row = createdWithClass('tabverse-row');
+  await row.fire('click');
+  expect(elements.get('drawer').hidden).toBe(false);
+  for (const fn of documentListeners.keydown || []) fn({ key: 'Escape' });
+  // the panel slides out first, then the drawer is hidden (see DRAWER_EXIT_MS)
+  await new Promise((r) => setTimeout(r, 260));
+  expect(elements.get('drawer').hidden).toBe(true);
+});
+
+test('deleting a tabverse asks for a typed confirmation, then asks the server', async () => {
+  await run(WITH_A_TABVERSE);
+  const row = createdWithClass('tabverse-row');
+  await row.fire('click');
+
+  // The wrong thing typed is not a deletion.
+  promptAnswer = 'nope';
+  await elements.get('drawer-delete').fire('click');
+  expect(requests.some((r) => r.method === 'DELETE')).toBe(false);
+  expect(elements.get('drawer').hidden).toBe(false);
+
+  // The right thing typed sends the delete with the id back as the
+  // confirmation the server demands.
+  promptAnswer = 'Window-3';
+  await elements.get('drawer-delete').fire('click');
+  const del = requests.find((r) => r.method === 'DELETE');
+  expect(del, 'the delete never left the page').toBeDefined();
+  expect(del.url).toBe(
+    '/api/v1/admin/users/usr_me/tabspaces/ts_1?confirm=ts_1',
+  );
+  await new Promise((r) => setTimeout(r, 260));
+  expect(elements.get('drawer').hidden).toBe(true);
+});
+
+test('the delete is not offered while looking through somebody else', async () => {
+  const problems = await run({
+    ...WITH_A_TABVERSE,
+    '/api/v1/console/impersonation': {
+      assuming: true,
+      as: 'alice',
+      user_id: 'usr_alice',
+      as_by: 'usr_root',
+      read_only: true,
+    },
+    '/api/v1/admin/users/usr_alice': {
+      user: { id: 'usr_alice', name: 'alice' },
+      stats: { live: 14, total: 14, by_entity: {} },
+      devices: [],
+      tokens: [],
+    },
+    '/api/v1/admin/users/usr_alice/tabspaces': {
+      tabspaces: [TABVERSE_BUNDLE.tabspace],
+      total: 1,
+    },
+    '/api/v1/admin/users/usr_alice/tabspaces/ts_1': TABVERSE_BUNDLE,
+    '/api/v1/admin/users/usr_alice/records': { records: [], total: 0 },
+    '/api/v1/admin/users/usr_alice/search': { hits: [] },
+  });
+  expect(problems, 'the script raised: ' + problems.join(' | ')).toEqual([]);
+  const row = createdWithClass('tabverse-row');
+  await row.fire('click');
+  // the server would refuse it with 403 anyway (adr/0014), so it is not shown
+  expect(elements.get('drawer-delete').hidden).toBe(true);
+});
+
+test('a tabverse that was deleted under the console does not open an empty drawer', async () => {
+  const problems = await run({
+    ...WITH_A_TABVERSE,
+    // the bundle is gone: somebody deleted it, or this tabverse id is not ours
+    '/api/v1/admin/users/usr_me/tabspaces/ts_1': { error: 'not found' },
+  });
+  expect(problems, 'the script raised: ' + problems.join(' | ')).toEqual([]);
+  const row = createdWithClass('tabverse-row');
+  await row.fire('click');
+  expect(elements.get('drawer').hidden).toBe(true);
+  expect(elements.get('toast').hidden).toBe(false);
 });

@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/liyu1981/tabverse/server/internal/accounts"
+	"github.com/liyu1981/tabverse/server/internal/store"
 )
 
 const testAdminEmail = "operator@example.com"
@@ -508,6 +509,146 @@ func TestRenameAndDeleteAccount(t *testing.T) {
 		t.Fatalf("the account or its records survived the delete: users %v->%v, records %v->%v",
 			usersBefore, usersAfter, liveBefore, liveAfter)
 	}
+}
+
+// ---- deleting a tabverse (adr/0015) ---------------------------------------
+
+func TestOperatorDeletesATabverseAndItsRecords(t *testing.T) {
+	ts, op := newAdminServer(t)
+	userID, token := seedUser(t, op, "alice")
+	seedTabverse(t, ts, token, "ts1", "Research", [][2]string{{"t1", "Alpha"}, {"t2", "Beta"}})
+	seedTabverse(t, ts, token, "ts2", "Other", [][2]string{{"t3", "Gamma"}})
+
+	// A delete of user content has to carry the id back, like deleting an
+	// account does.
+	r := adminDo(t, op, http.MethodDelete,
+		"/api/v1/admin/users/"+userID+"/tabspaces/ts1", nil)
+	r.mustStatus(t, http.StatusBadRequest)
+	if r.body["error"] != "confirmation_required" {
+		t.Fatalf("unconfirmed delete = %s, want confirmation_required", r.raw)
+	}
+	// ...and the wrong confirmation is refused just as firmly.
+	adminDo(t, op, http.MethodDelete,
+		"/api/v1/admin/users/"+userID+"/tabspaces/ts1?confirm=ts2", nil).
+		mustStatus(t, http.StatusBadRequest)
+
+	adminDo(t, op, http.MethodDelete,
+		"/api/v1/admin/users/"+userID+"/tabspaces/ts1?confirm=ts1", nil).
+		mustStatus(t, http.StatusNoContent)
+
+	// The bundle is gone, and so is the row from the list an operator browses.
+	adminDo(t, op, http.MethodGet,
+		"/api/v1/admin/users/"+userID+"/tabspaces/ts1", nil).
+		mustStatus(t, http.StatusNotFound)
+	r = adminDo(t, op, http.MethodGet, "/api/v1/admin/users/"+userID+"/tabspaces", nil)
+	r.mustStatus(t, http.StatusOK)
+	if total, _ := r.body["total"].(float64); total != 1 {
+		t.Fatalf("the tabverse list still holds %v tabverses: %s", total, r.raw)
+	}
+
+	// The device that stored it learns about it: the tombstone comes down the
+	// delta sync like any other change, which is the whole point (the console
+	// cannot remove a row from somebody's browser).
+	r = doJSON(t, http.MethodGet, ts.URL+"/api/v1/sync?since=0&limit=200", token, nil)
+	r.mustStatus(t, http.StatusOK)
+	records, _ := r.body["records"].([]any)
+	deleted := map[string]bool{}
+	for _, raw := range records {
+		rec, _ := raw.(map[string]any)
+		if rec["deleted"] == true {
+			deleted[rec["entity"].(string)+"/"+rec["id"].(string)] = true
+		}
+	}
+	for _, want := range []string{"tabspace/ts1", "tab/t1", "tab/t2"} {
+		if !deleted[want] {
+			t.Fatalf("%s was not tombstoned, so a device would push it back: %v", want, deleted)
+		}
+	}
+	// The tabverse the operator did not touch is untouched.
+	if deleted["tabspace/ts2"] {
+		t.Fatalf("the delete reached past its tabverse: %v", deleted)
+	}
+
+	// And it is in the audit log, because this is the one entry that removed
+	// somebody's content.
+	entries, err := op.srv.store.ListAudit(context.Background(), store.AuditTabspaceDeleted, userID, 10)
+	if err != nil || len(entries) != 1 {
+		t.Fatalf("no tabspace_deleted audit entry: %+v (%v)", entries, err)
+	}
+	if !strings.Contains(entries[0].Detail, "ts1") {
+		t.Fatalf("the audit entry does not name the tabverse: %+v", entries[0])
+	}
+}
+
+func TestDeletingATabverseIsRefusedWhileLookingThroughSomebodyElses(t *testing.T) {
+	ts, s := newAccountServer(t)
+	ctx := context.Background()
+
+	root := signInAs(t, ts, s, "root@example.com")
+	rootID, _ := root.do(t, http.MethodGet, "/api/v1/console/me").body["user_id"].(string)
+	if err := s.store.SetRole(ctx, rootID, store.RoleAdmin); err != nil {
+		t.Fatalf("promote: %v", err)
+	}
+	root = signInAs(t, ts, s, "root@example.com")
+
+	alice := signInAs(t, ts, s, "alice@example.com")
+	aliceID, _ := alice.do(t, http.MethodGet, "/api/v1/console/me").body["user_id"].(string)
+	if _, r := push(t, ts, mintDeviceToken(t, ts, s, aliceID), []pushedRecord{
+		{Entity: "tabspace", ID: "ts_alice", UpdatedAt: 1700000000000,
+			Payload: `{"id":"ts_alice","name":"Alice work","tabIds":[]}`},
+	}); r.status != http.StatusOK {
+		t.Fatalf("seed: %s", r.raw)
+	}
+
+	root.do(t, http.MethodPost, "/api/v1/admin/users/"+aliceID+"/impersonate").
+		mustStatus(t, http.StatusOK)
+
+	// A delete is a write, and a write is exactly what the assumed identity
+	// is not allowed to do - the same rule as the invites route.
+	r := root.do(t, http.MethodDelete,
+		"/api/v1/admin/users/"+aliceID+"/tabspaces/ts_alice?confirm=ts_alice")
+	r.mustStatus(t, http.StatusForbidden)
+	if r.body["error"] != "read_only" {
+		t.Fatalf("expected read_only, got %s", r.raw)
+	}
+
+	root.do(t, http.MethodPost, "/api/v1/console/impersonate/stop").
+		mustStatus(t, http.StatusNoContent)
+	// Out of the assumed identity, it works: an operator can still delete.
+	root.do(t, http.MethodDelete,
+		"/api/v1/admin/users/"+aliceID+"/tabspaces/ts_alice?confirm=ts_alice").
+		mustStatus(t, http.StatusNoContent)
+}
+
+func TestAPersonCanDeleteATabverseOfTheirOwnAccount(t *testing.T) {
+	ts, s := newAccountServer(t)
+	alice := signInAs(t, ts, s, "alice@example.com")
+	aliceID, _ := alice.do(t, http.MethodGet, "/api/v1/console/me").body["user_id"].(string)
+	if _, r := push(t, ts, mintDeviceToken(t, ts, s, aliceID), []pushedRecord{
+		{Entity: "tabspace", ID: "ts1", UpdatedAt: 1700000000000,
+			Payload: `{"id":"ts1","name":"Research","tabIds":["t1"]}`},
+		{Entity: "tab", ID: "t1", UpdatedAt: 1700000000001,
+			Payload: `{"id":"t1","tabSpaceId":"ts1","title":"Alpha","url":"https://a.example/"}`},
+	}); r.status != http.StatusOK {
+		t.Fatalf("seed: %s", r.raw)
+	}
+
+	// The account is not an operator's, and deleting its own tabverse is what
+	// a person would do from the console: the route is theirs, not just the
+	// operator's (resolveScope decides who may act on an account).
+	alice.do(t, http.MethodDelete,
+		"/api/v1/admin/users/"+aliceID+"/tabspaces/ts1?confirm=ts1").
+		mustStatus(t, http.StatusNoContent)
+	alice.do(t, http.MethodGet,
+		"/api/v1/admin/users/"+aliceID+"/tabspaces/ts1").mustStatus(t, http.StatusNotFound)
+}
+
+func TestDeletingAnUnknownTabverseIs404(t *testing.T) {
+	_, op := newAdminServer(t)
+	userID, _ := seedUser(t, op, "alice")
+	adminDo(t, op, http.MethodDelete,
+		"/api/v1/admin/users/"+userID+"/tabspaces/ts_nope?confirm=ts_nope", nil).
+		mustStatus(t, http.StatusNotFound)
 }
 
 // ---- the console itself ---------------------------------------------------

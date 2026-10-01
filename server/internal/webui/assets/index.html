@@ -366,7 +366,7 @@
                       autocomplete="off"
                     />
                   </div>
-                  <div id="tabspace-list" class="tabspace-list"></div>
+                  <div id="tabspace-list" class="tabverse-list"></div>
                   <div class="pager" id="tabspace-pager"></div>
                 </div>
 
@@ -408,18 +408,52 @@
             </div>
           </div>
         </section>
-
-        <section id="view-tabspace" class="view" hidden>
-          <div class="view-head">
-            <div>
-              <button id="tabspace-back" class="link" type="button">← all tabverses</button>
-              <h1 id="tabspace-name">Tabverse</h1>
-              <p class="muted small" id="tabspace-meta"></p>
-            </div>
-          </div>
-          <div id="tabspace-body"></div>
-        </section>
       </main>
+    </div>
+
+    <!-- One tabverse, in a drawer over the account.
+         The console browses a whole account at a time, and a tabverse used to
+         replace that whole account to show itself: you lost the list you were
+         picking from, the account you were looking at, and the tab you were on.
+         A drawer keeps all three, so the answer to "what is in this one?" never
+         costs the context it was asked in.
+
+         It is the extension's own tabverse view - the same "Working on N tabs"
+         and the same tab cards - with the extension's action buttons taken out,
+         because a tab stored on somebody else's account cannot be opened in
+         this browser. What is left is the one action that is about the stored
+         data rather than about the browser: deleting it (adr/0015). -->
+    <div id="drawer" class="drawer" hidden>
+      <div id="drawer-backdrop" class="drawer-backdrop"></div>
+      <aside
+        id="drawer-panel"
+        class="drawer-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="drawer-title"
+      >
+        <header class="drawer-head">
+          <div class="drawer-heading">
+            <h1 id="drawer-title">Tabverse</h1>
+            <p class="muted small" id="drawer-meta"></p>
+          </div>
+          <button
+            id="drawer-close"
+            class="icon-button"
+            type="button"
+            aria-label="Close"
+            title="Close"
+          >
+            ✕
+          </button>
+        </header>
+        <div id="drawer-body" class="drawer-body"></div>
+        <footer class="drawer-foot">
+          <button id="drawer-delete" class="danger" type="button">
+            Delete tabverse
+          </button>
+        </footer>
+      </aside>
     </div>
 
     <div id="toast" class="toast" hidden></div>

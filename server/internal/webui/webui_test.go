@@ -126,14 +126,16 @@ func TestAccountChromeIsStillReachable(t *testing.T) {
 	ids := htmlIDs(t)
 	// Everything the tabbed layout is made of, still wired to something.
 	for _, id := range []string{
-		"view-account",  // the tab rail and its panels
-		"view-tabspace", // the tabverse detail, which replaces them
-		"view-signin",   // the account login
-		"view-login",    // the break-glass token screen
-		"assume-bar",    // the read only banner an operator must not miss
-		"account-head",  // the account title and its owner actions
-		"rail-admin",    // the operator's fourth tab
-		"panel-admin",   // ...and the directory it shows
+		"view-account", // the tab rail and its panels
+		"drawer",       // the tabverse detail, which slides over them
+		"drawer-body",
+		"drawer-delete",
+		"view-signin",  // the account login
+		"view-login",   // the break-glass token screen
+		"assume-bar",   // the read only banner an operator must not miss
+		"account-head", // the account title and its owner actions
+		"rail-admin",   // the operator's fourth tab
+		"panel-admin",  // ...and the directory it shows
 		"directory-table",
 		"sign-out",
 	} {
@@ -153,6 +155,11 @@ func TestAccountChromeIsStillReachable(t *testing.T) {
 		"set-role",       // ...as is the role switch
 		"view-directory", // the directory is a tab panel, not a view
 		"account-stats-", // the one stat strip, split between two tabs
+		// the tabverse detail is a drawer over the account now, so the view
+		// that used to replace the account is gone with it
+		"view-tabspace",
+		"tabspace-back",
+		"tabspace-body",
 	} {
 		if ids[id] {
 			t.Errorf("#%s is still in the page and should not be", id)

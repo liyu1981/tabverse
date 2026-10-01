@@ -361,6 +361,19 @@ type RecordFilter struct {
 
 // ListRecords returns a page of a user's records, newest first, plus the total
 // number of rows the filter matches (for paging).
+// tabSpaceIDOfPayload reads a record's tabSpaceId out of its payload.
+//
+// The guard is not decoration: a tombstone carries no payload at all (every
+// delete clears it), and json_extract() raises "malformed JSON" on a document
+// it cannot read instead of returning NULL. Without the guard, asking for a
+// deleted tabverse's rows is a 500 rather than a list of tombstones.
+const tabSpaceIDOfPayload = `json_extract(CASE WHEN json_valid(payload) THEN payload ELSE '{}' END, '$.tabSpaceId')`
+
+// tabSpaceIDOf is the same expression for an aliased row.
+func tabSpaceIDOf(alias string) string {
+	return `json_extract(CASE WHEN json_valid(` + alias + `.payload) THEN ` + alias + `.payload ELSE '{}' END, '$.tabSpaceId')`
+}
+
 func (s *Store) ListRecords(ctx context.Context, userID string, f RecordFilter) ([]Record, int, error) {
 	where := []string{"user_id = ?"}
 	args := []any{userID}
@@ -380,11 +393,17 @@ func (s *Store) ListRecords(ctx context.Context, userID string, f RecordFilter) 
 	if f.TabspaceID != "" {
 		// Every entity except the aggregates carries a top level tabSpaceId;
 		// a tabspace record *is* its own tabverse.
+		//
+		// A tombstone carries no payload at all (the delete clears it), and
+		// json_extract() raises on a malformed document rather than returning
+		// NULL - so the extraction has to be guarded, or asking the record
+		// browser for a deleted tabverse's rows fails instead of listing the
+		// tombstones.
 		if f.Entity == "tabspace" || f.Entity == "" {
-			where = append(where, "(id = ? OR json_extract(payload, '$.tabSpaceId') = ?)")
+			where = append(where, "(id = ? OR "+tabSpaceIDOfPayload+" = ?)")
 			args = append(args, f.TabspaceID, f.TabspaceID)
 		} else {
-			where = append(where, "json_extract(payload, '$.tabSpaceId') = ?")
+			where = append(where, tabSpaceIDOfPayload+" = ?")
 			args = append(args, f.TabspaceID)
 		}
 	}
@@ -489,7 +508,7 @@ func (s *Store) ListTabspaces(ctx context.Context, userID, query string, include
 		return `(SELECT COUNT(*) FROM records n
 		         WHERE n.user_id = r.user_id AND n.entity = '` + entity + `' AND n.deleted = 0
 		           AND ` + visible + `
-		           AND json_extract(n.payload, '$.tabSpaceId') = r.id)`
+		           AND ` + tabSpaceIDOf("n") + ` = r.id)`
 	}
 	pageArgs := append(append([]any{}, args...), limit, offset)
 	rows, err := s.db.QueryContext(ctx, `
@@ -594,6 +613,12 @@ func (s *Store) GetTabspaceBundle(ctx context.Context, userID, tabspaceID string
 	if err != nil {
 		return TabspaceBundle{}, err
 	}
+	if rec.Deleted {
+		// A tombstone is what a delete leaves behind (adr/0015), and it has no
+		// payload to render: the console asked for a view of something that is
+		// gone, which is a 404 rather than a nameless tabverse.
+		return TabspaceBundle{}, ErrNotFound
+	}
 	bundle := TabspaceBundle{
 		Tabspace:     tabspaceSummaryOf(rec),
 		TabspaceData: map[string]any{},
@@ -688,6 +713,94 @@ func (s *Store) GetTabspaceBundle(ctx context.Context, userID, tabspaceID string
 	return bundle, nil
 }
 
+// DeleteResult is what one cascade delete actually did, so the caller can
+// report it and tell the devices that have to hear about it.
+type DeleteResult struct {
+	// Tombstoned counts the records the write accepted (a row already deleted
+	// is not counted twice).
+	Tombstoned int
+	// Entities are the entity names involved, for the realtime notification.
+	Entities []string
+	// ServerRev is the account revision the tombstones were assigned from.
+	ServerRev int64
+}
+
+// tabspaceEntities is every entity a tabverse owns: its rows, the rows that
+// hang off it, and the three ordered aggregates. A tabspace record is not in
+// the list - it is deleted by id, and it is not one of its own children.
+var tabspaceEntities = []string{
+	"tab", "note", "todo", "bookmark", "closedtab",
+	"allnote", "alltodo", "allbookmark",
+}
+
+// DeleteTabspace tombstones a tabverse and everything that hangs off it
+// (adr/0015).
+//
+// This is the one place the console writes user records, and it is a delete
+// rather than an edit: an edit from here carries no device and a clock the
+// next honest sync would win against (adr/0009), but a delete has to be a
+// tombstone for the opposite reason - removing the row from SQLite would
+// leave every paired device holding a copy it would push straight back. So
+// this is exactly what the extension's own delete does (handleDeleteEntity),
+// widened from one record to the whole tabverse in one call, which is what
+// ApplyRecords is for.
+//
+// Archived rows are included (ADR 0011 archives rows out of the default views,
+// it does not free them), and already deleted rows are skipped: tombstoning a
+// tombstone would burn revisions on nothing.
+//
+// The read and the write are two steps, not one transaction. A row written
+// between them survives this call and is caught by the next delete, which is
+// the right way round: a delete that raced a sync should never half-apply to
+// the tabverse itself.
+func (s *Store) DeleteTabspace(ctx context.Context, userID, tabspaceID, deviceID string, at int64, maxBytes int64) (DeleteResult, error) {
+	if _, err := s.GetRecord(ctx, userID, "tabspace", tabspaceID); err != nil {
+		return DeleteResult{}, err
+	}
+	rows, err := s.recordsOfTabspace(ctx, userID, tabspaceID, true, tabspaceEntities)
+	if err != nil {
+		return DeleteResult{}, err
+	}
+	inputs := make([]RecordInput, 0, len(rows)+1)
+	seen := map[string]bool{}
+	// The tabverse record first: recordsOfTabspace filters the entity list, so
+	// the row being deleted is not one of its own children (it matches on id).
+	inputs = append(inputs, RecordInput{
+		Entity: "tabspace", ID: tabspaceID, UpdatedAt: at, Deleted: true,
+	})
+	seen["tabspace/"+tabspaceID] = true
+	for _, r := range rows {
+		// The guard is against one row arriving twice (an aggregate whose id
+		// is its tabspace id is matched both by id and by payload).
+		key := r.Entity + "/" + r.ID
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+		inputs = append(inputs, RecordInput{
+			Entity: r.Entity, ID: r.ID, UpdatedAt: at, Deleted: true,
+		})
+	}
+	results, serverRev, err := s.ApplyRecords(ctx, userID, deviceID, inputs, maxBytes)
+	if err != nil {
+		return DeleteResult{}, err
+	}
+	out := DeleteResult{ServerRev: serverRev}
+	entities := map[string]bool{}
+	for _, r := range results {
+		if r.Status != StatusOK {
+			continue
+		}
+		out.Tombstoned++
+		entities[r.Entity] = true
+	}
+	for entity := range entities {
+		out.Entities = append(out.Entities, entity)
+	}
+	sort.Strings(out.Entities)
+	return out, nil
+}
+
 // stringList coerces a decoded JSON array of ids into []string. A malformed
 // aggregate yields an empty order rather than an error: the console then falls
 // back to id order instead of showing nothing.
@@ -747,7 +860,7 @@ func (s *Store) recordsOfTabspace(ctx context.Context, userID, tabspaceID string
 		FROM records
 		WHERE user_id = ? AND deleted = 0 AND `+visible+`
 		  AND entity IN (`+strings.Join(placeholders, ",")+`)
-		  AND (json_extract(payload, '$.tabSpaceId') = ? OR id = ?)
+		  AND (`+tabSpaceIDOfPayload+` = ? OR id = ?)
 		ORDER BY entity ASC, id ASC`, args...)
 	if err != nil {
 		return nil, err

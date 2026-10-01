@@ -23,8 +23,8 @@ server authoritative sync protocol.
   registration with `TABVERSED_ADMIN_EMAIL` is the operator. There is no master
   credential (ADR 0012, ADR 0013)
 - **Console:** `GET /` serves an embedded, dependency free console: a read only
-  browser over stored data, and the account, device and token management around
-  it. No build step
+  browser over stored data, plus a way to delete one tabverse, and the account,
+  device and token management around it. No build step
 
 ## Run
 
@@ -234,10 +234,15 @@ With the token set:
   by `user_id` exactly as the devices of one account already were, and
   `/api/v1/auth/bootstrap` now requires the admin token too (no more
   first-payer-wins on an exposed port)
-- **read only data browser** — the console lists an account's tabverses, opens
-  one the way the extension does (tabs in `tabIds` order, notes/todos/bookmarks
-  in their aggregate order, closed tabs newest first), plus a raw record
-  browser and the same FTS search the extension uses
+- **read only data browser** — the console lists an account's tabverses as rows,
+  and clicking one slides in a drawer over the list with the same view the
+  extension shows (name, when it was created and saved, "working on N tabs",
+  the tab cards, tab groups), plus a raw record browser and the same FTS search
+  the extension uses
+- **delete a tabverse** — `DELETE /api/v1/admin/users/{id}/tabspaces/{tid}?confirm={tid}`
+  tombstones that tabverse and every record hanging off it (tabs, notes, todos,
+  bookmarks, closed tabs, ordering aggregates) and tells the account's devices,
+  so their next sync removes their copy too (ADR 0015)
 
 The account view is three tabs, rail on the left, panel on the right: **Pair
 Code** (mint a code, copy it and the server URL), **Devices & Tokens** (revoke,
@@ -253,6 +258,15 @@ There is deliberately **no way to edit a user's records from the console**: a
 record written there would carry no device and no trustworthy client clock, so
 the next honest sync from the real device would win the LWW comparison. The
 admin surface is for operator state; the data stays the extension's to write.
+
+**Deleting a tabverse is the exception, and it is a delete rather than an edit**
+(`adr/0015`). It writes no content - it tombstones the tabverse and its records,
+exactly as the extension's own `DELETE /api/v1/entities/{entity}/{id}` does,
+because a delete has to travel the sync channel or the next push from any paired
+device puts the rows back. It needs the tabverse id back as `?confirm=`, it is
+refused while an operator is looking through somebody else's account, and it is
+audited as `tabspace_deleted`. Archiving stays what ADR 0011 said it is:
+bookkeeping that hides a row, not a delete that removes it.
 
 The console is three embedded files under `internal/webui/assets/` (HTML, CSS,
 JS - no framework, no build step) served with a strict CSP. It holds no secret

@@ -605,6 +605,42 @@ paths:
               schema: { $ref: '#/components/schemas/TabspaceBundle' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [admin]
+      summary: Delete one tabverse and everything in it
+      description: |
+        The only write over user data in the admin API (ADR 0015). It is a
+        delete and not an edit: every record of the tabverse - its tabs, notes,
+        todos, bookmarks, closed tabs and the three ordered aggregates - is
+        tombstoned, so the user's paired devices delete their own copies
+        through the normal delta sync instead of pushing the rows straight
+        back. Removing the rows from SQLite instead would leave every device
+        holding a copy that comes back on its next push.
+
+        `confirm` must carry the tabverse id: the console asks for a typed
+        confirmation, because a mis-clicked button one row away from the wrong
+        tabverse is not recoverable from here. Archived rows are included
+        (ADR 0011 retires a row from the default views, it does not free it).
+
+        A write, so it is refused while an operator is looking through somebody
+        else's account (ADR 0014), and recorded in the audit log as
+        `tabspace_deleted`.
+      parameters:
+        - name: confirm
+          in: query
+          required: true
+          schema: { type: string }
+          description: must equal `tabspace_id`
+      responses:
+        '204': { description: deleted }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403':
+          description: read only while looking through another account
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '404': { $ref: '#/components/responses/NotFound' }
 
   /api/v1/admin/users/{user_id}/records:
     parameters: [{ $ref: '#/components/parameters/userId' }]

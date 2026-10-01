@@ -109,6 +109,9 @@ func (s *Server) Handler() http.Handler {
 	// read only data browsing
 	mux.HandleFunc("GET /api/v1/admin/users/{user_id}/tabspaces", admin(s.handleAdminListTabspaces))
 	mux.HandleFunc("GET /api/v1/admin/users/{user_id}/tabspaces/{tabspace_id}", admin(s.handleAdminGetTabspace))
+	// ...and the one write over user data: a delete, which tombstones the
+	// tabverse and its records so the devices learn about it too (adr/0015).
+	mux.HandleFunc("DELETE /api/v1/admin/users/{user_id}/tabspaces/{tabspace_id}", admin(s.handleAdminDeleteTabspace))
 	mux.HandleFunc("GET /api/v1/admin/users/{user_id}/records", admin(s.handleAdminListRecords))
 	mux.HandleFunc("GET /api/v1/admin/users/{user_id}/search", admin(s.handleAdminSearch))
 

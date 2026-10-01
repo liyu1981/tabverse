@@ -56,6 +56,10 @@ const (
 	AuditAccountRenamed  = "account_renamed"
 	AuditRoleChanged     = "role_changed"
 	AuditAccountDisabled = "account_disabled"
+	// The one write the console makes to user data (adr/0015). Named
+	// separately because it is the only entry in this log that removed
+	// somebody's content.
+	AuditTabspaceDeleted = "tabspace_deleted"
 )
 
 // Email token purposes.

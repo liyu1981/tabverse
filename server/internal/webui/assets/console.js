@@ -110,7 +110,7 @@ const state = {
     deleted: false,
     archived: false,
   },
-  openTabspace: null, // bundle
+  openTabspace: null, // bundle of the tabverse the drawer is showing
   // the operator's directory filter
   directoryQuery: '',
   // "show archived" for the devices and tokens tables (the stored-data panel
@@ -322,6 +322,10 @@ async function boot() {
   await openMyAccount();
   const tab = params.get('tab');
   if (tab) setTab(tab);
+  // A link may carry a tabverse with it (the drawer writes one into the
+  // fragment), and the operator should land on the tabverse it names.
+  const tabspace = params.get('tabspace');
+  if (tabspace) await openTabspaceDrawer(tabspace);
 }
 
 function showSignin(me) {
@@ -753,7 +757,9 @@ async function openAccount(userID) {
 
 function showAccount() {
   $('#view-account').hidden = false;
-  $('#view-tabspace').hidden = true;
+  // A different account means a different set of tabverses, so whatever the
+  // drawer was showing is no longer anything to show.
+  closeTabspaceDrawer();
   renderAccount();
   // An account with no device has nothing to look at in the other two tabs, so
   // the first visit lands on Pair Code. After that the choice wins, and
@@ -772,6 +778,9 @@ function showAccount() {
 function setTab(tab) {
   state.tab = tab;
   writeHash({ tab, tabspace: '' });
+  // The drawer belongs to the account tabs; it has no meaning on the operator's
+  // directory, and the hash above has already dropped the tabverse it was on.
+  closeTabspaceDrawer();
   $$('.rail-item').forEach((item) => {
     const active = item.dataset.tab === tab;
     item.classList.toggle('active', active);
@@ -1394,10 +1403,13 @@ function renderTabspaces() {
     );
   }
   for (const ts of s.items) {
-    const counts = el('div', { class: 'counts' });
+    // A row, not a card: the extension's saved-tabverse list is a list of rows
+    // (name over the numbers), and an operator is comparing twenty of them
+    // against each other, which is what rows are for. The counts stay on the
+    // right, where the eye goes looking for them.
+    const counts = el('span', { class: 'row-counts' });
     const pill = (n, label) =>
       n > 0 && counts.append(el('span', { class: 'badge' }, `${n} ${label}`));
-    pill(ts.tab_count, 'tabs');
     pill(ts.notes, 'notes');
     pill(ts.todos, 'todos');
     pill(ts.bookmarks, 'bookmarks');
@@ -1408,15 +1420,21 @@ function renderTabspaces() {
       el(
         'button',
         {
-          class: 'tabspace-card',
+          class: 'tabverse-row',
           type: 'button',
-          onclick: () => openTabspace(ts.id),
+          title: ts.id,
+          onclick: () => openTabspaceDrawer(ts.id),
         },
-        el('span', { class: 'name' }, ts.name),
         el(
           'span',
-          { class: 'when' },
-          'updated ' + ago(ts.updated_at) + ' · rev ' + ts.rev,
+          { class: 'row-text' },
+          el('span', { class: 'row-name' }, ts.name || '(unnamed)'),
+          el(
+            'span',
+            { class: 'row-meta' },
+            `${ts.tab_count} tab${ts.tab_count === 1 ? '' : 's'} · updated ` +
+              ago(ts.updated_at),
+          ),
         ),
         counts,
       ),
@@ -1460,114 +1478,209 @@ function renderPager(node, s, reload) {
   );
 }
 
-async function openTabspace(tabspaceID) {
-  writeHash({ tabspace: tabspaceID });
-  const bundle = await api.get(
-    `/api/v1/admin/users/${encodeURIComponent(state.selected.id)}/tabspaces/${encodeURIComponent(tabspaceID)}`,
-  );
+// ---- the tabverse drawer --------------------------------------------------
+//
+// The tabverse view the extension shows when a saved one is opened, in a drawer
+// over the account rather than a page that replaces it.
+//
+// The action buttons are gone on purpose. "Load to New Window", "Load to Current"
+// and "Switch to Tabverse" all act on *this* browser, and a tab stored on this
+// account is not openable here - the buttons would be decoration that cannot
+// work. What is left is the one action that is about the stored data rather
+// than about the browser (adr/0015).
+
+/** The drawer's slide-out duration in console.css. */
+const DRAWER_EXIT_MS = 200;
+
+async function openTabspaceDrawer(tabspaceID) {
+  let bundle;
+  try {
+    bundle = await api.get(
+      `/api/v1/admin/users/${encodeURIComponent(state.selected.id)}/tabspaces/${encodeURIComponent(tabspaceID)}`,
+    );
+  } catch (e) {
+    // Deleted while this list was on screen (another operator, another tab of
+    // the console), or an id this account does not have. Either way there is
+    // nothing to open, and saying so beats a drawer with an empty tabverse.
+    toast(e.message, 'bad');
+    closeTabspaceDrawer();
+    return;
+  }
   state.openTabspace = bundle;
-  // the detail view replaces the whole account view, tabs included
-  $('#view-account').hidden = true;
-  $('#view-tabspace').hidden = false;
-  renderTabspace();
+  writeHash({ tabspace: tabspaceID });
+  renderTabspaceDrawer();
+  const drawer = $('#drawer');
+  drawer.hidden = false;
+  // The transition needs the panel laid out before the class lands, or it
+  // slides in from nowhere.
+  requestAnimationFrame(() => drawer.classList.add('open'));
+  $('#drawer-close').focus();
 }
 
-$('#tabspace-back').addEventListener('click', () => {
+function closeTabspaceDrawer() {
+  const drawer = $('#drawer');
+  if (drawer.hidden) {
+    return;
+  }
   state.openTabspace = null;
   writeHash({ tabspace: '' });
-  $('#view-tabspace').hidden = true;
-  $('#view-account').hidden = false;
+  drawer.classList.remove('open');
+  setTimeout(() => {
+    drawer.hidden = true;
+  }, DRAWER_EXIT_MS);
+}
+
+$('#drawer-close').addEventListener('click', closeTabspaceDrawer);
+$('#drawer-backdrop').addEventListener('click', closeTabspaceDrawer);
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') {
+    closeTabspaceDrawer();
+  }
 });
 
-function renderTabspace() {
+/** "Working on 7 tabs in 2 groups", the line the extension puts above the cards. */
+function tabverseSummaryLine(tabs, groups) {
+  const line = el(
+    'p',
+    { class: 'drawer-summary' },
+    'Working on ',
+    el('b', {}, String(tabs)),
+    tabs === 1 ? ' tab' : ' tabs',
+  );
+  if (groups > 0) {
+    line.append(
+      ' in ',
+      el('b', {}, String(groups)),
+      groups === 1 ? ' group' : ' groups',
+    );
+  }
+  return line;
+}
+
+/** One tab, shaped like the extension's tab card: favicon, title, url, flags. */
+function tabCard(tab) {
+  const fav = tab.data.favIconUrl
+    ? el('img', {
+        class: 'fav',
+        src: tab.data.favIconUrl,
+        alt: '',
+        loading: 'lazy',
+        onerror: (e) => e.target.remove(),
+      })
+    : el('span', { class: 'fav' });
+  const url = tab.data.url
+    ? el(
+        'a',
+        {
+          class: 'u',
+          href: tab.data.url,
+          target: '_blank',
+          rel: 'noreferrer noopener',
+        },
+        tab.data.url,
+      )
+    : el('span', { class: 'u' }, '(no url)');
+  const flags = el('span', { class: 'flags' });
+  if (tab.data.pinned) flags.append(el('span', { class: 'badge' }, 'pinned'));
+  if (tab.data.suspended)
+    flags.append(el('span', { class: 'badge' }, 'suspended'));
+  return el(
+    'li',
+    { class: 'tab-card' },
+    fav,
+    el(
+      'span',
+      { class: 'tab-card-text' },
+      el('span', { class: 'tab-card-title' }, tab.data.title || '(untitled)'),
+      url,
+    ),
+    flags,
+  );
+}
+
+function renderTabspaceDrawer() {
   const b = state.openTabspace;
   const ts = b.tabspace;
-  $('#tabspace-name').textContent = ts.name;
-  $('#tabspace-meta').textContent =
-    `${ts.id} · updated ${ago(ts.updated_at)} · rev ${ts.rev} · ${bytes(jsonSize(b))}` +
-    (ts.created_at ? ` · created ${dateOf(ts.created_at)}` : '');
-
-  const body = $('#tabspace-body');
-  clear(body);
-
-  // Tabs, in the tabverse's own order, with the tab groups it remembers.
-  // The groups are chrome's, not ours: they only carry a colour and a title,
-  // and their ids are the tabverse's own tab ids.
-  const groupOf = {};
   const groups = Array.isArray(b.tabspace_data && b.tabspace_data.tabGroups)
     ? b.tabspace_data.tabGroups
     : [];
+  // Which tab belongs to which group. The groups are chrome's, not ours: they
+  // carry a colour and a title, and their members are the tabverse's own tab
+  // ids.
+  const groupOf = {};
   for (const g of groups) for (const id of g.tabIds || []) groupOf[id] = g;
 
-  const tabSection = el(
-    'div',
-    { class: 'section' },
-    el('h3', {}, 'Tabs ', el('span', { class: 'count-pill' }, b.tabs.length)),
-  );
-  if (!b.tabs.length)
-    tabSection.append(
-      el('p', { class: 'empty-inline' }, 'no tabs in this tabverse'),
+  $('#drawer-title').textContent = ts.name || '(unnamed tabverse)';
+  $('#drawer-meta').textContent =
+    `${ts.id} · rev ${ts.rev} · updated ${ago(ts.updated_at)} · ` +
+    bytes(jsonSize(b));
+  // Looking through somebody else's account is read only, and the server
+  // refuses the delete with 403 anyway (adr/0014), so it is not offered.
+  $('#drawer-delete').hidden = isAssumed();
+
+  const body = $('#drawer-body');
+  clear(body);
+
+  // Created and saved, the way the extension states them: how long ago, with
+  // the exact timestamp underneath for when it matters.
+  const timeBlock = (label, ms) =>
+    el(
+      'div',
+      { class: 'drawer-when' },
+      el('span', { class: 'muted small' }, label),
+      el('div', {}, el('b', {}, ago(ms))),
+      el('div', { class: 'muted small' }, dateOf(ms)),
     );
-  else {
-    const ul = el('ul', { class: 'tabs-list' });
+  body.append(
+    el(
+      'div',
+      { class: 'drawer-times' },
+      timeBlock('Created', ts.created_at),
+      timeBlock('Saved', ts.updated_at),
+    ),
+  );
+
+  body.append(tabverseSummaryLine(b.tabs.length, groups.length));
+
+  if (!b.tabs.length) {
+    body.append(el('p', { class: 'empty-inline' }, 'no tabs in this tabverse'));
+  } else {
+    const cards = el('ul', { class: 'tab-cards' });
     let currentGroup = null;
     for (const tab of b.tabs) {
       const g = groupOf[tab.id];
-      const gkey = g ? g.id : null;
-      if (gkey !== currentGroup) {
-        currentGroup = gkey;
-        if (g)
-          ul.append(
+      const key = g ? g.id : null;
+      if (key !== currentGroup) {
+        currentGroup = key;
+        if (g) {
+          cards.append(
             el(
               'li',
               { class: 'group-label' },
               (g.title || 'group') + (g.color ? ' · ' + g.color : ''),
             ),
           );
+        }
       }
-      const flags = el('div', { class: 'flags' });
-      if (tab.data.pinned)
-        flags.append(el('span', { class: 'badge' }, 'pinned'));
-      if (tab.data.suspended)
-        flags.append(el('span', { class: 'badge' }, 'suspended'));
-      const fav = tab.data.favIconUrl
-        ? el('img', {
-            class: 'fav',
-            src: tab.data.favIconUrl,
-            alt: '',
-            loading: 'lazy',
-            onerror: (e) => e.target.remove(),
-          })
-        : el('span', { class: 'fav' });
-      const url = tab.data.url
-        ? el(
-            'a',
-            {
-              class: 'u',
-              href: tab.data.url,
-              target: '_blank',
-              rel: 'noreferrer noopener',
-            },
-            tab.data.url,
-          )
-        : el('span', { class: 'u' }, '(no url)');
-      ul.append(
-        el(
-          'li',
-          { class: 'tab-row' },
-          fav,
-          el('span', { class: 't' }, tab.data.title || '(untitled)'),
-          url,
-          flags,
-        ),
-      );
+      cards.append(tabCard(tab));
     }
-    tabSection.append(ul);
+    body.append(cards);
   }
-  body.append(tabSection);
 
-  // Notes / todos / bookmarks.
-  body.append(
+  // Everything else the tabverse carries is folded away: the extension's own
+  // view stops at the tabs, and an operator who wants the notes is looking for
+  // something specific enough to click once.
+  const more = el(
+    'details',
+    { class: 'drawer-more' },
+    el(
+      'summary',
+      {},
+      `notes, todos, bookmarks and closed tabs stored with it ` +
+        `(${b.notes.length + b.todos.length + b.bookmarks.length + b.closed_tabs.length})`,
+    ),
+  );
+  more.append(
     notesSection('Notes', b.notes, (n) =>
       el(
         'div',
@@ -1598,7 +1711,7 @@ function renderTabspace() {
     }
     todoSection.append(ul);
   }
-  body.append(todoSection);
+  more.append(todoSection);
 
   const bmSection = el(
     'div',
@@ -1642,7 +1755,7 @@ function renderTabspace() {
     }
     bmSection.append(ul);
   }
-  body.append(bmSection);
+  more.append(bmSection);
 
   // History: tabs closed in this tabverse, newest first.
   const histSection = el(
@@ -1693,17 +1806,49 @@ function renderTabspace() {
     }
     histSection.append(ul);
   }
-  body.append(histSection);
+  more.append(histSection);
 
   // Raw json of the aggregates, for the curious.
-  const agg = el(
-    'details',
-    { class: 'section' },
-    el('summary', {}, 'ordering aggregates (raw)'),
-    el('pre', { class: 'mono' }, JSON.stringify(b.aggregates, null, 2)),
+  more.append(
+    el(
+      'details',
+      { class: 'section' },
+      el('summary', {}, 'ordering aggregates (raw)'),
+      el('pre', { class: 'mono' }, JSON.stringify(b.aggregates, null, 2)),
+    ),
   );
-  body.append(agg);
+  body.append(more);
 }
+
+// Deleting is a write over somebody else's data, so it is the one button left
+// in here and it asks for a typed confirmation (adr/0015).
+$('#drawer-delete').addEventListener('click', async () => {
+  const b = state.openTabspace;
+  if (!b) return;
+  const ts = b.tabspace;
+  const who = ts.name || ts.id;
+  const typed = prompt(
+    `Deleting "${who}" removes the tabverse, its ${b.tabs.length} tab(s) and ` +
+      `everything stored with it (notes, todos, bookmarks, closed tabs).\n\n` +
+      `Every device of this account deletes its own copy on the next sync.\n\n` +
+      `Type ${who} to confirm:`,
+  );
+  if (typed !== who) return;
+  try {
+    await api.del(
+      `/api/v1/admin/users/${encodeURIComponent(state.selected.id)}/tabspaces/` +
+        encodeURIComponent(ts.id) +
+        '?confirm=' +
+        encodeURIComponent(ts.id),
+    );
+    closeTabspaceDrawer();
+    // The list and the account's counters both moved.
+    await openAccount(state.selected.id);
+    toast(`Deleted ${who}`, 'good');
+  } catch (e) {
+    toast(e.message, 'bad');
+  }
+});
 
 function notesSection(title, notes, render) {
   const section = el(
@@ -1884,7 +2029,7 @@ async function runSearch() {
           {
             class: 'link',
             type: 'button',
-            onclick: () => openTabspace(hit.tabspace_id),
+            onclick: () => openTabspaceDrawer(hit.tabspace_id),
           },
           'open tabverse →',
         ),
