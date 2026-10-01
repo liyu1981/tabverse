@@ -11,7 +11,7 @@
     "develop": "vite build --watch --mode development",
     "build-doc": "./tools/builddoc.sh",
     "build-crx": "./tools/buildcrx.sh",
-    "server:dev": "cd server && go run ./cmd/tabversed",
+    "server:dev": "cd server && go run ./cmd/tabversed serve",
     "server:build": "cd server && CGO_ENABLED=0 go build -trimpath -o bin/tabversed ./cmd/tabversed",
     "server:test": "cd server && go test ./...",
     "server:test-race": "cd server && go test -race ./...",

@@ -1,159 +1,99 @@
 // Command tabversed is the Tabverse sync server.
 //
-// A single, dependency light Go binary: cross compile it with
+//	tabversed serve     run the server (the whole binary, in the foreground)
+//	tabversed version   print the version
+//	tabversed config    write a .env to configure this machine
+//	tabversed service   install and control it as a systemd *user* service
 //
-//	GOOS=windows GOARCH=amd64 go build ./cmd/tabversed
-//
-// (the SQLite driver is pure Go, no cgo), or build a container image.
+// Run it with no arguments to see this list. The server is the SQLite driver
+// (pure Go, no cgo), so a deployment is one file and one .env.
 package main
 
 import (
-	"context"
 	"errors"
 	"fmt"
-	"log/slog"
-	"net/http"
 	"os"
-	"os/signal"
-	"syscall"
-	"time"
-
-	"github.com/liyu1981/tabverse/server/internal/api"
-	"github.com/liyu1981/tabverse/server/internal/config"
-	"github.com/liyu1981/tabverse/server/internal/hub"
-	"github.com/liyu1981/tabverse/server/internal/retention"
-	"github.com/liyu1981/tabverse/server/internal/store"
-	"github.com/liyu1981/tabverse/server/internal/version"
 )
 
+// errUsage is the exit code for a command line the user got wrong, as opposed
+// to a failure of the command itself.
+var errUsage = errors.New("usage")
+
 func main() {
-	if err := run(); err != nil {
-		slog.Error("fatal", "err", err)
+	if err := run(os.Args[1:]); err != nil {
+		if errors.Is(err, errUsage) {
+			os.Exit(2)
+		}
+		fmt.Fprintf(os.Stderr, "tabversed: %v\n", err)
 		os.Exit(1)
 	}
 }
 
-func run() error {
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
-
-	// Settings may live in a file next to the binary (.env, or whatever
-	// TABVERSED_ENV_FILE names) rather than in the unit file. It has to happen
-	// before Load, and the real environment still wins over it.
-	if path, err := config.LoadEnvFile(); err != nil {
-		return fmt.Errorf("env file: %w", err)
-	} else if path != "" {
-		logger.Info("loaded settings from a file", "file", path,
-			"note", "the environment overrides it")
+// run dispatches one command. Everything it does is a thin shell around either
+// the server itself or the tools around it, so each one lives in its own file.
+func run(args []string) error {
+	if len(args) == 0 {
+		usage(os.Stdout)
+		return nil
 	}
-
-	cfg, err := config.Load(version.Version)
-	if err != nil {
-		return err
+	switch args[0] {
+	case "serve":
+		return serve(args[1:])
+	case "version", "-version", "--version":
+		return printVersion()
+	case "config":
+		return configCommand(args[1:])
+	case "service":
+		return serviceCommand(args[1:])
+	case "help", "-h", "-help", "--help":
+		usage(os.Stdout)
+		return nil
+	default:
+		fmt.Fprintf(os.Stderr, "tabversed: unknown command %q\n\n", args[0])
+		usage(os.Stderr)
+		return errUsage
 	}
-
-	if dir := parentDir(cfg.DBPath); dir != "" && dir != "." {
-		if err := os.MkdirAll(dir, 0o755); err != nil {
-			return err
-		}
-	}
-
-	st, err := store.Open(cfg.DBPath)
-	if err != nil {
-		return err
-	}
-	defer st.Close()
-
-	h := hub.New()
-	// The account layer is part of the server now (adr/0013): there is no mode
-	// switch and no master credential, only signed-in accounts.
-	srv, err := api.New(cfg, st, h, logger)
-	if err != nil {
-		return err
-	}
-	if cfg.DevMode {
-		logger.Warn("TABVERSED_DEV_MODE is on: the library's fake OAuth provider is " +
-			"mounted, which is for local development only")
-	}
-	if !cfg.SMTPConfigured() {
-		logger.Warn("no TABVERSED_SMTP_HOST: sign-in links will be printed to this log " +
-			"instead of emailed")
-	}
-	// The operator bootstrap: an account that already uses TABVERSED_ADMIN_EMAIL
-	// is promoted on start, so setting the variable on an existing deployment
-	// and restarting is all it takes (adr/0013).
-	if err := srv.BootstrapOperator(context.Background()); err != nil {
-		return fmt.Errorf("operator bootstrap: %w", err)
-	}
-
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
-
-	// Server side retention (chrome session snapshots).
-	go retention.Run(ctx, st, h, cfg.RetentionDays, logger)
-
-	httpServer := &http.Server{
-		Addr:              cfg.Addr,
-		Handler:           srv.Handler(),
-		ReadHeaderTimeout: 10 * time.Second,
-		// Long lived WebSockets are handled by the hijacked connection, not
-		// by this server, but keep WriteTimeout off to avoid interfering.
-		WriteTimeout: 30 * time.Second,
-		IdleTimeout:  120 * time.Second,
-	}
-
-	errCh := make(chan error, 1)
-	go func() {
-		logger.Info("tabversed listening",
-			"addr", cfg.Addr, "db", cfg.DBPath, "version", cfg.Version)
-		logOperatorState(st, logger)
-		if cfg.Exposed() {
-			logger.Warn("listening on a non-loopback address: the pairing/bootstrap " +
-				"endpoint is reachable from the network (set TABVERSED_ADDR=127.0.0.1:8223 " +
-				"to keep it local)")
-		}
-		if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			errCh <- err
-		}
-	}()
-
-	select {
-	case err := <-errCh:
-		return err
-	case <-ctx.Done():
-	}
-
-	logger.Info("shutting down")
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	return httpServer.Shutdown(shutdownCtx)
 }
 
-// logOperatorState says, in one line each, who runs this deployment. The
-// interesting case is a server with no operator at all: the console still works
-// for whoever registers, but the account list and impersonation are unreachable
-// until somebody becomes the operator, and saying so at startup beats a person
-// wondering why a button is missing.
-func logOperatorState(st *store.Store, logger *slog.Logger) {
-	n, err := st.CountAdmins(context.Background())
-	if err != nil {
-		logger.Warn("cannot read the operator list", "err", err)
-		return
-	}
-	if n > 0 {
-		logger.Info("this server has an operator; accounts and their devices are managed in the console", "operators", n)
-		return
-	}
-	logger.Warn("no operator account yet: the console works for whoever registers, but the " +
-		"account list and impersonation need an operator")
-	logger.Warn("set TABVERSED_ADMIN_EMAIL to the address that should become the operator, " +
-		"then register with it (or restart the server if you are already registered)")
-}
+func usage(out *os.File) {
+	fmt.Fprint(out, `tabversed - the Tabverse sync server
 
-func parentDir(path string) string {
-	for i := len(path) - 1; i >= 0; i-- {
-		if path[i] == '/' || path[i] == '\\' {
-			return path[:i]
-		}
-	}
-	return ""
+Usage:
+  tabversed serve            Run the server in the foreground.
+  tabversed version          Print the version.
+  tabversed config           Write a .env to the current directory, to edit.
+  tabversed service ...      Install and control a systemd user service.
+
+Commands:
+  serve              Everything the binary is: it listens, serves the sync API
+                     and the operator console, and prunes old records. Ctrl-C
+                     stops it. With no arguments, tabversed prints this text -
+                     nothing starts by accident, which matters for something
+                     meant to run for months on somebody's machine.
+
+  version            The build version ("dev" unless it was set at build time
+                     with -ldflags -X .../internal/version.Version=...).
+
+  config             Copies the built-in settings template to ./.env, mode 0600,
+                     ready to fill in. It refuses to replace an existing .env
+                     unless you pass --force. This is the same file
+                     server/.env.example documents every variable in.
+
+  service install    Write, enable and register a systemd *user* unit, so the
+  service status     server survives a logout and can be inspected, restarted
+  service start      and stopped without a terminal. Uses "systemctl --user",
+  service restart    which needs no root and no sudo.
+  service stop
+  service logs       The five verbs map to systemctl --user. "logs" follows the
+                     journal; anything after it goes to journalctl as it is,
+                     e.g. "tabversed service logs --since -1h".
+
+Settings:
+  Every variable is TABVERSED_*. They are read from the environment and from a
+  .env file in the working directory - "serve" picks that up, and the
+  environment still wins over the file. TABVERSED_ENV_FILE names another file;
+  one that cannot be read is a startup error.
+
+Run "tabversed config" first if this machine has no .env yet.
+`)
 }

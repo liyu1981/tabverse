@@ -38,6 +38,40 @@ pnpm run server:build    # binary at server/bin/tabversed
 pnpm run server:docker && docker run -p 8223:8223 -v tvdata:/data tabversed
 ```
 
+### The command line
+
+With **no arguments the binary prints its help and exits** - it never starts by
+accident, which matters for something meant to run for months.
+
+```sh
+tabversed                # the help
+tabversed serve          # the server, in the foreground (what the binary used to do)
+tabversed version        # "tabversed v1.2.3 (linux/amd64, go1.27)"
+tabversed config         # write a .env here, from the embedded template (0600, --force to replace)
+tabversed service install|status|start|restart|stop|logs
+```
+
+`service` is a **systemd user** unit (`systemctl --user`, no root, no sudo):
+`install` writes `~/.config/systemd/user/topicversed.service`, reloads and
+enables it, and stops there so starting stays a visible separate step. The unit
+runs `tabversed serve` with `WorkingDirectory` set to where the binary lives,
+because that is where the `.env` is - the binary reads it itself, so the file
+format has one parser rather than two. For a server that should survive a
+logout, `loginctl enable-linger $USER` once.
+
+`service logs` follows the journal and passes anything after it to `journalctl`
+(`tabversed service logs --since -1h`).
+
+A full local install, start to finish:
+
+```sh
+tabversed config                     # edit ./.env
+tabversed service install
+loginctl enable-linger $USER         # optional: keep it running when logged out
+tabversed service start
+tabversed service logs
+```
+
 The default bind address is `0.0.0.0` on purpose: during development the
 extension is usually loaded on a different machine than the server. The server
 logs a warning when it listens on a non-loopback address, because the

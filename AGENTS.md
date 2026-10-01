@@ -21,6 +21,15 @@ addition to anything in `ARCHITECTURE.md` and `adr/`.
 - Run what is automatable: `npm test` (vitest), `npm run typecheck`, biome
   `format`/`lint`, and the Go suite (`go vet`, `go test -race ./...` in
   `server/`). Fix what they report, and state plainly which checks you ran.
+- **Every manual check that involves something long-lived must be bounded.**
+  A server in the foreground, a `systemctl start`ed unit, a `journalctl -f`, a
+  `tail -f`, a `npm run develop` watch build, a server waiting on a port: put a
+  timeout on it (`timeout 5 ...`, `journalctl -n 50 --no-pager`, `&` plus
+  `kill`), and never leave one running between tool calls. A call that blocks
+  for minutes with no output is indistinguishable from a hang, and it holds the
+  session hostage - the same discipline as the `--no-pager` flag on anything
+  that pages. Anything started for a check is stopped again in the same task,
+  including units that were `enable`d, and say what you left behind.
 - **Do not drive a headless browser to verify UI.** The user checks the UI
   (extension pages, the tabversed console) themselves. Report what to look for
   instead, and say plainly what is unverified - do not imply a UI was checked

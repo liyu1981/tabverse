@@ -17,4 +17,6 @@ VOLUME /data
 ENV TABVERSED_ADDR=0.0.0.0:8223 \
     TABVERSED_DB=/data/tabversed.db
 EXPOSE 8223
-ENTRYPOINT ["/usr/local/bin/tabversed"]
+# "serve", because the bare binary prints its help and exits - on a container
+# that is the difference between a service and an immediate exit.
+ENTRYPOINT ["/usr/local/bin/tabversed", "serve"]
