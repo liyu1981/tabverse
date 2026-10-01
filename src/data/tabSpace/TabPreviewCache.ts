@@ -30,11 +30,20 @@ export function removePreview(
   });
 }
 
+/**
+ * The thumbnail of a tab, or '' when there is none.
+ *
+ * '' rather than a placeholder image on purpose: the previews are a local cache
+ * (see tabPreviewStore), so "not captured yet" is a normal state, not an error
+ * to dress up. It used to be a dummyimage.com URL, which made hovering a tab
+ * without a thumbnail fetch a picture from a third party - for the one feature
+ * whose whole promise is that the picture never leaves the machine.
+ */
 export function getPreview(
   chromeTabId: number,
   targetTabPreviewCache: TabPreviewCache,
 ): string {
   return targetTabPreviewCache.previews.has(chromeTabId)
     ? targetTabPreviewCache.previews.get(chromeTabId)
-    : 'https://dummyimage.com/500x280/ffffff/666666&text=Preview+Not+Yet+Generated';
+    : '';
 }

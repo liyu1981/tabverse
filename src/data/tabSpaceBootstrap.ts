@@ -1,6 +1,6 @@
 import { scanCurrentTabs, startMonitorTabChanges } from './tabSpace/chromeTab';
 
-import { loadPreviews, pruneStalePreviews } from './tabSpace/tabPreviewStore';
+import { loadPreviews } from './tabSpace/tabPreviewStore';
 import { monitorDbChanges, saveCurrentTabSpace } from './tabSpace/util';
 import { startMonitorChromeMessage } from '../message/chromeMessage';
 import { $tabSpace, tabSpaceStoreApi } from './tabSpace/store';
@@ -35,10 +35,13 @@ export async function tabSpaceBootstrap(
 }
 
 /**
- * Puts the stored thumbnails back into the in-memory cache and drops the ones
- * that no longer have a tab. Runs on bootstrap, which is the only moment the
- * full set of live tabs is known, so it is also the only place stale rows (a
- * crash, a restart, a restored tabverse) can be recognised.
+ * Puts the stored thumbnails back into the in-memory cache.
+ *
+ * It runs on bootstrap, which is the only moment the full set of live tabs is
+ * known - but that is a *restore*, not a reap. Dropping what has no tab is the
+ * worker's job now (data/tabSpace/previewReaper): the sweep works on indexed
+ * keys, and the manager page should not be doing that work at all before it has
+ * drawn anything.
  */
 async function restoreTabPreviews(): Promise<void> {
   const tabSpace = $tabSpace.getState();
@@ -55,9 +58,5 @@ async function restoreTabPreviews(): Promise<void> {
   });
   if (stored.size > 0) {
     logger.log(`restored ${stored.size} stored tab preview(s)`);
-  }
-  const pruned = await pruneStalePreviews(liveChromeTabIds);
-  if (pruned > 0) {
-    logger.log(`pruned ${pruned} stale tab preview(s)`);
   }
 }

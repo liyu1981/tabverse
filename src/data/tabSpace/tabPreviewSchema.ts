@@ -9,7 +9,12 @@
  */
 
 export const TAB_PREVIEW_DB_TABLE_NAME = 'SavedTabPreview';
-export const TAB_PREVIEW_DB_SCHEMA = 'id, capturedAt';
+/**
+ * `sessionId` is indexed because the reaper asks "which rows did an earlier
+ * browser run write" more often than anything else, and the answer has to come
+ * from an index rather than from reading rows (see data/tabSpace/previewSession).
+ */
+export const TAB_PREVIEW_DB_SCHEMA = 'id, capturedAt, sessionId';
 
 /**
  * Upper bound on stored thumbnails per profile. A tabverse with hundreds of

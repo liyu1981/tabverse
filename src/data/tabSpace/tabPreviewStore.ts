@@ -21,22 +21,24 @@
 
 import { db } from '../../storage/db';
 import { logger } from '../../global';
+import { currentPreviewSessionId } from './previewSession';
 import {
-  MAX_STORED_PREVIEWS,
   TAB_PREVIEW_DB_SCHEMA,
   TAB_PREVIEW_DB_TABLE_NAME,
 } from './tabPreviewSchema';
 
-export {
-  MAX_STORED_PREVIEWS,
-  TAB_PREVIEW_DB_SCHEMA,
-  TAB_PREVIEW_DB_TABLE_NAME,
-};
+export { TAB_PREVIEW_DB_SCHEMA, TAB_PREVIEW_DB_TABLE_NAME };
 
 export interface TabPreviewRow {
   /** the chrome tab id, as a string: the primary key of this table */
   id: string;
   capturedAt: number;
+  /**
+   * The browser run that captured it (see ./previewSession). A chrome tab id
+   * is only meaningful within one run and is recycled between them, so this is
+   * what says "the same tab" rather than "a tab with that number".
+   */
+  sessionId: string;
   /** the base64 JPEG data URL from chrome.tabs.captureVisibleTab */
   preview: string;
 }
@@ -59,6 +61,7 @@ export async function persistPreview(
     await table().put({
       id: key(chromeTabId),
       capturedAt: Date.now(),
+      sessionId: await currentPreviewSessionId(),
       preview,
     });
   } catch (err) {
@@ -89,9 +92,18 @@ export async function loadPreviews(
     return out;
   }
   try {
+    // Only this browser run's rows. A row from a previous run whose chrome tab
+    // id has since been recycled would otherwise be shown on a completely
+    // different page - and the reaper, which drops those rows, may not have
+    // woken up yet (see ./previewReaper).
+    const sessionId = await currentPreviewSessionId();
+    const wanted = new Set(chromeTabIds.map(key));
     const rows = await table()
-      .bulkGet(chromeTabIds.map(key))
-      .catch(() => [] as (TabPreviewRow | undefined)[]);
+      .where('sessionId')
+      .equals(sessionId)
+      .and((row) => wanted.has(row.id))
+      .toArray()
+      .catch(() => [] as TabPreviewRow[]);
     rows.forEach((row) => {
       if (row && typeof row.preview === 'string') {
         out.set(Number(row.id), row.preview);
@@ -101,36 +113,4 @@ export async function loadPreviews(
     logger.log('repo: could not read the stored tab previews', err);
   }
   return out;
-}
-
-/**
- * Brings the table back in line with reality: throws away thumbnails of tabs
- * that no longer exist (a crash, a restart, a tabverse restore) and enforces
- * MAX_STORED_PREVIEWS, oldest first. Called on bootstrap, which is also the
- * only moment we know the full set of live tabs.
- */
-export async function pruneStalePreviews(
-  liveChromeTabIds: number[],
-): Promise<number> {
-  try {
-    const live = new Set(liveChromeTabIds.map(key));
-    const all = await table().toArray();
-    const doomed = all.filter((row) => !live.has(row.id)).map((row) => row.id);
-    if (all.length - doomed.length > MAX_STORED_PREVIEWS) {
-      const survivors = all
-        .filter((row) => live.has(row.id))
-        .sort((a, b) => a.capturedAt - b.capturedAt);
-      const overflow = survivors.length - MAX_STORED_PREVIEWS;
-      for (let i = 0; i < overflow; i += 1) {
-        doomed.push(survivors[i].id);
-      }
-    }
-    if (doomed.length > 0) {
-      await table().bulkDelete(doomed);
-    }
-    return doomed.length;
-  } catch (err) {
-    logger.log('repo: could not prune the stored tab previews', err);
-    return 0;
-  }
 }

@@ -60,6 +60,52 @@ function createV7Database(): Promise<void> {
   });
 }
 
+/**
+ * What v10 declared: the same stores, with the preview table before it learned
+ * to record which browser run wrote a row (data/tabSpace/previewSession).
+ */
+const V10_SCHEMAS: { [name: string]: string } = {
+  ...schemas,
+  SavedTabPreview: 'id, capturedAt',
+};
+
+/** Creates the database a v10 build would have created (Dexie v10 = IDB 100). */
+function createV10Database(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const request = fakeIndexedDB.open(DB_NAME + '-v10', 100);
+    request.onupgradeneeded = () => {
+      const idb = request.result;
+      for (const [name, spec] of Object.entries(V10_SCHEMAS)) {
+        if (!idb.objectStoreNames.contains(name)) {
+          idb.createObjectStore(name, { keyPath: 'id' });
+        }
+        // only the store matters here; Dexie adds the missing sessionId index
+        // on the version upgrade, which is what the test below checks
+        void spec;
+      }
+    };
+    request.onsuccess = () => {
+      const idb = request.result;
+      const tx = idb.transaction(
+        ['SavedTabPreview', 'SavedTabSpace'],
+        'readwrite',
+      );
+      tx.objectStore('SavedTabPreview').put({
+        id: '1',
+        capturedAt: 1,
+        preview: 'data:image/jpeg;base64,AAA',
+      });
+      tx.objectStore('SavedTabSpace').put({ id: 'ts1', updatedAt: 1 });
+      tx.oncomplete = () => {
+        idb.close();
+        resolve();
+      };
+      tx.onerror = () => reject(tx.error);
+    };
+    request.onerror = () => reject(request.error);
+  });
+}
+
 describe(`schema v${TABSPACE_DB_VERSION}`, () => {
   test('no longer declares a session store', () => {
     expect(Object.keys(schemas)).not.toContain('ChromeSession');
@@ -83,6 +129,39 @@ describe(`schema v${TABSPACE_DB_VERSION}`, () => {
       const row = await database.table(name).get(`row-${name}`);
       expect(row, `row in ${name}`).toBeTruthy();
     }
+
+    await database.delete();
+  });
+
+  // The preview table is a cache (data/tabSpace/previewReaper), so its schema
+  // change is the one that must not cost a migration: rows written without a
+  // session id are simply unowned, and the reaper drops them.
+  test('opening a v10 database adds the preview session index and keeps the rows', async () => {
+    await createV10Database();
+    const database = new TabSpaceDatabase(TAG + '-v10');
+    await database.open();
+
+    // the row survives, with no session id: the reaper treats it as unowned
+    const row = await database.table('SavedTabPreview').get('1');
+    expect(row, 'the preview row did not survive the upgrade').toBeTruthy();
+    expect(row.sessionId).toBeUndefined();
+
+    // the index the reaper queries exists now
+    expect(Array.from(database.backendDB().objectStoreNames)).toContain(
+      'SavedTabPreview',
+    );
+    expect(
+      (database.table('SavedTabPreview') as any).schema.primKey.keyPath,
+    ).toBe('id');
+    const indexNames = (
+      database.table('SavedTabPreview') as any
+    ).schema.indexes.map((i: any) => i.name);
+    expect(indexNames).toContain('sessionId');
+
+    // and nothing else moved
+    await expect(
+      database.table('SavedTabSpace').get('ts1'),
+    ).resolves.toBeTruthy();
 
     await database.delete();
   });

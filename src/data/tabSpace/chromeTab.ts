@@ -10,7 +10,7 @@ import { produce } from 'immer';
 import { recordClosedTab } from '../closedTab/util';
 import { saveCurrentTabSpaceIfNeeded } from './util';
 import { captureTabGroups, startMonitorTabGroups } from './tabGroup';
-import { forgetPreview, persistPreview } from './tabPreviewStore';
+import { persistPreview } from './tabPreviewStore';
 
 const CHROME_TAB_DEBOUNCE_TIME = 500;
 
@@ -283,7 +283,8 @@ export function getOnChromeTabDetached() {
     }
     tabSpaceStoreApi.removeTabByChromeTabId(chromeTabId);
     tabSpaceStoreApi.removePreview(chromeTabId);
-    void forgetPreview(chromeTabId);
+    // the durable row is the worker's to drop (see previewReaper): it owns every
+    // delete of that table, on the tab event and on its timer alike
     saveCurrentTabSpaceIfNeeded();
   }
 
@@ -319,7 +320,8 @@ export function getOnChromeTabRemoved() {
     }
     tabSpaceStoreApi.removeTabByChromeTabId(chromeTabId);
     tabSpaceStoreApi.removePreview(chromeTabId);
-    void forgetPreview(chromeTabId);
+    // the durable row is the worker's to drop (see previewReaper): it owns every
+    // delete of that table, on the tab event and on its timer alike
     saveCurrentTabSpaceIfNeeded();
   };
 

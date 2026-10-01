@@ -45,13 +45,18 @@ const TabDetailPreviewPanel = (props) => {
         </div>
         <div className={classes.previewWrapText}>{props.tab.url}</div>
       </div>
-      <div className={classes.previewImageContainer}>
-        <img
-          alt={`Preview of ${props.tab.title}`}
-          className={classes.previewImage}
-          src={props.tabPreview}
-        />
-      </div>
+      {/* A thumbnail is a cache entry, not a promise: the popover opens before
+          one has been captured (and after a reaping, data/tabSpace/previewReaper),
+          so with no picture it is just the tab's own facts. */}
+      {props.tabPreview ? (
+        <div className={classes.previewImageContainer}>
+          <img
+            alt={`Preview of ${props.tab.title}`}
+            className={classes.previewImage}
+            src={props.tabPreview}
+          />
+        </div>
+      ) : null}
     </Card>
   ) : null;
 };

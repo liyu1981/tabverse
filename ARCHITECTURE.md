@@ -243,5 +243,10 @@ because a record somebody just changed is live again.
       the tabSpaceRegistry (leader election + broadcast-channel) is gone and
       the change feed uses Dexie's own write hooks instead of dexie-observable
       (`adr/0006`)
+- [x] Tab previews are a **cache**, and the service worker owns every delete of
+      them: rows carry the browser run that wrote them (`chrome.storage.session`,
+      because chrome tab ids are recycled between runs), the worker sweeps every
+      five minutes and on tab removal, and the manager page no longer prunes at
+      all (`adr/0016`)
 - [ ] A real run in Chrome: load `dist/` unpacked, pair a server, exercise
       capture -> sync -> search and the note editor
