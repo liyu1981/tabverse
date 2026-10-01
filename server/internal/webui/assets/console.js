@@ -351,7 +351,18 @@ function renderSignInProviders(providers) {
     box.append(
       el(
         'a',
-        { class: 'provider', href: '/auth/' + name + '/login' },
+        // ?from= is not optional. The auth library redirects the browser to it
+        // once the provider answers, and accepts only an *absolute* URL on the
+        // console's own host - a relative "/" is rejected, and with nothing at
+        // all a perfectly good Google sign-in ends on a page of JSON.
+        {
+          class: 'provider',
+          href:
+            '/auth/' +
+            name +
+            '/login?from=' +
+            encodeURIComponent(location.origin + '/'),
+        },
         name === 'github' ? 'GitHub' : name === 'google' ? 'Google' : name,
       ),
     );

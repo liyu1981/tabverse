@@ -826,3 +826,28 @@ test('a directory row deletes with the same confirmation', async () => {
   expect(del, 'the delete never left the page').toBeDefined();
   expect(del.url).toBe('/api/v1/admin/users/usr_alice?confirm=usr_alice');
 });
+
+// The provider buttons are not decoration: the auth library redirects the browser
+// to ?from= once the provider answers, and it accepts only an absolute URL on the
+// console's own host. A missing (or relative) `from` means a successful Google
+// sign-in ends on a page of JSON instead of the console.
+test('a social login button carries an absolute ?from=', async () => {
+  // a signed-*out* visitor, since that is the screen the buttons live on
+  const problems = await run({
+    ...ME_PERSON,
+    '/api/v1/console/me': {
+      signed_in: false,
+      providers: ['google', 'github'],
+      csrf: 'x',
+      csrf_header: 'X-XSRF-Token',
+      self_hosted: true,
+    },
+  });
+  expect(problems, 'the script raised: ' + problems.join(' | ')).toEqual([]);
+
+  const link = createdWithClass('provider');
+  expect(link, 'no provider button was rendered').toBeDefined();
+  expect(link.getAttribute('href')).toBe(
+    '/auth/google/login?from=' + encodeURIComponent('http://127.0.0.1:8223/'),
+  );
+});

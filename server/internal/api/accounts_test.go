@@ -247,6 +247,56 @@ func (c *sessionClient) do(t *testing.T, method, path string) apiResp {
 	return c.doJSON(t, method, path, nil)
 }
 
+// A social login is the one bug in this file's neighbourhood that stays invisible
+// until a real provider refuses it. The auth library is mounted under /auth, we
+// strip that prefix before it sees the request, and it composes the provider's
+// redirect URI from the path it was handed - so a URL without /auth produces a
+// server that starts happily, offers a Google button, and answers every sign-in
+// with Google's redirect_uri_mismatch. This asserts the URI that actually leaves
+// the building.
+func TestTheProviderRedirectURICarriesTheAuthRoutingPath(t *testing.T) {
+	_, srv := newAccountServer(t)
+	cfg := srv.cfg
+	// a provider is only offered when it is configured, so configure one
+	cfg.GoogleClientID = "cid.apps.googleusercontent.com"
+	cfg.GoogleClientSecret = "secret"
+	cfg.PublicURL = "https://tabversed.example"
+	withGoogle, err := New(cfg, srv.store, hub.New(), nil)
+	if err != nil {
+		t.Fatalf("server with a google client: %v", err)
+	}
+	ts := httptest.NewServer(withGoogle.Handler())
+	t.Cleanup(ts.Close)
+
+	// no redirect following: the answer we want to look at is the 302 itself
+	client := &http.Client{
+		CheckRedirect: func(*http.Request, []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+	// ?from= as the console sends it: the library only redirects back to an
+	// absolute URL on this host, so this is what a real click carries
+	resp, err := client.Get(ts.URL + "/auth/google/login?from=" +
+		url.QueryEscape("https://tabversed.example/"))
+	if err != nil {
+		t.Fatalf("follow the login route: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusFound {
+		t.Fatalf("the login route answered %d, want a redirect to the provider", resp.StatusCode)
+	}
+	location := resp.Header.Get("Location")
+	if !strings.HasPrefix(location, "https://accounts.google.com/") {
+		t.Fatalf("the login route did not redirect to Google: %s", location)
+	}
+	// this exact string is what has to be registered in Google's console
+	want := "redirect_uri=" + url.QueryEscape("https://tabversed.example/auth/google/callback")
+	if !strings.Contains(location, want) {
+		t.Errorf("the provider was told a redirect URI Google would reject\n  location: %s\n  wanted to contain: %s",
+			location, want)
+	}
+}
+
 func TestConsoleMeBeforeAndAfterSignIn(t *testing.T) {
 	ts, s := newAccountServer(t)
 

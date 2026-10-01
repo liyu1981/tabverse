@@ -116,16 +116,28 @@ func New(cfg config.Config, st *store.Store, logger *slog.Logger) (*Service, err
 		secureCookies = false
 	}
 
+	// What the provider library is told its own root is: the public console plus
+	// the routing path it is mounted under.
+	authRoot := strings.TrimSuffix(publicURL, "/") + "/auth"
+
 	s := &Service{store: st, cfg: cfg, log: logger, publicURL: publicURL, secureCookies: secureCookies}
 
 	svc := auth.NewService(auth.Opts{
-		SecretReader:  token.SecretFunc(func(string) (string, error) { return secret, nil }),
+		SecretReader: token.SecretFunc(func(string) (string, error) { return secret, nil }),
+		// The routing path is part of the URL, not of the mount. We serve the
+		// library under /auth (server.go strips the prefix before it gets here),
+		// and the provider composes its redirect URI as
+		// URL + <the request path minus its last segment> + /callback - from the
+		// *stripped* path. So the prefix has to be in the URL or the callback
+		// comes out as /google/callback instead of /auth/google/callback, and
+		// every provider answers redirect_uri_mismatch. (The library's own
+		// comment says the same thing: rootURL/{routingPath}/provider/callback.)
+		URL:           authRoot,
 		TokenDuration: 12 * time.Hour,
 		// The cookie outlives the token so a refresh does not interrupt the user;
 		// the window is bounded by the revocation cut-off, not by this.
 		CookieDuration: 30 * 24 * time.Hour,
 		Issuer:         "tabversed",
-		URL:            publicURL,
 		SecureCookies:  secureCookies,
 		SameSiteCookie: http.SameSiteLaxMode,
 		JWTCookieName:  sessionCookie,
