@@ -36,6 +36,16 @@ func main() {
 func run() error {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
 
+	// Settings may live in a file next to the binary (.env, or whatever
+	// TABVERSED_ENV_FILE names) rather than in the unit file. It has to happen
+	// before Load, and the real environment still wins over it.
+	if path, err := config.LoadEnvFile(); err != nil {
+		return fmt.Errorf("env file: %w", err)
+	} else if path != "" {
+		logger.Info("loaded settings from a file", "file", path,
+			"note", "the environment overrides it")
+	}
+
 	cfg, err := config.Load(version.Version)
 	if err != nil {
 		return err

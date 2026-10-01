@@ -61,7 +61,21 @@ pnpm run server:fmt         # gofmt -l -w .
 pnpm run server:fmt:check   # lists unformatted files (CI asserts the list is empty)
 ```
 
-## Configuration (environment)
+## Configuration (environment, or a `.env` file)
+
+Settings are read from the process environment. They may also live in a `.env`
+file next to the binary: the server reads it at startup, **and the environment
+still wins** over it, so systemd's `EnvironmentFile`, `docker run --env-file`
+and `VAR=x ./tabversed` all keep overriding it. `TABVERSED_ENV_FILE` names a
+different file, and a path given that way which cannot be read is a startup
+error rather than a silent fallback to defaults. The format is `KEY=VALUE`
+lines with `#` comments (no interpolation, no inline comments); a line that is
+not a setting stops the server with its line number.
+
+[`server/.env.example`](.env.example) is a filled-in template with the same
+table and a start-to-finish production checklist. Copy it to `.env` - which is
+git-ignored, because it holds the auth secret and the provider secret - and
+`chmod 600` it.
 
 | Variable                     | Default             | Meaning                                                     |
 | ---------------------------- | ------------------- | ----------------------------------------------------------- |
@@ -74,6 +88,7 @@ pnpm run server:fmt:check   # lists unformatted files (CI asserts the list is em
 | `TABVERSED_WS_ORIGINS`       | _(any)_             | comma separated Origin allow list for the WebSocket upgrade |
 | `TABVERSED_ADMIN_EMAIL`      | _(unset)_           | whose first registration becomes the operator (ADR 0013) |
 | `TABVERSED_DEVICE_INACTIVE_DAYS` | `30`           | silence required before a device may be archived (ADR 0011); a device that never authenticated is exempt, `0` disables the check |
+| `TABVERSED_ENV_FILE`       | _(unset)_           | read this file instead of `./.env`; unreadable is a startup error |
 
 ## API
 
