@@ -1,5 +1,6 @@
 import { Button, InputGroup } from '@blueprintjs/core';
 import React, { useEffect, useState } from 'react';
+import clsx from 'clsx';
 
 import { Tab } from '../../../data/tabSpace/Tab';
 import classes from './ActiveTabSearch.module.scss';
@@ -95,20 +96,23 @@ export function ActiveTabSearch(props: ActiveTabSearchProps) {
         rightElement={
           <div className={classes.right}>
             <span className={classes.count}>{countText}</span>
-            {isFiltering ? (
-              <Button
-                className="tv-icon-button"
-                icon="cross"
-                minimal={true}
-                small={true}
-                title="Clear the filter (Esc)"
-                aria-label="Clear the tab filter"
-                onClick={() => {
-                  props.onChange('');
-                  props.inputRef.current?.focus();
-                }}
-              />
-            ) : null}
+            {/* always rendered, so the count does not shift when the box
+                starts filtering - hidden, so there is nothing to press */}
+            <Button
+              className={clsx(
+                'tv-icon-button',
+                !isFiltering ? classes.clearHidden : '',
+              )}
+              icon="cross"
+              minimal={true}
+              small={true}
+              title="Clear the filter (Esc)"
+              aria-label="Clear the tab filter"
+              onClick={() => {
+                props.onChange('');
+                props.inputRef.current?.focus();
+              }}
+            />
           </div>
         }
         aria-label="Search the tabs of this tabverse"

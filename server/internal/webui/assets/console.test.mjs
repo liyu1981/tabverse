@@ -649,7 +649,7 @@ const TABVERSE_BUNDLE = {
       data: {
         title: 'Alpha',
         url: 'https://a.example/',
-        favIconUrl: '',
+        favIconUrl: 'https://a.example/favicon.ico',
         pinned: true,
         suspended: false,
       },
@@ -661,7 +661,7 @@ const TABVERSE_BUNDLE = {
       data: {
         title: 'Beta',
         url: 'https://b.example/',
-        favIconUrl: '',
+        favIconUrl: 'https://b.example/favicon.png',
         pinned: false,
         suspended: false,
       },
@@ -713,6 +713,34 @@ test('a tabverse is a row, and clicking it opens the drawer over the account', a
   expect(elements.get('drawer-delete').hidden).toBe(false);
   // and the notes are folded away rather than taking the drawer over
   expect(createdWithClass('drawer-more')).toBeDefined();
+});
+
+// The drawer's favicon is a plain <img> of whatever size the file happens to
+// be - a 180px SVG is a perfectly normal favicon - so console.css pins
+// `li.tab-card > img` to 16px. That selector only bites if the image really is
+// a direct child of the card, which is a shape of the markup, not a style: this
+// is where a wrapper <span> or a class dropped by a refactor would show up.
+test("a tab card's favicon is an image directly inside the card", async () => {
+  await run(WITH_A_TABVERSE);
+  await createdWithClass('tabverse-row').fire('click');
+
+  const cards = created.filter((e) =>
+    String(e.className).split(/\s+/).includes('tab-card'),
+  );
+  expect(cards.length).toBe(2);
+  expect(cards.map((card) => card.children[0].getAttribute('src'))).toEqual([
+    'https://a.example/favicon.ico',
+    'https://b.example/favicon.png',
+  ]);
+  for (const card of cards) {
+    const favicon = card.children[0];
+    expect(favicon.id, 'the favicon is not an <img>').toBe('<img>');
+    // the class is the fallback half of the selector, not the only half
+    expect(favicon.className).toBe('fav');
+    // ... and it is the first child, so it cannot be nested where
+    // `.tab-card > img` would miss it
+    expect(favicon).toBe(card.children[0]);
+  }
 });
 
 test('Escape closes the drawer', async () => {

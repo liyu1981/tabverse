@@ -1,41 +1,84 @@
 @use '../../../global.scss';
 
-.container {
-  margin-bottom: 10px;
-}
-
+/*
+ * White, not the header's own shade: this box sits on the tabverse's sticky
+ * header, and a filter you are typing into should read as a field rather than
+ * as another layer of the card behind it.
+ */
 .container :global(.bp6-input-group) {
-  background-color: global.$color-light-shade;
+  background-color: white;
+  border-radius: 4px;
 }
 
 .container :global(.bp6-input-group):focus {
   background-color: white;
 }
 
-.container :global(.bp6-input) {
-  background-color: global.$color-light-shade;
+.container :global(.bp6-input-group) :global(.bp6-input) {
+  background-color: white;
   box-shadow: none;
   font-size: 16px;
+  /*
+   * Room for the count pill and the clear button, which are taken out of the
+   * flow below. Blueprint gives a trailing element the same job with
+   * `.bp6-input-action`; a plain node gets nothing, which is why the count used
+   * to sit under the box instead of in it.
+   */
+  padding-right: 104px;
 }
 
-.container :global(.bp6-input):focus {
+.container :global(.bp6-input-group) :global(.bp6-input):focus {
   box-shadow: none;
 }
 
 /*
- * The count sits inside the box on the right, before the clear button, and is
- * not a button: it says how much of the list the text is showing, which is a
- * fact about the list rather than something to click.
+ * The count and the clear button, inside the box on the right.
+ *
+ * The group is `display: block` (Blueprint's own), so a right element is in
+ * flow and lands *below* the input unless it is taken out - hence the absolute
+ * positioning here.
+ *
+ * `top: -2px` is measured, not derived: a percentage height on an absolutely
+ * positioned child of a block whose height is `auto` computes to `auto`, so
+ * `top: 0; height: 100%` never centred anything - the pill sat flush against
+ * the top of the field, which is where the misalignment came from. If the
+ * field's height ever changes, this is the number to re-measure.
  */
 .right {
+  position: absolute;
+  top: -2px;
+  right: 0;
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding-right: 4px;
+  gap: 6px;
+  padding-right: 6px;
+  z-index: 1;
 }
 
+/*
+ * The count is a pill, not a bare number: it is a fact about the list next to
+ * the field, and the rounded shape is what the extension gives every other bit
+ * of chrome-size information (the selected-tabs badge in the toolbar below it).
+ */
 .count {
-  color: global.$color-a;
-  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 10px;
+  background-color: global.$color-light-shade;
+  color: global.$color-d;
+  font-size: 12px;
+  line-height: 1;
   white-space: nowrap;
+}
+
+/*
+ * The clear button keeps its place whether or not there is anything to clear,
+ * so the count does not jump sideways the moment the box has text in it.
+ * `visibility` rather than `display`: a hidden button that took no space would
+ * defeat the point, and this one is out of the tab order while hidden.
+ */
+.clearHidden {
+  visibility: hidden;
 }

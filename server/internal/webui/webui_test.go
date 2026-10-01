@@ -194,36 +194,71 @@ func TestRailAndPanelsMatch(t *testing.T) {
 }
 
 // A favicon is whatever size its file happens to be - a 180px SVG is a perfectly
-// normal favicon - so the console pins it. This rule used to be scoped to
-// `.tab-row`, which the drawer's tab cards do not use: the icons rendered at
-// their intrinsic size there and the rows grew to match, squeezing the title and
-// url into a one-character column. Nothing about that was visible without a
-// browser, which is exactly what the rest of this file is for.
-func TestTheFaviconIsSizedUnscoped(t *testing.T) {
-	css := readAsset(t, "console.css")
-	// the rule has to stand on its own, not under a parent selector
-	scoped := regexp.MustCompile(`(?m)^\.[a-zA-Z0-9_-]+ \.fav \{`)
-	if scoped.MatchString(css) {
-		t.Error("console.css sizes .fav only under a parent selector, so a row " +
-			"shape that is not that parent renders the icon at its file's own size")
-	}
-	if !regexp.MustCompile(`(?m)^\.fav \{`).MatchString(css) {
-		t.Error("console.css has no unscoped .fav rule to pin the icon's size")
-	}
-	// and the pinned size has to be an actual size
-	rule := regexp.MustCompile(`(?ms)^\.fav \{(.*?)\n\}`)
+// normal favicon - so the console pins it, and the row that renders one must
+// not grow to fit it. The rule used to be scoped to `.tab-row`, which the
+// drawer's tab cards do not use: the icons rendered at their intrinsic size
+// there and the rows grew to match, squeezing the title and url into a
+// one-character column. Nothing about that was visible without a browser, which
+// is exactly what the rest of this file is for.
+func TestTheFaviconIsSixteenPixels(t *testing.T) {
+	// comments go first: the rule's own comment talks about the selectors, and
+	// a regex over the raw file would read that prose as the selector list
+	css := strings.ReplaceAll(
+		regexp.MustCompile(`(?s)/\*.*?\*/`).ReplaceAllString(
+			readAsset(t, "console.css"), ""),
+		"\n\n", "\n",
+	)
+
+	// The rule, and the selectors it applies to. `.fav` is the catch-all; the
+	// drawer's row is named too, so `li.tab-card > img` is pinned whether or
+	// not the script labelled it - which is the selector the drawer really
+	// renders.
+	rule := regexp.MustCompile(`(?ms)^([^{}]*\.fav[^{}]*)\{(.*?)\n\}`)
 	m := rule.FindStringSubmatch(css)
 	if m == nil {
-		t.Fatal("could not read the .fav rule")
+		t.Fatal("console.css has no rule that sizes .fav")
 	}
-	for _, want := range []string{"width:", "height:", "object-fit:"} {
-		if !strings.Contains(m[1], want) {
-			t.Errorf("the .fav rule has no %s:\n%s", want, m[1])
+	selectors, body := m[1], m[2]
+	entries := strings.Split(selectors, ",")
+	var hasBareFav, hasTabCard bool
+	for _, entry := range entries {
+		switch strings.TrimSpace(entry) {
+		case ".fav":
+			hasBareFav = true
+		case ".tab-card > img":
+			hasTabCard = true
+		case "":
+		default:
+			t.Errorf("the favicon rule has an unexpected selector %q: a rule "+
+				"scoped to one parent is what this test exists to prevent",
+				strings.TrimSpace(entry))
+		}
+	}
+	if !hasBareFav {
+		t.Error("the favicon rule does not apply to .fav on its own, so a " +
+			"favicon rendered outside the drawer's row is sized by nothing")
+	}
+	if !hasTabCard {
+		t.Error("the favicon rule does not cover .tab-card > img, the drawer's " +
+			"tab row, so a big icon there grows the row again")
+	}
+
+	// 16px is the point: a size, not just any declaration
+	for _, want := range []string{"width: 16px;", "height: 16px;", "object-fit:"} {
+		if !strings.Contains(body, want) {
+			t.Errorf("the favicon rule has no %q:\n%s", want, body)
 		}
 	}
 
-	// the markup uses that class
-	if !strings.Contains(readAsset(t, "console.js"), "class: 'fav'") {
+	script := readAsset(t, "console.js")
+	if !strings.Contains(script, "class: 'fav'") {
 		t.Error("console.js renders no .fav element, so the rule is dead code")
+	}
+	// and the drawer's favicon really is a direct child of the card, or the
+	// `.tab-card > img` half of the selector would match nothing
+	direct := regexp.MustCompile(`(?s)'li',\s*\{\s*class:\s*'tab-card'\s*\},\s*fav,`)
+	if !direct.MatchString(script) {
+		t.Error("console.js does not put the favicon directly inside the " +
+			"tab card, so `.tab-card > img` matches nothing")
 	}
 }

@@ -1037,13 +1037,18 @@ button.copy.done {
   background: var(--surface);
   border: 1px solid var(--border);
 }
-/* One favicon rule for the whole console, not one per row shape.
-   It was scoped to `.tab-row`, which the drawer's tab cards do not use - so an
-   `<img class="fav">` there rendered at the size its file happened to be (a
-   180px SVG is a perfectly normal favicon) and the row grew to match it,
-   squeezing the title and url into a one-character column. A favicon is 16px
-   everywhere in the extension, and it is 16px here. */
-.fav {
+/* A favicon is 16px in the extension and 16px here, whatever size the file
+   happens to be - a 180px SVG is a perfectly normal favicon, and a row that
+   grows to fit one squeezes its title and url into a one-character column.
+
+   The selector list is two long on purpose. `.tab-card` is the drawer's tab
+   row, and the favicon is a direct child of it (`li.tab-card > img`), so that
+   element is pinned whether or not the script remembered to label it; `.fav` on
+   its own is the catch-all for a favicon anywhere else. This rule used to be
+   scoped to `.tab-row`, which the drawer does not use at all: `.tab-row` is the
+   todo and bookmark list, and it has no favicon to size. */
+.fav,
+.tab-card > img {
   flex: 0 0 auto;
   width: 16px;
   height: 16px;
