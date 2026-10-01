@@ -274,10 +274,11 @@ func TestTheProviderRedirectURICarriesTheAuthRoutingPath(t *testing.T) {
 			return http.ErrUseLastResponse
 		},
 	}
-	// ?from= as the console sends it: the library only redirects back to an
-	// absolute URL on this host, so this is what a real click carries
-	resp, err := client.Get(ts.URL + "/auth/google/login?from=" +
-		url.QueryEscape("https://tabversed.example/"))
+	// No ?from=, exactly as the console's button asks: the server has to put the
+	// console on it, or the provider answers and the browser lands on the
+	// library's JSON dump of the user instead of the console (which is how a
+	// perfectly good Google sign-in ended on a page of JSON).
+	resp, err := client.Get(ts.URL + "/auth/google/login")
 	if err != nil {
 		t.Fatalf("follow the login route: %v", err)
 	}

@@ -216,10 +216,39 @@ func New(cfg config.Config, st *store.Store, logger *slog.Logger) (*Service, err
 	return s, nil
 }
 
-// Handlers exposes the library's login routes (mount at /auth/).
+// Handlers exposes the library's login routes (mount at /auth/), with the
+// console as the return target on every provider login.
 func (s *Service) Handlers() http.Handler {
 	authHandler, _ := s.auth.Handlers()
-	return authHandler
+	return s.withConsoleReturn(authHandler)
+}
+
+// withConsoleReturn puts the console on the ?from= of every provider login.
+//
+// The library redirects the browser to ?from= once the provider answers, and when
+// there is nothing to redirect to it renders the user as JSON - so a sign-in that
+// worked perfectly ends on a page of JSON instead of the console. The passwordless
+// email link had this handled by hand, server side, because the link is built
+// there (see api/console.go); the social buttons did not have it at all, and a
+// Google sign-in landed on JSON for exactly that reason.
+//
+// It is set here, for every provider, and overwritten rather than defaulted: the
+// point of a sign-in is to end up in the console, and a return target that
+// arrived in the query is one the caller chose. (The library only honours a host
+// on the console's own allow list anyway, so this is belt and braces rather than
+// the only defence.)
+func (s *Service) withConsoleReturn(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// /<provider>/login under the /auth mount; the callback and logout routes
+		// take no from, and the callback reads it from the handshake instead
+		if strings.HasSuffix(r.URL.Path, "/login") {
+			r = r.Clone(r.Context())
+			q := r.URL.Query()
+			q.Set("from", s.ConsoleURL())
+			r.URL.RawQuery = q.Encode()
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 // Guard wraps one of our handlers with the session check, the account mapping

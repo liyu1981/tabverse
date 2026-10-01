@@ -5,6 +5,7 @@ import (
 	"crypto/sha1"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"path/filepath"
 	"testing"
 	"time"
@@ -472,4 +473,49 @@ func register(t *testing.T, rig testRig, email string) string {
 		t.Fatalf("verify: %v", err)
 	}
 	return id
+}
+
+// Every provider login has to come back to the console. The library redirects the
+// browser to ?from= once the provider answers, and with nothing to redirect to it
+// renders the user as JSON instead - which is not a failure anybody notices in
+// the server log, only in the browser, where a successful Google sign-in ends on
+// a page of JSON. So the target is set here, server side, for every provider.
+func TestProviderLoginsCarryTheConsoleAsTheReturnTarget(t *testing.T) {
+	svc := &Service{publicURL: "https://tabversed.example"}
+	var seen string
+	inner := http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		seen = r.URL.RawQuery
+	})
+	handler := svc.withConsoleReturn(inner)
+
+	for _, path := range []string{"/google/login", "/github/login", "/email/login"} {
+		seen = ""
+		handler.ServeHTTP(httptest.NewRecorder(),
+			httptest.NewRequest(http.MethodGet, "https://tabversed.example/auth"+path, nil))
+		got, err := url.ParseQuery(seen)
+		if err != nil {
+			t.Fatalf("%s: parse the query %q: %v", path, seen, err)
+		}
+		if got.Get("from") != svc.ConsoleURL() {
+			t.Errorf("%s carried from=%q, want %q", path, got.Get("from"), svc.ConsoleURL())
+		}
+	}
+
+	// a target that arrived in the query is not honoured: the point of a sign-in
+	// is to end up in the console, and a return URL is not the caller's to choose
+	seen = ""
+	handler.ServeHTTP(httptest.NewRecorder(),
+		httptest.NewRequest(http.MethodGet,
+			"https://tabversed.example/auth/google/login?from=https://evil.example/", nil))
+	if got, _ := url.ParseQuery(seen); got.Get("from") != svc.ConsoleURL() {
+		t.Errorf("a caller supplied return target was honoured: %q", got.Get("from"))
+	}
+
+	// the callback and logout routes take no from - they read the handshake
+	seen = ""
+	handler.ServeHTTP(httptest.NewRecorder(),
+		httptest.NewRequest(http.MethodGet, "https://tabversed.example/auth/google/callback?state=x", nil))
+	if seen != "state=x" {
+		t.Errorf("the callback route was rewritten: %q", seen)
+	}
 }

@@ -178,14 +178,10 @@ func (s *Server) handleConsoleSigninLink(w http.ResponseWriter, r *http.Request)
 		writeStoreErr(w, err)
 		return
 	}
+	// The rewrite into the shape the library dispatches on. The `from` that
+	// brings the person back to the console is not set here: Handlers() puts it on
+	// every provider login, server side, so the two sign-in flows cannot drift.
 	hijack := r.Clone(r.Context())
-	// `from` is what the library redirects to once the link is followed. It is
-	// set *here*, server side, to the console's own address rather than taken
-	// from the request: the point of the sign-in is to end up in the console, and
-	// a value that arrived in the query would be a redirect an attacker chose.
-	q := hijack.URL.Query()
-	q.Set("from", s.accounts.ConsoleURL())
-	hijack.URL.RawQuery = q.Encode()
 	hijack.URL.Path = "/" + accounts.ProviderEmail + "/login"
 	s.accounts.Handlers().ServeHTTP(w, hijack)
 }

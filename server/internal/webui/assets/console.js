@@ -351,18 +351,11 @@ function renderSignInProviders(providers) {
     box.append(
       el(
         'a',
-        // ?from= is not optional. The auth library redirects the browser to it
-        // once the provider answers, and accepts only an *absolute* URL on the
-        // console's own host - a relative "/" is rejected, and with nothing at
-        // all a perfectly good Google sign-in ends on a page of JSON.
-        {
-          class: 'provider',
-          href:
-            '/auth/' +
-            name +
-            '/login?from=' +
-            encodeURIComponent(location.origin + '/'),
-        },
+        // No ?from= here on purpose: the server puts the console on it for every
+        // provider login (accounts.Service.withConsoleReturn), so the return
+        // target is chosen in one place, server side, and a stale console.js
+        // cannot leave a sign-in landing on a page of JSON.
+        { class: 'provider', href: '/auth/' + name + '/login' },
         name === 'github' ? 'GitHub' : name === 'google' ? 'Google' : name,
       ),
     );
