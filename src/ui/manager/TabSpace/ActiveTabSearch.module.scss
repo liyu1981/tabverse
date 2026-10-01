@@ -7,7 +7,14 @@
  */
 .container :global(.bp6-input-group) {
   background-color: white;
-  border-radius: 4px;
+  /*
+   * 16px, the same radius the bottom nav's buttons use: a filter box is a
+   * field like those are, and at a smaller radius the square white corners of
+   * the input inside showed through the group's own rounded ones. Clipping
+   * keeps that true for whatever is inside the group, not just the input.
+   */
+  border-radius: 16px;
+  overflow: hidden;
 }
 
 .container :global(.bp6-input-group):focus {

@@ -139,13 +139,14 @@ is the page doing the restoring.
 ## Commands
 
 ```sh
-npm run develop      # vite build --watch (development, includes dev pages)
-npm run build        # production bundle in dist/
-npm test             # vitest + coverage
-npm run typecheck    # tsc --noEmit
-npm run lint:check   # eslint 10 (flat config in eslint.config.mjs)
-npm run format:check # biome 2
-npm run build-crx    # production bundle + dist_crx/tabverse.zip (store package)
+pnpm install            # install (pnpm-lock.yaml is the source of truth)
+pnpm run develop        # vite build --watch (development, includes dev pages)
+pnpm run build          # production bundle in dist/
+pnpm test               # vitest + coverage
+pnpm run typecheck      # tsc --noEmit
+pnpm run lint:check     # biome lint
+pnpm run format:check   # biome format
+pnpm run build-crx      # production bundle + dist_crx/tabverse.zip (store package)
 ```
 
 ## Running the server
@@ -167,8 +168,8 @@ Note that a device token is a bearer credential: over plaintext `http` on a LAN
 it is readable by anything on that network, so use `https://` or a trusted
 network.
 
-The server has no Makefile: every build, test and cross-compile target is an
-npm script (`server:dev`, `server:build`, `server:test`, `server:vet`,
+The server has no Makefile: every build, test and cross-compile target is a
+package.json script (`server:dev`, `server:build`, `server:test`, `server:vet`,
 `server:fmt`, `server:cross`, `server:docker`). It binds `0.0.0.0:8223` by
 default so the extension can be loaded on another machine; set
 `TABVERSED_ADDR=127.0.0.1:8223` to keep it local.

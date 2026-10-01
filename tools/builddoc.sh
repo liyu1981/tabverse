@@ -1,5 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
-cd doc/tabverse-website/
-npm run build
-cd -
+cd "$(dirname "$0")/../doc/tabverse-website"
+pnpm run build

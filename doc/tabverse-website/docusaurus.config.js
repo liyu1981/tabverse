@@ -1,9 +1,5 @@
 // @ts-check
-
-const lightCodeTheme = require('prism-react-renderer/themes/github');
-const darkCodeTheme = require('prism-react-renderer/themes/dracula');
-
-const isProd = process && process.env && process.env.NODE_ENV === 'production';
+const { themes: prismThemes } = require('prism-react-renderer');
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -12,10 +8,17 @@ const config = {
   url: 'https://liyu1981.github.io/',
   baseUrl: '/tabverse/',
   onBrokenLinks: 'throw',
-  onBrokenMarkdownLinks: 'warn',
-  favicon: isProd ? '/tabverse/img/icon19.png' : '../img/icon19.png',
+  // Paths are resolved against the static directory, and get the baseUrl
+  // prefixed automatically, both in dev and in the production build.
+  favicon: 'img/icon19.png',
   organizationName: 'liyu1981',
   projectName: 'tabverse',
+
+  markdown: {
+    hooks: {
+      onBrokenMarkdownLinks: 'warn',
+    },
+  },
 
   presets: [
     [
@@ -42,14 +45,13 @@ const config = {
   ],
 
   themeConfig:
-    // @ts-ignore
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       navbar: {
         title: 'Tabverse',
         logo: {
           alt: 'Tabverse Logo',
-          src: isProd ? '/tabverse/img/icon48.png' : '../img/icon48.png',
+          src: 'img/icon48.png',
         },
         items: [
           {
@@ -102,8 +104,8 @@ const config = {
         copyright: `Copyright © ${new Date().getFullYear()} Tabverse Project. This website is built with Docusaurus.`,
       },
       prism: {
-        theme: lightCodeTheme,
-        darkTheme: darkCodeTheme,
+        theme: prismThemes.github,
+        darkTheme: prismThemes.dracula,
       },
     }),
 };

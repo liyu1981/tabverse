@@ -19,8 +19,32 @@
 
 .leftSide {
   flex: 0 0 auto;
-  /* the title is 1.2em, so the 16px icon wants a nudge to sit on its line */
-  margin-top: 3px;
+  /*
+   * A flex row, not a plain block. Blueprint's control (the checkbox) is
+   * `.bp6-control { display: block }`, so as a block child it started a new
+   * line and the favicon that follows it wrapped onto a second row of its own,
+   * below the title. The float-era rule was flex too: a floated block
+   * establishes a block formatting context, which is why the icon stayed
+   * beside the checkbox then.
+   */
+  display: flex;
+  align-items: center;
+}
+
+/*
+ * FavIcon pulls itself up 10px for callers that sit it in a centred row; the
+ * card row is top-aligned, and the 32px icon is already as tall as the two
+ * lines of text, so that nudge is cancelled here rather than by an equal
+ * margin on .leftSide - two numbers that have to keep matching is one too
+ * many. What is left is an icon whose top edge is the title's line, with the
+ * checkbox centred against it.
+ *
+ * `.card .favIcon`, not `.favIcon`: FavIcon's own container class is also a
+ * single class, so both rules would have the same specificity and the winner
+ * would be whichever stylesheet the bundler happened to emit last.
+ */
+.card .favIcon {
+  margin-top: 0;
 }
 
 .dragHandle {

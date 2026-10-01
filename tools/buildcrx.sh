@@ -3,7 +3,7 @@
 # where a Chrome binary with the signing key is available).
 set -e
 
-npm run build || exit 1
+pnpm run build || exit 1
 
 mkdir -p dist_crx
 cd dist_crx

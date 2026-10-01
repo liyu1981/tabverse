@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunktabverse_website||=[]).push([[903],{1912(e){e.exports=JSON.parse('{"blogBasePath":"/tabverse/blog","blogTitle":"Blog","authorsListPath":"/tabverse/blog/authors"}')}}]);

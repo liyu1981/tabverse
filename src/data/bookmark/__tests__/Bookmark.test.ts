@@ -26,7 +26,7 @@ function initAllBookmark() {
 }
 
 test('init', () => {
-  const { tabSpaceId, allBookmark, b1, b2 } = initAllBookmark();
+  const { tabSpaceId, allBookmark } = initAllBookmark();
   expect(allBookmark.bookmarks.size).toEqual(2);
   expect(allBookmark.tabSpaceId).toEqual(tabSpaceId);
   allBookmark.bookmarks.forEach((bookmark) => {
@@ -47,7 +47,7 @@ test('updateBookmark', () => {
 });
 
 test('removeBookmark', () => {
-  let { tabSpaceId, allBookmark, b1, b2 } = initAllBookmark();
+  let { allBookmark, b2 } = initAllBookmark();
   allBookmark = removeBookmark('888', allBookmark);
   expect(allBookmark.bookmarks.size).toEqual(2);
   allBookmark = removeBookmark(b2.id, allBookmark);
@@ -55,7 +55,7 @@ test('removeBookmark', () => {
 });
 
 test('updateTabSpaceId', () => {
-  let { tabSpaceId, allBookmark, b1, b2 } = initAllBookmark();
+  let { tabSpaceId, allBookmark } = initAllBookmark();
   const newTabSpaceId = tabSpaceId + 'changed';
   allBookmark = updateTabSpaceId(newTabSpaceId, allBookmark);
   expect(allBookmark.tabSpaceId).toEqual(newTabSpaceId);
@@ -65,7 +65,7 @@ test('updateTabSpaceId', () => {
 });
 
 test('misc', () => {
-  let { tabSpaceId, allBookmark, b1, b2 } = initAllBookmark();
+  let { allBookmark } = initAllBookmark();
   const {
     allBookmark: savedAllBookmark,
     allBookmarkSavePayload,

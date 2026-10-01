@@ -1,0 +1,5 @@
+# The website is its own pnpm workspace root so that it keeps a lockfile of its
+# own, separate from the extension at the repository root.
+allowBuilds:
+  '@parcel/watcher': true
+  core-js: true

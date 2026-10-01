@@ -5,25 +5,26 @@ addition to anything in `ARCHITECTURE.md` and `adr/`.
 
 ## Package manager
 
-- **Prefer pnpm** for installing and managing Node dependencies in general:
-  `pnpm add -D <pkg>`, `pnpm remove <pkg>`, `pnpm <script>`, `pnpm dlx ...`
-  instead of the npm equivalents.
-- Do not mix lockfiles: only one package manager's lockfile may exist in the
-  repo at a time.
-- Note: the toolchain was set up with npm, so `package-lock.json` is what is
-  committed today and CI (`.github/workflows/ci.yml`) runs `npm ci`. If you
-  touch dependency management, either migrate the repo to pnpm completely
-  (lockfile + CI + README scripts) or stay on npm for that change - say which
-  you did, and never leave both lockfiles behind.
+- **Use pnpm** for installing and managing Node dependencies:
+  `pnpm add -D <pkg>`, `pnpm remove <pkg>`, `pnpm <script>`, `pnpm dlx ...`.
+- Do not mix lockfiles: only one package manager's lockfile may exist per
+  package. The repository moved off npm on 2025: `package-lock.json` is gone,
+  `pnpm-lock.yaml` is the source of truth, and CI
+  (`.github/workflows/ci.yml`) runs `pnpm install --frozen-lockfile` with
+  `pnpm/action-setup@v4`, which reads the pinned version from
+  `packageManager` in `package.json`. The Docusaurus site in
+  `doc/tabverse-website/` is a package of its own (it has a
+  `pnpm-workspace.yaml` so it is its own workspace root, and its own
+  `pnpm-lock.yaml`), built and served separately from the extension.
 
 ## Verification
 
-- Run what is automatable: `npm test` (vitest), `npm run typecheck`, biome
+- Run what is automatable: `pnpm test` (vitest), `pnpm run typecheck`, biome
   `format`/`lint`, and the Go suite (`go vet`, `go test -race ./...` in
   `server/`). Fix what they report, and state plainly which checks you ran.
 - **Every manual check that involves something long-lived must be bounded.**
   A server in the foreground, a `systemctl start`ed unit, a `journalctl -f`, a
-  `tail -f`, a `npm run develop` watch build, a server waiting on a port: put a
+  `tail -f`, a `pnpm run develop` watch build, a server waiting on a port: put a
   timeout on it (`timeout 5 ...`, `journalctl -n 50 --no-pager`, `&` plus
   `kill`), and never leave one running between tool calls. A call that blocks
   for minutes with no output is indistinguishable from a hang, and it holds the

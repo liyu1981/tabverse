@@ -133,7 +133,7 @@ export function TabCard(props: ITabCardProps) {
             }}
           />
         ) : null}
-        <FavIcon url={props.tab.favIconUrl} />
+        <FavIcon className={classes.favIcon} url={props.tab.favIconUrl} />
       </div>
       <button
         type="button"

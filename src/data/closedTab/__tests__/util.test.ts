@@ -16,7 +16,7 @@ import {
   startMonitorDbChanges,
 } from '../util';
 
-import { $tabSpace, tabSpaceStoreApi } from '../../tabSpace/store';
+import { tabSpaceStoreApi } from '../../tabSpace/store';
 import { TabSpaceDBMsg, sendPubSubMessage } from '../../../message/message';
 import { getMockChrome } from '../../../dev/chromeMock';
 import { newEmptyAllClosedTab } from '../AllClosedTab';

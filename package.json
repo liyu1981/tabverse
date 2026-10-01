@@ -2,6 +2,10 @@
   "name": "tabverse",
   "version": "0.5.0",
   "description": "Tabverse is an opinionated tab manager for Chrome browser.",
+  "packageManager": "pnpm@12.4.2",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "typecheck:ts6": "tsc6 --noEmit",

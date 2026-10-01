@@ -28,7 +28,7 @@ server authoritative sync protocol.
 
 ## Run
 
-Every build/run/cross-compile target is an npm script at the repository root
+Every build/run/cross-compile target is a package.json script at the repository root
 (`package.json` is the only build tool; there is no Makefile).
 
 ```sh

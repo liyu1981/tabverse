@@ -80,9 +80,7 @@
   },
   "overrides": [
     {
-      "includes": [
-        "src/ui/common/useAsyncEffect.ts"
-      ],
+      "includes": ["src/ui/common/useAsyncEffect.ts"],
       "linter": {
         "rules": {
           "correctness": {
@@ -92,9 +90,7 @@
       }
     },
     {
-      "includes": [
-        "src/ui/common/SearchInput/SearchInput.tsx"
-      ],
+      "includes": ["src/ui/common/SearchInput/SearchInput.tsx"],
       "linter": {
         "rules": {
           "a11y": {

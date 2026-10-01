@@ -14,29 +14,33 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # pnpm/action-setup picks the version up from packageManager in
+      # package.json, so the lockfile and CI cannot drift apart
+      - uses: pnpm/action-setup@v4
+
       - uses: actions/setup-node@v4
         with:
-          # ESLint 10 requires node >= 20.19; 22 is the active LTS
+          # TypeScript 6 / Vite 8 want a recent node; 22 is the active LTS
           node-version: 22
-          cache: npm
+          cache: pnpm
 
       - name: install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: typecheck
-        run: npm run typecheck
+        run: pnpm run typecheck
 
       - name: format check
-        run: npm run format:check
+        run: pnpm run format:check
 
       - name: lint
-        run: npm run lint:check
+        run: pnpm run lint:check
 
       - name: unit tests
-        run: npm test
+        run: pnpm test
 
       - name: production build
-        run: npm run build
+        run: pnpm run build
 
       - name: archive production bundle
         uses: actions/upload-artifact@v4
@@ -59,11 +63,14 @@ jobs:
           go-version-file: server/go.mod
           cache-dependency-path: server/go.sum
 
-      # the server build/test/cross targets are npm scripts (no Makefile)
+      # the server build/test/cross targets are package.json scripts (no
+      # Makefile); none of them needs node_modules, so nothing is installed
+      - uses: pnpm/action-setup@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
+          cache: pnpm
 
       - name: gofmt
         run: test -z "$(gofmt -l .)"
@@ -78,7 +85,7 @@ jobs:
         working-directory: server
 
       - name: cross compile (pure go, no cgo)
-        run: npm run server:cross
+        run: pnpm run server:cross
 
       - name: archive server binaries
         uses: actions/upload-artifact@v4
@@ -94,18 +101,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
+          cache: pnpm
 
       - name: install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: build store zip
         # produces dist_crx/tabverse.zip; .crx signing is intentionally not
         # done here (the web store takes a zip, keys stay local)
-        run: npm run build-crx
+        run: pnpm run build-crx
 
       - name: archive store package
         uses: actions/upload-artifact@v4

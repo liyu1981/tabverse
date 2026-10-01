@@ -3,6 +3,7 @@
 
 # Production
 /build
+# Docusaurus build output of this site lives in ../../docs, tracked on purpose
 
 # Generated files
 .docusaurus
@@ -18,3 +19,4 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.pnpm-debug.log*

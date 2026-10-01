@@ -1,12 +1,12 @@
-import { GITHUB_URL_PREFIX } from '../tabverse';
 import React from 'react';
+import useBaseUrl from '@docusaurus/useBaseUrl';
 import clsx from 'clsx';
 import styles from './HomepageFeatures.module.css';
 
-const FeatureList = [
+const getFeatureList = (baseUrl) => [
   {
     title: 'With Tabverse you can bravely closing that many tabs!',
-    img: `${GITHUB_URL_PREFIX}img/so-many-tabs-problem.png`,
+    img: `${baseUrl}img/so-many-tabs-problem.png`,
     description: (
       <>
         Tabverse helps you to best managing many chrome tabs opened for doing a
@@ -16,7 +16,7 @@ const FeatureList = [
   },
   {
     title: 'Group your tabs and manage them with Tabverse',
-    img: `${GITHUB_URL_PREFIX}img/tabverse-feature-1.png`,
+    img: `${baseUrl}img/tabverse-feature-1.png`,
     description: (
       <>
         Group your tabs in one window and create Tabverse to manage them. One
@@ -28,7 +28,7 @@ const FeatureList = [
   {
     title:
       'You focus on working and let Tabverse focus on remembering your workspace',
-    img: `${GITHUB_URL_PREFIX}img/tabverse-feature-2.png`,
+    img: `${baseUrl}img/tabverse-feature-2.png`,
     description: (
       <>
         Save your Tabverse, and it will remember your tabs, todos, notes, and
@@ -40,7 +40,7 @@ const FeatureList = [
   {
     title:
       'You are master of your data. No login, no subscription, just convenience.',
-    img: `${GITHUB_URL_PREFIX}img/tabverse-feature-3.png`,
+    img: `${baseUrl}img/tabverse-feature-3.png`,
     description: (
       <>
         Tabverse saves all your data inside your local Chrome storage. You do
@@ -50,7 +50,7 @@ const FeatureList = [
   },
   {
     title: 'Free and open source!',
-    img: `${GITHUB_URL_PREFIX}img/tabverse-feature-4.png`,
+    img: `${baseUrl}img/tabverse-feature-4.png`,
     description: (
       <>
         You can use it free by installing from Chrome web store. We also open
@@ -93,11 +93,12 @@ function Feature({ idx, img, svg, title, description }) {
 }
 
 export default function HomepageFeatures() {
+  const baseUrl = useBaseUrl('/');
   return (
     <section className={styles.features}>
       <div className="container">
         <div className="row">
-          {FeatureList.map((props, idx) => (
+          {getFeatureList(baseUrl).map((props, idx) => (
             <Feature key={idx} idx={idx} {...props} />
           ))}
         </div>

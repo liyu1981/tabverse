@@ -1,9 +1,4 @@
-import {
-  Bookmark,
-  convertToSavedBookmark,
-  newEmptyBookmark,
-  setTabSpaceId,
-} from './Bookmark';
+import { Bookmark, convertToSavedBookmark, setTabSpaceId } from './Bookmark';
 import { IBase, isIdNotSaved } from '../common';
 import {
   convertToSavedBase,

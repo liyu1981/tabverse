@@ -1,10 +1,11 @@
 import './TabSpaceLogo.module.css';
 
-import { GITHUB_URL_PREFIX } from '../tabverse';
 import React from 'react';
+import useBaseUrl from '@docusaurus/useBaseUrl';
 import styles from './TabSpaceLogo.module.css';
 
 export const TabSpaceLogo = () => {
+  const baseUrl = useBaseUrl('/');
   return (
     <div
       style={{
@@ -22,7 +23,7 @@ export const TabSpaceLogo = () => {
             top: '-86px',
             right: '-74px',
           }}
-          src={`${GITHUB_URL_PREFIX}img/tabverse_logo_universe.svg`}
+          src={`${baseUrl}img/tabverse_logo_universe.svg`}
         />
       </div>
       <div

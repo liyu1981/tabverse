@@ -20,7 +20,7 @@ function initAllNote() {
 }
 
 test('init', () => {
-  const { tabSpaceId, allNote, n1, n2 } = initAllNote();
+  const { tabSpaceId, allNote } = initAllNote();
   expect(allNote.notes.size).toEqual(2);
   expect(allNote.tabSpaceId).toEqual(tabSpaceId);
   expect(allNote.notes.map((note) => note.tabSpaceId).toArray()).toEqual([
@@ -39,7 +39,7 @@ test('updateNote', () => {
 });
 
 test('removeNote', () => {
-  let { tabSpaceId, allNote, n1, n2 } = initAllNote();
+  let { allNote, n2 } = initAllNote();
   allNote = removeNote('888', allNote);
   expect(allNote.notes.size).toEqual(2);
   allNote = removeNote(n2.id, allNote);
@@ -47,7 +47,7 @@ test('removeNote', () => {
 });
 
 test('updateTabSpaceId', () => {
-  let { tabSpaceId, allNote, n1, n2 } = initAllNote();
+  let { tabSpaceId, allNote } = initAllNote();
   const newTabSpaceId = tabSpaceId + 'changed';
   allNote = updateTabSpaceId(newTabSpaceId, allNote);
   expect(allNote.tabSpaceId).toEqual(newTabSpaceId);
@@ -68,7 +68,7 @@ test('note isEqualContent', () => {
 });
 
 test('misc', () => {
-  let { tabSpaceId, allNote, n1, n2 } = initAllNote();
+  let { allNote } = initAllNote();
   const {
     allNote: savedAllNote,
     allNoteSavePayload,

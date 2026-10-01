@@ -514,14 +514,6 @@ async function openMyAccount() {
   await openAccount(target);
 }
 
-function showApp() {
-  $('#view-signin').hidden = true;
-  $('#app').hidden = false;
-  // The one case where being signed in is not enough: this account is the
-  // address the operator is expected to be, and nobody has claimed the role yet.
-  $('#operator-hint').hidden = !(state.me && state.me.awaiting_operator);
-}
-
 // ---- the directory ------------------------------------------------------
 
 // showDirectory is the operator's Admin tab: every account, and what can be
