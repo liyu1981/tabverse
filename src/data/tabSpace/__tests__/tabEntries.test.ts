@@ -9,7 +9,7 @@ import { db } from '../../../storage/db';
 import { newEmptyTab, setPinned, setTitle, setUrl } from '../Tab';
 import { querySavedTabSpace, saveTabSpace } from '../util';
 import { resetTestDb } from '../../../dev/dbImplTest';
-import { tabverseEntries } from '../tabEntries';
+import { tabverseEntries, tabverseTabs } from '../tabEntries';
 import { produce } from 'immer';
 
 import { Tab } from '../Tab';
@@ -149,4 +149,18 @@ test('a tabverse with no groups and no splits is a flat list', () => {
   const entries = tabverseEntries(tabSpace);
   expect(entries.length).toEqual(2);
   expect(entries.every((entry) => entry.kind === 'tab')).toBe(true);
+});
+
+test('the flat tab list reads in the same order as the entries do', () => {
+  // the filter box ranks matches, so it cannot hand them back nested in the
+  // blocks they came from: it needs the window's own order, flattened
+  const { tabSpace } = tabverseWithEverything();
+  expect(tabverseTabs(tabSpace).map((tab) => tab.title)).toEqual([
+    'Pinned',
+    'Left',
+    'Right',
+    'Grouped',
+    'Loose',
+  ]);
+  expect(tabverseTabs(newEmptyTabSpace())).toEqual([]);
 });

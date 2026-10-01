@@ -9,7 +9,13 @@ import {
   Popover,
   Tooltip,
 } from '@blueprintjs/core';
-import React, { useEffect, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   findTabById,
   getTabIds,
@@ -24,6 +30,7 @@ import {
 } from '../../../data/bookmark/Bookmark';
 
 import { CapabilityWarning } from './CapabilityWarning';
+import { ActiveTabSearch } from './ActiveTabSearch';
 import { ErrorBoundary } from '../../common/ErrorBoundary';
 import { List } from 'immutable';
 import { MoveToExistTabSpaceDialog } from '../../dialog/MoveToExistTabSpace';
@@ -36,9 +43,15 @@ import { getPreview } from '../../../data/tabSpace/TabPreviewCache';
 import { logger } from '../../../global';
 import { saveAndCloseTabSpace } from '../../../data/tabSpace/closeTabSpace';
 import { saveCurrentBookmarks } from '../../../data/bookmark/util';
-import { tabverseEntries } from '../../../data/tabSpace/tabEntries';
+import {
+  tabverseEntries,
+  tabverseTabs,
+} from '../../../data/tabSpace/tabEntries';
+import { filterActiveTabs } from '../../../data/tabSpace/activeTabFilter';
+import { focusLiveTabUtil } from '../../../data/tabSpace/chromeUtil';
 import { updateTabSpaceName } from '../../../data/tabSpace/chromeTab';
 import { useStore } from 'effector-react';
+import clsx from 'clsx';
 
 enum SelectedTabTool {
   MoveToExistTabverse = 'Move to Exist Tabverse',
@@ -94,6 +107,54 @@ export function TabSpaceListView() {
   const [isMoveToExistTabSpaceDialogOpen, setIsMoveToExistTabSpaceDialogOpen] =
     useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  // the filter box over the live tabs; empty means the whole list, unchanged
+  const [filterText, setFilterText] = useState<string>('');
+  const [activeTabId, setActiveTabId] = useState<string | null>(null);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+
+  const isFiltering = filterText.trim().length > 0;
+
+  // the window's own order, flattened: the box ranks matches, so it cannot
+  // hand them back nested in the group and split blocks they came from
+  const orderedTabs = useMemo(() => tabverseTabs(tabSpace), [tabSpace]);
+  const matchedTabs = useMemo(
+    () => filterActiveTabs(orderedTabs, filterText),
+    [orderedTabs, filterText],
+  );
+
+  const onActiveMatchChange = useCallback((tab: Tab | null) => {
+    setActiveTabId(tab ? tab.id : null);
+  }, []);
+
+  // `/` focuses the box from anywhere on the page, unless the user is already
+  // typing somewhere - in the note editor or a text field `/` is just a slash
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== '/' || event.ctrlKey || event.metaKey || event.altKey) {
+        return;
+      }
+      const target = event.target as HTMLElement | null;
+      if (
+        target &&
+        (target.isContentEditable ||
+          ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))
+      ) {
+        return;
+      }
+      event.preventDefault();
+      searchInputRef.current?.focus();
+      searchInputRef.current?.select();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
+
+  // a tab can be closed while the box is filtering over the list
+  useEffect(() => {
+    if (activeTabId && !tabSpace.tabs.some((tab) => tab.id === activeTabId)) {
+      setActiveTabId(null);
+    }
+  }, [activeTabId, tabSpace.tabs]);
 
   // The tabverse itself is saved on every tab event, so this button is not
   // about saving it: it flushes whatever is still pending (a note typed a
@@ -123,7 +184,13 @@ export function TabSpaceListView() {
   const tabGroupOf = (tab: Tab) => groupOfTab(tabSpace.tabGroups, tab.id);
 
   const tabCard = (tab: Tab) => (
-    <div key={tab.id} className={tabGroupOf(tab) ? classes.tabInGroup : ''}>
+    <div
+      key={tab.id}
+      className={clsx(
+        tabGroupOf(tab) ? classes.tabInGroup : '',
+        isFiltering && tab.id === activeTabId ? classes.tabIsActiveMatch : '',
+      )}
+    >
       <ErrorBoundary>
         <TabCard
           tab={tab}
@@ -159,30 +226,38 @@ export function TabSpaceListView() {
   // Groups, split pairs and plain tabs come from the shared entry builder, so
   // this list and the saved tabverse list describe a tabverse the same way
   const tabEntries: React.ReactNode[] = [];
-  for (const entry of tabverseEntries(tabSpace)) {
-    if (entry.kind === 'tab') {
-      tabEntries.push(tabCard(entry.tab));
-    } else if (entry.kind === 'split') {
-      const [first, second] = entry.tabs as [Tab, Tab];
-      tabEntries.push(
-        <SplitBlock
-          key={`split-${first.splitViewId}`}
-          splitViewId={first.splitViewId}
-        >
-          {tabCard(first)}
-          {tabCard(second)}
-        </SplitBlock>,
-      );
-    } else if (entry.tabs.length > 0) {
-      tabEntries.push(
-        <TabGroupBlock
-          key={`group-${entry.group.id}`}
-          group={entry.group}
-          tabCount={entry.tabs.length}
-        >
-          <div className={classes.tabInGroup}>{entry.tabs.map(tabCard)}</div>
-        </TabGroupBlock>,
-      );
+  if (isFiltering) {
+    // a ranked, flat result list: the blocks exist to show the window's shape,
+    // and a best-match-first answer to "which one is it" does not have one
+    for (const tab of matchedTabs) {
+      tabEntries.push(tabCard(tab));
+    }
+  } else {
+    for (const entry of tabverseEntries(tabSpace)) {
+      if (entry.kind === 'tab') {
+        tabEntries.push(tabCard(entry.tab));
+      } else if (entry.kind === 'split') {
+        const [first, second] = entry.tabs as [Tab, Tab];
+        tabEntries.push(
+          <SplitBlock
+            key={`split-${first.splitViewId}`}
+            splitViewId={first.splitViewId}
+          >
+            {tabCard(first)}
+            {tabCard(second)}
+          </SplitBlock>,
+        );
+      } else if (entry.tabs.length > 0) {
+        tabEntries.push(
+          <TabGroupBlock
+            key={`group-${entry.group.id}`}
+            group={entry.group}
+            tabCount={entry.tabs.length}
+          >
+            <div className={classes.tabInGroup}>{entry.tabs.map(tabCard)}</div>
+          </TabGroupBlock>,
+        );
+      }
     }
   }
 
@@ -248,6 +323,15 @@ export function TabSpaceListView() {
     <div className={classes.stickyOn}>
       <div className={classes.header}>
         {tabSpaceTitleView}
+        <ActiveTabSearch
+          value={filterText}
+          onChange={setFilterText}
+          matches={matchedTabs}
+          totalCount={orderedTabs.length}
+          inputRef={searchInputRef}
+          onActivate={(tab: Tab) => void focusLiveTabUtil(tab)}
+          onActiveMatchChange={onActiveMatchChange}
+        />
         {tabSpaceToolbarView}
       </div>
     </div>
@@ -258,6 +342,11 @@ export function TabSpaceListView() {
       {tabSpaceHeaderView}
       <CapabilityWarning />
       <div className={classes.tabEntriesContainer}>{tabEntries}</div>
+      {isFiltering && matchedTabs.length <= 0 ? (
+        <div className={classes.noMatchNotice}>
+          {`No tab of "${tabSpace.name || 'this tabverse'}" matches.`}
+        </div>
+      ) : null}
       <div className={classes.bottomPlaceholder}></div>
       <MoveToExistTabSpaceDialog
         tabsForMoving={selectedTabs.toArray()}

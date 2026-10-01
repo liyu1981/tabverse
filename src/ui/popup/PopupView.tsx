@@ -186,7 +186,7 @@ export function PopupView() {
       setPendingReplace({
         url: tabverseUrl(TabSpaceOp.LoadSaved, tabSpace.id),
         title: 'Replace the tabverse in this window?',
-        body: `This window already has a tabverse ("${currentTabSpaceName}"). It is saved automatically, so nothing is lost. Continuing closes it here and loads the ${tabSpace.tabs.size} tab(s) of "${tabSpace.name}" into this window.`,
+        body: `This window already has a tabverse ("${currentTabSpaceName}"). It is saved automatically, so nothing is lost. Continuing closes the other tabs here and loads the ${tabSpace.tabs.size} tab(s) of "${tabSpace.name}" into this window - the ones of that tabverse already open here are left as they are.`,
       });
       return;
     }

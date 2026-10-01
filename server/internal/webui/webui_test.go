@@ -192,3 +192,38 @@ func TestRailAndPanelsMatch(t *testing.T) {
 		}
 	}
 }
+
+// A favicon is whatever size its file happens to be - a 180px SVG is a perfectly
+// normal favicon - so the console pins it. This rule used to be scoped to
+// `.tab-row`, which the drawer's tab cards do not use: the icons rendered at
+// their intrinsic size there and the rows grew to match, squeezing the title and
+// url into a one-character column. Nothing about that was visible without a
+// browser, which is exactly what the rest of this file is for.
+func TestTheFaviconIsSizedUnscoped(t *testing.T) {
+	css := readAsset(t, "console.css")
+	// the rule has to stand on its own, not under a parent selector
+	scoped := regexp.MustCompile(`(?m)^\.[a-zA-Z0-9_-]+ \.fav \{`)
+	if scoped.MatchString(css) {
+		t.Error("console.css sizes .fav only under a parent selector, so a row " +
+			"shape that is not that parent renders the icon at its file's own size")
+	}
+	if !regexp.MustCompile(`(?m)^\.fav \{`).MatchString(css) {
+		t.Error("console.css has no unscoped .fav rule to pin the icon's size")
+	}
+	// and the pinned size has to be an actual size
+	rule := regexp.MustCompile(`(?ms)^\.fav \{(.*?)\n\}`)
+	m := rule.FindStringSubmatch(css)
+	if m == nil {
+		t.Fatal("could not read the .fav rule")
+	}
+	for _, want := range []string{"width:", "height:", "object-fit:"} {
+		if !strings.Contains(m[1], want) {
+			t.Errorf("the .fav rule has no %s:\n%s", want, m[1])
+		}
+	}
+
+	// the markup uses that class
+	if !strings.Contains(readAsset(t, "console.js"), "class: 'fav'") {
+		t.Error("console.js renders no .fav element, so the rule is dead code")
+	}
+}

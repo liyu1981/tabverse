@@ -1,4 +1,5 @@
 import { TabSpaceOp } from '../../global';
+import { Tab } from './Tab';
 import { getNewId } from '../common';
 import { logger } from '../../global';
 import { sendChromeMessage, TabSpaceMsg } from '../../message/message';
@@ -57,6 +58,64 @@ export function switchToTabSpaceUtil(
     });
   }
   chrome.windows.update(chromeWindowId, { focused: true });
+}
+
+/**
+ * Brings a live tab to the front, in its own window if that window is behind.
+ *
+ * The failure is logged and swallowed rather than thrown: the tab can be closed
+ * between the list being drawn and the click landing, and a tabverse row that
+ * throws on click is worse than a click that does nothing.
+ */
+export async function focusLiveTabUtil(targetTab: Tab): Promise<void> {
+  if (targetTab.chromeTabId < 0) {
+    return;
+  }
+  try {
+    await chrome.tabs.update(targetTab.chromeTabId, { active: true });
+    if (targetTab.chromeWindowId >= 0) {
+      await chrome.windows.update(targetTab.chromeWindowId, { focused: true });
+    }
+  } catch (err) {
+    logger.log('could not switch to the tab', targetTab.id, err);
+  }
+}
+
+/**
+ * Puts a window's tabs in a given order.
+ *
+ * Restoring reuses the tabs the window already has (see restorePlan.ts), and
+ * those sit wherever they were left, so the tab strip would otherwise end up in
+ * a different order from the tabverse list - which is the one thing the list is
+ * for. One pass, moving each tab that is not already where it belongs: the
+ * shortest set of moves is not worth working out for a window's worth of tabs.
+ *
+ * The order is taken as given, with the tabverse's own pinned tab expected at
+ * the front, so only pinned tabs are asked to move inside the pinned section.
+ * A tab that cannot be moved (it was closed meanwhile, or the browser refused)
+ * is logged and skipped: the next save reconciles whatever order we ended up
+ * with.
+ */
+export async function orderWindowTabs(
+  windowId: number,
+  desiredChromeTabIds: number[],
+): Promise<void> {
+  const current = await chrome.tabs.query({ windowId });
+  for (let index = 0; index < desiredChromeTabIds.length; index++) {
+    const wantedId = desiredChromeTabIds[index];
+    const from = current.findIndex((tab) => tab.id === wantedId);
+    if (from < 0 || from === index) {
+      continue;
+    }
+    try {
+      await chrome.tabs.move(wantedId, { index });
+      // keep our own copy in step, so the next tab is placed against reality
+      const [moved] = current.splice(from, 1);
+      current.splice(index, 0, moved);
+    } catch (err) {
+      logger.log('could not move tab into place', wantedId, err);
+    }
+  }
 }
 
 /**

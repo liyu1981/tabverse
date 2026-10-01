@@ -22,10 +22,11 @@ import {
   subscribePubSubMessage,
 } from '../../message/message';
 import { debounce, hasOwn, logger, perfEnd, perfStart } from '../../global';
-import { filter, isEqual, omit } from 'lodash';
+import { isEqual, omit } from 'lodash';
 
 import { DEFAULT_SAVE_DEBOUNCE } from '../../storage/StorageOverview';
-import { pinTabverseTabFirst } from './chromeUtil';
+import { orderWindowTabs, pinTabverseTabFirst } from './chromeUtil';
+import { planRestore } from './restorePlan';
 import { restoreTabGroups } from './tabGroup';
 
 export function monitorDbChanges() {
@@ -360,6 +361,18 @@ export async function moveTabsToTabSpace(
   await saveTabSpace(newTabSpace);
 }
 
+/**
+ * Loads a saved tabverse into the window the manager page is in.
+ *
+ * The window is emptied of everything that is not part of the tabverse - the
+ * tabs the user had open here are the ones being replaced - but a tab of the
+ * saved tabverse that is *already* open here is kept rather than closed and
+ * opened again (see restorePlan.ts). Kept tabs keep their place in the window,
+ * its history and its state; the tabverse then owns the order, so the strip is
+ * put back into the saved order and every tab's live fields (chromeTabId above
+ * all - the store's copy of it is what the list's buttons act on) are set from
+ * what the browser actually has.
+ */
 export async function loadTabSpaceByTabSpaceId(
   savedTabSpaceId: string,
   chromeTabId: number,
@@ -368,12 +381,16 @@ export async function loadTabSpaceByTabSpaceId(
   let tabSpace = await querySavedTabSpaceById(savedTabSpaceId);
   tabSpace = updateTabSpace({ chromeTabId, chromeWindowId }, tabSpace);
 
-  // remove any other tabs before loading our tabs
+  const windowTabs = await chrome.tabs.query({ currentWindow: true });
+  const plan = planRestore(tabSpace.tabs.toArray(), windowTabs, chromeTabId);
+  logger.log(
+    `restoring "${tabSpace.name}": opening ${plan.createTabs.length}, ` +
+      `keeping ${plan.entries.length - plan.createTabs.length}, ` +
+      `closing ${plan.removeChromeTabIds.length}`,
+  );
+
   await Promise.all(
-    filter(
-      await chrome.tabs.query({ currentWindow: true }),
-      (tab) => tab.id !== chromeTabId,
-    ).map((otherTab) => chrome.tabs.remove(otherTab.id)),
+    plan.removeChromeTabIds.map((id) => chrome.tabs.remove(id)),
   );
 
   // here we do not use map but use for loop to ensure that we restore tabs in
@@ -383,46 +400,101 @@ export async function loadTabSpaceByTabSpaceId(
   // Passing `pinned` (or an index) to tabs.create() would make Chrome resolve
   // the position inside the pinned section, whose index semantics are not
   // documented; pinning in order afterwards reproduces the saved order without
-  // depending on that.
-  const createdTabIds: { ourTabId: string; id: number; pinned: boolean }[] = [];
-  for (let i = 0; i < tabSpace.tabs.size; i++) {
-    const savedTab = tabSpace.tabs.get(i);
-    const created = await chrome.tabs.create({ url: savedTab.url });
+  // depending on that. The same is true of a reused tab: if the window had it
+  // pinned and the tabverse saved it unpinned (or the other way round), the
+  // saved row is the truth, so it is set below.
+  const pinnedBeforeRestore = new Map<number, boolean>(
+    windowTabs.map((tab) => [tab.id, !!tab.pinned]),
+  );
+  const chromeTabIdByOurTabId = new Map<string, number>();
+  for (const entry of plan.entries) {
+    if (entry.reuseChromeTabId !== undefined) {
+      chromeTabIdByOurTabId.set(entry.savedTab.id, entry.reuseChromeTabId);
+      continue;
+    }
+    const created = await chrome.tabs.create({
+      url: entry.savedTab.url,
+      windowId: chromeWindowId,
+    });
     if (created?.id !== undefined) {
-      createdTabIds.push({
-        ourTabId: savedTab.id,
-        id: created.id,
-        pinned: !!savedTab.pinned,
-      });
+      chromeTabIdByOurTabId.set(entry.savedTab.id, created.id);
     }
   }
-  for (const { id, pinned } of createdTabIds) {
-    if (pinned) {
+
+  const pinnedChromeTabIds = new Set<number>();
+  for (const entry of plan.entries) {
+    const liveTabId = chromeTabIdByOurTabId.get(entry.savedTab.id);
+    if (liveTabId === undefined) {
+      // the tab could not be opened; restore is best effort
+      continue;
+    }
+    // a tab created above was never pinned, so it is not in the map
+    const wasPinned = pinnedBeforeRestore.get(liveTabId) ?? false;
+    if (wasPinned !== entry.pinned) {
       try {
-        await chrome.tabs.update(id, { pinned: true });
+        await chrome.tabs.update(liveTabId, { pinned: entry.pinned });
       } catch (err) {
-        logger.log('could not pin restored tab', id, err);
+        logger.log(
+          'could not set the pinned state of a restored tab',
+          entry.savedTab.id,
+          err,
+        );
+        continue;
       }
     }
+    if (entry.pinned) {
+      pinnedChromeTabIds.add(liveTabId);
+    }
   }
+
   // the tabverse's own pinned tabs were just pinned, so put the tabverse tab
   // back at the front of the pinned section
   await pinTabverseTabFirst(chromeTabId);
 
+  // the window is a mixture now - tabs that were here and tabs that were just
+  // opened - and only the saved order makes the strip match the list
+  const chromeTabIdsInSavedOrder = (pinned: boolean) =>
+    plan.entries
+      .filter((entry) => entry.pinned === pinned)
+      .map((entry) => chromeTabIdByOurTabId.get(entry.savedTab.id))
+      .filter((id): id is number => id !== undefined);
+  await orderWindowTabs(chromeWindowId, [
+    chromeTabId,
+    ...chromeTabIdsInSavedOrder(true),
+    ...chromeTabIdsInSavedOrder(false),
+  ]);
+
   // groups last: chrome.tabs.group() needs every tab to exist, and a split view
-  // (which requires matching group state) is created after this
-  const tabIdByOurTabId = new Map(
-    createdTabIds.map(({ ourTabId, id }) => [ourTabId, id]),
-  );
+  // (which requires matching group state) is created after this. Reused tabs are
+  // in the map like the new ones, so a group can land on either.
   const restoredGroups = await restoreTabGroups(
     tabSpace.tabGroups,
-    tabIdByOurTabId,
-    (tabId) => !!createdTabIds.find((t) => t.id === tabId)?.pinned,
+    chromeTabIdByOurTabId,
+    (tabId) => pinnedChromeTabIds.has(tabId),
   );
   if (restoredGroups > 0) {
     logger.log(`restored ${restoredGroups} tab group(s)`);
   }
 
+  // the store's copy of a tabverse carries live fields that are not saved, and
+  // a reused tab raises no event to fill them in
+  for (const entry of plan.entries) {
+    const liveTabId = chromeTabIdByOurTabId.get(entry.savedTab.id);
+    if (liveTabId === undefined) {
+      continue;
+    }
+    tabSpace = updateTab(
+      {
+        tid: entry.savedTab.id,
+        changes: {
+          chromeTabId: liveTabId,
+          chromeWindowId,
+          pinned: entry.pinned,
+        },
+      },
+      tabSpace,
+    );
+  }
   tabSpaceStoreApi.update(tabSpace);
 
   // focus tabspace tab

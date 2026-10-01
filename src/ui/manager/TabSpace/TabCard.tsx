@@ -12,6 +12,7 @@ import { CollapsibleLabel } from '../../common/CollapsibleLabel';
 import { FavIcon } from '../../common/FavIcon';
 import React from 'react';
 import { Tab } from '../../../data/tabSpace/Tab';
+import { focusLiveTabUtil } from '../../../data/tabSpace/chromeUtil';
 import classes from './TabCard.module.scss';
 import clsx from 'clsx';
 
@@ -114,9 +115,7 @@ export function TabCard(props: ITabCardProps) {
       props.onActivate(t);
       return;
     }
-    if (t.chromeTabId) {
-      chrome.tabs.update(t.chromeTabId, { active: true });
-    }
+    void focusLiveTabUtil(t);
   };
 
   const closeTab = (t: Tab) => {

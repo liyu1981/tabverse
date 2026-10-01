@@ -75,3 +75,20 @@ export function tabverseEntries(targetTabSpace: TabSpace): TabverseEntry[] {
 
   return entries;
 }
+
+/** The tabs of one entry, whether it is a plain tab or a composite. */
+export function entryTabs(entry: TabverseEntry): Tab[] {
+  return entry.kind === 'tab' ? [entry.tab] : entry.tabs;
+}
+
+/**
+ * Every tab of a tabverse in the order the list above shows them.
+ *
+ * The composite entries are flattened (both halves of a split view, a group's
+ * tabs under their header), so a caller that wants a plain list of tabs - the
+ * filter box, which ranks matches and therefore cannot nest them back into the
+ * blocks they came from - reads the list in the order the user sees.
+ */
+export function tabverseTabs(targetTabSpace: TabSpace): Tab[] {
+  return tabverseEntries(targetTabSpace).flatMap(entryTabs);
+}

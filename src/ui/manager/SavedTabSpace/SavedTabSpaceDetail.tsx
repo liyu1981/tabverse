@@ -132,7 +132,7 @@ export function SavedTabSpaceDetail(props: SavedTabSpaceDetailProps) {
               onClick={() => {
                 props.loadToCurrentWindowFunc(props.tabSpace.id);
               }}
-              title="Load all tabs to current window"
+              title="Load into this window: the tabs it already has open are kept, the rest are closed"
             >
               Load to Current
             </Button>

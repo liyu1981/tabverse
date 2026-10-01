@@ -79,6 +79,63 @@ return the same thing - ranked tabverse ids - so browsing and searching page
 alike, and a server that is unreachable falls back to the local scan instead of
 failing the search box.
 
+## The live tab filter (`src/data/tabSpace/activeTabFilter.ts`)
+
+The tabverse page's box over the tabs of the window on screen is not that
+search, and deliberately does not share its machinery: there is nothing to look
+up (the rows are the list being drawn), no scope to pick, and no reason to wait
+for a server. It is a substring test over the window's own tabs, with the
+`valueMatchesTerms` semantics of `data/search/searchable.ts` - a filter box is
+expected to match inside a word - plus one scoring rule so the best match comes
+first: a term in the title outranks the same term in the url, the whole phrase
+next to itself in a title outranks the same words scattered, and ties keep the
+window's tab order so the list never shuffles under the cursor.
+
+Two consequences worth writing down:
+
+- **While it filters, the list is flat and ranked.** Group headers and split
+  blocks exist to show the shape of the window, and a best-match-first answer
+  to "which one is it" has no shape. `tabverseTabs` (in `tabEntries.ts`)
+  flattens `tabverseEntries` into the order the user sees, which is also the
+  tie-break order.
+- **It is the live tabverse only.** Nothing here is stored, synced or searched
+  server side: a tab is already on screen, and it is the user's own eyes that
+  asked the question.
+
+## Restoring a tabverse into a window (`src/data/tabSpace/restorePlan.ts`)
+
+Loading a saved tabverse into the window its manager page is in used to be
+"close every tab in the window, then open every tab of the tabverse". That is
+right about the result and wasteful about the way there: a tab the user already
+has open in that window was closed and opened again, losing its place in the
+strip, its history and whatever state the page was holding.
+
+So the restore asks the window first, and the answer is a plan
+(`planRestore`): a saved tab whose url is already open in the window reuses that
+tab, a saved tab with no open tab to stand for it is opened, and a window tab
+that is in neither is closed. The plan is a pure function of the saved tabs and
+the window's tabs, which is where the testable part of this lives; the chrome
+calls are `util.ts`'s.
+
+Three things it has to get right, and did not before:
+
+- **One open tab stands for one saved tab.** A tabverse holding `chrome://newtab/`
+  twice reuses two open tabs, not one, and an extra open copy of a url the
+  tabverse has once is closed. Matching is on the url as a person reads it: the
+  fragment and a trailing slash are dropped and the origin is lowercased, but the
+  path is not (a query string or a capital in the path is a different page).
+- **The strip is put back into the saved order.** Reused tabs sit where they were
+  and opened ones land at the end, so without `orderWindowTabs` the tab strip and
+  the tabverse list would disagree - which is the one thing the list is for. The
+  order asked for is the tabverse tab, then the saved pinned tabs, then the rest,
+  because Chrome's pinned section is at the front either way.
+- **Live fields are written back into the store.** A reused tab raises no
+  `tabs.onCreated`, so nothing would fill in the `chromeTabId` the list's close
+  and switch buttons act on. The restore sets them from what the browser has.
+
+The tabverse's own manager tab is never a reuse candidate and never closed: it
+is the page doing the restoring.
+
 ## Commands
 
 ```sh

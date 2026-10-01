@@ -1,0 +1,41 @@
+@use '../../../global.scss';
+
+.container {
+  margin-bottom: 10px;
+}
+
+.container :global(.bp6-input-group) {
+  background-color: global.$color-light-shade;
+}
+
+.container :global(.bp6-input-group):focus {
+  background-color: white;
+}
+
+.container :global(.bp6-input) {
+  background-color: global.$color-light-shade;
+  box-shadow: none;
+  font-size: 16px;
+}
+
+.container :global(.bp6-input):focus {
+  box-shadow: none;
+}
+
+/*
+ * The count sits inside the box on the right, before the clear button, and is
+ * not a button: it says how much of the list the text is showing, which is a
+ * fact about the list rather than something to click.
+ */
+.right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-right: 4px;
+}
+
+.count {
+  color: global.$color-a;
+  font-size: 13px;
+  white-space: nowrap;
+}

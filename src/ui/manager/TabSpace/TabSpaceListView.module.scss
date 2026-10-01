@@ -110,3 +110,22 @@
 .tabInGroup {
   margin-bottom: 2px;
 }
+
+/*
+ * The row Enter would open, while the arrow keys are moving over the matches.
+ * A ring rather than a background tint: the row has a favicon and two lines of
+ * text, and a wash over both of them is what a selected row usually does - here
+ * it only has to be findable at a glance, not look like a selection the browser
+ * is about to act on.
+ */
+.tabIsActiveMatch {
+  border-radius: 12px;
+  outline: 2px solid global.$color-main-brand;
+  outline-offset: -2px;
+}
+
+.noMatchNotice {
+  padding: 24px 4px;
+  color: global.$color-a;
+  text-align: center;
+}

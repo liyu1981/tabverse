@@ -173,6 +173,11 @@ class MockTabsApi {
     if (params && params.active) {
       this.chrome.setActiveTab(tabId);
     }
+    if (params && typeof params.pinned === 'boolean') {
+      // pinning is a property of the tab itself, and the restore path sets it
+      // on tabs it reused as well as on the ones it opened
+      this.chrome.updateTab(tabId, { pinned: params.pinned }, false);
+    }
     if (params && params.url) {
       // a navigation: the popup reuses a window's manager tab instead of
       // opening a second one, which only works if update really moves it
@@ -183,6 +188,28 @@ class MockTabsApi {
       );
     }
     return this.chrome.getTab(tabId);
+  }
+
+  /**
+   * Moves a tab to an index in its window. What a restore uses to put the tab
+   * strip back into the tabverse's saved order, and what putting the tabverse
+   * tab first uses.
+   */
+  async move(tabId: number | number[], properties: chrome.tabs.MoveProperties) {
+    const ids = Array.isArray(tabId) ? tabId : [tabId];
+    for (const id of ids) {
+      this.chrome.moveTab(id, properties.index);
+    }
+    return ids.length === 1 ? this.chrome.getTab(ids[0]) : undefined;
+  }
+
+  /** The tab this page is: the active one of the window it is in. */
+  async getCurrent() {
+    const window = this.chrome._getCurrentWindow();
+    if (!window) {
+      return undefined;
+    }
+    return window.tabs.tabs[window.tabs.activeTabIndex];
   }
 
   /**
