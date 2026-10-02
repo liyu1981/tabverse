@@ -22,9 +22,10 @@ server authoritative sync protocol.
   configured social provider) and manage their own account; the first
   registration with `TABVERSED_ADMIN_EMAIL` is the operator. There is no master
   credential (ADR 0012, ADR 0013)
-- **Console:** `GET /` serves an embedded, dependency free console: a read only
-  browser over stored data, plus a way to delete one tabverse, and the account,
-  device and token management around it. No build step
+- **Console:** `GET /` serves the console: a read only browser over stored
+  data, plus a way to delete one tabverse, and the account, device and token
+  management around it. It is a Vite/React app under `server/ui`, built into
+  `internal/webui/dist` and embedded in the binary (ADR 0018)
 
 ## Run
 
@@ -32,10 +33,25 @@ Every build/run/cross-compile target is a package.json script at the repository 
 (`package.json` is the only build tool; there is no Makefile).
 
 ```sh
+pnpm run ui:build        # the console -> server/internal/webui/dist (embedded, not committed)
 pnpm run server:dev      # go run: listens on 0.0.0.0:8223, db ./server/data/tabversed.db
-pnpm run server:build    # binary at server/bin/tabversed
+pnpm run server:build    # builds the console, then the binary at server/bin/tabversed
 # or
 pnpm run server:docker && docker run -p 8223:8223 -v tvdata:/data tabversed
+```
+
+The console's build output is **generated, not committed** (ADR 0018): every Go
+target runs `pnpm run ui:build` first, so a binary and its console are one
+build. A binary built without it (`cd server && go build ./...` on a fresh
+clone) still compiles - a tracked `.gitkeep` keeps the embed directory present -
+and serves a page naming the command to run.
+
+To work on the console itself, run the app and the server side by side; the dev
+server proxies `/api` and `/auth` to a `tabversed` on 127.0.0.1:8223:
+
+```sh
+pnpm run server:dev      # in one shell
+pnpm run ui:dev          # in another: http://localhost:5174/
 ```
 
 ### The command line
@@ -96,12 +112,17 @@ pnpm run server:cross    # linux/amd64, linux/arm64, darwin/amd64, darwin/arm64,
 Tests and checks:
 
 ```sh
-pnpm run server:test        # go test ./...
-pnpm run server:test-race   # go test -race ./...
-pnpm run server:vet         # go vet ./...
+pnpm run server:test        # builds the console, then go test ./...
+pnpm run server:test-race   # builds the console, then go test -race ./...
+pnpm run server:vet         # builds the console, then go vet ./...
 pnpm run server:fmt         # gofmt -l -w .
 pnpm run server:fmt:check   # lists unformatted files (CI asserts the list is empty)
 ```
+
+The console's own tests are in the root suite (`pnpm test`): vitest over its
+data layer with a stubbed `fetch`, and `react-dom/server` over the views'
+markup. There are no DOM tests - this repository does not install jsdom - so
+what a view does when it is *clicked* is the user's to check, not the suite's.
 
 ## Configuration (environment, or a `.env` file)
 
@@ -319,10 +340,12 @@ With the token set:
 
 The account view is three tabs, rail on the left, panel on the right: **Pair
 Code** (mint a code, copy it and the server URL), **Devices & Tokens** (revoke,
-archive, inspect) and **Stored data** (tabverses, search, records). Each tab
-carries its own counters in the rail, so an operator can see what is behind one
-without opening it, and the first visit on an account with no devices lands on
-Pair Code. `#token=…&user=…&tab=credentials` opens a specific tab directly.
+archive, inspect) and **Stored data** (tabverses, search, records). An operator
+gets a fourth tab, **Admin**, which is the accounts themselves. Each tab carries
+its own counters in the rail, so an operator can see what is behind one without
+opening it, and the first visit on an account with no devices lands on Pair
+Code. `#user=…&tab=credentials&tabspace=…` opens a specific account, tab and
+tabverse directly (ADR 0014, ADR 0018).
 - **accounts and tokens** — rename, delete (records, devices, tokens, invites
   and search index rows), mint a pairing code for a given account, revoke one
   token by fingerprint or every token of one device

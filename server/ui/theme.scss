@@ -1,0 +1,365 @@
+// The shared look of the console.
+//
+// A plain stylesheet, not a CSS module, because half of it is Blueprint: the
+// components below are styled by their own class names, and a module would
+// rename them and lose the connection. Layout that belongs to one view lives in
+// a *.module.scss next to that view (see layout.module.scss, data.module.scss,
+// drawer.module.scss).
+//
+// The import order matters and main.tsx fixes it: normalize, then Blueprint,
+// then this file, then the modules. Everything here is meant to win over
+// Blueprint's defaults, so it has to come after it.
+
+@use './tokens.scss';
+
+// ---- the page -------------------------------------------------------------
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  // Blueprint's own stack puts "blueprint-icons-16" at the end of the font
+  // list, which makes every glyph a fallback lookup. The console's icons are
+  // Blueprint's own <svg>, so the stack is the plain system one.
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+h1 {
+  font-size: 20px;
+  margin: 4px 0 2px;
+  color: var(--brand);
+}
+
+h2 {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin: 0 0 10px;
+}
+
+h3 {
+  font-size: 14px;
+  margin: 0 0 10px;
+}
+
+code {
+  font-family: var(--mono);
+  font-size: 0.92em;
+  background: var(--sunken);
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+a {
+  color: var(--brand);
+}
+
+p {
+  margin: 0 0 8px;
+}
+
+// ---- Blueprint, made this product's ---------------------------------------
+
+/* One radius for everything clickable, one for everything that holds text -
+   the figures the extension's theme.scss uses. */
+.bp6-button {
+  border-radius: 18px;
+}
+
+.bp6-input,
+.bp6-html-select select {
+  border-radius: 28px;
+  box-shadow: none;
+  border: 1px solid var(--border-strong);
+  background-color: var(--surface);
+  color: var(--text);
+}
+
+/* A select keeps the smaller pill: in the extension only text inputs are fully
+   rounded. */
+.bp6-html-select select {
+  border-radius: var(--radius);
+}
+
+.bp6-input:focus,
+.bp6-html-select select:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgb(84 97 122 / 20%);
+}
+
+.bp6-input::placeholder {
+  color: var(--text-muted);
+}
+
+.bp6-card {
+  border-radius: var(--radius);
+  box-shadow: none;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 16px;
+}
+
+.bp6-dialog {
+  border-radius: var(--radius);
+  padding-bottom: 16px;
+}
+
+.bp6-dialog-header {
+  background: var(--surface);
+  box-shadow: none;
+  padding: 14px 16px 8px;
+}
+
+.bp6-heading {
+  color: var(--brand);
+}
+
+.bp6-tag {
+  border-radius: var(--radius-chip);
+  font-size: 0.75em;
+}
+
+.bp6-control.bp6-checkbox .bp6-control-indicator {
+  border-radius: var(--radius-chip);
+  border-color: var(--border-strong);
+}
+
+.bp6-control.bp6-checkbox input:checked ~ .bp6-control-indicator {
+  background-color: var(--brand);
+}
+
+.bp6-control {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.bp6-overlay-backdrop {
+  background: rgb(16 22 26 / 28%);
+}
+
+/* The drawer's panel is the console's own width; Blueprint's SMALL would take a
+   third of the screen, which is not enough for a tabverse with 40 tabs in it. */
+.bp6-drawer {
+  background: var(--bg);
+  border-left: 1px solid var(--border);
+  box-shadow: var(--shadow-lift);
+}
+
+.bp6-overlay-content {
+  outline: none;
+}
+
+/* ---- shared atoms -------------------------------------------------------- */
+
+.muted {
+  color: var(--text-muted);
+}
+
+.small {
+  font-size: 12px;
+}
+
+.mono {
+  font-family: var(--mono);
+}
+
+.danger-text {
+  color: var(--danger);
+}
+
+/* A status chip. Blueprint's Tag is the control (a filter, a removable thing);
+   this is a *fact about a row* - live, revoked, archived, N notes - so it keeps
+   its own class and the mono face the extension's own counters use. */
+.badge {
+  display: inline-block;
+  font-size: 11px;
+  padding: 1px 8px;
+  border-radius: var(--radius-chip);
+  background: var(--sunken);
+  color: var(--text-muted);
+  font-family: var(--mono);
+  white-space: nowrap;
+}
+
+.badge.live {
+  color: var(--ok);
+  background: var(--ok-soft);
+}
+
+.badge.revoked {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+/* Archived is the operator's tidying, deliberately not a danger colour:
+   nothing is lost, the row is only out of the default way (adr/0011). */
+.badge.archived {
+  color: var(--warn);
+  background: var(--warn-soft);
+  margin-left: 6px;
+}
+
+.empty-inline {
+  color: var(--text-muted);
+  font-size: 13px;
+  padding: 8px 2px;
+  margin: 0;
+}
+
+/* ---- stats --------------------------------------------------------------- */
+
+.stat-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.stat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 14px;
+  min-width: 96px;
+}
+
+.stat .v {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--brand);
+}
+
+.stat .k {
+  color: var(--text-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* ---- toolbars ------------------------------------------------------------ */
+
+.toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.toolbar .bp6-input-group,
+.toolbar .bp6-html-select {
+  flex: 0 0 auto;
+}
+
+/* A filter box is the one control that should take the room left over. */
+.toolbar .grow {
+  flex: 1 1 220px;
+  min-width: 180px;
+}
+
+/* ---- the pill segmented control ------------------------------------------ */
+
+/* A grey well with a white pill for the current one, which is what the
+   extension's tag inputs do. */
+.segmented {
+  display: flex;
+  gap: 4px;
+  background: var(--sunken);
+  padding: 3px;
+  border-radius: 18px;
+}
+
+.segmented .bp6-button {
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-muted);
+  padding: 5px 12px;
+  min-height: 0;
+}
+
+.segmented .bp6-button.bp6-active {
+  background: var(--surface);
+  color: var(--brand);
+  font-weight: 500;
+  box-shadow: var(--shadow);
+}
+
+/* ---- pager --------------------------------------------------------------- */
+
+.pager {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 0;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+/* ---- tables -------------------------------------------------------------- */
+
+/* A table is a table: Blueprint's own, with the row separators and the header
+   scale the hand written stylesheet had. The card around it (border, radius,
+   surface) belongs to the view, not here. */
+.bp6-html-table {
+  width: 100%;
+  font-size: 13px;
+}
+
+.bp6-html-table th {
+  text-align: left;
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.bp6-html-table td {
+  padding: 9px 8px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.bp6-html-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.bp6-html-table tbody tr:hover td {
+  background: var(--brand-soft);
+}
+
+.bp6-html-table td.right,
+.bp6-html-table th.right {
+  text-align: right;
+}
+
+.empty-row td {
+  color: var(--text-muted);
+  text-align: center;
+  padding: 14px;
+}
+
+.archived-row td:not(:last-child) {
+  opacity: 0.65;
+}
+
+/* Row actions sit on the right, in the order the workflow goes: cut access,
+   then retire the row, then (optionally) retire what it wrote. */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}

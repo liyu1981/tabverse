@@ -1,0 +1,268 @@
+// One tabverse, in a drawer over the account.
+//
+// The content is the extension's own saved-tabverse view: the name, when it was
+// created and saved, "Working on N tabs in M groups", and then the tabs - a
+// group as a block with its colour, a tab as a card with its favicon, title and
+// url. What is *not* here is every action that would act on this browser
+// ("Load to New Window", "Switch to Tabverse", closing a tab): a tab stored on
+// this account is not openable in the console, so those buttons would be
+// decoration that cannot work. The one action left is about the stored data
+// rather than about the browser, and it is at the bottom (adr/0015).
+
+.drawer {
+  display: flex;
+  flex-direction: column;
+}
+
+.head {
+  padding: 0 4px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.meta {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-family: var(--mono);
+  overflow-wrap: anywhere;
+}
+
+// Created and saved, the way the extension states them: how long ago, with the
+// exact timestamp underneath for when it matters.
+.times {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+  font-size: 13px;
+}
+
+.when b {
+  font-size: 14px;
+}
+
+.summary {
+  margin: 0 0 4px;
+}
+
+.body {
+  padding: 14px 4px 8px;
+}
+
+.cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+// A tab: the extension's card, which is a row of [favicon] [text] with no
+// border and no shadow - the row *is* the surface.
+.card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  margin-top: 6px;
+}
+
+.cardText {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+
+.cardTitle {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.cardUrl {
+  color: var(--text-muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+  text-decoration: none;
+}
+
+.cardUrl:hover {
+  text-decoration: underline;
+}
+
+.flags {
+  display: flex;
+  gap: 5px;
+  flex: 0 0 auto;
+  align-items: center;
+}
+
+// A favicon is pinned to 16px whatever size the file happens to be - a 180px
+// SVG is a perfectly normal favicon, and a row that grows to fit one squeezes
+// its title and url into a one-character column.
+.fav {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  margin-top: 4px;
+}
+
+// A tab group as a block: a coloured rule down the left and a header row with
+// the group's title and how many of its tabs are here. The label's background
+// carries the colour, so one thing says which group this is rather than two.
+.group {
+  margin: 1rem 0;
+  padding-left: 8px;
+  border-left: 3px solid var(--border-strong);
+  border-radius: 2px;
+}
+
+.groupHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 2px;
+  font-size: 0.9em;
+}
+
+.groupLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  min-width: 0;
+  padding: 2px 10px;
+  border-radius: 10px;
+  color: #fff;
+  line-height: 1.5;
+}
+
+.groupTitle {
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.groupCount {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+// ---- everything the tab list does not show ---------------------------------
+
+.more {
+  margin-top: 16px;
+}
+
+.more > summary {
+  cursor: pointer;
+  color: var(--brand);
+  font-size: 13px;
+}
+
+.section {
+  margin-bottom: 16px;
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--brand);
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.countPill {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--mono);
+  font-weight: 400;
+}
+
+.rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.rowText {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+.rowUrl {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-family: var(--mono);
+  overflow-wrap: anywhere;
+  text-decoration: none;
+}
+
+.rowUrl:hover {
+  text-decoration: underline;
+}
+
+.done .rowText {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.noteBody {
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow-wrap: anywhere;
+  margin-bottom: 6px;
+}
+
+.noteName {
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: var(--brand);
+}
+
+.noteText {
+  color: var(--text-muted);
+  font-size: 13px;
+  white-space: pre-wrap;
+}
+
+.foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  margin-top: 8px;
+}
+
+// The raw ordering aggregates, for the curious.
+.payload {
+  margin: 8px 0 0;
+  font-family: var(--mono);
+  font-size: 12px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--text-muted);
+  max-height: 220px;
+  overflow: auto;
+}

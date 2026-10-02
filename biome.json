@@ -11,6 +11,7 @@
       "**",
       "!**/dist",
       "!**/dist_crx",
+      "!**/server/internal/webui/dist",
       "!**/coverage",
       "!**/doc",
       "!**/docs",
@@ -96,6 +97,21 @@
           "a11y": {
             "noStaticElementInteractions": "off",
             "useKeyWithClickEvents": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "server/ui/views/TabverseList.tsx",
+        "server/ui/views/RecordBrowser.tsx",
+        "server/ui/views/SearchPanel.tsx",
+        "server/ui/views/AdminPanel.tsx"
+      ],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "useExhaustiveDependencies": "off"
           }
         }
       }

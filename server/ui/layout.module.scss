@@ -1,0 +1,344 @@
+// The console's frame: the brand bar, the read-only bar, the sign-in card, and
+// the account view's rail-and-panel layout (the shape ADR 0014 settled on: the
+// account view *is* the console, and an operator's powers are a fourth tab
+// rather than a different application).
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 18px;
+  background: var(--brand-bar);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.version {
+  color: rgb(255 255 255 / 70%);
+  font-weight: 400;
+  font-size: 12px;
+}
+
+.topbarRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.totals {
+  color: rgb(255 255 255 / 70%);
+  font-size: 12px;
+}
+
+/* On the brand bar the controls are the extension's minimal buttons: no fill,
+   white text, and only a lighter fill under the pointer. */
+.topbar :global(.bp6-button) {
+  background: transparent;
+  box-shadow: none;
+  color: #fff;
+}
+
+.topbar :global(.bp6-button:hover) {
+  background: rgb(255 255 255 / 14%);
+  color: #fff;
+}
+
+/* The operator hint is not an error, so not red: a person is signed in and
+   working, they just cannot reach the operator views yet. */
+.operatorHint {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 18px;
+  background: var(--brand-soft);
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+/* The read-only bar. Deliberately loud and deliberately not dismissible: the
+   page underneath belongs to somebody else, and an operator who forgets they
+   are looking through it is exactly the failure this feature has to prevent.
+   It is the one place that keeps a warning colour in the light palette. */
+.assumeBar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 18px;
+  background: var(--warn-soft);
+  color: var(--warn);
+  font-weight: 600;
+  font-size: 13px;
+  border-bottom: 1px solid #e6d3a0;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+.assumeDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--warn);
+  flex: 0 0 auto;
+}
+
+.assumeBar :global(.bp6-button) {
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid #e6d3a0;
+  color: var(--warn);
+  font-weight: 600;
+  box-shadow: none;
+}
+
+.assumeBar :global(.bp6-button:hover) {
+  background: #f7ecd0;
+  border-color: var(--warn);
+}
+
+.content {
+  padding: 18px 22px 60px;
+  min-width: 0;
+}
+
+.viewHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.viewActions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+// The rail is as wide as its longest label, and never steals room from the
+// tables and record payloads the panels hold.
+.tabbed {
+  display: grid;
+  grid-template-columns: minmax(150px, 200px) 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  position: sticky;
+  top: 68px;
+}
+
+.railItem {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  padding: 8px 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font: inherit;
+}
+
+.railItem:hover {
+  background: var(--surface);
+  color: var(--text);
+}
+
+// The selected tab is marked on its left edge, so the rail reads as a
+// navigation column rather than four more buttons. Applied on top of railItem
+// rather than composed into it, so the two classes stay independent.
+.railActive {
+  background: var(--surface);
+  border-color: var(--border);
+  box-shadow: var(--shadow);
+  color: var(--brand);
+  font-weight: 500;
+}
+
+.railLabel {
+  font-size: 13px;
+}
+
+.railNote {
+  font-size: 11px;
+  font-family: var(--mono);
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.railActive .railNote {
+  color: var(--brand);
+}
+
+.panels {
+  min-width: 0;
+}
+
+.panelHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.panelHead h2 {
+  margin-bottom: 2px;
+}
+
+.panelHeadActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+// Narrow: the rail goes horizontal above the panel, so the console still works
+// in a half-width window without a second layout to maintain.
+@media (max-width: 760px) {
+  .tabbed {
+    grid-template-columns: 1fr;
+  }
+
+  .rail {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+
+// ---- the sign-in form ------------------------------------------------------
+
+.signin {
+  display: flex;
+  justify-content: center;
+  padding: 8vh 16px;
+}
+
+.signinCard {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 0;
+}
+
+.signinCard label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--brand);
+}
+
+.providers {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  margin-top: 2px;
+}
+
+.provider {
+  border: 1px solid var(--border-strong);
+  border-radius: 18px;
+  padding: 5px 14px;
+  text-decoration: none;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.provider:hover {
+  background: var(--sunken);
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+// ---- dialogs ---------------------------------------------------------------
+
+.dialog-text {
+  color: var(--text);
+  margin-bottom: 12px;
+  white-space: pre-wrap;
+}
+
+.dialog-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--brand);
+  margin-bottom: 6px;
+}
+
+// ---- the pairing code ------------------------------------------------------
+
+.codeBox {
+  margin-top: 12px;
+  padding: 16px;
+  background: var(--bg);
+  border: 1px dashed var(--brand);
+  border-radius: var(--radius);
+  text-align: center;
+}
+
+// The code and its copy button sit on one line: the code keeps the wide
+// monospace letter spacing it is read with, the button stays a normal size.
+.codeRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.codeRow :global(.mono) {
+  font-size: 18px;
+  letter-spacing: 0.12em;
+  user-select: all;
+  cursor: text;
+  color: var(--brand);
+}
+
+.expiry {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+
+.serverUrlBox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  padding: 8px 10px;
+  background: var(--sunken);
+  border-radius: var(--radius);
+}
+
+.serverUrl {
+  font-family: var(--mono);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}

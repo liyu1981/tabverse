@@ -47,6 +47,12 @@
     "noUncheckedIndexedAccess": true,
     "useUnknownInCatchVariables": true
   },
-  "include": ["src", "*.d.ts", "*.mts"],
-  "exclude": ["node_modules", "dist", "docs", "doc"]
+  "include": ["src", "server/ui", "*.d.ts", "*.mts"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "server/internal/webui/dist",
+    "docs",
+    "doc"
+  ]
 }

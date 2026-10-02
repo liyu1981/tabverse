@@ -1,0 +1,61 @@
+// The console's palette, transcribed from the extension's own tokens
+// (src/global.scss and src/ui/theme.scss) the way the hand written stylesheet
+// transcribed them: with the source named, because this file is not built from
+// that one and the two can only be kept together by being explicit about it.
+//
+//   --brand        $color-d                    the main brand
+//   --brand-bar    color.adjust($color-d, -5%) the extension's nav bar
+//   --brand-hover  color.adjust($color-d, -8%) .tv-primary-button:hover
+//   --bg           $color-c                    the page behind the cards
+//   --sunken       $color-light-shade          inputs, wells, inactive chips
+//   --border       #ededed and up              the hairlines between list rows
+//   --text         $color-text                 color.adjust($color-d, -15%)
+//   --text-muted   $color-a
+//   --radius       18px                        .bp6-card, .bp6-dialog
+//   inputs         28px                        .bp6-input
+//   chips          8px                         .bp6-tag
+//
+// The console is light only, like the extension, and for the same reason: it
+// should not change appearance because the machine it runs on does.
+
+:root {
+  --brand: #54617a;
+  --brand-bar: #4a556b;
+  --brand-hover: #434e62;
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --sunken: #f0f1f2;
+  --sunken-hover: #e4e5e7;
+  --border: #e8e9ec;
+  --border-strong: #c5c6c7;
+  --text: #353d4d;
+  --text-muted: #797a7a;
+  --danger: #c92a2a;
+  --danger-soft: #fdf0f0;
+  --ok: #2f855a;
+  --ok-soft: #eef7f1;
+  --warn: #a2761a;
+  --warn-soft: #fdf6e3;
+  --brand-soft: #eceef4;
+  --radius: 18px;
+  --radius-chip: 8px;
+  --radius-input: 28px;
+  // the extension's soft shadows (theme.scss, .stickyOn .header)
+  --shadow: 0 2px 10px -5px rgb(16 22 26 / 60%);
+  --shadow-lift: 0 8px 24px rgb(16 22 26 / 20%);
+  --mono: ui-monospace, sfmono-regular, menlo, consolas, monospace;
+
+  // Chrome's nine tab group colours, darkened for a white card - the same
+  // nine values the extension keeps in src/data/tabSpace/tabGroup.ts. They are
+  // data about the stored record (which colour a group was saved with), and an
+  // operator comparing two tabverses needs to see that difference.
+  --group-grey: #8c8c8c;
+  --group-blue: #3b6fd4;
+  --group-red: #d1453b;
+  --group-yellow: #c79100;
+  --group-green: #2f8a4c;
+  --group-pink: #c74392;
+  --group-purple: #8250df;
+  --group-cyan: #0f8ba8;
+  --group-orange: #cc6a2b;
+}

@@ -49,7 +49,7 @@ jobs:
           path: dist/
           retention-days: 7
 
-  # ---- tabversed sync server: vet, race tests, cross compile ----
+  # ---- tabversed sync server: console build, vet, race tests, cross ----
   server:
     runs-on: ubuntu-latest
     defaults:
@@ -64,13 +64,27 @@ jobs:
           cache-dependency-path: server/go.sum
 
       # the server build/test/cross targets are package.json scripts (no
-      # Makefile); none of them needs node_modules, so nothing is installed
+      # Makefile). The console build (adr/0018) needs the workspace's
+      # node_modules, so this job installs them like the extension job does.
       - uses: pnpm/action-setup@v4
 
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
+
+      # The console is a Vite app embedded in the binary (adr/0018), so the Go
+      # targets below need its build output: `go:embed` has nothing to embed
+      # otherwise, and internal/webui's tests fail with the command to run.
+      # Both steps run at the repository root - this job's default working
+      # directory is server/, where there is no package.json.
+      - name: install dependencies
+        run: pnpm install --frozen-lockfile
+        working-directory: .
+
+      - name: build the console
+        run: pnpm run ui:build
+        working-directory: .
 
       - name: gofmt
         run: test -z "$(gofmt -l .)"
@@ -86,6 +100,7 @@ jobs:
 
       - name: cross compile (pure go, no cgo)
         run: pnpm run server:cross
+        working-directory: .
 
       - name: archive server binaries
         uses: actions/upload-artifact@v4

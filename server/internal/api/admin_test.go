@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -653,21 +654,33 @@ func TestDeletingAnUnknownTabverseIs404(t *testing.T) {
 
 // ---- the console itself ---------------------------------------------------
 
+// TestConsoleIsServed is the end of the road for the console's own build: the
+// shell the server serves has to reference assets that are actually embedded
+// with it (adr/0018). The names are content hashed, so they are read out of the
+// shell rather than written down here - a fixed name would make this test fail
+// on every build instead of saying something.
 func TestConsoleIsServed(t *testing.T) {
 	ts, op := newAdminServer(t)
 
 	page := doJSON(t, http.MethodGet, ts.URL+"/", "", nil)
 	page.mustStatus(t, http.StatusOK)
-	if !strings.Contains(page.raw, "<title>tabversed console</title>") {
-		t.Fatalf("/ did not serve the console: %s", page.raw)
+	if !strings.Contains(page.raw, "<div id=\"root\">") {
+		t.Fatalf("/ did not serve the console shell: %s", page.raw)
 	}
-	for _, asset := range []string{"/assets/console.css", "/assets/console.js"} {
-		res := doJSON(t, http.MethodGet, ts.URL+asset, "", nil)
+
+	assets := regexp.MustCompile(`(?:src|href)="(/assets/[^"]+)"`).FindAllStringSubmatch(page.raw, -1)
+	if len(assets) < 2 {
+		t.Fatalf("the console shell references %d assets, want a script and a stylesheet: %s",
+			len(assets), page.raw)
+	}
+	for _, asset := range assets {
+		res := doJSON(t, http.MethodGet, ts.URL+asset[1], "", nil)
 		res.mustStatus(t, http.StatusOK)
 		if res.raw == "" {
-			t.Fatalf("%s is empty", asset)
+			t.Fatalf("%s is empty", asset[1])
 		}
 	}
+
 	// A client side route falls back to the shell rather than 404ing. The
 	// response is HTML, so this cannot go through the JSON helper.
 	res, err := http.Get(op.ts.URL + "/anything/else")
@@ -678,6 +691,11 @@ func TestConsoleIsServed(t *testing.T) {
 	if res.StatusCode != http.StatusOK {
 		t.Fatalf("a client side route = %d, want 200", res.StatusCode)
 	}
+
+	// A missing asset under /assets/ is a broken build and has to look broken,
+	// not quietly become the shell.
+	missing := doJSON(t, http.MethodGet, ts.URL+"/assets/index-notthere.js", "", nil)
+	missing.mustStatus(t, http.StatusNotFound)
 }
 
 // The console is public, the data behind it is not: a device token must not

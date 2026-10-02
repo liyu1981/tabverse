@@ -19,7 +19,8 @@
 | -------------------- | -------------------------------------------------------------------------------------------------------- |
 | `src/`               | the extension (unchanged entry points: `background.ts`, `ui/popup.tsx`, `ui/manager.tsx`)                |
 | `src/data/repo/`     | **new** sync layer: types, HTTP client, outbox, delta engine, realtime client, Dexie bridge, change feed |
-| `server/`            | **new** `tabversed` sync server (pure Go, no cgo)                                                        |
+| `server/`            | the `tabversed` sync server (pure Go, no cgo)                                                            |
+| `server/ui/`         | the console: a Vite/React app, built into `server/internal/webui/dist` and embedded in the binary (`adr/0018`)  |
 | `api/openapi.yaml`   | wire contract for the server                                                                             |
 | `adr/`               | architecture decision records                                                                            |
 | `dist/manifest.json` | manifest (single source of truth today; generated later)                                                 |
@@ -248,20 +249,31 @@ identity in its own cookie, so the operator's own session survives, every mutati
 route answers 403 while it is on, and entering and leaving are both in
 `audit_log`. `TABVERSED_ADMIN_TOKEN` remains as the break-glass path.
 
-`internal/webui` embeds three hand written files (HTML, CSS, JS - no framework,
-no build step) and serves them with a strict CSP. A tabverse opens in a drawer
-over the account rather than a page that replaces it, and it is the extension's
-own tabverse view with its action buttons removed: a tab stored on this account
-cannot be opened in the browser running the console, and the one button that
-remains is the delete above. Its stylesheet is the
+`internal/webui` embeds the console's **built** bundle: the app is a Vite/React
+project under `server/ui` (`adr/0018`) that compiles into
+`internal/webui/dist`, which is generated, not committed, and embedded with
+`//go:embed all:dist`. Every Go target runs `pnpm run ui:build` first, so a
+binary and its console are one build; a `.gitkeep` in `dist/` keeps the package
+compiling on a fresh clone, and a binary built without its UI serves a page that
+names the command rather than a blank one.
+
+State is effector stores and effects (`server/ui/data/`), the client is a typed
+`fetch` wrapper mirroring `api/openapi.yaml`, and the components are Blueprint's
+- the same dependency the extension uses, from the same lockfile. The tests are
+what a compiler cannot do: vitest over the data layer with a stub `fetch`, and
+`react-dom/server` over the views' markup (no DOM, which `AGENTS.md` forbids
+installing). `internal/webui/webui_test.go` checks the shell against the files
+actually embedded with it, since the names are content hashed.
+
+A tabverse opens in a drawer over the account rather than a page that replaces
+it, and it is the extension's own tabverse view with its action buttons removed: a
+tab stored on this account cannot be opened in the browser running the console,
+and the one button that remains is the delete above. Its stylesheet is the
 extension's look - the palette, the 18px cards, the pill buttons and inputs are
-transcribed from `src/global.scss` and `src/ui/theme.scss` (nothing imports
-them here, so the tokens carry the name of the file each came from), and the
-console is light only for the same reason the extension is. Since there is no bundler
-and no type checker between the script and the page - it reaches the DOM by
-string id - `webui_test.go` asserts the contract between them (every selector
-resolves, ids are unique, every tab has a panel); the look of it is still the
-user's to check (AGENTS.md); the admin API is
+transcribed from `src/global.scss` and `src/ui/theme.scss` (nothing imports them
+here, so `server/ui/tokens.scss` carries the name of the file each came from),
+and the console is light only for the same reason the extension is. The look of
+it is still the user's to check (AGENTS.md); the admin API is
 `internal/api/admin.go` and its queries are `internal/store/admin.go`. A device
 token and the admin token are not interchangeable, and both directions are
 tested.
@@ -283,7 +295,8 @@ because a record somebody just changed is live again.
       fan-out, FTS5 search, retention, tests (`-race`), cross-compile, Docker
 - [x] Multi tenant admin API + embedded console, read only over user data
       (`adr/0009`) with one exception: deleting a tabverse, as tombstones the
-      devices sync down (`adr/0015`)
+      devices sync down (`adr/0015`). The console is a Vite/React app built
+      into the binary (`adr/0018`)
 - [x] Wire contract (`api/openapi.yaml`)
 - [x] Client sync layer: outbox, delta engine, realtime, Dexie bridge,
       change feed, pairing dialog (8 test suites)
@@ -306,6 +319,10 @@ because a record somebody just changed is live again.
       everything local, and the separate button remains for later (ADR 0002 §3)
 - [ ] `strictNullChecks` (428 errors) + `noImplicitAny` (227) — staged pass,
       count first with `npx tsc --noEmit --strict`
+- [x] Console revamped from three hand written files into a Vite/React app
+      under `server/ui`, built into the Go binary: typed client, effector
+      stores, Blueprint components, vitest + `renderToStaticMarkup` instead of
+      a hand built stub DOM (`adr/0018`)
 - [x] Cross-window machinery deleted: each manager page owns one window, so
       the tabSpaceRegistry (leader election + broadcast-channel) is gone and
       the change feed uses Dexie's own write hooks instead of dexie-observable

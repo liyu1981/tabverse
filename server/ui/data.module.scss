@@ -1,0 +1,122 @@
+// The data the console *browses*: the operator's directory, the tabverse list
+// and the raw record cards. Shared by three panels, so it is one module.
+
+.tableCard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.emptyCard {
+  background: var(--surface);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+  padding: 28px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+// A list of rows, the way the extension's saved-tabverse list is one: the name
+// over the numbers, and the counts on the right. An operator reads these against
+// each other, which is what a row is for.
+.tabverseList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tabverseRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.tabverseRow:hover {
+  border-color: var(--brand);
+  box-shadow: var(--shadow);
+}
+
+.rowText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.rowName {
+  font-weight: 600;
+  color: var(--brand);
+  overflow-wrap: anywhere;
+}
+
+.rowMeta {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.rowCounts {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  flex: 0 0 auto;
+}
+
+// ---- raw records -----------------------------------------------------------
+
+.recordList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.record {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+}
+
+.recordHead {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.entity {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--brand);
+}
+
+.payload {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 12px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--text-muted);
+  max-height: 220px;
+  overflow: auto;
+}
+
+// ---- the stored-data panel's own header ------------------------------------
+
+.subtitle {
+  color: var(--text-muted);
+  font-size: 12px;
+}
