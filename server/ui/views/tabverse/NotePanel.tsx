@@ -1,3 +1,4 @@
+import { Card } from '@blueprintjs/core';
 import React from 'react';
 
 import { normalizeNoteHtml } from '../../../../src/ui/notebook/draftLegacy';
@@ -10,13 +11,21 @@ import classes from './tabverse.module.scss';
 /**
  * The extension's notebook, read.
  *
- * A note there is a title bar with a caret and a rich-text editor under it. The
- * caret collapses the editor, and the editor is an editor - so this shows the
- * title the same way and the body as text: `note.data` is HTML written on
- * another machine, and a page holding that person's account has no business
- * putting it in its own document (see `data/noteText.ts`). The legacy draft-js
- * format goes through the extension's own `normalizeNoteHtml` first, so an old
- * note is not a wall of JSON here either.
+ * A note there is a title bar with a caret and a rich-text editor under it, both
+ * inside the notebook's own white panel. The caret collapses the editor and the
+ * editor is an editor - so this shows the title in the extension's type and the
+ * body as text: `note.data` is HTML written on another machine, and a page
+ * holding that person's account has no business putting it in its own document
+ * (see `data/noteText.ts`). The legacy draft-js format goes through the
+ * extension's own `normalizeNoteHtml` first, so an old note is not a wall of JSON
+ * here either.
+ *
+ * Each note is a card, which is what it looked like in the extension too - there
+ * the white notebook panel supplied the surface, and here every other thing in
+ * this pane brings its own, so a note that brought none was floating text on the
+ * pane's grey. The title row is the extension's *type*, not its 50px row: that
+ * row was tall because a caret and a delete button sat in it, and neither has
+ * anywhere to go here.
  */
 export function NotePanel(props: { notes: Note[] }) {
   if (!props.notes.length) {
@@ -30,14 +39,12 @@ export function NotePanel(props: { notes: Note[] }) {
   return (
     <div className={notebookClasses.container}>
       {props.notes.map((note) => (
-        <div key={note.id}>
-          <div className={noteClasses.container}>
-            <div className={noteClasses.titleContainer}>
-              <b>{note.name || '(untitled)'}</b>
-            </div>
+        <Card key={note.id} className={classes.noteCard}>
+          <div className={noteClasses.titleContainer}>
+            <b>{note.name || '(untitled)'}</b>
           </div>
           <div className={classes.noteBody}>{bodyOf(note)}</div>
-        </div>
+        </Card>
       ))}
     </div>
   );

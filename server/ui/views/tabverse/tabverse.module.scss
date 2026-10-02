@@ -218,11 +218,20 @@
   overflow: auto;
 }
 
-// ---- the note bodies, as text ---------------------------------------------
+// ---- notes, as text on a card ----------------------------------------------
+
+// One card per note, like every other thing in this drawer, and like the note's
+// own white panel in the extension. The extension's 50px title row is not
+// repeated: that height was the caret and the delete button sitting in it.
+.noteCard {
+  padding: 12px 16px 14px;
+  margin-bottom: 12px;
+}
 
 .noteBody {
-  padding: 4px 0 12px;
-  border-bottom: 1px solid var(--border);
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
 }
 
 .noteText {

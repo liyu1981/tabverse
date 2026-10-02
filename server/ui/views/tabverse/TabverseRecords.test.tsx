@@ -169,6 +169,15 @@ test('a note is its name and its body, as text', () => {
   expect(html).not.toContain('<strong>');
 });
 
+test('a note is a card, like everything else this drawer puts in a column', () => {
+  const html = renderToStaticMarkup(
+    <NotePanel notes={[note(), note({ id: 'n2', name: 'second' })]} />,
+  );
+  // two notes, two cards
+  expect(html.match(/bp6-card/g) || []).toHaveLength(2);
+  expect(html).toContain('second');
+});
+
 test('a note cannot be created, renamed or deleted from here', () => {
   const html = renderToStaticMarkup(<NotePanel notes={[note()]} />);
   expect(html).not.toContain('New Note');
