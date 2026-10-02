@@ -3,17 +3,43 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import React from 'react';
 
 import { TabverseBody } from './TabverseDrawer';
-import type { TabspaceBundle } from '../data/types';
+import type { BundleRow, TabspaceBundle } from '../data/types';
 
 /**
- * The drawer's content, rendered to markup.
+ * The drawer, rendered to markup.
  *
  * `renderToStaticMarkup` is what makes views testable in this repository at all:
  * the repo's rule is no jsdom (AGENTS.md), and a Blueprint `Portal` - which is
  * what a Drawer is - renders nothing without a document, so the drawer's own
- * wrapper is not what these assertions read. The content is a plain tree, and
- * this is the part with the information in it.
+ * wrapper is not what these assertions read.
+ *
+ * Since `adr/0019` the tab list inside is the extension's own `TabCard`,
+ * `TabGroupBlock` and `tabverseEntries`, so these assertions are mostly about
+ * the two things the console is still responsible for: the adapter produces the
+ * shape those components expect, and nothing in them reaches for this browser.
  */
+
+function tab(
+  id: string,
+  position: number,
+  extra: Record<string, any> = {},
+): BundleRow {
+  return {
+    id,
+    rev: 1,
+    updated_at: 1000,
+    server_at: 1000,
+    position,
+    data: {
+      title: `tab ${id}`,
+      url: `https://example.com/${id}`,
+      favIconUrl: '',
+      pinned: false,
+      suspended: false,
+      ...extra,
+    },
+  };
+}
 
 function bundle(over: Partial<TabspaceBundle> = {}): TabspaceBundle {
   return {
@@ -34,94 +60,108 @@ function bundle(over: Partial<TabspaceBundle> = {}): TabspaceBundle {
       tabGroups: [{ id: 'g1', title: 'work', color: 'blue', tabIds: ['t2'] }],
     },
     tabs: [
-      {
-        id: 't1',
-        rev: 1,
-        updated_at: 1,
-        server_at: 1,
-        position: 0,
-        data: {
-          title: 'docs',
-          url: 'https://example.com/docs',
-          favIconUrl: 'https://example.com/favicon.ico',
-          pinned: true,
-        },
-      },
-      {
-        id: 't2',
-        rev: 1,
-        updated_at: 1,
-        server_at: 1,
-        position: 1,
-        data: {
-          title: 'mail',
-          url: 'https://mail.example.com',
-          favIconUrl: '',
-        },
-      },
+      tab('t1', 0, {
+        title: 'docs',
+        url: 'https://example.com/docs',
+        favIconUrl: 'https://example.com/favicon.ico',
+        pinned: true,
+      }),
+      tab('t2', 1, { title: 'mail', url: 'https://mail.example.com' }),
     ],
-    notes: [
-      {
-        id: 'n1',
-        rev: 1,
-        updated_at: 1,
-        server_at: 1,
-        position: 0,
-        data: { name: 'plan', data: 'ship the console' },
-      },
-    ],
+    notes: [],
     todos: [],
     bookmarks: [],
     closed_tabs: [],
-    aggregates: { allnote: '{"noteIds":["n1"]}' },
+    aggregates: {},
     ...over,
   };
 }
 
-test('the summary line is the extension`s own sentence', () => {
-  const html = renderToStaticMarkup(<TabverseBody bundle={bundle()} />);
-  expect(html).toContain('Working on');
-  expect(html).toContain('>2</b>');
-  expect(html).toContain('tabs');
-  expect(html).toContain('>1</b>');
-  expect(html).toContain('group');
+/** The text a reader sees, with markup and the bold taken out. */
+function say(html: string): string {
+  return html
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+test('the summary line is the extension`s own component, so its wording too', () => {
+  const text = say(renderToStaticMarkup(<TabverseBody bundle={bundle()} />));
+  expect(text).toContain('Working on 2 tabs in 1 group');
 });
 
-test('a tab is a card with its favicon, title, url and flags', () => {
+test('a tab is the extension`s card: title over url, with its pinned tag', () => {
   const html = renderToStaticMarkup(<TabverseBody bundle={bundle()} />);
-  expect(html).toContain('https://example.com/favicon.ico');
+  // The card is a Blueprint card with the extension's own module classes, and
+  // the url is the truncated label the extension shows.
+  expect(html).toContain('bp6-card');
   expect(html).toContain('docs');
   expect(html).toContain('https://example.com/docs');
   // Chrome puts pinned tabs in their own section, so "pinned" is part of what a
-  // tab is and has to be readable here too.
+  // tab is and has to be readable here too - as the extension's Tag, pin and
+  // all, not as a chip of the console's own.
+  expect(html).toContain('bp6-icon-pin');
   expect(html).toContain('pinned');
 });
 
-test('a group is a block carrying its colour and its count', () => {
+test('a group is the extension`s block, in that group`s colour', () => {
   const html = renderToStaticMarkup(<TabverseBody bundle={bundle()} />);
-  expect(html).toContain('var(--group-blue)');
+  // #3b6fd4 is TAB_GROUP_COLORS_JS.blue, compiled into the component: the
+  // console no longer keeps a palette of its own.
+  expect(html).toContain('#3b6fd4');
   expect(html).toContain('work');
 });
 
-test('an empty tabverse says so instead of drawing nothing', () => {
+test('nothing in a tabverse on somebody else`s account can act on this browser', () => {
+  const html = renderToStaticMarkup(<TabverseBody bundle={bundle()} />);
+  // The guard is `chromeTabId > 0` in TabCard and the adapter stores 0, so a
+  // stored tab offers no close button. This is the assertion that would fail if
+  // the sentinel ever came back as -1.
+  expect(html).not.toContain('Close this tab');
+  expect(html).not.toContain('Save this tab as a bookmark');
+});
+
+test('a tabverse with no tabs says so instead of drawing nothing', () => {
   const html = renderToStaticMarkup(
     <TabverseBody bundle={bundle({ tabs: [], tabspace_data: {} })} />,
   );
   expect(html).toContain('no tabs in this tabverse');
+  expect(say(html)).toContain('Working on 0 tabs');
 });
 
 test('everything that is not a tab is folded away, and counted', () => {
-  const html = renderToStaticMarkup(<TabverseBody bundle={bundle()} />);
+  const html = renderToStaticMarkup(
+    <TabverseBody
+      bundle={bundle({
+        notes: [
+          {
+            id: 'n1',
+            rev: 1,
+            updated_at: 1,
+            server_at: 1,
+            position: 0,
+            data: { name: 'plan', data: 'ship the console' },
+          },
+        ],
+      })}
+    />,
+  );
   expect(html).toContain(
     'notes, todos, bookmarks and closed tabs stored with it (1)',
   );
   expect(html).toContain('ship the console');
 });
 
-test('a tab without a favicon still draws its title', () => {
+/**
+ * The one image the console asks a third party for, asserted so it is a
+ * decision rather than a surprise: `FavIcon` falls back to a dummyimage.com
+ * URL for a tab with no icon of its own (ADR 0016 removed that from the
+ * preview path for exactly this reason). The console accepts it for now and
+ * will draw its own icon later (ADR 0019, decision 3) - so when FavIcon grows a
+ * local placeholder, this is the assertion to delete.
+ */
+test('a tab without an icon gets the extension`s placeholder, which is remote', () => {
   const html = renderToStaticMarkup(<TabverseBody bundle={bundle()} />);
-  expect(html).toContain('mail');
-  // One favicon in the bundle, one image in the markup: the row with none does
-  // not get a placeholder image, because a placeholder would be a request.
-  expect(html.match(/<img/g) || []).toHaveLength(1);
+  expect(html).toContain('dummyimage.com');
 });

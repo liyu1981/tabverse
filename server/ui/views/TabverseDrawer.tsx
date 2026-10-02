@@ -2,19 +2,23 @@ import { Button, Drawer, Spinner } from '@blueprintjs/core';
 import React, { useState } from 'react';
 import { useUnit } from 'effector-react';
 
+import {
+  SplitBlock,
+  TabGroupBlock,
+} from '../../../src/ui/manager/TabSpace/TabGroupBlock';
+import { TabCard } from '../../../src/ui/manager/TabSpace/TabCard';
+import { TabverseSummary } from '../../../src/ui/manager/SavedTabSpace/TabverseSummary';
+import { tabverseEntries } from '../../../src/data/tabSpace/tabEntries';
+import type { Tab } from '../../../src/data/tabSpace/Tab';
+
 import { deleteTabspace, dismissTabspace } from '../data/actions';
 import { ago, dateOf, bytes, jsonSize } from '../data/format';
 import { $account } from '../data/stores/accounts';
 import { $bundle, $bundleError, $drawerOpen } from '../data/stores/drawer';
 import { $isAssumed } from '../data/stores/session';
-import {
-  groupColorVar,
-  storedCount,
-  tabverseEntries,
-  tabverseSummary,
-  type TabCardModel,
-} from '../data/tabverseView';
-import type { TabGroupHint, TabspaceBundle } from '../data/types';
+import { storedCount } from '../data/tabverseView';
+import { toTabSpace } from '../data/tabverseAdapter';
+import type { TabspaceBundle } from '../data/types';
 import { TypedConfirmDialog } from '../components/Dialogs';
 import classes from '../drawer.module.scss';
 
@@ -150,105 +154,64 @@ function When(props: { label: string; ms: number }) {
  * views are tested without a DOM (adr/0018, decision 8).
  */
 export function TabverseBody(props: { bundle: TabspaceBundle }) {
-  const { tabs, groups } = tabverseSummary(props.bundle);
-  const entries = tabverseEntries(props.bundle);
+  const bundle = props.bundle;
+  const tabSpace = toTabSpace(bundle);
+  // The same builder the extension's own saved-tabverse list uses, on the same
+  // shape: a group is a block at its first member and a split view is one
+  // block of two (adr/0019).
+  const entries = tabverseEntries(tabSpace);
+
+  // Opening a stored tab is the one thing a card can do that is about this
+  // browser rather than about the account, and it is a plain link: there is no
+  // window here to switch to.
+  const openTab = (tab: Tab) => {
+    if (tab.url) window.open(tab.url, '_blank', 'noreferrer');
+  };
+
+  const storedCard = (tab: Tab) => (
+    <TabCard key={tab.id} tab={tab} onActivate={openTab} />
+  );
 
   return (
     <div className={classes.body}>
-      <p className={classes.summary}>
-        Working on <b>{tabs}</b> {tabs === 1 ? 'tab' : 'tabs'}
-        {groups > 0 ? (
-          <>
-            {' '}
-            in <b>{groups}</b> {groups === 1 ? 'group' : 'groups'}
-          </>
-        ) : null}
-      </p>
+      <TabverseSummary
+        tabCount={tabSpace.tabs.size}
+        groupCount={tabSpace.tabGroups.length}
+      />
 
-      {!tabs ? (
+      {!tabSpace.tabs.size ? (
         <p className="empty-inline">no tabs in this tabverse</p>
       ) : (
-        <ul className={classes.cards}>
-          {entries.map((entry) =>
-            entry.kind === 'tab' ? (
-              <TabCard key={entry.tab.id} tab={entry.tab} />
-            ) : (
-              <GroupBlock
-                key={entry.group.id}
+        <div className={classes.cards}>
+          {entries.map((entry) => {
+            if (entry.kind === 'tab') return storedCard(entry.tab);
+            if (entry.kind === 'split') {
+              const [first, second] = entry.tabs as [Tab, Tab];
+              return (
+                <SplitBlock
+                  key={`split-${first.id}`}
+                  splitViewId={first.splitViewId}
+                >
+                  {storedCard(first)}
+                  {storedCard(second)}
+                </SplitBlock>
+              );
+            }
+            return (
+              <TabGroupBlock
+                key={`group-${entry.group.id}`}
                 group={entry.group}
-                tabs={entry.tabs}
-              />
-            ),
-          )}
-        </ul>
+                tabCount={entry.tabs.length}
+              >
+                {entry.tabs.map(storedCard)}
+              </TabGroupBlock>
+            );
+          })}
+        </div>
       )}
 
-      <StoredSections bundle={props.bundle} />
+      <StoredSections bundle={bundle} />
     </div>
-  );
-}
-
-interface TabCardProps {
-  tab: TabCardModel;
-}
-
-/** One tab: favicon, title over url, and the flags it earned. */
-function TabCard(props: TabCardProps) {
-  const tab = props.tab;
-  return (
-    <li className={classes.card}>
-      {tab.favIconUrl ? (
-        <img
-          className={classes.fav}
-          src={tab.favIconUrl}
-          alt=""
-          loading="lazy"
-        />
-      ) : null}
-      <span className={classes.cardText}>
-        <span className={classes.cardTitle}>{tab.title || '(untitled)'}</span>
-        {tab.url ? (
-          <a
-            className={classes.cardUrl}
-            href={tab.url}
-            target="_blank"
-            rel="noreferrer noopener"
-          >
-            {tab.url}
-          </a>
-        ) : (
-          <span className={classes.cardUrl}>(no url)</span>
-        )}
-      </span>
-      <span className={classes.flags}>
-        {tab.pinned ? <span className="badge">pinned</span> : null}
-        {tab.suspended ? <span className="badge">suspended</span> : null}
-      </span>
-    </li>
-  );
-}
-
-/**
- * A tab group as a block: a coloured rule down the left and a header row with
- * the group's title and how many of its tabs are here. The label's background
- * carries the colour, so one thing says which group this is rather than two.
- */
-function GroupBlock(props: { group: TabGroupHint; tabs: TabCardModel[] }) {
-  const color = groupColorVar(props.group.color);
-  return (
-    <li className={classes.group} style={{ borderLeftColor: color }}>
-      <div className={classes.groupHeader}>
-        <span className={classes.groupLabel} style={{ backgroundColor: color }}>
-          <span className={classes.groupTitle} title={props.group.title}>
-            {props.group.title || '(untitled group)'}
-          </span>
-        </span>
-        <span className={classes.groupCount}>{props.tabs.length}</span>
-      </div>
-      {props.tabs.map((tab) => (
-        <TabCard key={tab.id} tab={tab} />
-      ))}
-    </li>
   );
 }
 

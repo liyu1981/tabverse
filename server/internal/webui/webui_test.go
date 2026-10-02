@@ -173,29 +173,52 @@ func TestAssetsAreServedImmutable(t *testing.T) {
 // the cheapest way to catch a build that quietly stopped emitting our CSS.
 func TestTheStylesheetCarriesTheProductLayer(t *testing.T) {
 	requireBundle(t)
+	css := bundleText(t, ".css")
+
+	// `--brand` is the console's own token layer and `bp6-card` is the Blueprint
+	// base it is drawn over. Both have to survive the build or the console is
+	// the extension's components with nothing of its own around them.
+	for _, want := range []string{"--brand", "bp6-card"} {
+		if !strings.Contains(css, want) {
+			t.Errorf("the stylesheet has no %q: the console's own layer did not survive the build", want)
+		}
+	}
+
+	// The drawer draws tab groups with the extension's own component, which
+	// carries Chrome's nine group colours (adr/0019). They are set inline from
+	// TAB_GROUP_COLORS_JS rather than in CSS, so they are looked for in the
+	// script: if it stops being there, the console has quietly lost the tabverse
+	// view it went there for.
+	js := bundleText(t, ".js")
+	if !strings.Contains(js, "3b6fd4") {
+		t.Error("the bundle has no tab group colours: the extension's tabverse view is not in it")
+	}
+}
+
+// bundleText concatenates every built file with the given extension, which is
+// how the bundle is read here: the names are content hashed, so a test cannot
+// name a file.
+func bundleText(t *testing.T, ext string) string {
+	t.Helper()
 	entries, err := fs.ReadDir(dist, "dist")
 	if err != nil {
 		t.Fatalf("read dist: %v", err)
 	}
-	var css string
+	out := ""
 	for _, entry := range entries {
-		if !strings.HasSuffix(entry.Name(), ".css") {
+		if !strings.HasSuffix(entry.Name(), ext) {
 			continue
 		}
 		body, err := fs.ReadFile(dist, "dist/"+entry.Name())
 		if err != nil {
 			t.Fatalf("read %s: %v", entry.Name(), err)
 		}
-		css += string(body)
+		out += string(body)
 	}
-	if css == "" {
-		t.Fatal("the bundle has no stylesheet")
+	if out == "" {
+		t.Fatalf("the bundle has no %s files", ext)
 	}
-	for _, want := range []string{"--brand", "--group-blue", "bp6-card"} {
-		if !strings.Contains(css, want) {
-			t.Errorf("the stylesheet has no %q: the console's own layer did not survive the build", want)
-		}
-	}
+	return out
 }
 
 func min(a, b int) int {
