@@ -151,7 +151,9 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--text-muted);
-  margin-bottom: 10px;
+  // A label needs air above it as well as below, or it reads as the last line
+  // of the header card rather than as the head of the list.
+  margin: 6px 0 14px;
   padding-left: 12px;
 }
 
@@ -171,11 +173,24 @@
 // pane that reads as a stack of touching rows, so the list gets its own gap.
 // The left inset is the one the cards already agree on: a group block draws its
 // coloured rule there, and the header and the label above sit on the same edge.
+/*
+ * The tab rows, spaced.
+ *
+ * The rows themselves are the extension's own `TabCard`, which brings its own
+ * 6px top margin and cannot be restyled from here without the console's tabverse
+ * view ceasing to be the extension's (adr/0019). The air therefore goes around
+ * them: a 10px gap on top of the card's own 6px makes 16px between two rows,
+ * where the extension's live list puts 6px - the pane is wider and shorter than
+ * a manager tab, and rows that close together there read as one block here. The
+ * bottom margin is the room the list ends with, so the last row is not the last
+ * thing in the pane.
+ */
 .cards {
   padding-left: 12px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 10px;
+  margin-bottom: 20px;
 }
 
 // ---- the bottom bar -------------------------------------------------------
