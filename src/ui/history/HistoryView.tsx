@@ -10,7 +10,6 @@ import { $allClosedTab } from '../../data/closedTab/store';
 import {
   clearAllClosedTabs,
   deleteClosedTab,
-  monitorTabSpaceChanges,
   restoreClosedTab,
   startMonitorDbChanges,
 } from '../../data/closedTab/util';
@@ -102,7 +101,6 @@ export function HistoryView() {
   const { toaster } = useContext(ManagerViewContext);
 
   useEffect(() => {
-    monitorTabSpaceChanges();
     // a tab closed in this tabverse on another device shows up as a database
     // write, not as a store event
     startMonitorDbChanges();

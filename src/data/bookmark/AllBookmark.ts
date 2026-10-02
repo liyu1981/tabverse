@@ -1,5 +1,5 @@
 import { Bookmark, convertToSavedBookmark, setTabSpaceId } from './Bookmark';
-import { IBase, isIdNotSaved } from '../common';
+import { IBase } from '../common';
 import {
   convertToSavedBase,
   inPlaceCopyFromOtherBase,
@@ -89,24 +89,10 @@ export function convertAndGetAllBookmarkSavePayload(
 ): {
   allBookmark: AllBookmark;
   allBookmarkSavePayload: AllBookmarkSavePayload;
-  isNewAllBookmark: boolean;
-  newBookmarkSavePayloads: Bookmark[];
-  existBookmarkSavePayloads: Bookmark[];
+  bookmarkSavePayloads: Bookmark[];
 } {
-  const isNewAllBookmark = isIdNotSaved(targetAllBookmark.id);
-  const newBookmarkSavePayloads: Bookmark[] = [];
-  const existBookmarkSavePayloads: Bookmark[] = [];
   const savedBookmarks = targetAllBookmark.bookmarks
-    .map((bookmark) => {
-      const isNewBookmark = isIdNotSaved(bookmark.id);
-      const savedBookmark = convertToSavedBookmark(bookmark);
-      if (isNewBookmark) {
-        newBookmarkSavePayloads.push(savedBookmark);
-      } else {
-        existBookmarkSavePayloads.push(savedBookmark);
-      }
-      return savedBookmark;
-    })
+    .map(convertToSavedBookmark)
     .toList();
   const savedBase = convertToSavedBase(targetAllBookmark);
   const savedAllBookmark = produce(targetAllBookmark, (draft) => {
@@ -121,8 +107,6 @@ export function convertAndGetAllBookmarkSavePayload(
   return {
     allBookmark: savedAllBookmark,
     allBookmarkSavePayload,
-    isNewAllBookmark,
-    newBookmarkSavePayloads,
-    existBookmarkSavePayloads,
+    bookmarkSavePayloads: savedBookmarks.toArray(),
   };
 }

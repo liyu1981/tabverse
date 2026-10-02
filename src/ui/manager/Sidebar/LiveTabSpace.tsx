@@ -1,8 +1,7 @@
 import React from 'react';
-import { Tag, Tree, TreeNodeInfo } from '@blueprintjs/core';
+import { Tree, TreeNodeInfo } from '@blueprintjs/core';
 
 import classes from './LiveTabSpace.module.scss';
-import { isIdNotSaved } from '../../../data/common';
 import { $tabSpace } from '../../../data/tabSpace/store';
 import { useStore } from 'effector-react';
 import type { SidebarComponentProps } from './Sidebar';
@@ -28,7 +27,6 @@ export function LiveTabSpace(props: LiveTabSpaceProps) {
       label: (
         <span className={classes.currentWindow}>
           <b>In This Window</b> <span>{tabSpace.name}</span>
-          {isIdNotSaved(tabSpace.id) ? '' : <Tag>saved</Tag>}
         </span>
       ),
     },

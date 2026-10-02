@@ -1,22 +1,16 @@
 import { $allNote, noteStoreApi } from '../../data/note/store';
+import React from 'react';
 import { Note, newEmptyNote, setName } from '../../data/note/Note';
-import React, { useEffect } from 'react';
-import { monitorTabSpaceChanges, saveCurrentNotes } from '../../data/note/util';
+import { saveCurrentNotes } from '../../data/note/util';
 
 import { Button } from '@blueprintjs/core';
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { NoteView } from './Note';
 import classes from './NotebookView.module.scss';
-import { logger } from '../../global';
 import { useStore } from 'effector-react';
 
 export function NotebookView() {
   const allNote = useStore($allNote);
-
-  useEffect(() => {
-    logger.info('notebook start monitor tabspace, alltodo changes');
-    monitorTabSpaceChanges();
-  }, []);
 
   const updateNote = (nid: string, changes: Partial<Note>) => {
     noteStoreApi.updateNote({ nid, changes });

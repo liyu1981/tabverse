@@ -15,12 +15,7 @@ import {
   updateTabSpace,
 } from './TabSpace';
 import { TAB_DB_TABLE_NAME, Tab, TabSavePayload, fromSavedTab } from './Tab';
-import {
-  TabSpaceDBMsg,
-  TabSpaceMsg,
-  sendPubSubMessage,
-  subscribePubSubMessage,
-} from '../../message/message';
+import { TabSpaceDBMsg, subscribePubSubMessage } from '../../message/message';
 import {
   debounce,
   hasOwn,
@@ -225,28 +220,22 @@ export async function saveTabSpace(targetTabSpace: TabSpace): Promise<number> {
       const {
         tabSpace: updatedTabSpace,
         tabSpaceSavePayload,
-        isNewTabSpace,
-        newTabSavePayloads,
-        existTabSavePayloads,
+        tabSavePayloads,
       } = convertAndGetTabSpaceSavePayload(targetTabSpace);
       logger.log(
         'save tabSpaceSavePayload is:',
         targetTabSpace,
         $tabSpace.getState(),
         tabSpaceSavePayload,
-        newTabSavePayloads,
-        existTabSavePayloads,
+        tabSavePayloads,
       );
       if (isCurrentTabSpace) {
         tabSpaceStoreApi.update(updatedTabSpace);
       }
-      if (isNewTabSpace) {
-        await db.table(TABSPACE_DB_TABLE_NAME).add(tabSpaceSavePayload);
-      } else {
-        await db.table(TABSPACE_DB_TABLE_NAME).put(tabSpaceSavePayload);
-      }
-      await db.table(TAB_DB_TABLE_NAME).bulkAdd(newTabSavePayloads);
-      await db.table(TAB_DB_TABLE_NAME).bulkPut(existTabSavePayloads);
+      // every id is final from the moment a record is created, so a row that is
+      // not in the database yet and one that is there both go in with put
+      await db.table(TABSPACE_DB_TABLE_NAME).put(tabSpaceSavePayload);
+      await db.table(TAB_DB_TABLE_NAME).bulkPut(tabSavePayloads);
       return updatedTabSpace;
     },
   );
@@ -326,16 +315,9 @@ export async function deleteSavedTabSpace(
 const saveCurrentTabSpaceImpl = async () => {
   tabSpaceStoreApi.markInSaving(true);
   const currentTabSpace = $tabSpace.getState();
-  const oldId = currentTabSpace.id;
   const savedTime = await saveTabSpace(currentTabSpace);
   tabSpaceStoreApi.updateLastSavedTime(savedTime);
   tabSpaceStoreApi.markInSaving(false);
-
-  const newId = $tabSpace.getState().id;
-  if (oldId !== newId) {
-    // note/todo/bookmark rows are re-parented to the saved id (same context)
-    sendPubSubMessage(TabSpaceMsg.ChangeID, { from: oldId, to: newId });
-  }
 };
 
 /**

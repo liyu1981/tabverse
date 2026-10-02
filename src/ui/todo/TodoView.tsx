@@ -1,12 +1,11 @@
 import { $allTodo, todoStoreApi } from '../../data/todo/store';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Todo, setCompleted } from '../../data/todo/Todo';
-import { monitorTabSpaceChanges, saveCurrentTodos } from '../../data/todo/util';
+import { saveCurrentTodos } from '../../data/todo/util';
 import { newEmptyTodo, setContent } from '../../data/todo/Todo';
 
 import classes from './TodoView.module.scss';
 import clsx from 'clsx';
-import { logger } from '../../global';
 import { useStore } from 'effector-react';
 
 const RETURN_KEY = 13;
@@ -99,11 +98,6 @@ export function TodoView(_props: TodoViewProps) {
   const [currentInputValue, setCurrentInputValue] = useState<string | null>(
     null,
   );
-
-  useEffect(() => {
-    logger.info('todo start monitor tabspace, alltodo changes');
-    monitorTabSpaceChanges();
-  }, []);
 
   const changeTodo = (id: string, t: Todo) => {
     todoStoreApi.updateTodo({ tid: id, changes: t });

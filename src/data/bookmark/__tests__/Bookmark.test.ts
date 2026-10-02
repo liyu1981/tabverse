@@ -1,4 +1,3 @@
-import { isIdNotSaved } from '../../common';
 import {
   addBookmark,
   convertAndGetAllBookmarkSavePayload,
@@ -69,19 +68,10 @@ test('misc', () => {
   const {
     allBookmark: savedAllBookmark,
     allBookmarkSavePayload,
-    isNewAllBookmark,
-    newBookmarkSavePayloads,
-    existBookmarkSavePayloads,
+    bookmarkSavePayloads,
   } = convertAndGetAllBookmarkSavePayload(allBookmark);
-  expect(savedAllBookmark.bookmarks.toArray()).toEqual(newBookmarkSavePayloads);
-  allBookmarkSavePayload.bookmarkIds.forEach((bookmarkId) => {
-    expect(isIdNotSaved(bookmarkId)).toBeFalsy();
-  });
-  expect(isNewAllBookmark).toBeTruthy();
+  expect(savedAllBookmark.bookmarks.toArray()).toEqual(bookmarkSavePayloads);
   expect(allBookmarkSavePayload.bookmarkIds).toEqual(
-    newBookmarkSavePayloads.map(
-      (bookmarkSavePayload) => bookmarkSavePayload.id,
-    ),
+    bookmarkSavePayloads.map((bookmarkSavePayload) => bookmarkSavePayload.id),
   );
-  expect(existBookmarkSavePayloads.length).toEqual(0);
 });

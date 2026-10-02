@@ -1,10 +1,19 @@
+import { $allClosedTab } from '../../closedTab/store';
+import {
+  loadClosedTabsByTabSpaceId,
+  queryClosedTabs,
+  recordClosedTab,
+  saveAllClosedTabs,
+} from '../../closedTab/util';
 import { TabSpace, insertTab, newEmptyTabSpace } from '../TabSpace';
-import { $tabSpace } from '../store';
+import { $tabSpace, tabSpaceStoreApi } from '../store';
 import { entryTabs, tabverseEntries } from '../tabEntries';
 import { getMockChrome } from '../../../dev/chromeMock';
 import { getNewId } from '../../common';
 import { loadTabSpaceByTabSpaceId, saveTabSpace } from '../util';
 import { resetTestDb } from '../../../dev/dbImplTest';
+import { scanCurrentTabs, startMonitorTabChanges } from '../chromeTab';
+import { vi } from 'vitest';
 import { setPinned, setTitle, setUrl, newEmptyTab } from '../Tab';
 
 const MANAGER_URL = 'chrome-extension://abcdefgh/manager.html?op=new&tvid=ts-1';
@@ -365,4 +374,89 @@ test('the saved pinned state wins over what the window had', async () => {
       .tabs.map((tab) => tab.pinned)
       .toArray(),
   ).toEqual([true, false]);
+});
+
+test('the history of both tabverses survives a restore', async () => {
+  // the window is a tabverse of its own, with history
+  const windowTabSpace = await savedTabSpace('window one', [
+    { title: 'A', url: 'https://a.test/' },
+  ]);
+  // and the tabverse about to be loaded has history of its own, from a window
+  // the user worked in before
+  const loadedTabSpace = await savedTabSpace('loaded one', [
+    { title: 'B', url: 'https://b.test/' },
+  ]);
+  const w = mockChrome.addWindow();
+  const manager = mockChrome.insertTabFromData(
+    { title: 'Tabverse', url: MANAGER_URL, favIconUrl: '', pinned: true },
+    w.id,
+  );
+  mockChrome.insertTabFromData(
+    { title: 'A', url: 'https://a.test/', favIconUrl: '', pinned: false },
+    w.id,
+  );
+  // the window's own tabverse: the tabs in it are live rows, which is what
+  // the tab event path looks a closing tab up by
+  tabSpaceStoreApi.update(windowTabSpace);
+  await scanCurrentTabs();
+  startMonitorTabChanges();
+
+  const aClosed = {
+    ...newEmptyTab(),
+    title: 'closed in A',
+    url: 'https://a1.test/',
+  };
+  await loadClosedTabsByTabSpaceId(windowTabSpace.id);
+  recordClosedTab(aClosed, 1000);
+  await saveAllClosedTabs();
+  const bClosed = {
+    ...newEmptyTab(),
+    title: 'closed in B',
+    url: 'https://b1.test/',
+  };
+  tabSpaceStoreApi.updateTabSpace({ id: loadedTabSpace.id });
+  await loadClosedTabsByTabSpaceId(loadedTabSpace.id);
+  recordClosedTab(bClosed, 2000);
+  await saveAllClosedTabs();
+  tabSpaceStoreApi.update(windowTabSpace);
+  await loadClosedTabsByTabSpaceId(windowTabSpace.id);
+  expect(
+    (await queryClosedTabs(windowTabSpace.id)).map((row) => row.url),
+  ).toEqual(['https://a1.test/']);
+  expect(
+    (await queryClosedTabs(loadedTabSpace.id)).map((row) => row.url),
+  ).toEqual(['https://b1.test/']);
+
+  await loadTabSpaceByTabSpaceId(loadedTabSpace.id, manager.id, w.id);
+
+  // the restore itself records nothing: the tab it closed belonged to the
+  // window's own tabverse
+  expect(
+    (await queryClosedTabs(windowTabSpace.id)).map((row) => row.url),
+  ).toEqual(['https://a1.test/']);
+  expect(
+    (await queryClosedTabs(loadedTabSpace.id)).map((row) => row.url),
+  ).toEqual(['https://b1.test/']);
+
+  // and the first tab closed after the restore is recorded against the
+  // tabverse the window is now on, without touching either one's history
+  // (the mock delivers chrome events on a timer, so let the tab the restore
+  // opened report itself before closing it)
+  await mockChrome.flushMessages(100);
+  mockChrome.removeTab(
+    (await chrome.tabs.query({ windowId: w.id })).find(
+      (tab) => tab.url === 'https://b.test/',
+    ).id,
+  );
+  await vi.waitFor(() =>
+    expect($allClosedTab.getState().closedTabs.size).toEqual(2),
+  );
+  await saveAllClosedTabs();
+  expect(
+    (await queryClosedTabs(loadedTabSpace.id)).map((row) => row.url).sort(),
+  ).toEqual(['https://b.test/', 'https://b1.test/']);
+  expect($allClosedTab.getState().tabSpaceId).toEqual(loadedTabSpace.id);
+  expect(
+    (await queryClosedTabs(windowTabSpace.id)).map((row) => row.url),
+  ).toEqual(['https://a1.test/']);
 });

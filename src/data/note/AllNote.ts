@@ -1,5 +1,5 @@
-import { IBase, isIdNotSaved } from '../common';
-import { Note, convertToSavedNote, newEmptyNote, setTabSpaceId } from './Note';
+import { IBase } from '../common';
+import { Note, convertToSavedNote, setTabSpaceId } from './Note';
 import {
   convertToSavedBase,
   inPlaceCopyFromOtherBase,
@@ -78,25 +78,9 @@ export function updateTabSpaceId(
 export function convertAndGetAllNoteSavePayload(targetAllNote: AllNote): {
   allNote: AllNote;
   allNoteSavePayload: AllNoteSavePayload;
-  isNewAllNote: boolean;
-  newNoteSavePayloads: Note[];
-  existNoteSavePayloads: Note[];
+  noteSavePayloads: Note[];
 } {
-  const isNewAllNote = isIdNotSaved(targetAllNote.id);
-  const newNoteSavePayloads: Note[] = [];
-  const existNoteSavePayloads: Note[] = [];
-  const savedNotes = targetAllNote.notes
-    .map((note) => {
-      const isNewNote = isIdNotSaved(note.id);
-      const savedNote = convertToSavedNote(note);
-      if (isNewNote) {
-        newNoteSavePayloads.push(savedNote);
-      } else {
-        existNoteSavePayloads.push(savedNote);
-      }
-      return savedNote;
-    })
-    .toList();
+  const savedNotes = targetAllNote.notes.map(convertToSavedNote).toList();
   const savedBase = convertToSavedBase(targetAllNote);
   const savedAllNote = produce(targetAllNote, (draft) => {
     inPlaceCopyFromOtherBase(draft, savedBase);
@@ -110,8 +94,6 @@ export function convertAndGetAllNoteSavePayload(targetAllNote: AllNote): {
   return {
     allNote: savedAllNote,
     allNoteSavePayload,
-    isNewAllNote,
-    newNoteSavePayloads,
-    existNoteSavePayloads,
+    noteSavePayloads: savedNotes.toArray(),
   };
 }

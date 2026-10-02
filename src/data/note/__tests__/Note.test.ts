@@ -1,6 +1,5 @@
 import { cloneNote, isEqualContent, newEmptyNote, setName } from '../Note';
 
-import { isIdNotSaved } from '../../common';
 import {
   addNote,
   convertAndGetAllNoteSavePayload,
@@ -72,18 +71,12 @@ test('misc', () => {
   const {
     allNote: savedAllNote,
     allNoteSavePayload,
-    isNewAllNote,
-    newNoteSavePayloads,
-    existNoteSavePayloads,
+    noteSavePayloads,
   } = convertAndGetAllNoteSavePayload(allNote);
-  expect(isIdNotSaved(savedAllNote.tabSpaceId)).toBeFalsy();
-  expect(savedAllNote.notes.toArray()).toEqual(newNoteSavePayloads);
-  allNoteSavePayload.noteIds.forEach((noteId) => {
-    expect(isIdNotSaved(noteId)).toBeFalsy();
-  });
-  expect(isNewAllNote).toBeTruthy();
+  // a save does not touch the ids: they are final from creation
+  expect(savedAllNote.tabSpaceId).toEqual(allNote.tabSpaceId);
+  expect(savedAllNote.notes.toArray()).toEqual(noteSavePayloads);
   expect(allNoteSavePayload.noteIds).toEqual(
-    newNoteSavePayloads.map((noteSavePayload) => noteSavePayload.id),
+    noteSavePayloads.map((noteSavePayload) => noteSavePayload.id),
   );
-  expect(existNoteSavePayloads.length).toEqual(0);
 });

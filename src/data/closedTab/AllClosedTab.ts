@@ -4,7 +4,7 @@ import {
   convertToSavedClosedTab,
   setTabSpaceId,
 } from './ClosedTab';
-import { IBase, isIdNotSaved } from '../common';
+import { IBase } from '../common';
 import { newEmptyBase } from '../Base';
 
 import { List } from 'immutable';
@@ -134,32 +134,23 @@ export function updateTabSpaceId(
   });
 }
 
+/**
+ * The rows to write. The aggregate is store-only (there is no SavedAllClosedTab
+ * row), so only the entries are saved, and every id is final from creation, so
+ * one bulkPut covers both a first write and an update.
+ */
 export function convertAndGetClosedTabSavePayloads(target: AllClosedTab): {
   allClosedTab: AllClosedTab;
-  newClosedTabSavePayloads: ClosedTab[];
-  existClosedTabSavePayloads: ClosedTab[];
+  closedTabSavePayloads: ClosedTab[];
 } {
-  const newClosedTabSavePayloads: ClosedTab[] = [];
-  const existClosedTabSavePayloads: ClosedTab[] = [];
   const savedClosedTabs = target.closedTabs
-    .map((closedTab) => {
-      const savedClosedTab = convertToSavedClosedTab(closedTab);
-      if (isIdNotSaved(closedTab.id)) {
-        newClosedTabSavePayloads.push(savedClosedTab);
-      } else {
-        existClosedTabSavePayloads.push(savedClosedTab);
-      }
-      return savedClosedTab;
-    })
+    .map(convertToSavedClosedTab)
     .toList();
-  // the aggregate is store-only (there is no SavedAllClosedTab row), so only
-  // the entries get their durable ids here
   return {
     allClosedTab: produce(target, (draft) => {
       draft.closedTabs = savedClosedTabs;
     }),
-    newClosedTabSavePayloads,
-    existClosedTabSavePayloads,
+    closedTabSavePayloads: savedClosedTabs.toArray(),
   };
 }
 

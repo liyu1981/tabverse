@@ -1,4 +1,4 @@
-import { IBase, getSavedId, getUnsavedNewId } from './common';
+import { IBase, getNewId } from './common';
 
 import { TABSPACE_DB_VERSION } from '../global';
 import { produce } from 'immer';
@@ -10,7 +10,7 @@ export function newEmptyBase(): IBase {
     version: TABSPACE_DB_VERSION,
     createdAt: -1,
     updatedAt: -1,
-    id: getUnsavedNewId(),
+    id: getNewId(),
   };
 }
 
@@ -28,7 +28,6 @@ export function convertToSavedBase(targetBase: IBase): IBase {
     const datenow = Date.now();
     draft.createdAt = targetBase.createdAt < 0 ? datenow : targetBase.createdAt;
     draft.updatedAt = datenow;
-    draft.id = getSavedId(targetBase.id);
   });
 }
 
@@ -42,11 +41,14 @@ export function inPlaceCopyFromOtherBase<T extends IBase>(
   target.id = otherBase.id;
 }
 
+/**
+ * Stamps the record as saved. The id is already final: nothing about a save
+ * changes who a record is.
+ */
 export function inPlaceConvertToSaved<T extends IBase>(target: T) {
   const datenow = Date.now();
   target.createdAt = target.createdAt < 0 ? datenow : target.createdAt;
   target.updatedAt = datenow;
-  target.id = getSavedId(target.id);
 }
 
 export function updateFromSaved<T1 extends IBase, T2 extends IBase>(

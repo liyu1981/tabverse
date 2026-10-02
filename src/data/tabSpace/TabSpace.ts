@@ -1,10 +1,4 @@
-import {
-  IBase,
-  getSavedId,
-  getUnsavedNewId,
-  isIdNotSaved,
-  setAttrForObject2,
-} from '../common';
+import { IBase, getNewId, setAttrForObject2 } from '../common';
 import {
   Tab,
   TabCore,
@@ -160,14 +154,15 @@ export function reset(
   {
     chromeTabId,
     chromeWindowId,
-    newId,
-  }: { chromeTabId?: number; chromeWindowId?: number; newId?: string },
+  }: { chromeTabId?: number; chromeWindowId?: number },
   targetTabSpace: TabSpace,
 ): TabSpace {
   return produce(targetTabSpace, (draft) => {
     draft.chromeTabId = chromeTabId ?? -1;
     draft.chromeWindowId = chromeWindowId ?? -1;
-    draft.id = newId ?? getUnsavedNewId();
+    // a manager page that has just taken over a window is a new tabverse, so
+    // it gets a new id; the one it replaces keeps its own
+    draft.id = getNewId();
     draft.tabs = List();
   });
 }
@@ -279,18 +274,15 @@ export function replaceAllTabs(
 }
 
 /**
- * Rewrites group membership after a save renames tab ids (the '~' prefix is
- * dropped the first time a tab is saved).
+ * Drops the group hints that point at tabs this tabverse does not hold.
  *
- * `idRemap` covers the rename; `validTabIds` covers the other case - a tab that
- * was closed or moved to another tabverse, whose id is simply not in the
- * tabverse any more. Both would otherwise leave the hint pointing at tabs that
- * do not exist, and the group would render as a silently broken entry. A group
- * left with nothing is dropped.
+ * A tab that was closed or moved to another tabverse leaves its id behind in
+ * the hint, and a hint pointing at a tab that is not there renders as a
+ * silently broken entry, so membership is filtered to the tabs that are. A
+ * group left with nothing is dropped.
  */
-export function remapTabGroups(
+export function filterTabGroups(
   groups: TabGroupHint[] | undefined,
-  idRemap: Map<string, string>,
   validTabIds: Set<string>,
 ): TabGroupHint[] {
   if (!groups || groups.length === 0) {
@@ -299,11 +291,9 @@ export function remapTabGroups(
   const out: TabGroupHint[] = [];
   for (const group of groups) {
     const tabIds: string[] = [];
-    for (const oldId of group.tabIds ?? []) {
-      // an id that was not renamed is already its final form
-      const newId = idRemap.get(oldId) ?? oldId;
-      if (validTabIds.has(newId) && tabIds.indexOf(newId) < 0) {
-        tabIds.push(newId);
+    for (const tabId of group.tabIds ?? []) {
+      if (validTabIds.has(tabId) && tabIds.indexOf(tabId) < 0) {
+        tabIds.push(tabId);
       }
     }
     if (tabIds.length === 0) {
@@ -317,39 +307,14 @@ export function remapTabGroups(
 export function convertAndGetTabSpaceSavePayload(targetTabSpace: TabSpace): {
   tabSpace: TabSpace;
   tabSpaceSavePayload: TabSpaceSavePayload;
-  isNewTabSpace: boolean;
-  newTabSavePayloads: TabCore[];
-  existTabSavePayloads: TabCore[];
+  tabSavePayloads: TabCore[];
 } {
-  const isNewTabSpace = isIdNotSaved(targetTabSpace.id);
-  const existTabSavePayloads: TabCore[] = [];
-  const newTabSavePayloads: TabCore[] = [];
-  // saving strips the '~' from every tab id, so remember what each one became:
-  // group membership references tab ids and has to follow the rename, or the
-  // hints point at tabs that no longer exist and the group silently disappears
-  const idRemap = new Map<string, string>();
   const savedTabs = targetTabSpace.tabs
-    .map((tab: Tab) => {
-      const isNewTab = isIdNotSaved(tab.id);
-      const { tab: updatedTab, savedTab } = convertAndGetTabSavePayload(
-        tab,
-        getSavedId(targetTabSpace.id),
-      );
-      if (updatedTab.id !== tab.id) {
-        idRemap.set(tab.id, updatedTab.id);
-      }
-      if (isNewTab) {
-        newTabSavePayloads.push(savedTab);
-      } else {
-        existTabSavePayloads.push(savedTab);
-      }
-      return updatedTab;
-    })
+    .map((tab: Tab) => convertAndGetTabSavePayload(tab, targetTabSpace.id).tab)
     .toList();
   const savedBase = convertToSavedBase(targetTabSpace);
-  const savedTabGroups = remapTabGroups(
+  const savedTabGroups = filterTabGroups(
     targetTabSpace.tabGroups,
-    idRemap,
     new Set(savedTabs.map((tab) => tab.id).toArray()),
   );
   const tabSpace = produce(targetTabSpace, (draft) => {
@@ -366,8 +331,6 @@ export function convertAndGetTabSpaceSavePayload(targetTabSpace: TabSpace): {
   return {
     tabSpace,
     tabSpaceSavePayload,
-    isNewTabSpace,
-    newTabSavePayloads,
-    existTabSavePayloads,
+    tabSavePayloads: savedTabs.toArray(),
   };
 }

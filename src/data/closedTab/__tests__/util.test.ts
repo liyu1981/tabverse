@@ -23,6 +23,7 @@ import { newEmptyAllClosedTab } from '../AllClosedTab';
 import { resetTestDb } from '../../../dev/dbImplTest';
 import { TABSPACE_DB_TABLE_NAME } from '../../tabSpace/TabSpace';
 import { db } from '../../../storage/db';
+import { vi } from 'vitest';
 
 const mockChrome = getMockChrome();
 const TABSPACE_ID = 'tabspace-under-test';
@@ -104,6 +105,69 @@ test('history is per tabverse', async () => {
   await loadClosedTabsByTabSpaceId('another-tabspace');
   expect($allClosedTab.getState().closedTabs.size).toEqual(0);
   expect((await queryClosedTabs(TABSPACE_ID)).length).toEqual(1);
+});
+
+test('a tab closed after the window became another tabverse is recorded there', async () => {
+  // the window was tabspace A, with history of its own
+  recordClosedTab(aTab('https://www.mine.com'), 1000);
+  await saveAllClosedTabs();
+
+  // tabspace B has history too, and the window is now B (what a restore does)
+  tabSpaceStoreApi.updateTabSpace({ id: 'tabspace-b' });
+  await loadClosedTabsByTabSpaceId('tabspace-b');
+  recordClosedTab(aTab('https://www.b.com'), 2000);
+  await saveAllClosedTabs();
+  tabSpaceStoreApi.updateTabSpace({ id: 'tabspace-b' });
+
+  // the store is on B, but the case that lost history is a store still holding
+  // A's rows - which is what a restore leaves when the History panel was not
+  // open - when the first tab of B is closed
+  tabSpaceStoreApi.updateTabSpace({ id: TABSPACE_ID });
+  await loadClosedTabsByTabSpaceId(TABSPACE_ID);
+  tabSpaceStoreApi.updateTabSpace({ id: 'tabspace-b' });
+
+  recordClosedTab(aTab('https://www.closed-in-b.com'), 3000);
+  await vi.waitFor(() =>
+    expect($allClosedTab.getState().tabSpaceId).toEqual('tabspace-b'),
+  );
+  await saveAllClosedTabs();
+
+  // B keeps its own row and gains the new one
+  expect(
+    (await queryClosedTabs('tabspace-b')).map((row) => row.url).sort(),
+  ).toEqual(['https://www.b.com', 'https://www.closed-in-b.com']);
+  // and A's history is still A's: not re-labelled, and not deleted as stale
+  // (those deletes are what the change feed pushed to the server)
+  expect((await queryClosedTabs(TABSPACE_ID)).map((row) => row.url)).toEqual([
+    'https://www.mine.com',
+  ]);
+});
+
+test('a burst of closes across the tabverse switch is not lost', async () => {
+  recordClosedTab(aTab('https://www.mine.com'), 1000);
+  await saveAllClosedTabs();
+  tabSpaceStoreApi.updateTabSpace({ id: 'tabspace-b' });
+
+  // closing a window fires onRemoved per tab, and they all land while the one
+  // load of the new tabverse's rows is in flight
+  recordClosedTab(aTab('https://www.one.com'), 2000);
+  recordClosedTab(aTab('https://www.two.com'), 3000);
+  recordClosedTab(aTab('https://www.three.com'), 4000);
+  await vi.waitFor(() =>
+    expect($allClosedTab.getState().closedTabs.size).toEqual(3),
+  );
+  await saveAllClosedTabs();
+
+  expect(
+    (await queryClosedTabs('tabspace-b')).map((row) => row.url).sort(),
+  ).toEqual([
+    'https://www.one.com',
+    'https://www.three.com',
+    'https://www.two.com',
+  ]);
+  expect((await queryClosedTabs(TABSPACE_ID)).map((row) => row.url)).toEqual([
+    'https://www.mine.com',
+  ]);
 });
 
 test('the oldest rows are deleted once the cap is reached', async () => {

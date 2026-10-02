@@ -10,7 +10,6 @@
  */
 
 import { db } from '../../storage/db';
-import { isIdNotSaved } from '../common';
 import { ALLBOOKMARK_DB_TABLE_NAME } from '../bookmark/AllBookmark';
 import { CLOSED_TAB_DB_TABLE_NAME } from '../closedTab/ClosedTab';
 import { BOOKMARK_DB_TABLE_NAME } from '../bookmark/Bookmark';
@@ -86,8 +85,7 @@ export function rowUpdatedAt(row: any): number {
  * asked to consent to is the number that actually goes.
  */
 export function isSyncableRow(entity: EntityName, row: any): boolean {
-  if (!row || typeof row.id !== 'string' || isIdNotSaved(row.id)) {
-    // Never saved (ids prefixed with `~`): a UI store row, not data.
+  if (!row || typeof row.id !== 'string') {
     return false;
   }
   if (entity === 'tabspace' && isEmptyTabSpaceRow(row)) {

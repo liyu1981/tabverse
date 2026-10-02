@@ -3,7 +3,7 @@ import { merge } from 'lodash';
 import { exposeDebugData } from '../../debug';
 import { LoadStatus, perfEnd, perfStart } from '../../global';
 import { Query, SearchBackend, searchSavedTabSpaces } from '../search';
-import { isIdNotSaved, setAttrForObject } from '../common';
+import { setAttrForObject } from '../common';
 import { $tabSpace, $tabSpaceStorage } from '../tabSpace/store';
 import { TabSpace } from '../tabSpace/TabSpace';
 import { querySavedTabSpace } from '../tabSpace/util';
@@ -40,18 +40,16 @@ async function reload() {
   // A manager page only ever owns the tabverse of its own window, so at most
   // one saved tabverse can be "opened" (the one being shown right here).
   const currentTabSpace = $tabSpace.getState();
-  const openedSavedTabSpaces = isIdNotSaved(currentTabSpace.id)
-    ? []
-    : [
-        {
-          id: currentTabSpace.id,
-          name: currentTabSpace.name,
-          createdAt: currentTabSpace.createdAt,
-          updatedAt: currentTabSpace.updatedAt,
-          chromeTabId: currentTabSpace.chromeTabId,
-          chromeWindowId: currentTabSpace.chromeWindowId,
-        },
-      ];
+  const openedSavedTabSpaces = [
+    {
+      id: currentTabSpace.id,
+      name: currentTabSpace.name,
+      createdAt: currentTabSpace.createdAt,
+      updatedAt: currentTabSpace.updatedAt,
+      chromeTabId: currentTabSpace.chromeTabId,
+      chromeWindowId: currentTabSpace.chromeWindowId,
+    },
+  ];
   let savedTabSpaces: TabSpace[];
   let changes: Record<string, any> = {};
   if (!tabSpaceQuery.query.isEmpty()) {

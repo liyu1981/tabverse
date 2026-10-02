@@ -4,7 +4,6 @@ import { TabSpace, findTabByChromeTabId } from './TabSpace';
 import { debounce, isTabSpaceManagerPage, logger } from '../../global';
 
 import { eq, isEqual, omit } from 'lodash';
-import { getUnsavedNewId } from '../common';
 import { isJestTest } from '../../debug';
 import { recordClosedTab } from '../closedTab/util';
 import { saveCurrentTabSpaceIfNeeded } from './util';
@@ -182,11 +181,18 @@ export function getOnChromeTabAttached() {
     _attachInfo: chrome.tabs.OnAttachedInfo,
   ) {
     const chromeTab = await chrome.tabs.get(chromeTabId);
-    const oldId = $tabSpace.getState().id;
+    // the Tabverse tab is moving to another window, so the tabverse it was
+    // showing follows it there under a new id - the one it replaces keeps its
+    // own, and so do its notes, todos, bookmarks and history
+    logger.log(
+      'tabverse tab attached to window',
+      chromeTab.windowId,
+      'replacing the tabverse of that window',
+      $tabSpace.getState().id,
+    );
     tabSpaceStoreApi.reset({
       chromeTabId: chromeTab.id,
       chromeWindowId: chromeTab.windowId,
-      newId: getUnsavedNewId(),
     });
     await scanCurrentTabs();
     saveCurrentTabSpaceIfNeeded();

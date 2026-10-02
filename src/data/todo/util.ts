@@ -9,21 +9,12 @@ import {
   updateTabSpaceId,
 } from './AllTodo';
 import { TODO_DB_TABLE_NAME, Todo } from './Todo';
-import { TabSpaceMsg, subscribePubSubMessage } from '../../message/message';
 import { addPagingToQueryParams, db } from '../../storage/db';
 import { debounce, logger } from '../../global';
 
 import { $tabSpace } from '../tabSpace/store';
 import { DEFAULT_SAVE_DEBOUNCE } from '../../storage/StorageOverview';
 import { updateFromSaved } from '../Base';
-
-export function monitorTabSpaceChanges() {
-  subscribePubSubMessage(TabSpaceMsg.ChangeID, (message, data) => {
-    logger.log('pubsub:', message, data);
-    const { to } = data;
-    todoStoreApi.updateTabSpaceId(to);
-  });
-}
 
 export async function loadAllTodoByTabSpaceId(tabSpaceId: string) {
   const savedAllTodo = await queryAllTodo(
@@ -44,20 +35,10 @@ export async function saveAllTodo(): Promise<number> {
     'rw',
     [db.table(TODO_DB_TABLE_NAME), db.table(ALLTODO_DB_TABLE_NAME)],
     async (_tx) => {
-      const {
-        allTodo,
-        allTodoSavePayload,
-        isNewAllTodo,
-        newTodoSavePayloads,
-        existTodoSavePayloads,
-      } = convertAndGetAllTodoSavePayload($allTodo.getState());
-      await db.table(TODO_DB_TABLE_NAME).bulkAdd(newTodoSavePayloads);
-      await db.table(TODO_DB_TABLE_NAME).bulkPut(existTodoSavePayloads);
-      if (isNewAllTodo) {
-        await db.table(ALLTODO_DB_TABLE_NAME).add(allTodoSavePayload);
-      } else {
-        await db.table(ALLTODO_DB_TABLE_NAME).put(allTodoSavePayload);
-      }
+      const { allTodo, allTodoSavePayload, todoSavePayloads } =
+        convertAndGetAllTodoSavePayload($allTodo.getState());
+      await db.table(TODO_DB_TABLE_NAME).bulkPut(todoSavePayloads);
+      await db.table(ALLTODO_DB_TABLE_NAME).put(allTodoSavePayload);
       todoStoreApi.update(allTodo);
       return allTodoSavePayload.updatedAt;
     },

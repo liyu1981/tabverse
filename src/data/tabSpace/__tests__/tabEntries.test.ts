@@ -13,7 +13,7 @@ import { tabverseEntries, tabverseTabs } from '../tabEntries';
 import { produce } from 'immer';
 
 import { Tab } from '../Tab';
-import { getNewId, getSavedId } from '../../common';
+import { getNewId } from '../../common';
 
 /** A tabverse with a pinned tab, a split pair and a named group. */
 function tabverseWithEverything(): {
@@ -83,7 +83,7 @@ test('pinned and tab groups survive a save and load', async () => {
       id: 'g1',
       title: 'Work',
       color: 'blue',
-      tabIds: [getSavedId(named.grouped.id)],
+      tabIds: [named.grouped.id],
     },
   ]);
 

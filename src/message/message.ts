@@ -9,7 +9,6 @@ export interface ILocalTablesChangedPayload {
 
 export enum TabSpaceMsg {
   Focus = 'tabspace_focus',
-  ChangeID = 'tabspace_changeid',
 }
 
 /** In-process "these tables changed" notice; payload is a list of table names. */
@@ -91,19 +90,9 @@ export async function sendChromeMessage(msgPayload: {
   return result;
 }
 
-interface ITabSpaceMsgPayload {
-  from: string;
-  to: string;
-}
-
 export function sendPubSubMessage(
   type: TabSpaceDBMsg.Changed,
   payload: string[],
-): void;
-
-export function sendPubSubMessage(
-  type: TabSpaceMsg.ChangeID,
-  payload: ITabSpaceMsgPayload,
 ): void;
 
 export function sendPubSubMessage(
@@ -113,15 +102,10 @@ export function sendPubSubMessage(
 
 export function sendPubSubMessage(
   type: string,
-  payload: string[] | ITabSpaceMsgPayload | boolean,
+  payload: string[] | boolean,
 ): void {
   PubSub.publish(type, payload);
 }
-
-export function subscribePubSubMessage(
-  type: TabSpaceMsg.ChangeID,
-  callback: (message: string, data: any) => void,
-): string;
 
 export function subscribePubSubMessage(
   type: TabSpaceDBMsg.Changed,

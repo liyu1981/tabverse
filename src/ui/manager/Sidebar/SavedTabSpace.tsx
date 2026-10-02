@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 import { HTMLSelect } from '@blueprintjs/core';
 import type { SidebarComponentProps } from './Sidebar';
 import classes from './SavedTabSpace.module.scss';
-import { isIdNotSaved } from '../../../data/common';
 import { useStore } from 'effector-react';
 import {
   $tabSpaceQuery,
@@ -19,8 +18,8 @@ export function SavedTabSpace(props: SavedTabSpaceProps) {
   const tabSpaceStorage = useStore($tabSpaceStorage);
   const tabSpace = useStore($tabSpace);
   // a manager page owns one window, so at most one saved tabverse is loaded
-  // here (the current one)
-  const openedSavedCount = isIdNotSaved(tabSpace.id) ? 0 : 1;
+  // here (the current one, which is saved from the moment it is opened)
+  const openedSavedCount = 1;
   const [sortMethod, setSortMethod] = useState<SortMethods>(() => {
     return tabSpaceQuery ? tabSpaceQuery.sortMethod : SortMethods.CREATED;
   });

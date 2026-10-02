@@ -8,11 +8,7 @@ import {
   ClosedTab,
   newClosedTabFromTab,
 } from './ClosedTab';
-import {
-  TabSpaceDBMsg,
-  TabSpaceMsg,
-  subscribePubSubMessage,
-} from '../../message/message';
+import { TabSpaceDBMsg, subscribePubSubMessage } from '../../message/message';
 import { TabCore } from '../tabSpace/Tab';
 import { db } from '../../storage/db';
 import { debounce, logger } from '../../global';
@@ -32,14 +28,6 @@ import { DEFAULT_SAVE_DEBOUNCE } from '../../storage/StorageOverview';
  * side tools any more: a tabverse is born saved, so there has been no unsaved
  * state to fall back to since ids were minted in the tab's url.
  */
-
-export function monitorTabSpaceChanges() {
-  subscribePubSubMessage(TabSpaceMsg.ChangeID, (message, data) => {
-    logger.log('pubsub:', message, data);
-    const { to } = data;
-    closedTabStoreApi.updateTabSpaceId(to);
-  });
-}
 
 /**
  * A tab closed in this tabverse on *another* device arrives as a write in this
@@ -90,19 +78,14 @@ export async function loadClosedTabsByTabSpaceId(tabSpaceId: string) {
 
 async function saveAllClosedTabsImpl(): Promise<number> {
   const before = $allClosedTab.getState();
-  const { allClosedTab, newClosedTabSavePayloads, existClosedTabSavePayloads } =
+  const { allClosedTab, closedTabSavePayloads } =
     convertAndGetClosedTabSavePayloads(before);
   const keptIds = new Set(allClosedTab.closedTabs.map((t) => t.id).toArray());
   const updatedAt = await db.transaction(
     'rw',
     [db.table(CLOSED_TAB_DB_TABLE_NAME)],
     async (_tx) => {
-      await db
-        .table(CLOSED_TAB_DB_TABLE_NAME)
-        .bulkAdd(newClosedTabSavePayloads);
-      await db
-        .table(CLOSED_TAB_DB_TABLE_NAME)
-        .bulkPut(existClosedTabSavePayloads);
+      await db.table(CLOSED_TAB_DB_TABLE_NAME).bulkPut(closedTabSavePayloads);
       // rows the store no longer holds: deleted by the user, cleared in bulk,
       // or pushed off the end by the cap. Deleting them (rather than leaving
       // them behind) is what turns into a tombstone on the server.
@@ -164,11 +147,66 @@ export function recordClosedTab(tab: TabCore, closedAt: number = Date.now()) {
     return;
   }
   const tabSpaceId = $tabSpace.getState().id;
-  if ($allClosedTab.getState().tabSpaceId !== tabSpaceId) {
-    // the History panel may never have been opened, in which case the store
-    // does not know yet which tabverse it belongs to
+  const store = $allClosedTab.getState();
+  if (store.tabSpaceId !== tabSpaceId && store.closedTabs.size > 0) {
+    // The store holds *another* tabverse's history, and this is not the panel
+    // having never been opened (an empty store has nothing to lose): this is
+    // what a restore leaves behind, because the window is now a different
+    // tabverse (loadTabSpaceByTabSpaceId). Re-labelling those rows is what used
+    // to empty the history - they were filed under the new tabverse, and the
+    // save that followed deleted the new tabverse's own rows as stale, which
+    // the change feed then pushed to the server as tombstones. So the rows
+    // that belong to this tabverse are read first, and the tab recorded into
+    // those.
+    recordOnceStoreIsOnTabSpace(tabSpaceId, tab, closedAt);
+    return;
+  }
+  if (store.tabSpaceId !== tabSpaceId) {
+    // nothing loaded yet (the panel was never opened), so naming the tabverse
+    // is all it takes
     closedTabStoreApi.updateTabSpaceId(tabSpaceId);
   }
+  addClosedTabToStore(tab, tabSpaceId, closedAt);
+}
+
+/**
+ * Records that arrived while the store was still showing another tabverse.
+ *
+ * A burst of closes lands together - closing a window fires onRemoved once per
+ * tab - and every load replaces the store wholesale, so records that arrived
+ * during one would be wiped by the next. They wait here instead, and are added
+ * once the store is on the right tabverse.
+ */
+let pendingRecords: { tab: TabCore; closedAt: number }[] = [];
+let pendingSwitch: Promise<void> | null = null;
+
+function recordOnceStoreIsOnTabSpace(
+  tabSpaceId: string,
+  tab: TabCore,
+  closedAt: number,
+) {
+  pendingRecords.push({ tab, closedAt });
+  if (pendingSwitch) {
+    return;
+  }
+  pendingSwitch = loadClosedTabsByTabSpaceId(tabSpaceId)
+    .then(() => {
+      const records = pendingRecords;
+      pendingRecords = [];
+      records.forEach((record) => {
+        addClosedTabToStore(record.tab, tabSpaceId, record.closedAt);
+      });
+    })
+    .finally(() => {
+      pendingSwitch = null;
+    });
+}
+
+function addClosedTabToStore(
+  tab: TabCore,
+  tabSpaceId: string,
+  closedAt: number,
+) {
   const closedTab = newClosedTabFromTab(tab, tabSpaceId, closedAt);
   logger.log('closed tab recorded into history:', closedTab.url);
   localChangePending = true;

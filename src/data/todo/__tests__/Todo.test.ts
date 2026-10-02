@@ -10,8 +10,6 @@ import {
 } from '../AllTodo';
 import { convertToSavedTodo, newEmptyTodo, setContent } from '../Todo';
 
-import { isIdNotSaved } from '../../common';
-
 function initAllTodo() {
   const tabSpaceId = 'hello';
   let allTodo = updateTabSpaceId(tabSpaceId, newEmptyAllTodo());
@@ -88,9 +86,11 @@ test('updateTabSpaceId', () => {
 });
 
 test('convertToSavedTodo', () => {
-  let { tabSpaceId, allTodo, t1, t2 } = initAllTodo();
+  const { t2 } = initAllTodo();
   const t2payload = convertToSavedTodo(t2);
-  expect(isIdNotSaved(t2payload.id)).toBeFalsy();
+  // a save stamps the times; the id is already final
+  expect(t2payload.id).toEqual(t2.id);
+  expect(t2payload.updatedAt).toBeGreaterThan(0);
 });
 
 test('allTodo', () => {
@@ -98,19 +98,12 @@ test('allTodo', () => {
   const {
     allTodo: savedAllTodo,
     allTodoSavePayload,
-    isNewAllTodo,
-    newTodoSavePayloads,
-    existTodoSavePayloads,
+    todoSavePayloads,
   } = convertAndGetAllTodoSavePayload(allTodo);
-  allTodoSavePayload.todoIds.forEach((todoId) => {
-    expect(isIdNotSaved(todoId)).toBeFalsy();
-  });
-  expect(isNewAllTodo).toBeTruthy();
   expect(allTodoSavePayload.todoIds).toEqual(
     savedAllTodo.todos.map((todo) => todo.id).toArray(),
   );
   expect(allTodoSavePayload.todoIds).toEqual(
-    newTodoSavePayloads.map((todoSavePayload) => todoSavePayload.id),
+    todoSavePayloads.map((todoSavePayload) => todoSavePayload.id),
   );
-  expect(existTodoSavePayloads.length).toEqual(0);
 });

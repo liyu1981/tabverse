@@ -1,15 +1,11 @@
 import { $allBookmark, bookmarkStoreApi } from '../../data/bookmark/store';
 import { Button, ButtonGroup, EditableText } from '@blueprintjs/core';
-import React, { useEffect, useState } from 'react';
-import {
-  monitorTabSpaceChanges,
-  saveCurrentBookmarks,
-} from '../../data/bookmark/util';
+import React, { useState } from 'react';
+import { saveCurrentBookmarks } from '../../data/bookmark/util';
 
 import { Bookmark } from '../../data/bookmark/Bookmark';
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import classes from './BookmarkView.module.scss';
-import { logger } from '../../global';
 import { usePageControl } from '../common/usePageControl';
 import { useStore } from 'effector-react';
 
@@ -87,11 +83,6 @@ const BOOKMARK_PAGE_LIMIT = 10;
 
 export function BookmarkView() {
   const allBookmark = useStore($allBookmark);
-
-  useEffect(() => {
-    logger.info('bookmark start monitor tabspace, alltodo changes');
-    monitorTabSpaceChanges();
-  }, []);
 
   const [getCurrentPageItems, renderPageControl] = usePageControl<Bookmark>(
     allBookmark.bookmarks.reverse().toArray(),

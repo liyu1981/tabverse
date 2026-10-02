@@ -10,7 +10,6 @@ import {
   updateTabSpaceId,
 } from '../AllClosedTab';
 import { List } from 'immutable';
-import { isIdNotSaved } from '../../common';
 
 import {
   HISTORY_MAX_ENTRIES,
@@ -191,31 +190,26 @@ test('sortByClosedAt breaks a tie with the creation time', () => {
   ).toEqual(['b', 'a']);
 });
 
-test('convertAndGetClosedTabSavePayloads mints durable ids', () => {
+test('convertAndGetClosedTabSavePayloads keeps the ids it is given', () => {
   const { allClosedTab, c1, c2 } = initAllClosedTab();
-  const {
-    allClosedTab: saved,
-    newClosedTabSavePayloads,
-    existClosedTabSavePayloads,
-  } = convertAndGetClosedTabSavePayloads(allClosedTab);
+  const { allClosedTab: saved, closedTabSavePayloads } =
+    convertAndGetClosedTabSavePayloads(allClosedTab);
 
-  expect(newClosedTabSavePayloads.length).toEqual(2);
-  expect(existClosedTabSavePayloads.length).toEqual(0);
-  newClosedTabSavePayloads.forEach((payload) => {
-    expect(isIdNotSaved(payload.id)).toBeFalsy();
-  });
-  // the store now carries the durable ids (the leading ~ is dropped on save)
+  expect(closedTabSavePayloads.length).toEqual(2);
+  // ids are final from creation, so a save stamps the times and nothing else
   expect(
     saved.closedTabs
       .map((t) => t.id)
       .toArray()
       .sort(),
-  ).toEqual([c1.id, c2.id].map((id) => id.substring(1)).sort());
+  ).toEqual([c1.id, c2.id].sort());
+  expect(closedTabSavePayloads.map((p) => p.id).sort()).toEqual(
+    [c1.id, c2.id].sort(),
+  );
 
-  // a second pass has nothing new to add
+  // and a second pass is the same two rows
   const second = convertAndGetClosedTabSavePayloads(saved);
-  expect(second.newClosedTabSavePayloads.length).toEqual(0);
-  expect(second.existClosedTabSavePayloads.length).toEqual(2);
+  expect(second.closedTabSavePayloads.length).toEqual(2);
 });
 
 test('newClosedTabFromTab takes the url, title and icon of the tab', () => {

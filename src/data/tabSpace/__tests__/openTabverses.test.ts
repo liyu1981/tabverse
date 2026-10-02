@@ -23,8 +23,9 @@ test('the tabverse id comes out of the manager tab url', () => {
   expect(tabSpaceIdOfManagerTab(managerTab(1, 1, 'a%2Fb%20c'))).toEqual(
     'a/b c',
   );
-  expect(tabSpaceIdOfManagerTab(managerTab(1, 1, '~unsaved'))).toEqual(
-    '~unsaved',
+  // an id is whatever the url says: the manager page does not second-guess it
+  expect(tabSpaceIdOfManagerTab(managerTab(1, 1, 'a.b-c_d'))).toEqual(
+    'a.b-c_d',
   );
 });
 

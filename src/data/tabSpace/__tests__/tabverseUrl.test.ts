@@ -3,7 +3,6 @@
  * in the url as `tvid`, so opening a Tabverse tab is the same act as deciding to
  * keep the window's tabs.
  */
-import { getNewId, getUnsavedNewId, isIdNotSaved } from '../../common';
 import { TabSpaceOp } from '../../../global';
 import { tabverseUrl } from '../chromeUtil';
 
@@ -13,7 +12,6 @@ test('a new tabverse url carries a durable id', () => {
 
   const tvid = new URL(url, 'https://x/').searchParams.get('tvid');
   expect(tvid).toBeTruthy();
-  expect(isIdNotSaved(tvid!)).toBe(false);
 });
 
 test('the id is url encoded and never blank', () => {
@@ -28,9 +26,4 @@ test('each new tabverse gets its own id', () => {
     Array.from({ length: 50 }, () => tabverseUrl(TabSpaceOp.New)),
   );
   expect(ids.size).toBe(50);
-});
-
-test('getNewId is durable while getUnsavedNewId is not', () => {
-  expect(isIdNotSaved(getNewId())).toBe(false);
-  expect(isIdNotSaved(getUnsavedNewId())).toBe(true);
 });

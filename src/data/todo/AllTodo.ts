@@ -1,4 +1,4 @@
-import { IBase, isIdNotSaved } from '../common';
+import { IBase } from '../common';
 import {
   NotId,
   convertToSavedBase,
@@ -93,25 +93,9 @@ export function updateTabSpaceId(
 export function convertAndGetAllTodoSavePayload(targetAllTodo: AllTodo): {
   allTodo: AllTodo;
   allTodoSavePayload: AllTodoSavePayload;
-  isNewAllTodo: boolean;
-  newTodoSavePayloads: Todo[];
-  existTodoSavePayloads: Todo[];
+  todoSavePayloads: Todo[];
 } {
-  const isNewAllTodo = isIdNotSaved(targetAllTodo.id);
-  const newTodoSavePayloads: Todo[] = [];
-  const existTodoSavePayloads: Todo[] = [];
-  const savedTodos = targetAllTodo.todos
-    .map((todo) => {
-      const isNewTodo = isIdNotSaved(todo.id);
-      const savedTodo = convertToSavedTodo(todo);
-      if (isNewTodo) {
-        newTodoSavePayloads.push(savedTodo);
-      } else {
-        existTodoSavePayloads.push(savedTodo);
-      }
-      return savedTodo;
-    })
-    .toList();
+  const savedTodos = targetAllTodo.todos.map(convertToSavedTodo).toList();
   const savedBase = convertToSavedBase(targetAllTodo);
   const savedAllTodo = produce(targetAllTodo, (draft) => {
     inPlaceCopyFromOtherBase(draft, savedBase);
@@ -125,8 +109,6 @@ export function convertAndGetAllTodoSavePayload(targetAllTodo: AllTodo): {
   return {
     allTodo: savedAllTodo,
     allTodoSavePayload,
-    isNewAllTodo,
-    newTodoSavePayloads,
-    existTodoSavePayloads,
+    todoSavePayloads: savedTodos.toArray(),
   };
 }

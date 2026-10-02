@@ -1,5 +1,3 @@
-import { getSavedId, isIdNotSaved } from '../../common';
-
 import {
   addTabs,
   convertAndGetTabSpaceSavePayload,
@@ -36,9 +34,9 @@ test('constructor', () => {
   expect(ts.name).toEqual('');
   expect(ts.chromeTabId).toBe(-1);
   expect(ts.chromeWindowId).toBe(-1);
-  // a fresh in-memory tabspace still has the '~' id, but tabverses are born
-  // saved now, so autosave is always allowed (ADR: tvid in the tab url)
-  expect(isIdNotSaved(ts.id)).toBeTruthy();
+  // tabverses are born saved (ADR: tvid in the tab url), so the id is final
+  // from the start and autosave is always allowed
+  expect(ts.id.length).toBeGreaterThan(0);
   expect(needAutoSave(ts)).toBeTruthy();
 
   const ts5 = setChromeTabId(
@@ -50,10 +48,12 @@ test('constructor', () => {
   expect(ts5.chromeTabId).toBe(300);
   expect(ts5.chromeWindowId).toBe(301);
 
-  const ts7 = reset({ newId: 'testts7' }, ts);
+  // a reset is a manager page taking over a window, so it is a new tabverse
+  // with a new id
+  const ts7 = reset({}, ts);
   expect(ts7.chromeTabId).toBe(-1);
   expect(ts7.chromeWindowId).toBe(-1);
-  expect(ts7.id).toBe('testts7');
+  expect(ts7.id).not.toEqual(ts.id);
 });
 
 test('findTabById/findTabByChromeTabId', () => {
@@ -150,29 +150,26 @@ test('convertAndGetSavePayload', () => {
   let ts = newEmptyTabSpace();
   const t1 = newEmptyTab();
   ts = insertTab({ tab: t1 }, ts);
-  const {
-    tabSpace,
-    tabSpaceSavePayload,
-    isNewTabSpace,
-    newTabSavePayloads,
-    existTabSavePayloads,
-  } = convertAndGetTabSpaceSavePayload(ts);
-  expect(isIdNotSaved(tabSpace.id)).toBeFalsy();
-  expect(tabSpaceSavePayload.tabIds).toEqual([getSavedId(t1.id)]);
-  expect(isNewTabSpace).toBeTruthy();
-  expect(newTabSavePayloads[0].id).toEqual(getSavedId(t1.id));
-  expect(newTabSavePayloads[0].tabSpaceId).toEqual(getSavedId(ts.id));
-  expect(existTabSavePayloads.length).toEqual(0);
+  const { tabSpace, tabSpaceSavePayload, tabSavePayloads } =
+    convertAndGetTabSpaceSavePayload(ts);
+  // ids do not change on the way to the database, so the payload's tabIds are
+  // the ids the store already had
+  expect(tabSpaceSavePayload.tabIds).toEqual([t1.id]);
+  expect(tabSavePayloads.length).toEqual(1);
+  expect(tabSavePayloads[0].id).toEqual(t1.id);
+  expect(tabSavePayloads[0].tabSpaceId).toEqual(ts.id);
+  expect(tabSpace.id).toEqual(ts.id);
 
   const ts4 = fromSavedDataWithoutTabs(tabSpaceSavePayload);
-  expect(isIdNotSaved(ts4.id)).toBeFalsy();
+  expect(ts4.id).toEqual(ts.id);
   expect(ts4.tabs.size).toEqual(0);
 });
 
 test('reset', () => {
   let ts = newEmptyTabSpace();
+  const idBeforeReset = ts.id;
   ts = reset({ chromeTabId: 100, chromeWindowId: 101 }, ts);
-  expect(isIdNotSaved(ts.id)).toBeTruthy();
+  expect(ts.id).not.toEqual(idBeforeReset);
   expect(ts.chromeTabId).toBe(100);
   expect(ts.chromeWindowId).toBe(101);
 
@@ -206,7 +203,7 @@ test('the save payload keeps pinned tabs and group hints', () => {
     ts,
   );
 
-  const { tabSpaceSavePayload, tabSpace, existTabSavePayloads } =
+  const { tabSpaceSavePayload, tabSpace, tabSavePayloads } =
     convertAndGetTabSpaceSavePayload(ts);
 
   expect(tabSpaceSavePayload.tabIds).toEqual(['t1', 't2']);
@@ -214,9 +211,7 @@ test('the save payload keeps pinned tabs and group hints', () => {
     { id: 'g1', title: 'work', color: 'blue', tabIds: ['t1', 't2'] },
   ]);
   // pinned survives the trip through the database, on both tabs
-  const byId = Object.fromEntries(
-    existTabSavePayloads.map((t) => [t.id, t.pinned]),
-  );
+  const byId = Object.fromEntries(tabSavePayloads.map((t) => [t.id, t.pinned]));
   expect(byId).toEqual({ t1: true, t2: false });
   expect(tabSpace.tabGroups).toHaveLength(1);
 });
@@ -234,33 +229,31 @@ test('a tabverse saved before groups existed loads with an empty list', () => {
 });
 
 /*
- * Regression: a tab group hint records the tab ids it saw at capture time, but
- * the first save strips the '~' from every tab id. If membership is not
- * remapped at the same time, the hint points at tabs that no longer exist, the
- * group silently stops matching, and the tabs render as unrelated entries.
+ * A group hint records the tab ids it saw at capture time. Ids are final from
+ * creation, so a save has nothing to rename and membership only has to be
+ * filtered: a hint that points at a tab this tabverse does not hold would stop
+ * matching, and its tabs would render as unrelated entries.
  */
-test('saving remaps group membership onto the saved tab ids', () => {
+test('a save leaves group membership on the ids it already had', () => {
   let ts = newEmptyTabSpace();
   ts = setId('ts1', ts);
   ts = setName('Window-1', ts);
   ts = addTabs(
     [
-      { ...newEmptyTab(), ...tabSetId('~t1', newEmptyTab()), title: 'one' },
-      { ...newEmptyTab(), ...tabSetId('~t2', newEmptyTab()), title: 'two' },
+      { ...newEmptyTab(), ...tabSetId('t1', newEmptyTab()), title: 'one' },
+      { ...newEmptyTab(), ...tabSetId('t2', newEmptyTab()), title: 'two' },
     ],
     ts,
   );
   ts = setTabGroups(
-    [{ id: 'g1', title: 'work', color: 'blue', tabIds: ['~t1', '~t2'] }],
+    [{ id: 'g1', title: 'work', color: 'blue', tabIds: ['t1', 't2'] }],
     ts,
   );
 
   const { tabSpace, tabSpaceSavePayload } =
     convertAndGetTabSpaceSavePayload(ts);
 
-  // the tabs have been renamed ...
   expect(tabSpace.tabs.map((t) => t.id).toArray()).toEqual(['t1', 't2']);
-  // ... and the group followed them
   expect(tabSpace.tabGroups).toEqual([
     { id: 'g1', title: 'work', color: 'blue', tabIds: ['t1', 't2'] },
   ]);
@@ -270,11 +263,11 @@ test('saving remaps group membership onto the saved tab ids', () => {
 test('group membership for tabs that are gone is dropped, empty groups with it', () => {
   let ts = newEmptyTabSpace();
   ts = setId('ts2', ts);
-  ts = addTabs([{ ...newEmptyTab(), ...tabSetId('~t1', newEmptyTab()) }], ts);
+  ts = addTabs([{ ...newEmptyTab(), ...tabSetId('t1', newEmptyTab()) }], ts);
   ts = setTabGroups(
     [
-      { id: 'g1', title: 'gone', color: 'red', tabIds: ['~deleted'] },
-      { id: 'g2', title: 'kept', color: 'green', tabIds: ['~t1'] },
+      { id: 'g1', title: 'gone', color: 'red', tabIds: ['deleted'] },
+      { id: 'g2', title: 'kept', color: 'green', tabIds: ['t1'] },
     ],
     ts,
   );

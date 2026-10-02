@@ -9,19 +9,10 @@ import {
   updateTabSpaceId,
 } from './AllBookmark';
 import { BOOKMARK_DB_TABLE_NAME, Bookmark } from './Bookmark';
-import { TabSpaceMsg, subscribePubSubMessage } from '../../message/message';
 import { addPagingToQueryParams, db } from '../../storage/db';
-import { debounce, logger } from '../../global';
+import { debounce } from '../../global';
 import { DEFAULT_SAVE_DEBOUNCE } from '../../storage/StorageOverview';
 import { updateFromSaved } from '../Base';
-
-export function monitorTabSpaceChanges() {
-  subscribePubSubMessage(TabSpaceMsg.ChangeID, (message, data) => {
-    logger.log('pubsub:', message, data);
-    const { to } = data;
-    bookmarkStoreApi.updateTabSpaceId(to);
-  });
-}
 
 export async function loadAllBookmarkByTabSpaceId(tabSpaceId: string) {
   const loadedAllBookmark = await queryAllBookmark(
@@ -64,20 +55,10 @@ export async function saveAllBookmark(): Promise<number> {
     'rw',
     [db.table(BOOKMARK_DB_TABLE_NAME), db.table(ALLBOOKMARK_DB_TABLE_NAME)],
     async (_tx) => {
-      const {
-        allBookmark,
-        allBookmarkSavePayload,
-        isNewAllBookmark,
-        newBookmarkSavePayloads,
-        existBookmarkSavePayloads,
-      } = convertAndGetAllBookmarkSavePayload($allBookmark.getState());
-      await db.table(BOOKMARK_DB_TABLE_NAME).bulkAdd(newBookmarkSavePayloads);
-      await db.table(BOOKMARK_DB_TABLE_NAME).bulkPut(existBookmarkSavePayloads);
-      if (isNewAllBookmark) {
-        await db.table(ALLBOOKMARK_DB_TABLE_NAME).add(allBookmarkSavePayload);
-      } else {
-        await db.table(ALLBOOKMARK_DB_TABLE_NAME).put(allBookmarkSavePayload);
-      }
+      const { allBookmark, allBookmarkSavePayload, bookmarkSavePayloads } =
+        convertAndGetAllBookmarkSavePayload($allBookmark.getState());
+      await db.table(BOOKMARK_DB_TABLE_NAME).bulkPut(bookmarkSavePayloads);
+      await db.table(ALLBOOKMARK_DB_TABLE_NAME).put(allBookmarkSavePayload);
       bookmarkStoreApi.update(allBookmark);
       return allBookmarkSavePayload.updatedAt;
     },

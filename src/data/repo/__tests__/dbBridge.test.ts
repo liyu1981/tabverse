@@ -70,11 +70,9 @@ test('countLocalRecords agrees with what listLocalRecords would upload', async (
     createdAt: 1000,
     updatedAt: 2000,
   });
-  await db.table(NOTE).bulkPut([
-    note('n1', 'ts1', 3000),
-    // unsaved (ids are prefixed with ~) and an empty tabspace: both skipped
-    { ...note('~draft', 'ts1', 4000), id: '~draft' },
-  ]);
+  // an empty tabverse row is skipped: opening and closing a Tabverse tab
+  // leaves one behind, and it is not worth a record
+  await db.table(NOTE).put(note('n1', 'ts1', 3000));
 
   const counts = await countLocalRecords();
   const records = await listLocalRecords();
@@ -84,7 +82,7 @@ test('countLocalRecords agrees with what listLocalRecords would upload', async (
   expect(counts.byEntity).toMatchObject({ tabspace: 1, tab: 1, note: 1 });
 });
 
-test('listLocalRecords reads saved rows and skips unsaved ones', async () => {
+test('listLocalRecords reads the rows that are records', async () => {
   await db.table(TABSPACE).put({
     id: 'ts1',
     name: 'space one',
@@ -94,11 +92,7 @@ test('listLocalRecords reads saved rows and skips unsaved ones', async () => {
     createdAt: 1000,
     updatedAt: 2000,
   });
-  await db.table(NOTE).bulkPut([
-    note('n1', 'ts1', 3000),
-    // an unsaved row (ids are prefixed with ~) must never be uploaded
-    { ...note('~draft', 'ts1', 4000), id: '~draft' },
-  ]);
+  await db.table(NOTE).put(note('n1', 'ts1', 3000));
 
   const records = await listLocalRecords();
   const byKey = new Map(records.map((r) => [`${r.entity}/${r.id}`, r]));
@@ -111,7 +105,6 @@ test('listLocalRecords reads saved rows and skips unsaved ones', async () => {
     deleted: false,
   });
   expect(byKey.get('note/n1')!.updated_at).toBe(3000);
-  expect(byKey.get('note/~draft')).toBeUndefined();
 
   const parsed = JSON.parse(byKey.get('note/n1')!.payload);
   expect(parsed).toMatchObject({ id: 'n1', name: 'n1', tabSpaceId: 'ts1' });
