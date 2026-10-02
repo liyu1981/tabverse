@@ -8,7 +8,7 @@ import { OperatorHint, TopBar } from './components/TopBar';
 import { Toasts } from './components/Toasts';
 import { AccountView } from './views/AccountView';
 import { LoadingView, SignInView } from './views/SignInView';
-import { TabverseDrawer } from './views/TabverseDrawer';
+import { TabverseDrawer } from './views/tabverse/TabverseDrawer';
 
 /**
  * The whole console: a frame that never changes (the brand bar, the read-only

@@ -4,7 +4,7 @@
 // components below are styled by their own class names, and a module would
 // rename them and lose the connection. Layout that belongs to one view lives in
 // a *.module.scss next to that view (see layout.module.scss, data.module.scss,
-// drawer.module.scss).
+// views/tabverse/tabverse.module.scss).
 //
 // The import order matters and main.tsx fixes it: normalize, then Blueprint,
 // then this file, then the modules. Everything here is meant to win over

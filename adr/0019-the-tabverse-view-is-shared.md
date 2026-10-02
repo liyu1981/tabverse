@@ -86,6 +86,35 @@ extension's own entry builder. The view around them stays the console's.**
    wording is then one implementation, asserted once, and "the console shows
    what the extension shows" stops being a thing to keep an eye on.
 
+6. **The drawer is the extension's two columns.** The extension draws a tabverse
+   as the tab list on the left and its four tools - Todo, Note, Bookmark,
+   History - on the right, in a split with its own proportions
+   (`TabSpaceView.module.scss`), because the tools belong to one tabverse. The
+   console's drawer is that split, so the tools sit beside the tabs instead of
+   folded underneath them, and the drawer is wide enough for it
+   (`min(1180px, 96vw)`).
+
+7. **The four tools reuse their views' stylesheets, not their views.** Each of
+   `TodoView`, `NotebookView`, `BookmarkView` and `HistoryView` is an editor
+   bound to the local database: an add box, a delete button, a rich-text editor,
+   a store loader. What is worth sharing is how a todo row, a bookmark row and a
+   closed tab are *drawn* - so the console imports the four
+   `*.module.scss` files and draws read-only rows with the same class names,
+   keeps the tab strip on `TabSpaceRightSideView.module.scss` (the same pill
+   tabs, the same icons), and drops every affordance: no "New Note", no
+   toggle-all, no delete cross, no `EditableText`, no "Clear completed", no
+   lock. The two things that only change what is *shown* - the todo filters and
+   the count - stay.
+
+8. **A note body is text, and the tools' own wording is reused where it is
+   plain text.** `note.data` is HTML written on another machine, and this page
+   holds that person's whole account, so it is not rendered as markup: `data/
+   noteText.ts` strips it, and the console puts the result in a `<pre>`. The
+   pre-TipTap draft-js format goes through the extension's own
+   `normalizeNoteHtml` first, so an old note is not a wall of JSON here either.
+   History keeps `calendarLabel` from `src/time.ts` rather than a second
+   wording for "Today at 14:30".
+
 ## Consequences
 
 - `server/ui` imports `src/ui`, so the server's console has a build-time source
@@ -103,6 +132,14 @@ extension's own entry builder. The view around them stays the console's.**
 - The console's own tabverse view model (`tabverseView.ts`) and the CSS that went
   with it are deleted. The one thing worth keeping from them - which tab belongs
   to which group - is `tabverseEntries`, and now there is one of it.
+- A note in the console has lost its formatting. It is text in a box, which is
+  what an operator reading somebody else's note needs and less than the
+  extension shows the note's owner.
+- The drawer's right side inherits the TodoMVC stylesheet, which is written for
+  a 20px Helvetica app: the todo rows are large. That is the extension's own
+  todo list at the extension's own size, which is what "in the style of their
+  existence in extension" asks for, and it is the reason the drawer is wide.
 - Nothing here is verified by a browser. What the user should look at: the
   extension's saved tabverse list (no dead ✕, no remote icon) and the console's
-  drawer beside it.
+  drawer beside it - the two columns, the four tools, and that nothing in them
+  can be pressed into changing a record.

@@ -266,9 +266,13 @@ installing). `internal/webui/webui_test.go` checks the shell against the files
 actually embedded with it, since the names are content hashed.
 
 A tabverse opens in a drawer over the account rather than a page that replaces
-it, and it is the extension's own tabverse view with its action buttons removed: a
-tab stored on this account cannot be opened in the browser running the console,
-and the one button that remains is the delete above. Its stylesheet is the
+it, and it is the extension's own tabverse view in the extension's own two
+columns: the tabs on the left, its Todo / Note / Bookmark / History tools on the
+right (`adr/0019`). The tab list, the group blocks, the summary line and those
+four tools' stylesheets are the extension's own; the panels are read-only, because
+a tab stored on this account cannot be opened in the browser running the console
+and a record written from here would lose to the next honest sync. The one
+button that remains is the delete above. Its stylesheet is the
 extension's look - the palette, the 18px cards, the pill buttons and inputs are
 transcribed from `src/global.scss` and `src/ui/theme.scss` (nothing imports them
 here, so `server/ui/tokens.scss` carries the name of the file each came from),

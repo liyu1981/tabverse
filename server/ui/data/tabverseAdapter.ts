@@ -23,12 +23,21 @@
 
 import { List } from 'immutable';
 
+import type { Bookmark } from '../../../src/data/bookmark/Bookmark';
+import type { ClosedTab } from '../../../src/data/closedTab/ClosedTab';
+import type { Note } from '../../../src/data/note/Note';
 import type { Tab } from '../../../src/data/tabSpace/Tab';
 import type {
   TabGroupHint,
   TabSpace,
 } from '../../../src/data/tabSpace/TabSpace';
+import type { Todo } from '../../../src/data/todo/Todo';
 import type { BundleRow, TabspaceBundle } from './types';
+
+// The four record shapes, re-exported so a panel imports one module: these are
+// the extension's own types, which is the point - a field renamed in the
+// extension is a compile error in the console too.
+export type { Bookmark, ClosedTab, Note, Todo };
 
 /** The group hints in a bundle's own payload, in the order it lists them. */
 export function bundleGroups(bundle: TabspaceBundle): TabGroupHint[] {
@@ -91,5 +100,88 @@ export function toTabSpace(bundle: TabspaceBundle): TabSpace {
     // The tabverse itself is not open in this browser either.
     chromeTabId: 0,
     chromeWindowId: 0,
+  };
+}
+
+/**
+ * The records that hang off a tabverse, as the extension's own models.
+ *
+ * These four are typed against `src/data/{todo,note,bookmark,closedTab}` so the
+ * console's panels are drawn against the same shapes the extension draws them
+ * with - a field renamed in one place is a compile error in both - while the
+ * markup that draws them stays the console's own, because every one of those
+ * views is an editor and an editor has no business in a read-only operator
+ * surface (adr/0019).
+ *
+ * `updatedAt` is the row's, and `createdAt` is 0 for the same reason a tab's is:
+ * the bundle carries one timestamp per record and the tabverse's own, not a
+ * record's birth time. Nothing here invents a fact the server does not have.
+ */
+
+function baseFields(row: BundleRow, tabspaceId: string) {
+  return {
+    id: row.id,
+    tabSpaceId: tabspaceId,
+    createdAt: 0,
+    updatedAt: row.updated_at,
+    version: 0,
+  };
+}
+
+export function toTodo(row: BundleRow, tabspaceId: string): Todo {
+  return {
+    ...baseFields(row, tabspaceId),
+    content: typeof row.data?.content === 'string' ? row.data.content : '',
+    completed: row.data?.completed === true,
+  };
+}
+
+export function toNote(row: BundleRow, tabspaceId: string): Note {
+  return {
+    ...baseFields(row, tabspaceId),
+    name: typeof row.data?.name === 'string' ? row.data.name : '',
+    // HTML, written by the editor on the machine that saved it. The console
+    // shows it as text (data/noteText.ts); this is where the shape comes from.
+    data: typeof row.data?.data === 'string' ? row.data.data : '',
+  };
+}
+
+export function toBookmark(row: BundleRow, tabspaceId: string): Bookmark {
+  return {
+    ...baseFields(row, tabspaceId),
+    name: typeof row.data?.name === 'string' ? row.data.name : '',
+    url: typeof row.data?.url === 'string' ? row.data.url : '',
+    favIconUrl:
+      typeof row.data?.favIconUrl === 'string' ? row.data.favIconUrl : '',
+  };
+}
+
+export function toClosedTab(row: BundleRow, tabspaceId: string): ClosedTab {
+  return {
+    ...baseFields(row, tabspaceId),
+    title: typeof row.data?.title === 'string' ? row.data.title : '',
+    url: typeof row.data?.url === 'string' ? row.data.url : '',
+    favIconUrl:
+      typeof row.data?.favIconUrl === 'string' ? row.data.favIconUrl : '',
+    closedAt:
+      typeof row.data?.closedAt === 'number'
+        ? row.data.closedAt
+        : row.updated_at,
+    timesClosed:
+      typeof row.data?.timesClosed === 'number' ? row.data.timesClosed : 1,
+  };
+}
+
+/** The four record lists, in the order the server sorted them. */
+export function storedRecords(bundle: TabspaceBundle) {
+  const id = bundle.tabspace.id;
+  return {
+    todos: bundle.todos.map((row) => toTodo(row, id)),
+    notes: bundle.notes.map((row) => toNote(row, id)),
+    bookmarks: bundle.bookmarks.map((row) => toBookmark(row, id)),
+    // The server reads the tabverse's own ordering lists and sorts by them
+    // (ADR 0015), which is the same order the extension's aggregates hold: the
+    // user's order, not the server's.
+    history: bundle.closed_tabs.map((row) => toClosedTab(row, id)),
   };
 }

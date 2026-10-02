@@ -2,8 +2,8 @@ import { expect, test } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import React from 'react';
 
-import { TabverseBody } from './TabverseDrawer';
-import type { BundleRow, TabspaceBundle } from '../data/types';
+import { TabverseTabs } from './TabverseDrawer';
+import type { BundleRow, TabspaceBundle } from '../../data/types';
 
 /**
  * The drawer, rendered to markup.
@@ -87,12 +87,12 @@ function say(html: string): string {
 }
 
 test('the summary line is the extension`s own component, so its wording too', () => {
-  const text = say(renderToStaticMarkup(<TabverseBody bundle={bundle()} />));
+  const text = say(renderToStaticMarkup(<TabverseTabs bundle={bundle()} />));
   expect(text).toContain('Working on 2 tabs in 1 group');
 });
 
 test('a tab is the extension`s card: title over url, with its pinned tag', () => {
-  const html = renderToStaticMarkup(<TabverseBody bundle={bundle()} />);
+  const html = renderToStaticMarkup(<TabverseTabs bundle={bundle()} />);
   // The card is a Blueprint card with the extension's own module classes, and
   // the url is the truncated label the extension shows.
   expect(html).toContain('bp6-card');
@@ -106,7 +106,7 @@ test('a tab is the extension`s card: title over url, with its pinned tag', () =>
 });
 
 test('a group is the extension`s block, in that group`s colour', () => {
-  const html = renderToStaticMarkup(<TabverseBody bundle={bundle()} />);
+  const html = renderToStaticMarkup(<TabverseTabs bundle={bundle()} />);
   // #3b6fd4 is TAB_GROUP_COLORS_JS.blue, compiled into the component: the
   // console no longer keeps a palette of its own.
   expect(html).toContain('#3b6fd4');
@@ -114,7 +114,7 @@ test('a group is the extension`s block, in that group`s colour', () => {
 });
 
 test('nothing in a tabverse on somebody else`s account can act on this browser', () => {
-  const html = renderToStaticMarkup(<TabverseBody bundle={bundle()} />);
+  const html = renderToStaticMarkup(<TabverseTabs bundle={bundle()} />);
   // The guard is `chromeTabId > 0` in TabCard and the adapter stores 0, so a
   // stored tab offers no close button. This is the assertion that would fail if
   // the sentinel ever came back as -1.
@@ -124,33 +124,21 @@ test('nothing in a tabverse on somebody else`s account can act on this browser',
 
 test('a tabverse with no tabs says so instead of drawing nothing', () => {
   const html = renderToStaticMarkup(
-    <TabverseBody bundle={bundle({ tabs: [], tabspace_data: {} })} />,
+    <TabverseTabs bundle={bundle({ tabs: [], tabspace_data: {} })} />,
   );
   expect(html).toContain('no tabs in this tabverse');
   expect(say(html)).toContain('Working on 0 tabs');
 });
 
-test('everything that is not a tab is folded away, and counted', () => {
-  const html = renderToStaticMarkup(
-    <TabverseBody
-      bundle={bundle({
-        notes: [
-          {
-            id: 'n1',
-            rev: 1,
-            updated_at: 1,
-            server_at: 1,
-            position: 0,
-            data: { name: 'plan', data: 'ship the console' },
-          },
-        ],
-      })}
-    />,
-  );
-  expect(html).toContain(
-    'notes, todos, bookmarks and closed tabs stored with it (1)',
-  );
-  expect(html).toContain('ship the console');
+test('the header is the tabverse, its two times, and how many tabs it holds', () => {
+  const html = renderToStaticMarkup(<TabverseTabs bundle={bundle()} />);
+  expect(html).toContain('Window-3');
+  expect(html).toContain('Created');
+  expect(html).toContain('Saved');
+  // ...and none of the live window's furniture, which is about this browser and
+  // not about the stored record.
+  expect(html).not.toContain('Save and close');
+  expect(html).not.toContain('Mark all as complete');
 });
 
 /**
@@ -162,6 +150,6 @@ test('everything that is not a tab is folded away, and counted', () => {
  * local placeholder, this is the assertion to delete.
  */
 test('a tab without an icon gets the extension`s placeholder, which is remote', () => {
-  const html = renderToStaticMarkup(<TabverseBody bundle={bundle()} />);
+  const html = renderToStaticMarkup(<TabverseTabs bundle={bundle()} />);
   expect(html).toContain('dummyimage.com');
 });
