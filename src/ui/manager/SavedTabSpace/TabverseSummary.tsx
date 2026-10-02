@@ -11,12 +11,13 @@ export interface TabverseSummaryProps {
 /**
  * "Working on 7 tabs in 2 groups" - the line above a tabverse's tab cards.
  *
- * It is its own component because two pages draw it: the extension's
- * saved-tabverse view, and the console's tabverse drawer, which shows the same
- * view of a tabverse stored on an account this browser does not own
- * (`adr/0019`). When the wording lives in one place, "the console shows what the
- * extension shows" is a fact about the code rather than something to keep an eye
- * on.
+ * It started as its own component because two pages drew it: this one, and the
+ * console's tabverse drawer. The console stopped using it (its list says
+ * `Tabs (7)` instead, which is the same two facts in a label rather than a
+ * sentence - `adr/0019`), so what is left here is the saved view's line. The
+ * component stays because the wording is worth having in one place for the two
+ * saved-tabverse views in this repository to share if they ever need it again,
+ * and its assertions are the record of how that sentence is meant to read.
  */
 export function TabverseSummary(props: TabverseSummaryProps) {
   const { tabCount, groupCount } = props;

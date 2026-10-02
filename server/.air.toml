@@ -1,0 +1,78 @@
+# air: rebuild the console, rebuild the binary, restart the server - on every
+# change to either.
+#
+# Two things have to be rebuilt together, which is the whole reason this file
+# exists: the console is *embedded* in the binary (adr/0018), so a change to a
+# .tsx is invisible to `go build` and invisible to a running server until the
+# binary is rebuilt and restarted. Air watches both kinds of source and does both
+# steps, in that order.
+#
+# Run it with `pnpm run server:dev` from the repository root. Air itself is a
+# separate install (`go install github.com/air-verse/air@v1.67.4`) and is
+# deliberately not a module dependency: its own graph drags in a Hugo and two
+# Sass compilers for a watch loop.
+
+# The repository, not server/: air only watches directories under its root, and
+# the console's source is server/ui. `root` is resolved against air's working
+# directory (which is why the npm script does `cd server` first, and why this is
+# `..` and not `.`), and air refuses to run when that resolves to a home
+# directory. The server still runs *in* server/ - see scripts/dev-run.sh, which
+# is what keeps its .env and its database there.
+root = ".."
+tmp_dir = "server/tmp"
+
+[build]
+  # The console first: `go build` embeds whatever is in
+  # server/internal/webui/dist at that moment, so this has to finish before the
+  # binary is compiled.
+  # Both of these run in the directory air was started in - server/ - not in
+  # root, which is a distinction air's own file makes easy to get wrong: `pnpm`
+  # finds the workspace root from there on its own, and the build path is
+  # already the server's.
+  pre_cmd = ["pnpm run ui:build"]
+  cmd = "go build -o ./bin/tabversed ./cmd/tabversed"
+  # `entrypoint` rather than the older `bin` + `args_bin`: air deprecated those,
+  # and with them ignored the binary started with no arguments - which for this
+  # one is a help message and an immediate exit, so the failure looked like "the
+  # server did not come up" rather than a config mistake.
+  entrypoint = ["./server/scripts/dev-run.sh", "serve"]
+
+  include_ext = ["go", "tsx", "ts", "scss", "html"]
+  include_dir = ["server/cmd", "server/internal", "server/ui"]
+  exclude_dir = [
+    "node_modules",
+    "dist",
+    "bin",
+    "tmp",
+    "data",
+    "coverage",
+    "doc",
+    # The extension's own sources: a change there is `pnpm run develop`'s
+    # business, and nothing the server embeds.
+    "src",
+    # ...and the console's *output*, which is this file's own pre_cmd writing
+    # there. Watching the output of your own build step is how a watcher
+    # rebuilds itself forever, and it did exactly that until it was excluded.
+    "server/internal/webui/dist",
+  ]
+  # Tests are not the running program; editing one should not restart anything.
+  exclude_regex = ["_test\\.go$"]
+  # The console build is about a second; air's own 1000ms default on top of it
+  # would make a save feel like a pause.
+  delay = 200
+  kill_delay = 2000
+
+[run]
+  # A moment between the binary being replaced and the server starting, so a
+  # request in between gets a connection error rather than a half-written file.
+  delay = 500
+  log = "server/build-errors.log"
+
+[color]
+  app = "magenta"
+  main = "blue"
+  runner = "green"
+  watcher = "cyan"
+
+[misc]
+  clean_on_exit = true

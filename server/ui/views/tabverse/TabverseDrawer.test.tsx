@@ -86,9 +86,13 @@ function say(html: string): string {
     .trim();
 }
 
-test('the summary line is the extension`s own component, so its wording too', () => {
-  const text = say(renderToStaticMarkup(<TabverseTabs bundle={bundle()} />));
-  expect(text).toContain('Working on 2 tabs in 1 group');
+test('the list label carries the count, in place of a summary sentence', () => {
+  const html = renderToStaticMarkup(<TabverseTabs bundle={bundle()} />);
+  expect(html).toContain('Tabs');
+  expect(html.replace(/<[^>]+>/g, '')).toContain('Tabs (2)');
+  // The extension says the same facts in a sentence; a label says them in less
+  // space, and the groups are already named in the blocks they head.
+  expect(html).not.toContain('Working on');
 });
 
 test('a tab is the extension`s card: title over url, with its pinned tag', () => {
@@ -127,7 +131,8 @@ test('a tabverse with no tabs says so instead of drawing nothing', () => {
     <TabverseTabs bundle={bundle({ tabs: [], tabspace_data: {} })} />,
   );
   expect(html).toContain('no tabs in this tabverse');
-  expect(say(html)).toContain('Working on 0 tabs');
+  // the label says so too, rather than the list looking simply absent
+  expect(say(html)).toContain('Tabs (0)');
 });
 
 test('the header is the tabverse, its two times, and how many tabs it holds', () => {
@@ -139,6 +144,25 @@ test('the header is the tabverse, its two times, and how many tabs it holds', ()
   // not about the stored record.
   expect(html).not.toContain('Save and close');
   expect(html).not.toContain('Mark all as complete');
+});
+
+test('the list says what it is', () => {
+  // The tools beside it have names on their tabs; a column of cards with
+  // nothing over it read as the whole tabverse rather than as the tabs.
+  const html = renderToStaticMarkup(<TabverseTabs bundle={bundle()} />);
+  expect(html).toContain('Tabs');
+});
+
+test('the record`s own facts sit on the title row, as the extension`s control does', () => {
+  const html = renderToStaticMarkup(
+    <TabverseTabs bundle={bundle()} meta="ts_1 · rev 4 · updated 2h ago" />,
+  );
+  expect(html).toContain('rev 4');
+  // and the pane on its own (as the drawer's right pane can be read) has no
+  // invented facts
+  expect(
+    renderToStaticMarkup(<TabverseTabs bundle={bundle()} />),
+  ).not.toContain('rev 4');
 });
 
 /**

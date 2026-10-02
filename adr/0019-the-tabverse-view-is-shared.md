@@ -82,9 +82,12 @@ extension's own entry builder. The view around them stays the console's.**
    robustness fix for any non-extension host; the second removes a dead button
    from the extension's own saved list, which is the user's to see.
 
-5. **The summary line becomes `TabverseSummary`,** rendered by both pages. The
-   wording is then one implementation, asserted once, and "the console shows
-   what the extension shows" stops being a thing to keep an eye on.
+5. **The summary line becomes `TabverseSummary`,** so the two saved-tabverse
+   views could say it the same way. The console ended up not using it: its list
+   is labelled `Tabs (7)`, which carries the same count in a label rather than in
+   a sentence, and the groups are already named in the blocks they head. The
+   component is the saved view's line, with the assertions that record how it is
+   meant to read.
 
 6. **The drawer is the extension's two columns.** The extension draws a tabverse
    as the tab list on the left and its four tools - Todo, Note, Bookmark,

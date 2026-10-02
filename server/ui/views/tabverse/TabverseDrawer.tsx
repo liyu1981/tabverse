@@ -1,4 +1,4 @@
-import { Button, Drawer, Spinner } from '@blueprintjs/core';
+import { Button, Card, Drawer, Spinner } from '@blueprintjs/core';
 import React, { useState } from 'react';
 import { useUnit } from 'effector-react';
 
@@ -7,7 +7,6 @@ import {
   TabGroupBlock,
 } from '../../../../src/ui/manager/TabSpace/TabGroupBlock';
 import { TabCard } from '../../../../src/ui/manager/TabSpace/TabCard';
-import { TabverseSummary } from '../../../../src/ui/manager/SavedTabSpace/TabverseSummary';
 import { tabverseEntries } from '../../../../src/data/tabSpace/tabEntries';
 import type { Tab } from '../../../../src/data/tabSpace/Tab';
 
@@ -54,6 +53,11 @@ export function TabverseDrawer() {
   };
 
   const title = bundle?.tabspace.name || '(unnamed tabverse)';
+  // The facts about the record itself, which the header shows on the right of
+  // the title: which record this is, how many revisions it has been through,
+  // when it was last written and how big it is. The drawer title above says
+  // only the name, because that is the one thing an operator can hold in their
+  // head while reading the rest.
   const meta = bundle
     ? `${bundle.tabspace.id} · rev ${bundle.tabspace.rev} · updated ${ago(
         bundle.tabspace.updated_at,
@@ -74,26 +78,38 @@ export function TabverseDrawer() {
       <div className={classes.drawer}>
         {bundle ? (
           <>
-            <div className={classes.head}>
-              <p className={classes.meta}>{meta}</p>
-            </div>
-
             {/* The extension draws a tabverse as two columns: the tabs, and the
                 tools that belong to it. Same here, for the same reason - the
                 tools are per tabverse, so they belong beside it rather than
                 folded underneath. */}
             <div className={classes.split}>
-              <TabverseTabs bundle={bundle} />
+              <TabverseTabs bundle={bundle} meta={meta} />
               <TabverseRecords {...storedRecords(bundle)} />
             </div>
 
-            {/* One action, on its own line at the bottom: the drawer is read
-                most of the time, and a delete that sits next to the content
-                invites mis-clicks. Looking through somebody else's account is
-                read only, and the server refuses the delete with 403 anyway
-                (adr/0014), so it is not offered. */}
-            {!assumed && account ? (
-              <div className={classes.foot}>
+            <div className={classes.bottomBar}>
+              {/* The ordering lists are metadata, and they are the escape hatch
+                  for "why is this note third?": the tabverse's own
+                  allnote/alltodo/allbookmark records, which are how the *user*
+                  ordered those things (ADR 0015). They are not about the tabs
+                  and nothing on screen depends on reading them, so they live at
+                  the bottom, folded away, rather than under the list they were
+                  pushing the eye past. */}
+              <details className={classes.aggregates}>
+                <summary title="The tabverse's own ordering lists: which note, todo and bookmark sits in which position. The server stores them so this view can show the user's order rather than its own.">
+                  ordering aggregates (raw)
+                </summary>
+                <pre className={classes.payload}>
+                  {JSON.stringify(bundle.aggregates, null, 2)}
+                </pre>
+              </details>
+
+              {/* One action, on the same bar but on the other side: the drawer is
+                  read most of the time, and a delete that sits next to the
+                  content invites mis-clicks. Looking through somebody else's
+                  account is read only, and the server refuses the delete with
+                  403 anyway (adr/0014), so it is not offered. */}
+              {!assumed && account ? (
                 <Button
                   icon="trash"
                   intent="danger"
@@ -101,8 +117,8 @@ export function TabverseDrawer() {
                 >
                   Delete tabverse
                 </Button>
-              </div>
-            ) : null}
+              ) : null}
+            </div>
 
             <TypedConfirmDialog
               isOpen={deleting}
@@ -161,7 +177,7 @@ function When(props: { label: string; ms: number }) {
  * a portal renders nothing under `renderToStaticMarkup` - which is how these
  * views are tested without a DOM (adr/0018, decision 8).
  */
-export function TabverseTabs(props: { bundle: TabspaceBundle }) {
+export function TabverseTabs(props: { bundle: TabspaceBundle; meta?: string }) {
   const bundle = props.bundle;
   const tabSpace = toTabSpace(bundle);
   // The same builder the extension's own tabverse lists use, on the same shape:
@@ -182,18 +198,46 @@ export function TabverseTabs(props: { bundle: TabspaceBundle }) {
 
   return (
     <div className={classes.pane}>
-      <div className={classes.paneHeader}>
-        <h1 className={classes.paneTitle}>{tabSpace.name || '(untitled)'}</h1>
+      {/*
+        The header: a title row with the record's own facts on the right, and the
+        two times the extension states under a tabverse's name.
+
+        It is a card - the same card as the Pair Code and Devices panels, from
+        the same `theme.scss` rules - because everything else this console puts
+        in a column is in one, and a floating stack of text above the list read
+        as a caption for the whole tabverse rather than as a card holding facts
+        about it.
+      */}
+      <Card className={classes.headerCard}>
+        <div className={classes.titleRow}>
+          <h1 className={classes.paneTitle}>{tabSpace.name || '(untitled)'}</h1>
+          {/* Where the extension puts its save-and-close button: the small thing
+              on the right of the title row. Here it is the record's own facts,
+              which is what an operator wants beside the name. */}
+          {props.meta ? <p className={classes.meta}>{props.meta}</p> : null}
+        </div>
+
         {/* Created and saved, the way the extension states them: how long ago,
             with the exact timestamp underneath for when it matters. */}
         <div className={classes.times}>
           <When label="Created" ms={tabSpace.createdAt} />
           <When label="Saved" ms={tabSpace.updatedAt} />
         </div>
-        <TabverseSummary
-          tabCount={tabSpace.tabs.size}
-          groupCount={tabSpace.tabGroups.length}
-        />
+      </Card>
+
+      {/*
+        The list says what it is, and it carries the count: `Tabs (3)`. The
+        extension says the same two facts in a sentence above the list ("Working
+        on 3 tabs in 2 groups"), and a label does it in less space - the count
+        belongs to the thing it counts, and the groups are already named in the
+        blocks they head. The shared `TabverseSummary` is therefore the saved
+        view's line only now (adr/0019).
+
+        The label sits outside the card: it labels what is below it, not what is
+        above.
+      */}
+      <div className={classes.listLabel}>
+        Tabs <span className={classes.listCount}>({tabSpace.tabs.size})</span>
       </div>
 
       <div className={classes.paneBody}>
@@ -227,16 +271,6 @@ export function TabverseTabs(props: { bundle: TabspaceBundle }) {
             })}
           </div>
         )}
-
-        {/* The raw ordering lists, for a record nobody can make sense of any
-            other way. The extension has no such thing; somebody reading
-            another account's data does. */}
-        <details className={classes.more}>
-          <summary>ordering aggregates (raw)</summary>
-          <pre className={classes.payload}>
-            {JSON.stringify(bundle.aggregates, null, 2)}
-          </pre>
-        </details>
       </div>
     </div>
   );

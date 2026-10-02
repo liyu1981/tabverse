@@ -1,16 +1,23 @@
 // One tabverse, in a drawer over the account, in the extension's two columns.
 //
-// The tabs are the extension's own components (adr/0019) and the tools on the
-// right are the extension's own stylesheets, so what is left here is the frame:
+// The tabs are the extension's own components and the tools on the right are the
+// extension's own stylesheets (adr/0019), so what is left here is the frame:
 // the drawer, the split, the header on the left, and the two things only the
-// console has - the raw payload and the delete.
+// console has - the raw payload at the bottom and the delete beside it.
 //
-// What is *not* here, and will not be: every action that would act on this
-// browser ("Load to New Window", "Switch to Tabverse", closing a tab, pinning a
-// tool). A tabverse stored on this account is not openable in the console, so
-// those buttons would be decoration that cannot work. The one action left is
-// about the stored data rather than about the browser, and it is at the bottom
-// (adr/0015).
+// The spacing in here is deliberately generous. The first version of this file
+// used the same 12px everywhere and the drawer read as a screenshot of a list:
+// header text, cards and tools all crowded the same edges, and the tab cards -
+// which belong to the extension and cannot be restyled here - sat closer to
+// their neighbours than the extension puts them. Space is therefore spent at
+// the *edges of the panes* rather than inside the extension's rows, which keeps
+// the look on screen the extension's while the drawer stops feeling packed.
+//
+// What is not here, and will not be: every action that would act on this browser
+// ("Load to New Window", "Switch to Tabverse", closing a tab, pinning a tool).
+// A tabverse stored on this account is not openable in the console, so those
+// buttons would be decoration that cannot work. The one action left is about the
+// stored data rather than about the browser, and it is at the bottom (adr/0015).
 
 .drawer {
   display: flex;
@@ -18,24 +25,11 @@
   height: 100%;
 }
 
-.head {
-  padding: 0 4px 8px;
-  border-bottom: 1px solid var(--border);
-}
-
-.meta {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 12px;
-  font-family: var(--mono);
-  overflow-wrap: anywhere;
-}
-
 /*
- * The extension's own split: the tab list takes what is left, the right panel
- * keeps a share of a wide window and gives space back when there is not enough
- * (src/ui/manager/TabSpace/TabSpaceView.module.scss). The only difference is the
- * height - the drawer scrolls its own body, so `100vh` would be a lie.
+ * The extension's own split: the tab list takes what is left, the tools keep a
+ * share of a wide window and give space back when there is not enough
+ * (src/ui/manager/TabSpace/TabSpaceView.module.scss). The only difference is
+ * the height - the drawer scrolls its own body, so `100vh` would be a lie.
  */
 .split {
   display: flex;
@@ -52,16 +46,31 @@
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  padding: 12px 12px 40px;
+  padding: 20px 20px 32px 26px;
 }
 
 .tools {
-  flex: 0 1 45%;
-  min-width: 300px;
+  flex: 0 1 44%;
+  min-width: 320px;
   overflow-y: auto;
-  padding: 0 8px 40px;
+  /* The extension's right side sits inside 48px of padding on each side
+     (TabSpaceRightSideView.module.scss). A drawer pane does not have that much
+     to spare, so it keeps most of the feel rather than all of the figure. */
+  padding: 24px 24px 32px 28px;
   background-color: var(--sunken);
   box-shadow: 1px 0 0 0 #bbb inset;
+
+  /* The tab strip and the panel under it were touching, which made the panel
+     look like part of the tabs. The extension separates them with the margin
+     under its own tabs container; here Blueprint's markup is the thing to pad,
+     so the rule is written against Blueprint's class. */
+  :global(.bp6-tab-list) {
+    margin-bottom: 20px;
+  }
+
+  :global(.bp6-tab) {
+    margin-right: 4px;
+  }
 }
 
 /* not enough room for a useful panel: the tabs are the priority */
@@ -77,22 +86,55 @@
   }
 }
 
-.paneHeader {
-  padding-bottom: 4px;
+// ---- the header, in the extension's shape ---------------------------------
+
+/*
+ * The header card. `theme.scss` gives every `Card` in the console its 18px
+ * radius, its hairline and its surface; this only says how much air this one
+ * wants inside it and before the list, and it wins over that rules because a
+ * module's own class is emitted after them.
+ */
+.headerCard {
+  padding: 18px 20px;
+  margin-bottom: 20px;
+}
+
+.titleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
 }
 
 .paneTitle {
-  margin: 0 0 6px;
+  margin: 0 0 10px;
+  font-size: 1.35em;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+// The record's own facts, on the right of the title row: which record this is,
+// how many revisions, when it was last written, how big. Small and monospaced
+// because it is an identifier, not a headline.
+.meta {
+  margin: 4px 0 0;
+  flex: 0 1 auto;
+  max-width: 45%;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-family: var(--mono);
+  text-align: end;
   overflow-wrap: anywhere;
 }
 
 // Created and saved, the way the extension states them: how long ago, with the
-// exact timestamp underneath for when it matters.
+// exact timestamp underneath for when it matters. Two columns, so the pair reads
+// as a pair.
 .times {
   display: flex;
-  gap: 24px;
+  gap: 32px;
   flex-wrap: wrap;
-  margin: 0 0 8px;
+  margin: 0 0 14px;
   font-size: 13px;
 }
 
@@ -100,20 +142,66 @@
   font-size: 14px;
 }
 
+// The list says what it is, and carries its count: `Tabs (3)`. The tools beside
+// it have names on their tabs; this pane had a column of cards with nothing over
+// them.
+.listLabel {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  padding-left: 12px;
+}
+
+// The count in brackets: read as part of the sentence, drawn as part of the
+// label - same colour and weight, because "Tabs (3)" is one label and a grey
+// number inside a darker one reads as a separate, smaller thing.
+.listCount {
+  font-weight: 400;
+  font-family: var(--mono);
+}
+
 .paneBody {
   min-width: 0;
 }
 
+// The extension's card has a 6px top margin and nothing around it; in a wider
+// pane that reads as a stack of touching rows, so the list gets its own gap.
+// The left inset is the one the cards already agree on: a group block draws its
+// coloured rule there, and the header and the label above sit on the same edge.
 .cards {
   padding-left: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-// The raw ordering lists, for a record nobody can make sense of any other way.
-.more {
-  margin-top: 16px;
+// ---- the bottom bar -------------------------------------------------------
+
+/*
+ * One fixed bar across the foot of the drawer: the escape hatch on the left,
+ * the only destructive action on the right. It is out of the flow, so opening
+ * the raw payload scrolls the panes rather than the bar - which is the whole
+ * reason it is here rather than under the tab list.
+ */
+.bottomBar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 22px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
 }
 
-.more > summary {
+.aggregates {
+  min-width: 0;
+}
+
+.aggregates > summary {
   cursor: pointer;
   color: var(--brand);
   font-size: 13px;
@@ -126,14 +214,14 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   color: var(--text-muted);
-  max-height: 220px;
+  max-height: 200px;
   overflow: auto;
 }
 
 // ---- the note bodies, as text ---------------------------------------------
 
 .noteBody {
-  padding: 4px 0 10px;
+  padding: 4px 0 12px;
   border-bottom: 1px solid var(--border);
 }
 
@@ -148,13 +236,4 @@
 .noteEmpty {
   color: var(--text-muted);
   font-style: italic;
-}
-
-.foot {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
-  margin-top: 8px;
 }

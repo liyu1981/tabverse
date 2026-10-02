@@ -30,10 +30,23 @@
   border-radius: 18px;
 }
 
-.todoapp input::input-placeholder {
+/*
+ * The standard `::placeholder`, where this file used to say
+ * `::input-placeholder`. That pseudo-element has never existed in any browser -
+ * the vendor spellings were `::-webkit-input-placeholder` and
+ * `::-moz-placeholder` - so the three declarations below were dead CSS, and the
+ * minifier said so on every build: both this project's own (lightningcss warns
+ * about unknown pseudo-elements) and the console's, which compiles this same
+ * file since it draws its todo rows with these styles (adr/0019).
+ *
+ * `opacity: 1` is part of making the colour mean what it says: the UA style is a
+ * translucent grey, so a `color` on its own is blended with it.
+ */
+.todoapp input::placeholder {
   font-style: italic;
   font-weight: 400;
   color: rgba(0, 0, 0, 0.4);
+  opacity: 1;
 }
 
 .todoapp h1 {

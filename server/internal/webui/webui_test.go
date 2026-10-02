@@ -195,6 +195,24 @@ func TestTheStylesheetCarriesTheProductLayer(t *testing.T) {
 	}
 }
 
+// TestTheBundleCarriesNoUnknownSelectors: a stylesheet that names a
+// pseudo-element no browser has is a warning, not a failure - and a warning that
+// scrolls past is how dead CSS survives for years. The console compiles the
+// extension's own stylesheets (adr/0019), so its TodoMVC rules are in here, and
+// the one that used to be in them (`input::input-placeholder`) matched nothing in
+// any browser. lightningcss names the offender; this fails on it instead.
+func TestTheBundleCarriesNoUnknownSelectors(t *testing.T) {
+	requireBundle(t)
+	css := bundleText(t, ".css")
+
+	if strings.Contains(css, "::input-placeholder") {
+		t.Error("the bundle has an `::input-placeholder` rule: that pseudo-element does not exist, so the rule matches nothing")
+	}
+	if !strings.Contains(css, "::placeholder") {
+		t.Error("the bundle has no `::placeholder` rule at all: a placeholder selector was lost somewhere")
+	}
+}
+
 // bundleText concatenates every built file with the given extension, which is
 // how the bundle is read here: the names are content hashed, so a test cannot
 // name a file.
