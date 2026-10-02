@@ -27,7 +27,14 @@ export const TABSPACE_MANAGER_TAB_TITLE_PREFIX = 'Tabverse:Manager';
 // service worker and took every importer down with it. `globalThis.chrome` is
 // the same object in the node test environment (src/dev/chromeMock.ts assigns
 // to it) and exists in the extension.
-export const TABSPACE_MANAGER_TAB_URL_PREFIX = globalThis.chrome
+//
+// The chain is `chrome?.runtime?.id` and not `chrome.runtime.id` because
+// `window.chrome` is truthy on *any* page in Chrome - only `chrome.runtime` is
+// extension-only. Reading `id` off an ordinary web page threw a TypeError while
+// this module was still evaluating, which took down every importer of it: the
+// console draws the saved tabverse view with the same components (adr/0019) and
+// is an ordinary page.
+export const TABSPACE_MANAGER_TAB_URL_PREFIX = globalThis.chrome?.runtime?.id
   ? `chrome-extension://${chrome.runtime.id}/manager.html`
   : `chrome-extension://tabverse-jest-test/manager.html`;
 

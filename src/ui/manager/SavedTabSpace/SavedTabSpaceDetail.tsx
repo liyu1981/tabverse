@@ -13,6 +13,7 @@ import { TabSpaceQuery } from '../../../data/tabSpaceQuery/TabSpaceQuery';
 import { Tab, TabCore } from '../../../data/tabSpace/Tab';
 import { deleteSavedTabSpace } from '../../../data/tabSpace/util';
 import { tabverseEntries } from '../../../data/tabSpace/tabEntries';
+import { TabverseSummary } from './TabverseSummary';
 
 interface SavedTabSpaceDetailProps {
   opened: boolean;
@@ -146,14 +147,10 @@ export function SavedTabSpaceDetail(props: SavedTabSpaceDetailProps) {
         )}
       </div>
       <div className={classes.savedTabsContainer}>
-        <p>
-          Working on <b>{tabCount}</b> {tabCount === 1 ? 'tab' : 'tabs'}
-          {props.tabSpace.tabGroups.length > 0
-            ? ` in ${props.tabSpace.tabGroups.length} ${
-                props.tabSpace.tabGroups.length === 1 ? 'group' : 'groups'
-              }`
-            : ''}
-        </p>
+        <TabverseSummary
+          tabCount={tabCount}
+          groupCount={props.tabSpace.tabGroups.length}
+        />
         {entries}
       </div>
     </div>

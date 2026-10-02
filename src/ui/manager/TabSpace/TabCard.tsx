@@ -177,9 +177,15 @@ export function TabCard(props: ITabCardProps) {
         </div>
       </button>
       {/* after the content, because the card is a flex row: source order is
-          layout order, the close button has to come last to sit on the right */}
+          layout order, the close button has to come last to sit on the right.
+
+          The guard is `> 0`, not "is set": a saved tab carries
+          `chromeTabId: -1` (newEmptyTab's "no live tab"), and `-1` is truthy,
+          so every card in the saved-tabverse list offered a close button that
+          called `chrome.tabs.remove(-1)`. The row belongs to a window this
+          browser does not own, and the button could never work. */}
       <div className={classes.rightSide}>
-        {props.tab.chromeTabId ? (
+        {props.tab.chromeTabId > 0 ? (
           <ButtonGroup>
             {props.isBookmarked === undefined ? (
               ''
