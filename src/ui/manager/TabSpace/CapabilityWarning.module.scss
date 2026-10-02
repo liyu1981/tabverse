@@ -12,6 +12,16 @@
   padding: 8px 12px;
 }
 
+/*
+ * The warning icon, not the chevron: Blueprint takes the callout's own icon out
+ * of the flow and parks it at `top: 18px`, which is tuned for Blueprint's 16px
+ * padding. This bar has 8px, so the icon ends up ~10px below the text it sits
+ * beside; -9px puts it back on the text's line.
+ */
+.callout > :global(.bp6-icon:first-child) {
+  margin-top: -9px;
+}
+
 /* a real <button> (Enter and Space come free), reset to look like the bar it
    sits in */
 .header {

@@ -26,12 +26,15 @@ export function TabGroupBlock(props: ITabGroupBlockProps) {
       style={{ borderColor: TAB_GROUP_COLORS_JS[group.color] }}
     >
       <div className={classes.header}>
+        {/* the group's own colour is the label's background, so the dot that
+            used to carry it is gone - one thing says it, not two */}
         <span
-          className={classes.dot}
+          className={classes.label}
           style={{ backgroundColor: TAB_GROUP_COLORS_JS[group.color] }}
-        />
-        <span className={classes.title} title={group.title}>
-          {group.title || '(untitled group)'}
+        >
+          <span className={classes.title} title={group.title}>
+            {group.title || '(untitled group)'}
+          </span>
         </span>
         <small className={classes.count}>
           {props.tabCount ?? group.tabIds.length}
@@ -55,9 +58,13 @@ export function SplitBlock(props: ISplitBlockProps) {
       className={`${classes.block} ${classes.splitBlock}`}
       key={`split-${props.splitViewId}`}
     >
-      <div className={`${classes.header} ${classes.splitHeader}`}>
-        <span aria-hidden={true}>&#9101;</span>
-        split view
+      <div className={classes.header}>
+        {/* no group colour to borrow here, so the label keeps the neutral the
+            block's own rule is drawn in */}
+        <span className={classes.label}>
+          <span aria-hidden={true}>&#9101;</span>
+          <span className={classes.title}>split view</span>
+        </span>
       </div>
       {props.children}
     </div>

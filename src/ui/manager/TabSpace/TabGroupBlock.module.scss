@@ -3,7 +3,10 @@
 /* tab groups and split views: the block framing is shared by the live tab
  * list and the saved tabverse list, so a group looks the same in both. */
 .block {
-  margin: 0 0 8px 0;
+  /* 1rem above and below: a card in this list is separated by 6px of its own
+     top margin, and a group or a split is a bigger unit than a card, so it
+     needs air on both sides to read as one thing */
+  margin: 1rem 0;
   padding-left: 8px;
   border-left: 3px solid global.$color-e;
   border-radius: 2px;
@@ -21,16 +24,26 @@
   font-size: 0.9em;
 }
 
-.splitHeader {
-  color: global.$color-a;
-}
-
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: global.$color-a;
-  flex-shrink: 0;
+/*
+ * The label is a pill, and its background is what says which group this is -
+ * set per group from TAB_GROUP_COLORS_JS, with the split view's neutral as the
+ * default. Near-white text on all nine group colours: they are already the
+ * darkened-for-a-white-card versions of Chrome's palette, so a white label
+ * reads on the yellow one as well as on the blue.
+ */
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  /* a group title can be long, so the pill is allowed to be as wide as the
+     block and the text inside it is what gives way */
+  max-width: 100%;
+  min-width: 0;
+  padding: 2px 10px;
+  border-radius: 10px;
+  background-color: global.$color-light-accent;
+  color: global.$color-c;
+  line-height: 1.5;
 }
 
 .title {
