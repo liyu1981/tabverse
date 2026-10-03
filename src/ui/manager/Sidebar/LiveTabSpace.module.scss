@@ -1,9 +1,18 @@
 /*
  * The current tabverse's own name, under the entry's "Current Tabverse" label.
- * Truncated: a tabverse can be called anything, and the sidebar's width is not
- * negotiable. The full name is in the title attribute and in the rail tooltip.
+ *
+ * The indent lines the name up with the header's *text*, past its icon: the card
+ * adds 18px, the header button 10px, the icon is 20px with a 12px right margin,
+ * and this is what is left to reach the same column - so it is only correct while
+ * that icon size and margin are what Sidebar.module.scss says they are. Change
+ * either and this number has to move with it.
+ *
+ * Truncated, because a tabverse can be called anything and the sidebar's width
+ * is not negotiable; the full name is in the title attribute, and in the
+ * collapsed rail's tooltip.
  */
 .currentName {
+  margin-left: 48px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
