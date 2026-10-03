@@ -3,7 +3,7 @@ import { TabSpaceLogLevel, isJestTest, loglevel } from './debug';
 import { debounce as lodashDebounce } from 'lodash';
 
 // Do not manual edit it, use tools/version_update to update it.
-export const TABSPACE_VERSION = 'v0.5.0';
+export const TABSPACE_VERSION = 'v0.6.0';
 
 // v8 dropped the `chromesession` object store: the browser-session feature
 // (periodic window/tab snapshots, the Session Browser route and the server side

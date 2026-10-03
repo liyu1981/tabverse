@@ -1,6 +1,6 @@
 {
   "name": "tabverse",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Tabverse is an opinionated tab manager for Chrome browser.",
   "packageManager": "pnpm@12.4.2",
   "engines": {
