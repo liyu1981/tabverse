@@ -22,4 +22,14 @@ $color-background: $color-c;
 // poor contrast on that slate, so anything on top of it uses this instead.
 $color-on-brand: #f4f6fb;
 
+// The one radius for a row or card surface: the tab list row, the tab preview
+// panel and the sidebar's hover panel, and the four right side tools (todo,
+// note, bookmark, history) with their container. It is the tab list row's own
+// value - it was the only one of these that matched nothing else.
+//
+// Two things deliberately keep their own radius: the sidebar's own card (20px,
+// the frame the rows sit in, not a row) and the small controls *inside* a row
+// (3-10px: a button, a search box, a group block).
+$radius-card: 12px;
+
 $sidebar-background-color: $color-main-brand;

@@ -24,7 +24,7 @@
 
 .bpTabs :global(.bp6-tab) {
   padding: 4px 12px;
-  border-radius: 18px;
+  border-radius: global.$radius-card;
   font-weight: bold;
   color: global.$color-text;
   transition: all 200ms ease-in;
@@ -34,7 +34,7 @@
   background-color: global.$color-main-brand !important;
   color: global.$color-c;
   padding: 4px 12px;
-  border-radius: 18px;
+  border-radius: global.$radius-card;
   font-weight: bold;
 }
 

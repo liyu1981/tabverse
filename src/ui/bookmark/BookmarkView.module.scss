@@ -1,8 +1,10 @@
+@use '../../global.scss';
+
 .container {
   background: #fff;
   position: relative;
   color: #111111;
-  border-radius: 18px;
+  border-radius: global.$radius-card;
 }
 
 .listContainer {
@@ -37,7 +39,7 @@
   padding: 8px 18px;
   font-style: italic;
   font-weight: 500;
-  border-radius: 18px;
+  border-radius: global.$radius-card;
 }
 
 .pageControlContainer {

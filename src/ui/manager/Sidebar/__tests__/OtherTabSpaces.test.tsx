@@ -66,8 +66,11 @@ test('expanded: a heading, then one row per other window, each with its name', (
   expect(said).toContain('Other Tabverses');
   expect(said).toContain('Recipes for the week');
   expect(said).toContain('Java concurrency notes');
-  // the full name is on the row, for a hover and for a screen reader
-  expect(markup).toContain('title="Recipes for the week"');
+  // the row has no `title` of its own: the browser's tooltip lands about when
+  // the panel does and underneath it, so the full name is the panel header's
+  // job (asserted in TabverseHoverPreview.test.tsx). A stray one would put the
+  // double label back.
+  expect(markup).not.toContain('title=');
   // the derived-tab icon, which is what distinguishes these from the current one
   expect(markup).toContain('th-derived');
 });
@@ -90,6 +93,38 @@ test('collapsed: no heading, and the name is the tooltip', () => {
   expect(markup).toContain('aria-label="Recipes for the week"');
   expect(markup).toContain('aria-label="Java concurrency notes"');
   expect(markup).toContain('th-derived');
+});
+
+test('expanded: each row is a hover target, and the target is the button', () => {
+  setOpen([[2, 'ts-b']], [['ts-b', 'Recipes for the week', 12]]);
+  const markup = render(false);
+
+  // Blueprint wraps the target in .bp6-popover-target and puts tabindex and
+  // aria-haspopup on it, so the target has to be the row's button: a focusable
+  // element inside a <button> is invalid HTML and a second tab stop
+  expect(markup).toContain('bp6-popover-target');
+  // `[^>]*` covers the extra `bp6-popover-open` class while the panel is pinned
+  // open, and matches the plain wrapper again once it is not
+  expect(markup).toMatch(/bp6-popover-target[^>]*><button/);
+  expect(markup).toContain('aria-haspopup');
+  // one popover per row, and the panel itself is not rendered until it opens
+  expect(markup.split('bp6-popover-target').length - 1).toEqual(1);
+  expect(markup).not.toContain('No tabs open in this window.');
+});
+
+test('collapsed: the rail previews too, and says the name the tooltip did', () => {
+  // the rail's icons cannot say which tabverse they are, so the panel answers it
+  // there as well - and it replaces the tooltip, since its header carries the
+  // name. One overlay per hover, not two.
+  setOpen([[2, 'ts-b']], [['ts-b', 'Recipes for the week', 12]]);
+  const markup = render(true);
+
+  expect(markup).toMatch(/bp6-popover-target[^>]*><button/);
+  expect(markup).toContain('aria-haspopup');
+  // the icon is still the target's whole content, and the name is still its
+  // accessible name for anyone not using a pointer
+  expect(markup).toContain('aria-label="Recipes for the week"');
+  expect(markup).toContain('bp6-icon-th-derived');
 });
 
 test('one window, no section: a heading over nothing is worse than nothing', () => {

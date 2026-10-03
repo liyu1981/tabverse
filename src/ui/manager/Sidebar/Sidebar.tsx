@@ -26,6 +26,7 @@ export function SidebarComponent({
   railIcon,
   railLabel,
   onSwitch,
+  wrapHeader,
   children,
 }: SidebarComponentProps & {
   route: ManagerViewRoute;
@@ -39,6 +40,19 @@ export function SidebarComponent({
    */
   railLabel?: string;
   onSwitch: (value: ManagerViewRoute) => void;
+  /**
+   * Wraps the entry's button, for an entry that shows something on hover.
+   *
+   * The button is the target rather than the content inside it: Blueprint's
+   * `Popover` gives its target `tabindex="0"` and `aria-haspopup`, and a
+   * focusable element inside a `<button>` is both invalid HTML and a second tab
+   * stop. Wrapping the button puts both where they belong.
+   *
+   * It also *replaces* the collapsed rail's tooltip, in both states: a panel
+   * whose header carries the tabverse's name says everything the tooltip said,
+   * and stacking a popover inside a tooltip would be two overlays for one hover.
+   */
+  wrapHeader?: (button: React.ReactElement) => React.ReactElement;
   children?: React.JSX.Element | React.JSX.Element[];
 }) {
   const collapsed = useSidebarCollapsed();
@@ -74,7 +88,9 @@ export function SidebarComponent({
         )}
       >
         {!collapsed ? <div className={classes.edge}> </div> : null}
-        {collapsedLabel ? (
+        {wrapHeader ? (
+          wrapHeader(entryButton)
+        ) : collapsedLabel ? (
           <Tooltip content={collapsedLabel} placement="right">
             {entryButton}
           </Tooltip>

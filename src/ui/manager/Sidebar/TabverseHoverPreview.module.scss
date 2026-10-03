@@ -1,0 +1,138 @@
+@use '../../../global.scss';
+
+/*
+ * The hover panel on an "Other Tabverses" row.
+ *
+ * It is the tab card's preview panel - same card, same header band, same
+ * favicon-and-text typography - with a list where that one has a screenshot.
+ * So the reuse is in the component (a css module's hashed names cannot come
+ * through @use), and this file holds only what the list needs differently,
+ * plus the two places where it has to *beat* a reused rule: they are single
+ * classes, so a single class of mine is a coin flip against them in the
+ * emitted bundle, and they are nested under a parent to make it a certainty.
+ *
+ * Everything radius-shaped comes from one token: the panel, the tab preview it
+ * imitates and the tab list row are the same shape (global.$radius-card).
+ */
+
+.panel {
+  width: 440px;
+}
+
+/* The popover's own box, and the white surface inside it: Blueprint gives
+ * `.bp6-popover-content` a background and no radius, so without this the corners
+ * are square behind the rounded card. */
+.panelPopover :global(.bp6-popover),
+.panelPopover :global(.bp6-popover-content) {
+  border-radius: global.$radius-card;
+}
+
+.panelPopover :global(.bp6-popover) {
+  box-shadow: 0 8px 24px rgb(16 22 26 / 20%);
+}
+
+/* the arrow points at a row that is a whole card, not a point on it */
+.panelPopover :global(.bp6-popover-arrow) {
+  display: none;
+}
+
+/*
+ * Gap from the row that opened it.
+ *
+ * It is a margin on the transition container - the one element the two states
+ * agree on - and not popper's `offset`, because the two states want different
+ * numbers: the collapsed rail's button is narrow, the expanded row sits inside a
+ * 320px sidebar card. `offset` is zeroed in the component so this is the whole
+ * gap rather than sitting on top of Blueprint's 15px of arrow space.
+ */
+.panelPopoverRail :global(.bp6-popover-transition-container) {
+  margin-left: 1rem;
+}
+
+.panelPopoverWide :global(.bp6-popover-transition-container) {
+  margin-left: 5rem;
+}
+
+/*
+ * The header band: the name and how many tabs. Nested under .panel to beat
+ * TabCard's `.previewHeaderContainer { padding: 8px }` on the same element.
+ */
+.panel .header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 16px;
+}
+
+.headerTitle {
+  margin: 0;
+  font-size: 1em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.count {
+  color: global.$color-light-accent;
+  font-size: 0.85em;
+  white-space: nowrap;
+}
+
+.list {
+  /* a title that wraps is taller than a title that does not, so the list scrolls
+     rather than clipping a row under the card's bottom edge */
+  max-height: 320px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  /* the header above is the card's top corners; this is the bottom pair */
+  border-radius: 0 0 global.$radius-card global.$radius-card;
+}
+
+.tabRow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 16px;
+}
+
+.tabRow + .tabRow {
+  border-top: 1px solid rgb(0 0 0 / 6%);
+}
+
+/* nested to beat FavIcon's `.container { margin-top: -10px }`, which is written
+   for a card and would lift the icon off its line in a list row */
+.panel .favIcon {
+  margin-top: 0;
+  margin-right: 10px;
+  flex: 0 0 auto;
+}
+
+.tabText {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+/* nested to beat TabCard's `.previewWrapText { word-break: break-all }`, which
+   would break a title in the middle of a word */
+.tabRow .tabTitle {
+  white-space: normal;
+  word-break: normal;
+  /* long enough to be unbreakable (a url inside a title) still wraps */
+  overflow-wrap: anywhere;
+}
+
+.tabRow .tabUrl {
+  color: global.$color-light-accent;
+  font-size: 0.8em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.more,
+.empty {
+  padding: 8px 16px;
+  color: global.$color-light-accent;
+  font-size: 0.85em;
+}

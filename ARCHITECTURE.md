@@ -117,7 +117,14 @@ because it needed the old cross-window registry; the popup re-added it first
 sidebar. Names and tab counts are joined from IndexedDB on those ids, never the
 other way round: `loadTabSpacesByIds` drops ids it cannot find, and a list that
 empties itself because a neighbour's row is a moment late is worse than one row
-with no name. Each other window is a sidebar *entry*, which is what makes the
+with no name. Hovering one of those rows for a second shows what that tabverse has open -
+the first four of its tabs in tab strip order, from `chrome.tabs.query` on that
+window rather than from its saved rows, because a preview is a claim about the
+window *now* and only the live query carries the strip order and the tab ids
+(`data/tabSpace/tabversePreview.ts`). The panel is read-only: a row in a window
+that is not on screen is not a place to press buttons on.
+
+Each other window is a sidebar *entry*, which is what makes the
 collapsed rail work for free: expanded it is a row with the tabverse's name
 (truncated, full name in the title), collapsed it is a `th-derived` icon whose
 tooltip is that name. Scope is one Chrome profile - another profile is another

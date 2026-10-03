@@ -1,5 +1,5 @@
 import React from 'react';
-import { Icon, IconName } from '@blueprintjs/core';
+import { Icon, IconName, Popover } from '@blueprintjs/core';
 import { useStore } from 'effector-react';
 
 import { ManagerViewRoute } from '../routes';
@@ -9,9 +9,14 @@ import {
   switchToOtherWindow,
 } from '../../../data/tabSpace/openWindowStore';
 import { SidebarComponent } from './Sidebar';
+import { TabverseHoverPreview } from './TabverseHoverPreview';
 import { logger } from '../../../global';
 import { useSidebarCollapsed } from '../../common/SidebarContainer';
 import classes from './OtherTabSpaces.module.scss';
+import previewClasses from './TabverseHoverPreview.module.scss';
+
+/** How long the pointer has to rest on a row before its tabs are shown. */
+export const HOVER_PREVIEW_DELAY_MS = 1000;
 
 const ICON_SIZE = 20;
 
@@ -43,6 +48,15 @@ export function OtherTabSpaces() {
     return null;
   }
 
+  // The shared rules plus the state's own gap: the portal is outside the
+  // sidebar's DOM, so this is the only place that knows whether the row was a
+  // rail icon or a full row (see the scss).
+  const portalClassName = `${previewClasses.panelPopover} ${
+    collapsed
+      ? previewClasses.panelPopoverRail
+      : previewClasses.panelPopoverWide
+  }`;
+
   const goTo = (row: OtherWindowRow) => {
     // the window can be closed between the list being drawn and the click
     switchToOtherWindow(row).catch((err) =>
@@ -57,6 +71,20 @@ export function OtherTabSpaces() {
       )}
       {rows.map((row) => {
         const label = labelOfOtherTabSpace(row);
+        // The row is a <button>, so what lands inside it is a span and no
+        // focusable content: the panel is read-only and is portalled out by
+        // Blueprint (see TabverseHoverPreview for why it has no buttons).
+        // No `title` on the row: the browser's own tooltip appears after about
+        // the same delay as the panel and lands underneath it, which is the
+        // double label in the screenshot that prompted this. The full name is
+        // in the panel's header (with a title there), and the row's own ellipsis
+        // keeps a truncated name readable once it is up.
+        const rowContent = (
+          <div className={classes.otherHeaderRow}>
+            <Icon icon={'th-derived' as IconName} size={ICON_SIZE} />
+            <span className={classes.otherName}>{label}</span>
+          </div>
+        );
         return (
           <SidebarComponent
             key={`other-${row.chromeWindowId}-${row.tabSpaceId}`}
@@ -67,16 +95,42 @@ export function OtherTabSpaces() {
             railIcon={'th-derived' as IconName}
             railLabel={label}
             onSwitch={() => goTo(row)}
-            header={
-              <div
-                className={classes.otherHeaderRow}
-                // the name is truncated on screen; this is the whole of it
-                title={label}
+            header={rowContent}
+            // The popover's target is the row's button, not the content inside
+            // it: Blueprint gives its target tabindex and aria-haspopup, which
+            // do not belong inside another button. `hover`, not `hover-target`:
+            // the panel stays open while the pointer is on it, which a list
+            // invites.
+            //
+            // In the collapsed rail this replaces the icon's tooltip, because
+            // the panel's header says the tabverse's name anyway - so the rail
+            // answers "which one is it" with the same panel, not a tooltip that
+            // only repeats what it says.
+            wrapHeader={(button) => (
+              <Popover
+                autoFocus={false}
+                enforceFocus={false}
+                interactionKind="hover"
+                hoverOpenDelay={HOVER_PREVIEW_DELAY_MS}
+                placement="right"
+                // Zeroed: Blueprint's default is `[0, arrow/2]` = 15px of space
+                // for an arrow we hide, and the gap is set in css instead (see
+                // TabverseHoverPreview.module.scss), where the rail and the
+                // expanded list can want different numbers.
+                modifiers={{ offset: { options: { offset: [0, 0] } } }}
+                content={
+                  <div className={previewClasses.panel}>
+                    <TabverseHoverPreview
+                      name={label}
+                      windowId={row.chromeWindowId}
+                    />
+                  </div>
+                }
+                portalClassName={portalClassName}
               >
-                <Icon icon={'th-derived' as IconName} size={ICON_SIZE} />
-                <span className={classes.otherName}>{label}</span>
-              </div>
-            }
+                {button}
+              </Popover>
+            )}
           />
         );
       })}

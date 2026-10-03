@@ -4,7 +4,7 @@
   margin-top: 6px;
   padding: 8px 12px;
   min-height: 54px;
-  border-radius: 12px;
+  border-radius: global.$radius-card;
   box-shadow: none;
   /*
    * A row of [icon] [text] [buttons], laid out with flex rather than floats.
@@ -118,7 +118,7 @@
   padding: 8px;
   border-bottom: 1px solid #ccc;
   background-color: rgb(249, 249, 249);
-  border-radius: 38px 38px 0px 0px;
+  border-radius: global.$radius-card global.$radius-card 0px 0px;
 }
 
 .previewFavIconContainer {
@@ -129,7 +129,7 @@
 .previewCard {
   padding: 0px;
   max-width: 524px;
-  border-radius: 38px;
+  border-radius: global.$radius-card;
 }
 
 .previewTitleH {
@@ -151,7 +151,7 @@
 
 .previewImageContainer {
   padding: 12px;
-  border-radius: 0px 0px 38px 38px;
+  border-radius: 0px 0px global.$radius-card global.$radius-card;
 }
 
 /*
@@ -182,7 +182,7 @@
 }
 
 .tabCardPopover :global(.bp6-popover) {
-  border-radius: 38px;
+  border-radius: global.$radius-card;
   box-shadow: 0 8px 24px rgb(16 22 26 / 20%);
 }
 
@@ -195,5 +195,5 @@
 }
 
 .tabCardPopover :global(.bp6-popover) :global(.bp6-popover-content) {
-  border-radius: 38px;
+  border-radius: global.$radius-card;
 }

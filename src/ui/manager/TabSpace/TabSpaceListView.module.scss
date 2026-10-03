@@ -81,7 +81,7 @@
 }
 
 .header {
-  border-radius: 18px;
+  border-radius: global.$radius-card;
   background-color: rgba(global.$color-light-shade, 0.95);
   padding: 16px 26px;
   margin-bottom: 18px;

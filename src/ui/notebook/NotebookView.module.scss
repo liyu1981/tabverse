@@ -1,3 +1,5 @@
+@use '../../global.scss';
+
 .container {
   padding-left: 4px;
 }
@@ -30,5 +32,5 @@
   padding: 8px 18px;
   font-style: italic;
   font-weight: 500;
-  border-radius: 18px;
+  border-radius: global.$radius-card;
 }

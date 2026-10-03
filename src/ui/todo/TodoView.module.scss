@@ -27,7 +27,7 @@
     Helvetica,
     Arial,
     sans-serif;
-  border-radius: 18px;
+  border-radius: global.$radius-card;
 }
 
 /*
@@ -281,7 +281,7 @@
     0 9px 1px -3px #fff,
     0 16px 0 -6px #f6f6f6,
     0 17px 2px -6px #fff;
-  border-radius: 18px;
+  border-radius: global.$radius-card;
 }
 
 .todoapp .todoCount {
