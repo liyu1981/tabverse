@@ -212,6 +212,13 @@ export async function querySavedTabSpaceById(
 
 export async function saveTabSpace(targetTabSpace: TabSpace): Promise<number> {
   const isCurrentTabSpace = targetTabSpace.id === $tabSpace.getState().id;
+  // What the store holds just before it is replaced below. The update inside the
+  // transaction swaps the live list for this save's own copy, so a tab the store
+  // gained after `targetTabSpace` was taken - a tab created while this save was
+  // running, which is what a burst of tab events does - would be dropped from the
+  // live list with no chance of ever being written. The merge after the save
+  // needs both that list and the store's, to see every tab either had.
+  let tabsBeforeUpdate: Tab[] = [];
   const updatedTabSpace = await db.transaction(
     'rw',
     [db.table(TAB_DB_TABLE_NAME), db.table(TABSPACE_DB_TABLE_NAME)],
@@ -229,6 +236,7 @@ export async function saveTabSpace(targetTabSpace: TabSpace): Promise<number> {
         tabSavePayloads,
       );
       if (isCurrentTabSpace) {
+        tabsBeforeUpdate = $tabSpace.getState().tabs.toArray();
         tabSpaceStoreApi.update(updatedTabSpace);
       }
       // every id is final from the moment a record is created, so a row that is
@@ -239,12 +247,16 @@ export async function saveTabSpace(targetTabSpace: TabSpace): Promise<number> {
     },
   );
   if (isCurrentTabSpace) {
-    mayBeSaveCurrentAgain(updatedTabSpace);
+    mayBeSaveCurrentAgain(updatedTabSpace, tabsBeforeUpdate);
   }
   return updatedTabSpace.updatedAt;
 }
 
-function mayBeSaveCurrentAgain(updatedTabSpace: TabSpace) {
+function mayBeSaveCurrentAgain(
+  updatedTabSpace: TabSpace,
+  /** The store's tabs at the moment `saveTabSpace` replaced it. */
+  tabsBeforeUpdate: Tab[] = [],
+) {
   const currentTabSpace = $tabSpace.getState();
   let mergedTabSpace = cloneTabSpace(updatedTabSpace);
   let changed = false;
@@ -267,10 +279,26 @@ function mayBeSaveCurrentAgain(updatedTabSpace: TabSpace) {
     'id',
     'tabSpaceId',
   ];
-  currentTabSpace.tabs.forEach((ct) => {
+  // Every tab the store had or has, once each: the ones taken just before the
+  // update (it may have dropped them, being a copy of `targetTabSpace`) and the
+  // ones in the store now (they may have arrived after it). Keyed by our own
+  // tab id, which is final and unique - not by chromeTabId, which a tab that
+  // has no live tab yet shares.
+  const liveById = new Map<string, Tab>();
+  for (const tab of [...tabsBeforeUpdate, ...currentTabSpace.tabs]) {
+    liveById.set(tab.id, tab);
+  }
+  for (const ct of liveById.values()) {
     const ut = findTabByChromeTabId(ct.chromeTabId, updatedTabSpace);
     if (!ut) {
-      mergedTabSpace = addTabs([ut], mergedTabSpace);
+      // The tabverse has a tab that the row just written has no part of: it was
+      // added while this save ran (the burst of tab events a split view creates
+      // does exactly this), and without adding it here the store's copy of it
+      // was dropped by the update above and the row never carried it. It was
+      // adding `ut`, which is `undefined` here: immer threw "Cannot set
+      // properties of undefined", the re-save below never ran, and the error
+      // went out as an unhandled rejection.
+      mergedTabSpace = addTabs([ct], mergedTabSpace);
       changed = true;
     } else {
       if (!isEqual(omit(ct, noConsiderFields), omit(ut, noConsiderFields))) {
@@ -281,7 +309,7 @@ function mayBeSaveCurrentAgain(updatedTabSpace: TabSpace) {
         changed = true;
       }
     }
-  });
+  }
 
   if (changed) {
     logger.log(

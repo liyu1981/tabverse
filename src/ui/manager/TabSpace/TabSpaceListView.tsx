@@ -35,7 +35,7 @@ import { ErrorBoundary } from '../../common/ErrorBoundary';
 import { List } from 'immutable';
 import { MoveToExistTabSpaceDialog } from '../../dialog/MoveToExistTabSpace';
 import { SaveIndicator } from './SaveIndicator';
-import { SplitBlock, TabGroupBlock } from './TabGroupBlock';
+import { GroupTabs, SplitBlock, TabGroupBlock } from './TabGroupBlock';
 import { Tab } from '../../../data/tabSpace/Tab';
 import { TabCard } from './TabCard';
 import classes from './TabSpaceListView.module.scss';
@@ -254,7 +254,9 @@ export function TabSpaceListView() {
             group={entry.group}
             tabCount={entry.tabs.length}
           >
-            <div className={classes.tabInGroup}>{entry.tabs.map(tabCard)}</div>
+            <div className={classes.tabInGroup}>
+              <GroupTabs tabs={entry.tabs} card={tabCard} />
+            </div>
           </TabGroupBlock>,
         );
       }

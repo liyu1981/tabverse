@@ -76,6 +76,13 @@ interface IMockTabData {
    * to put a tab in a split view, as the restore's read-back test does.
    */
   splitViewId?: number;
+  /**
+   * Chrome's group id for the tab, undefined for an ungrouped one. Session
+   * scoped in Chrome, and read by `captureTabGroups` to decide which of a
+   * group's tabs belong to it - a test about group membership sets this and
+   * installs a `chrome.tabGroups.query` for it to read.
+   */
+  groupId?: number;
 }
 
 interface IMockTab extends IMockTabData {

@@ -4,6 +4,7 @@ import {
   querySavedTabSpace,
   querySavedTabSpaceById,
   saveCurrentTabSpace,
+  saveTabSpace,
 } from '../util';
 import { initMockChrome, tsTabData1 } from './common.test';
 
@@ -11,7 +12,8 @@ import { QUERY_PAGE_LIMIT_DEFAULT } from '../../../storage/db';
 import { findTabByChromeTabId } from '../TabSpace';
 import { pick } from 'lodash';
 import { resetTestDb } from '../../../dev/dbImplTest';
-import { startMonitorTabChanges } from '../chromeTab';
+import { scanCurrentTabs, startMonitorTabChanges } from '../chromeTab';
+import { fromLiveTab } from '../Tab';
 
 export async function initTabSpaceData() {
   const { mockChrome, w1, w2, t1, t2, t3, t4 } = initMockChrome();
@@ -86,5 +88,35 @@ test('tabSpaceStore', async () => {
       pageLimit: QUERY_PAGE_LIMIT_DEFAULT,
     });
     expect(savedTabSpaces3.length).toEqual(0);
+  });
+});
+
+test('a tab that arrives while a save runs is saved by the merge after it', async () => {
+  await testWithDb('merge after save', async () => {
+    await initTabSpaceData();
+    await scanCurrentTabs();
+    const snapshot = $tabSpace.getState();
+    expect(snapshot.tabs.size).toBeGreaterThan(0);
+
+    // a tab lands in the store while that snapshot is being written: the burst
+    // of tab events a split view creates does exactly this. The row being
+    // written has no part of it, and the merge is what has to add it -
+    // it was adding the copy it had just looked up and not found, i.e.
+    // `undefined`, and immer threw before the re-save could run
+    const late = fromLiveTab({
+      chromeTabId: 9999,
+      chromeWindowId: snapshot.chromeWindowId,
+    });
+    tabSpaceStoreApi.addTab(late);
+
+    await saveTabSpace(snapshot);
+    await new Promise((resolve) => setTimeout(resolve, 30));
+
+    const saved = await querySavedTabSpaceById(snapshot.id);
+    // querySavedTabSpaceById hands back the tabverse with its tabs loaded
+    expect(saved.tabs.size).toEqual(snapshot.tabs.size + 1);
+    expect(saved.tabs.map((tab) => tab.id).toArray()).toContain(late.id);
+    // and the live list still holds it too
+    expect($tabSpace.getState().tabs.size).toEqual(snapshot.tabs.size + 1);
   });
 });

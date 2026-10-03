@@ -3,6 +3,7 @@ import { Alignment, Button, ButtonGroup } from '@blueprintjs/core';
 import React from 'react';
 
 import { SplitBlock, TabGroupBlock } from '../TabSpace/TabGroupBlock';
+import { GroupTabs } from '../TabSpace/TabGroupBlock';
 import { TabCard } from '../TabSpace/TabCard';
 import { TabSpace } from '../../../data/tabSpace/TabSpace';
 import { TabSpaceId } from '../../../message/message';
@@ -64,7 +65,7 @@ export function SavedTabSpaceDetail(props: SavedTabSpaceDetailProps) {
           group={entry.group}
           tabCount={entry.tabs.length}
         >
-          {entry.tabs.map((tab) => savedTabCard(tab))}
+          <GroupTabs tabs={entry.tabs} card={savedTabCard} />
         </TabGroupBlock>,
       );
     }

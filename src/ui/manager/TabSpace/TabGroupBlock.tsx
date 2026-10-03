@@ -1,4 +1,6 @@
+import { Tab } from '../../../data/tabSpace/Tab';
 import { TabGroupHint } from '../../../data/tabSpace/TabSpace';
+import { subEntriesOfTabs } from '../../../data/tabSpace/tabEntries';
 import { TAB_GROUP_COLORS_JS } from '../../../data/tabSpace/tabGroup';
 import React from 'react';
 import classes from './TabGroupBlock.module.scss';
@@ -42,6 +44,43 @@ export function TabGroupBlock(props: ITabGroupBlockProps) {
       </div>
       {props.children}
     </div>
+  );
+}
+
+export interface IGroupTabsProps {
+  /** The group's tabs, in the order the list shows them. */
+  tabs: Tab[];
+  /** How this host draws one card - the live list, the saved view and the console's drawer all differ. */
+  card: (tab: Tab) => React.ReactNode;
+}
+
+/**
+ * A group's tabs as the list reads them: ordinary cards, and a split pair as
+ * one block.
+ *
+ * This is where a split view *inside* a group lands. `tabverseEntries` cannot
+ * express it: it takes a group's tabs and stops, so a split opened in a group
+ * used to draw as three plain cards - no block, and the pairing gone (which is
+ * how a `github: <tab1 | tab3> + tab2` split read as `github: tab1, tab2`). The
+ * three hosts each pass their own card in, so the composition is written once.
+ */
+export function GroupTabs(props: IGroupTabsProps) {
+  return (
+    <>
+      {subEntriesOfTabs(props.tabs).map((sub) =>
+        sub.kind === 'split' ? (
+          <SplitBlock
+            key={`split-${sub.tabs[0].id}`}
+            splitViewId={sub.tabs[0].splitViewId}
+          >
+            {props.card(sub.tabs[0])}
+            {props.card(sub.tabs[1])}
+          </SplitBlock>
+        ) : (
+          props.card(sub.tab)
+        ),
+      )}
+    </>
   );
 }
 

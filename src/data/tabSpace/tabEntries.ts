@@ -1,4 +1,5 @@
 import { Tab, findSplitPartner } from './Tab';
+import { List } from 'immutable';
 import { TabGroupHint, TabSpace, findTabById, getTabIds } from './TabSpace';
 import { groupOfTab } from './tabGroup';
 
@@ -57,7 +58,14 @@ export function tabverseEntries(targetTabSpace: TabSpace): TabverseEntry[] {
     }
 
     const partner = findSplitPartner(tab, targetTabSpace.tabs);
-    if (partner && tabIdOrder.indexOf(partner.id) >= 0) {
+    // a partner already consumed is one this list has already drawn - inside
+    // a group above, or as the other half of a split. Drawing it again would
+    // show the same tab twice, so this one stands on its own instead.
+    if (
+      partner &&
+      !consumedTabIds.has(partner.id) &&
+      tabIdOrder.indexOf(partner.id) >= 0
+    ) {
       consumedTabIds.add(partner.id);
       entries.push({ kind: 'split', tabs: [tab, partner] });
     } else {
@@ -79,6 +87,45 @@ export function tabverseEntries(targetTabSpace: TabSpace): TabverseEntry[] {
 /** The tabs of one entry, whether it is a plain tab or a composite. */
 export function entryTabs(entry: TabverseEntry): Tab[] {
   return entry.kind === 'tab' ? [entry.tab] : entry.tabs;
+}
+
+/** One entry *inside* a group: a plain tab, or the pair of a split view. */
+export type TabSubEntry =
+  | { kind: 'tab'; tab: Tab }
+  | { kind: 'split'; tabs: [Tab, Tab] };
+
+/**
+ * The entries inside a group: plain tabs, with a split pair drawn as one block.
+ *
+ * The top-level builder cannot do this: a group takes its tabs and stops
+ * (`continue`), which is why a split view opened *inside* a group used to render
+ * as three ordinary cards - no block, and the pairing lost. The group's block is
+ * drawn by its host (the live list, the saved view, the console's drawer), and
+ * they are three of them, so this is the shared half: what the list of a
+ * group's tabs reads as.
+ *
+ * Pairs are found within the given tabs only, so a split whose partner sits
+ * outside the group is drawn as what it is from in here: an ordinary tab.
+ */
+export function subEntriesOfTabs(tabs: Tab[]): TabSubEntry[] {
+  const asList = List(tabs);
+  const consumed = new Set<string>();
+  const entries: TabSubEntry[] = [];
+  for (const tab of tabs) {
+    if (consumed.has(tab.id)) {
+      continue;
+    }
+    const partner = findSplitPartner(tab, asList);
+    if (partner && partner.id !== tab.id && !consumed.has(partner.id)) {
+      consumed.add(tab.id);
+      consumed.add(partner.id);
+      entries.push({ kind: 'split', tabs: [tab, partner] });
+      continue;
+    }
+    consumed.add(tab.id);
+    entries.push({ kind: 'tab', tab });
+  }
+  return entries;
 }
 
 /**

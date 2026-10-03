@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useUnit } from 'effector-react';
 
 import {
+  GroupTabs,
   SplitBlock,
   TabGroupBlock,
 } from '../../../../src/ui/manager/TabSpace/TabGroupBlock';
@@ -265,7 +266,7 @@ export function TabverseTabs(props: { bundle: TabspaceBundle; meta?: string }) {
                   group={entry.group}
                   tabCount={entry.tabs.length}
                 >
-                  {entry.tabs.map(storedCard)}
+                  <GroupTabs tabs={entry.tabs} card={storedCard} />
                 </TabGroupBlock>
               );
             })}

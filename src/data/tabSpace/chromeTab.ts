@@ -18,6 +18,22 @@ function inCurrentTabSpace(windowId: number, tabSpace: TabSpace) {
 }
 
 /**
+ * Whether a chrome tab arrives already inside a group.
+ *
+ * `changeInfo.groupId` only fires when a tab moves in or out of an *existing*
+ * group, which is what the update path watches. A tab created inside one - the
+ * new half of a split view opened in a group, which Chrome puts in that group -
+ * carries `groupId` and says nothing else, so the hint would keep listing the
+ * group's two old tabs while the window shows three.
+ *
+ * `TAB_GROUP_ID_NONE` is -1; the field is optional before Chrome 89, so it is
+ * read defensively rather than through chrome.tabGroups (which may not exist).
+ */
+function isTabInGroup(chromeTab: chrome.tabs.Tab): boolean {
+  return typeof chromeTab.groupId === 'number' && chromeTab.groupId >= 0;
+}
+
+/**
  * What a page may rewrite about itself without becoming a different tab: its
  * title and its favicon.
  */
@@ -217,6 +233,10 @@ export function getOnChromeTabAttached() {
       t = copyChromeTabFields(chromeTab, t);
       tabSpaceStoreApi.addTab(t);
       await maintainTabOrder();
+      if (isTabInGroup(chromeTab)) {
+        // dragged in from a window where it was grouped
+        void captureGroupsOfWindow(currentTabIdMapping());
+      }
       saveCurrentTabSpace();
     }
   }
@@ -243,6 +263,10 @@ export function getOnChromeTabCreated() {
     t = copyChromeTabFields(chromeTab, t);
     tabSpaceStoreApi.addTab(t);
     await maintainTabOrder();
+    if (isTabInGroup(chromeTab)) {
+      // the group hint is keyed on membership, and this tab was born a member
+      void captureGroupsOfWindow(currentTabIdMapping());
+    }
     saveCurrentTabSpace();
   }
   return (chromeTab: chrome.tabs.Tab) => {
