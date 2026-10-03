@@ -75,7 +75,14 @@ export function SavedTabSpaceRow(props: ISavedTabSpaceRowProps) {
         <Button
           className="tv-icon-button"
           icon="folder-shared"
-          title="Open In A New Window"
+          // the door this opens switches when the tabverse is already open
+          // somewhere (openOrSwitchToTabSpace), so the title says which of the
+          // two it will do rather than promising a new window either way
+          title={
+            isOpen
+              ? 'Go to the window of this tabverse'
+              : 'Open In A New Window'
+          }
           minimal={true}
           small={true}
           onClick={() => props.openInNewWindow(tabSpace)}

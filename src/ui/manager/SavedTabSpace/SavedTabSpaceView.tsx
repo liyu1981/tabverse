@@ -18,6 +18,7 @@ import classes from './SavedTabSpaceView.module.scss';
 import { useAsyncEffect } from '../../common/useAsyncEffect';
 import { useStore } from 'effector-react';
 import { $tabSpace, $tabSpaceStorage } from '../../../data/tabSpace/store';
+import { $openTabSpaces } from '../../../data/tabSpace/openWindowStore';
 import {
   $tabSpaceQuery,
   tabSpaceQueryStoreApi,
@@ -32,16 +33,25 @@ export function SavedTabSpaceView() {
   const tabSpace = useStore($tabSpace);
   const tabStorage = useStore($tabSpaceStorage);
   const tabSpaceQuery = useStore($tabSpaceQuery);
+  // A window opening or closing elsewhere changes which tabverses count as
+  // opened, and that decides Switch vs Load on every row here - so this view
+  // re-reads when the open set changes, not only when its own data does.
+  const openTabSpaces = useStore($openTabSpaces);
   useAsyncEffect(async () => {
     await tabSpaceQueryStoreApi.reload();
-  }, [tabSpace, tabStorage]);
+  }, [tabSpace, tabStorage, openTabSpaces]);
 
-  // Only this window's tabverse can be switched to: a manager page does not
-  // know (or care) which window another tabverse is open in (ADR 0006).
+  // Where each open tabverse actually is. This page's own tabverse is one of
+  // them, and so is one open in another window (ADR 0006 kept one page per
+  // window, which is not the same as one page per profile).
   const switchToTabSpace = (target: TabSpace) => {
-    if (target.id === tabSpace.id) {
-      switchToTabSpaceUtil(tabSpace.chromeTabId, tabSpace.chromeWindowId);
+    const open = tabSpaceQuery.openedSavedTabSpaces.find(
+      (candidate) => candidate.id === target.id,
+    );
+    if (!open) {
+      return;
     }
+    switchToTabSpaceUtil(open.chromeTabId, open.chromeWindowId);
   };
 
   const restoreSavedTabSpace = (tabSpace: TabSpace) =>

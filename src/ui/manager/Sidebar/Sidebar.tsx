@@ -5,9 +5,12 @@ import { ErrorBoundary } from '../../common/ErrorBoundary';
 import { Icon, IconName, Tooltip } from '@blueprintjs/core';
 import { LiveTabSpace } from './LiveTabSpace';
 import React from 'react';
+import { OtherTabSpaces } from './OtherTabSpaces';
 import { SavedTabSpace } from './SavedTabSpace';
 import { TabSpaceLogo } from '../../common/TabSpaceLogo';
 import { useSidebarCollapsed } from '../../common/SidebarContainer';
+import { $tabSpace } from '../../../data/tabSpace/store';
+import { useStore } from 'effector-react';
 import classes from './Sidebar.module.scss';
 import clsx from 'clsx';
 import { isDebug } from '../../../debug';
@@ -131,6 +134,12 @@ const ICON_SIZE = 20;
 const RAIL_ICON_SIZE = 26;
 
 export const Sidebar = (props: ISidebarProps) => {
+  const tabSpace = useStore($tabSpace);
+  // the rail has no room for a name, so the current tabverse's own name is the
+  // tooltip; before the bootstrap write lands there is no name yet
+  const currentLabel =
+    tabSpace.name.length > 0 ? tabSpace.name : 'Current Tabverse';
+
   return (
     <>
       <div>
@@ -147,15 +156,18 @@ export const Sidebar = (props: ISidebarProps) => {
           route={ManagerViewRoute.Opened}
           onSwitch={props.switchRoute}
           railIcon="panel-table"
-          railLabel="Live Tabverses"
+          railLabel={currentLabel}
           header={
             <div className={classes.sidebarHeaderContainer}>
-              <Icon icon="panel-table" size={ICON_SIZE} /> Live Tabverses
+              <Icon icon="panel-table" size={ICON_SIZE} /> Current Tabverse
             </div>
           }
         >
           <LiveTabSpace active={props.route === ManagerViewRoute.Opened} />
         </SidebarComponent>
+        {/* One entry per other window, each switching to the tabverse it holds.
+            Renders nothing on a profile with a single window. */}
+        <OtherTabSpaces />
         <SidebarComponent
           active={props.route === ManagerViewRoute.Saved}
           route={ManagerViewRoute.Saved}

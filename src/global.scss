@@ -17,4 +17,9 @@ $color-dark-shade: #1d191f;
 $color-text: color.adjust($color-d, $lightness: -15%);
 $color-background: $color-c;
 
+// Text and glyphs drawn *on* the brand colour (the sidebar's own background:
+// the rail's icons, the "Other Tabverses" caption). The dark text colour is a
+// poor contrast on that slate, so anything on top of it uses this instead.
+$color-on-brand: #f4f6fb;
+
 $sidebar-background-color: $color-main-brand;

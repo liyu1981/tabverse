@@ -1,5 +1,10 @@
-.currentWindow {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+/*
+ * The current tabverse's own name, under the entry's "Current Tabverse" label.
+ * Truncated: a tabverse can be called anything, and the sidebar's width is not
+ * negotiable. The full name is in the title attribute and in the rail tooltip.
+ */
+.currentName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

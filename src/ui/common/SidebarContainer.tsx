@@ -12,7 +12,12 @@ interface SidebarState {
   expandSidebar: () => void;
 }
 
-const SidebarContext = createContext<SidebarState>({
+/**
+ * Exported for the sidebar's own tests: the rail is a second rendering of the
+ * same entries, and asserting it means putting the sidebar in its collapsed
+ * state, which is what this context is.
+ */
+export const SidebarContext = createContext<SidebarState>({
   collapsed: false,
   toggleCollapsed: () => undefined,
   expandSidebar: () => undefined,

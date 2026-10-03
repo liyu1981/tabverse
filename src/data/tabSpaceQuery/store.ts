@@ -4,11 +4,13 @@ import { exposeDebugData } from '../../debug';
 import { LoadStatus, perfEnd, perfStart } from '../../global';
 import { Query, SearchBackend, searchSavedTabSpaces } from '../search';
 import { setAttrForObject } from '../common';
-import { $tabSpace, $tabSpaceStorage } from '../tabSpace/store';
+import { $tabSpaceStorage } from '../tabSpace/store';
 import { TabSpace } from '../tabSpace/TabSpace';
 import { querySavedTabSpace } from '../tabSpace/util';
+import { queryOpenTabSpaces } from '../tabSpace/openTabverses';
 import {
   newEmptyTabSpaceQuery,
+  OpenedTabSpace,
   setQuery,
   SortMethods,
   TabSpaceQuery,
@@ -37,19 +39,19 @@ async function reload() {
 
   const tabSpaceQuery = $tabSpaceQuery.getState();
 
-  // A manager page only ever owns the tabverse of its own window, so at most
-  // one saved tabverse can be "opened" (the one being shown right here).
-  const currentTabSpace = $tabSpace.getState();
-  const openedSavedTabSpaces = [
-    {
-      id: currentTabSpace.id,
-      name: currentTabSpace.name,
-      createdAt: currentTabSpace.createdAt,
-      updatedAt: currentTabSpace.updatedAt,
-      chromeTabId: currentTabSpace.chromeTabId,
-      chromeWindowId: currentTabSpace.chromeWindowId,
-    },
-  ];
+  // Every tabverse open in this profile, not just this window's own. One
+  // chrome.tabs.query answers it, because every Tabverse tab carries its
+  // tabverse id in its url as `tvid` (see openTabverses.ts) - no registry, no
+  // bookkeeping. It matters because "is this open" decides what the detail view
+  // offers: Load to New / Load to Current, or Switch. Getting it wrong opens a
+  // second window on an id that is already open, and two pages holding one id
+  // overwrite each other's tab list.
+  const openInBrowser = await queryOpenTabSpaces();
+  const openedSavedTabSpaces: OpenedTabSpace[] = openInBrowser.map((open) => ({
+    id: open.tabSpaceId,
+    chromeTabId: open.chromeTabId,
+    chromeWindowId: open.chromeWindowId,
+  }));
   let savedTabSpaces: TabSpace[];
   let changes: Record<string, any> = {};
   if (!tabSpaceQuery.query.isEmpty()) {

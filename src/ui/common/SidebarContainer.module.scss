@@ -61,13 +61,13 @@ $transition-time: 200ms;
 .collapseToggle :global(.bp6-button) {
   min-width: 30px;
   min-height: 30px;
-  color: #f4f6fb;
+  color: global.$color-on-brand;
   background: none;
   box-shadow: none;
 }
 
 .collapseToggle :global(.bp6-button) :global(.bp6-icon) > svg {
-  fill: #f4f6fb;
+  fill: global.$color-on-brand;
 }
 
 .collapseToggle :global(.bp6-button):hover,

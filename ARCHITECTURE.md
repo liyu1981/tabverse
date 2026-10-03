@@ -103,6 +103,34 @@ Two consequences worth writing down:
   server side: a tab is already on screen, and it is the user's own eyes that
   asked the question.
 
+## The tabverses open in this browser (`src/data/tabSpace/openWindowStore.ts`)
+
+The sidebar's "Other Tabverses" list, and the rule that keeps a tabverse open in
+one window only. Both answer a question about *this* browser, and both answer it
+the same cheap way: `chrome.tabs.query({})`, once.
+
+A Tabverse tab carries its tabverse id in its url as `tvid` (`tabverseUrl`), so
+the query says which tabverses are open, in which windows, and on which tab -
+with no registry and no state to keep consistent. ADR 0006 removed this list
+because it needed the old cross-window registry; the popup re-added it first
+(`doc/tabverse-popup-plan.md` D8) and this is the same observation applied to the
+sidebar. Names and tab counts are joined from IndexedDB on those ids, never the
+other way round: `loadTabSpacesByIds` drops ids it cannot find, and a list that
+empties itself because a neighbour's row is a moment late is worse than one row
+with no name. Each other window is a sidebar *entry*, which is what makes the
+collapsed rail work for free: expanded it is a row with the tabverse's name
+(truncated, full name in the title), collapsed it is a `th-derived` icon whose
+tooltip is that name. Scope is one Chrome profile - another profile is another
+extension install, and its tabs are not visible here.
+
+**A tabverse is never opened twice.** `openOrSwitchToTabSpace` switches to the
+window that has it and only creates a window when nothing does; `SavedTabSpaceView`
+and the popup both reach the tabverse through it. This is not tidiness. Two pages
+holding one id both autosave the row keyed by that id, so they overwrite each
+other's `tabIds` and the tabverse's tab list flip-flops between the two windows.
+The `CountExit` guard does not help - it only catches two manager pages in the
+*same* window.
+
 ## Restoring a tabverse into a window (`src/data/tabSpace/restorePlan.ts`)
 
 Loading a saved tabverse into the window its manager page is in used to be

@@ -2,6 +2,7 @@ import { TabSpaceOp } from '../../global';
 import { Tab } from './Tab';
 import { getNewId } from '../common';
 import { logger } from '../../global';
+import { openOrSwitchToTabSpace } from './openTabverses';
 import { sendChromeMessage, TabSpaceMsg } from '../../message/message';
 import { concat } from 'lodash';
 
@@ -135,14 +136,28 @@ export async function createNewChromeWindowWithTab(
   return chromeWindow;
 }
 
-export function restoreSavedTabSpaceUtil(tabSpaceId: string) {
-  chrome.windows.create((window) => {
-    chrome.tabs.create({
-      active: true,
-      pinned: true,
-      url: tabverseUrl(TabSpaceOp.LoadSaved, tabSpaceId),
-      windowId: window.id,
-    });
+/**
+ * Opens a tabverse in a new window - or, if it is already open somewhere, goes
+ * to the window that has it.
+ *
+ * The check is the point: a tabverse is born saved and carries its id in the
+ * Tabverse tab's url, so nothing stops a second window from opening the same
+ * id, and two pages with one id overwrite each other's tab list on every tab
+ * event (see `openOrSwitchToTabSpace`).
+ */
+export async function restoreSavedTabSpaceUtil(
+  tabSpaceId: string,
+): Promise<void> {
+  await openOrSwitchToTabSpace(tabSpaceId, {
+    create: async () => {
+      const window = await chrome.windows.create({ focused: true });
+      await chrome.tabs.create({
+        active: true,
+        pinned: true,
+        url: tabverseUrl(TabSpaceOp.LoadSaved, tabSpaceId),
+        windowId: window.id,
+      });
+    },
   });
 }
 

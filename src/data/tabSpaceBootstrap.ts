@@ -4,6 +4,7 @@ import { loadPreviews } from './tabSpace/tabPreviewStore';
 import { monitorDbChanges, saveCurrentTabSpace } from './tabSpace/util';
 import { startMonitorChromeMessage } from '../message/chromeMessage';
 import { $tabSpace, tabSpaceStoreApi } from './tabSpace/store';
+import { startMonitorOpenTabSpaces } from './tabSpace/openWindowStore';
 import { logger } from '../global';
 
 /**
@@ -30,6 +31,10 @@ export async function tabSpaceBootstrap(
   await scanCurrentTabs();
   await restoreTabPreviews();
   startMonitorTabChanges();
+  // The other tabverses open in this browser, for the sidebar's list. It is a
+  // page concern: only a page draws it, and the worker is asleep most of the
+  // time. Started after the scan, so the first read sees a settled window.
+  startMonitorOpenTabSpaces();
   startMonitorChromeMessage();
   monitorDbChanges();
 }

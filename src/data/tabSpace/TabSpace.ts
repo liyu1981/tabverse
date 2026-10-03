@@ -120,20 +120,6 @@ export function getTabIds(targetTabSpace: TabSpace): string[] {
   return targetTabSpace.tabs.map((tab) => tab.id).toArray();
 }
 
-/**
- * Whether this tabverse may be written to the database (and, through the change
- * feed, to the sync server).
- *
- * Always true since tabverses became born saved: the id is minted when the
- * Tabverse tab is opened and travels in its url as `tvid`, so opening a
- * Tabverse *is* the decision to keep this window's tabs. The function is kept
- * because the note/todo/bookmark autosave paths ask it about the *tabspace*
- * before saving their own rows.
- */
-export function needAutoSave(targetTabSpace: TabSpace): boolean {
-  return true;
-}
-
 export function isEqual(t1: TabSpace, t2: TabSpace): boolean {
   return (
     eq(omit(t1, 'tabs'), omit(t2, 'tabs')) &&

@@ -1,0 +1,38 @@
+@use '../../../global.scss';
+
+/*
+ * The heading the other tabverses sit under, expanded. It is a caption and not
+ * an entry: nothing to click, and nothing to collapse - the entries below it
+ * are the sidebar entries, which is what makes the rail work for free.
+ *
+ * It sits on the sidebar's own background (the brand slate), not on a card, so
+ * it takes the same near-white the rail's glyphs use there - the dark text
+ * colour is barely legible on that background.
+ */
+.otherHeader {
+  margin: 0 0 8px 18px;
+  color: global.$color-on-brand;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/*
+ * One other tabverse, expanded. The name is the whole row and it is truncated:
+ * a tabverse can be called anything, and the sidebar's width is not negotiable.
+ * The title attribute carries the full name for a hover.
+ */
+.otherHeaderRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.otherName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

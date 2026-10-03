@@ -6,7 +6,6 @@ import {
   fromSavedDataWithoutTabs,
   getTabIds,
   insertTab,
-  needAutoSave,
   newEmptyTabSpace,
   removeTab,
   removeTabByChromeTabId,
@@ -35,9 +34,8 @@ test('constructor', () => {
   expect(ts.chromeTabId).toBe(-1);
   expect(ts.chromeWindowId).toBe(-1);
   // tabverses are born saved (ADR: tvid in the tab url), so the id is final
-  // from the start and autosave is always allowed
+  // from the start and the autosave has nothing to ask before writing
   expect(ts.id.length).toBeGreaterThan(0);
-  expect(needAutoSave(ts)).toBeTruthy();
 
   const ts5 = setChromeTabId(
     300,

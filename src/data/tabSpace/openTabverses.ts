@@ -65,6 +65,26 @@ export function openTabSpacesOf(tabs: chrome.tabs.Tab[]): OpenTabSpace[] {
     .filter((open) => open.tabSpaceId.length > 0);
 }
 
+/**
+ * The tabverses open in windows other than the caller's own.
+ *
+ * Both exclusions are needed. `windowId` is what makes the *window* the
+ * caller's own; `tabSpaceId` catches the same tabverse open twice in this
+ * profile (allowed, one page per window), where the caller would otherwise see
+ * its own tabverse as a neighbour. Window order is preserved, which is the
+ * popup's tie-break rule: the list must never shuffle under the cursor.
+ */
+export function otherWindowTabSpaces(
+  openTabSpaces: OpenTabSpace[],
+  self: { windowId: number; tabSpaceId: string },
+): OpenTabSpace[] {
+  return openTabSpaces.filter(
+    (open) =>
+      open.chromeWindowId !== self.windowId &&
+      open.tabSpaceId !== self.tabSpaceId,
+  );
+}
+
 export async function queryOpenTabSpaces(): Promise<OpenTabSpace[]> {
   try {
     const tabs = await chrome.tabs.query({});
@@ -120,4 +140,55 @@ export async function switchToOpenTabSpace(
 ): Promise<void> {
   await chrome.tabs.update(openTabSpace.chromeTabId, { active: true });
   await chrome.windows.update(openTabSpace.chromeWindowId, { focused: true });
+}
+
+/** What opening a tabverse should actually do. */
+export type OpenTabSpacePlan =
+  | { kind: 'switch'; open: OpenTabSpace }
+  | { kind: 'create' };
+
+/**
+ * Whether opening this tabverse means opening a window, or going to the window
+ * that already has it.
+ *
+ * A tabverse open in two windows is not a harmless duplicate. Both pages hold
+ * the same id, both autosave it (`saveCurrentTabSpace` writes the row keyed by
+ * id), so the two windows overwrite each other's `tabIds` - the tabverse's tab
+ * list flip-flops between them, and with it the tab list and the History tool.
+ * So "open it" must mean "go to it" whenever it is already open.
+ */
+export function planOpenTabSpace(
+  openTabSpaces: OpenTabSpace[],
+  tabSpaceId: string,
+): OpenTabSpacePlan {
+  const open = openTabSpaces.find(
+    (candidate) => candidate.tabSpaceId === tabSpaceId,
+  );
+  return open ? { kind: 'switch', open } : { kind: 'create' };
+}
+
+export interface OpenTabSpaceDeps {
+  query?: () => Promise<OpenTabSpace[]>;
+  switchTo?: (open: OpenTabSpace) => Promise<void>;
+  /** Opens a window holding this tabverse. The caller's own business. */
+  create?: () => Promise<void> | void;
+}
+
+/**
+ * The one door a tabverse is opened through: switch to it if it is already
+ * open, create it otherwise. `deps` exist so this is testable without chrome,
+ * and so `create` can stay with the caller that knows how it wants to open one.
+ */
+export async function openOrSwitchToTabSpace(
+  tabSpaceId: string,
+  deps: OpenTabSpaceDeps = {},
+): Promise<OpenTabSpacePlan['kind']> {
+  const query = deps.query || queryOpenTabSpaces;
+  const plan = planOpenTabSpace(await query(), tabSpaceId);
+  if (plan.kind === 'create') {
+    await deps.create?.();
+    return 'create';
+  }
+  await (deps.switchTo || switchToOpenTabSpace)(plan.open);
+  return 'switch';
 }

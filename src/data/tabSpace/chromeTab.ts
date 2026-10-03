@@ -6,7 +6,7 @@ import { debounce, isTabSpaceManagerPage, logger } from '../../global';
 import { eq, isEqual, omit } from 'lodash';
 import { isJestTest } from '../../debug';
 import { recordClosedTab } from '../closedTab/util';
-import { saveCurrentTabSpaceIfNeeded } from './util';
+import { saveCurrentTabSpace } from './util';
 import { captureTabGroups, startMonitorTabGroups } from './tabGroup';
 import { copyChromeTabFields } from './chromeTabFields';
 import { persistPreview } from './tabPreviewStore';
@@ -172,7 +172,7 @@ async function maintainTabOrder() {
 
 export function updateTabSpaceName(newName: string) {
   tabSpaceStoreApi.setName(newName);
-  saveCurrentTabSpaceIfNeeded();
+  saveCurrentTabSpace();
 }
 
 export function getOnChromeTabAttached() {
@@ -195,7 +195,7 @@ export function getOnChromeTabAttached() {
       chromeWindowId: chromeTab.windowId,
     });
     await scanCurrentTabs();
-    saveCurrentTabSpaceIfNeeded();
+    saveCurrentTabSpace();
 
     doCapturePreview(chromeTabId, chromeTab.windowId);
   }
@@ -217,7 +217,7 @@ export function getOnChromeTabAttached() {
       t = copyChromeTabFields(chromeTab, t);
       tabSpaceStoreApi.addTab(t);
       await maintainTabOrder();
-      saveCurrentTabSpaceIfNeeded();
+      saveCurrentTabSpace();
     }
   }
 
@@ -243,7 +243,7 @@ export function getOnChromeTabCreated() {
     t = copyChromeTabFields(chromeTab, t);
     tabSpaceStoreApi.addTab(t);
     await maintainTabOrder();
-    saveCurrentTabSpaceIfNeeded();
+    saveCurrentTabSpace();
   }
   return (chromeTab: chrome.tabs.Tab) => {
     if (!inCurrentTabSpace(chromeTab.windowId, $tabSpace.getState())) {
@@ -268,7 +268,7 @@ export function getOnChromeTabDetached() {
     tabSpaceStoreApi.removePreview(chromeTabId);
     // the durable row is the worker's to drop (see previewReaper): it owns every
     // delete of that table, on the tab event and on its timer alike
-    saveCurrentTabSpaceIfNeeded();
+    saveCurrentTabSpace();
   }
 
   return (chromeTabId: number, detachInfo: chrome.tabs.OnDetachedInfo) => {
@@ -305,7 +305,7 @@ export function getOnChromeTabRemoved() {
     tabSpaceStoreApi.removePreview(chromeTabId);
     // the durable row is the worker's to drop (see previewReaper): it owns every
     // delete of that table, on the tab event and on its timer alike
-    saveCurrentTabSpaceIfNeeded();
+    saveCurrentTabSpace();
   };
 
   return (chromeTabId: number, removeInfo: chrome.tabs.OnRemovedInfo) => {
@@ -341,7 +341,7 @@ function getOnChromeTabReplaced() {
     } else {
       tabSpaceStoreApi.addTab(newT);
       await maintainTabOrder();
-      saveCurrentTabSpaceIfNeeded();
+      saveCurrentTabSpace();
     }
   }
 
@@ -391,7 +391,7 @@ function getOnChromeTabUpdated() {
             chromeTabId,
           );
         } else {
-          saveCurrentTabSpaceIfNeeded();
+          saveCurrentTabSpace();
         }
       }
     }
@@ -418,7 +418,7 @@ function getOnChromeTabMoved() {
     moveInfo: chrome.tabs.OnMovedInfo,
   ) {
     await maintainTabOrder();
-    saveCurrentTabSpaceIfNeeded();
+    saveCurrentTabSpace();
   }
 
   return (chromeTabId: number, moveInfo: chrome.tabs.OnMovedInfo) => {

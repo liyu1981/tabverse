@@ -1,36 +1,29 @@
 import React from 'react';
-import { Tree, TreeNodeInfo } from '@blueprintjs/core';
+import { useStore } from 'effector-react';
 
 import classes from './LiveTabSpace.module.scss';
 import { $tabSpace } from '../../../data/tabSpace/store';
-import { useStore } from 'effector-react';
 import type { SidebarComponentProps } from './Sidebar';
 
 export type LiveTabSpaceProps = SidebarComponentProps;
 
 /**
- * The tabverse of the window this manager page was opened in.
+ * The tabverse of this window: its name, and nothing else.
  *
- * There is deliberately no "other windows" section any more: a manager page
- * owns exactly one window and never switches to a tabverse that lives in
- * another one (ADR 0006). Cross-window presence used to be tracked by the
- * tabSpaceRegistry's leader election, which is gone with it.
+ * The entry above already says "Current Tabverse", so the old "In This Window"
+ * heading said the same thing twice. The name is truncated because a tabverse
+ * can be called anything and the sidebar's width is not negotiable; the full
+ * name is in the title attribute, and in the collapsed rail's tooltip.
  */
 export function LiveTabSpace(props: LiveTabSpaceProps) {
   const tabSpace = useStore($tabSpace);
+  // a tabverse is named `Window-<id>` from its first second (tabSpaceBootstrap),
+  // so this only matters before that write lands: an id beats an empty row
+  const label = tabSpace.name.length > 0 ? tabSpace.name : tabSpace.id;
 
-  const nodes: TreeNodeInfo[] = [
-    {
-      id: 0,
-      icon: 'panel-table',
-      isExpanded: true,
-      label: (
-        <span className={classes.currentWindow}>
-          <b>In This Window</b> <span>{tabSpace.name}</span>
-        </span>
-      ),
-    },
-  ];
-
-  return <Tree contents={nodes} />;
+  return (
+    <div className={classes.currentName} title={label}>
+      {label}
+    </div>
+  );
 }

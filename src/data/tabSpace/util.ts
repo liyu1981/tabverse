@@ -10,7 +10,6 @@ import {
   findTabByChromeTabId,
   fromSavedDataWithoutTabs,
   insertTab,
-  needAutoSave,
   updateTab,
   updateTabSpace,
 } from './TabSpace';
@@ -286,12 +285,12 @@ function mayBeSaveCurrentAgain(updatedTabSpace: TabSpace) {
 
   if (changed) {
     logger.log(
-      'detected changed after save, will merge and saveCurrentTabSpaceIfNeeded for next',
+      'detected changed after save, will merge and save again',
       mergedTabSpace,
     );
     setTimeout(() => {
       tabSpaceStoreApi.update(mergedTabSpace);
-      saveCurrentTabSpaceIfNeeded();
+      saveCurrentTabSpace();
     });
   }
 }
@@ -329,18 +328,20 @@ const saveCurrentTabSpaceImpl = async () => {
 export const saveCurrentTabSpaceNow: () => Promise<void> =
   saveCurrentTabSpaceImpl;
 
+/**
+ * Saves the tabverse of this window, debounced.
+ *
+ * This is the autosave, and it is unconditional: a tabverse is born saved (its
+ * id is minted when the Tabverse tab is opened and travels in the url as
+ * `tvid`), so there is no "unsaved" state to ask about. That question used to
+ * be `needAutoSave()` behind `saveCurrentTabSpaceIfNeeded()`; both are gone,
+ * and there is deliberately no replacement - a gate that cannot say no is a
+ * branch nobody can test.
+ */
 export const saveCurrentTabSpace: () => void | Promise<void> = debounce(
   saveCurrentTabSpaceImpl,
   DEFAULT_SAVE_DEBOUNCE,
 );
-
-export const saveCurrentTabSpaceIfNeeded = () => {
-  const currentTabSpace = $tabSpace.getState();
-  if (!needAutoSave(currentTabSpace)) {
-    return;
-  }
-  return saveCurrentTabSpace();
-};
 
 export async function moveTabsToTabSpace(
   toMoveTabs: Tab[],

@@ -3,19 +3,37 @@ import * as PubSub from 'pubsub-js';
 import { concat, filter, forEach, merge, pick } from 'lodash';
 
 import { getNewId } from '../data/common';
+import { TABSPACE_MANAGER_TAB_URL_PREFIX } from '../global';
 
 interface IMockListenable {
   addListener: (callback: any) => void;
+  /**
+   * Added with the open-tabverse monitor: a component that registers listeners
+   * has to be able to unregister them, and without this every test's listeners
+   * stayed subscribed to the next one's events.
+   */
+  removeListener: (callback: any) => void;
   sendMessage: (payload: any) => void;
 }
 
 function getMockListenable(type: string): IMockListenable {
   const msgType = type;
+  const tokens = new Map<any, string>();
   return {
     addListener: (callback: any) => {
-      PubSub.subscribe(msgType, (msgType, payload) => {
-        callback(...payload);
-      });
+      tokens.set(
+        callback,
+        PubSub.subscribe(msgType, (msgType, payload) => {
+          callback(...payload);
+        }),
+      );
+    },
+    removeListener: (callback: any) => {
+      const token = tokens.get(callback);
+      if (token !== undefined) {
+        PubSub.unsubscribe(token);
+        tokens.delete(callback);
+      }
     },
     sendMessage: (args: any[]) => {
       PubSub.publish(msgType, args);
@@ -312,16 +330,75 @@ class MockWindowsApi {
   chrome: MockChrome;
   onCreated: IMockListenable;
   onRemoved: IMockListenable;
+  /** Added for the open-tabverse monitor, which re-reads on a focus change. */
+  onFocusChanged: IMockListenable;
 
   constructor(tag: string, mockChrome: MockChrome) {
     this.chrome = mockChrome;
     this.onCreated = getMockListenable(`windowOnCreated${tag}`);
     this.onRemoved = getMockListenable(`windowOnRemoved${tag}`);
+    this.onFocusChanged = getMockListenable(`windowOnFocusChanged${tag}`);
   }
 
   async getAll() {
     return this.chrome.mockWindows;
   }
+
+  /**
+   * Creates a window, callback style as chrome.windows.create is.
+   *
+   * It was missing, which left `restoreSavedTabSpaceUtil` (a window plus one
+   * Tabverse tab) untestable: a test could add a window, but not go through the
+   * code that opens a tabverse in one.
+   */
+  create(
+    createData: chrome.windows.CreateData,
+    callback?: (window: chrome.windows.Window) => void,
+  ): Promise<chrome.windows.Window> {
+    const created = this.chrome.addWindow();
+    callback?.(created as unknown as chrome.windows.Window);
+    return Promise.resolve(created as unknown as chrome.windows.Window);
+  }
+
+  /**
+   * Focusing a window is what "switch to the window that has this tabverse"
+   * ends with, and in the mock that means: it is the current window now.
+   */
+  async update(
+    windowId: number,
+    updateInfo: chrome.windows.UpdateInfo,
+  ): Promise<chrome.windows.Window> {
+    const target = this.chrome.getWindow(windowId);
+    if (!target) {
+      throw new Error(`no window ${windowId}`);
+    }
+    if (updateInfo.focused) {
+      this.chrome.setCurrentWindow(windowId);
+      this.onFocusChanged.sendMessage([windowId]);
+    }
+    return target as unknown as chrome.windows.Window;
+  }
+}
+
+/**
+ * Chrome resolves a relative url against the page that asked for it, so a tab
+ * opened as `manager.html?op=new&tvid=x` reports the absolute
+ * `chrome-extension://<id>/manager.html?op=new&tvid=x`.
+ *
+ * That absolute form is what `isTabSpaceManagerPage` matches on, so a mock that
+ * kept the relative string made every Tabverse tab opened through
+ * `chrome.tabs.create` invisible to the open-tabverse queries - the tab existed
+ * and could not be found.
+ */
+function resolveExtensionUrl(url: string): string {
+  if (/^[a-z][a-z0-9+.-]*:/i.test(url)) {
+    return url;
+  }
+  const origin = TABSPACE_MANAGER_TAB_URL_PREFIX.replace(
+    /\/manager\.html$/,
+    '',
+  );
+  return `${origin}/${url.replace(/^\//, '')}`;
 }
 
 class MockChrome {
@@ -374,6 +451,7 @@ class MockChrome {
       windowId: window,
       position: -1,
       ...td,
+      url: resolveExtensionUrl(td.url),
     };
   }
 

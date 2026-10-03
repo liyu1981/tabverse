@@ -18,11 +18,23 @@ export enum SortMethods {
  * but a single page only ever sees its own - the list is built in the store,
  * not queried.
  */
+/**
+ * A tabverse that is open in this profile, and where.
+ *
+ * One per *window*: the same tabverse can be open twice (one page per window,
+ * ADR 0006), and each of those is a real window somebody has to be able to go
+ * to. Built by one `chrome.tabs.query({})` in `data/tabSpaceQuery/store.ts` -
+ * every Tabverse tab carries its tabverse id in its url as `tvid`, so no
+ * registry and no bookkeeping are involved.
+ *
+ * Deliberately only what "is it open, and where" needs. The name and the tab
+ * count come from the saved row the list already loads, and the created/saved
+ * times are not here because a tabverse whose row has not been written yet has
+ * no honest value for them.
+ */
 export interface OpenedTabSpace {
   id: string;
-  name: string;
-  createdAt: number;
-  updatedAt: number;
+  /** The Tabverse tab itself: what `tabs.update({active})` takes. */
   chromeTabId: number;
   chromeWindowId: number;
 }
