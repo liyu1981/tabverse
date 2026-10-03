@@ -81,6 +81,15 @@ async function saveAllClosedTabsImpl(): Promise<number> {
   const { allClosedTab, closedTabSavePayloads } =
     convertAndGetClosedTabSavePayloads(before);
   const keptIds = new Set(allClosedTab.closedTabs.map((t) => t.id).toArray());
+  // Pruning below deletes what the store no longer holds, which is only true of
+  // the tabverse's history if the store is authoritative for it (see
+  // AllClosedTab.mayPrune). A store that has only recorded closed tabs since
+  // this page loaded - a reload, a restart, closing a tab before opening
+  // History - holds one new row and knows nothing about the rest, and pruning
+  // there would delete the tabverse's history and tombstone it to every device.
+  // Writes still happen; only the deletes are withheld.
+  const mayPrune =
+    before.mayPrune && before.tabSpaceId === allClosedTab.tabSpaceId;
   const updatedAt = await db.transaction(
     'rw',
     [db.table(CLOSED_TAB_DB_TABLE_NAME)],
@@ -96,7 +105,7 @@ async function saveAllClosedTabsImpl(): Promise<number> {
           .equals(allClosedTab.tabSpaceId)
           .primaryKeys()
       ).map((id) => String(id));
-      const staleIds = idsInDb.filter((id) => !keptIds.has(id));
+      const staleIds = mayPrune ? idsInDb.filter((id) => !keptIds.has(id)) : [];
       if (staleIds.length > 0) {
         await db.table(CLOSED_TAB_DB_TABLE_NAME).bulkDelete(staleIds);
       }
@@ -158,6 +167,10 @@ export function recordClosedTab(tab: TabCore, closedAt: number = Date.now()) {
     // the change feed then pushed to the server as tombstones. So the rows
     // that belong to this tabverse are read first, and the tab recorded into
     // those.
+    //
+    // An *empty* store does not need this: naming the tabverse leaves it
+    // unauthorised to prune (see AllClosedTab.mayPrune), so the rows it has
+    // never read survive.
     recordOnceStoreIsOnTabSpace(tabSpaceId, tab, closedAt);
     return;
   }

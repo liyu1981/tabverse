@@ -2,6 +2,13 @@
 
 Status: accepted (2026-09)
 
+Annotated (2026-10): decision 5's `needAutoSave()` no longer exists - see
+[ADR 0006](0006-window-ownership-and-dexie-4.md) and the "born saved" design it
+introduced. The gate was deleted outright once every tabverse was born saved:
+`needAutoSave()` returned `true` unconditionally and its only caller,
+`saveCurrentTabSpaceIfNeeded()`, was a conditional wrapper whose condition could
+never be false. Decision 5 itself stands; only the symbol it names is gone.
+
 ## Context
 
 The right side of a tabverse carries three tools: Todo, Note and Bookmark.
@@ -54,8 +61,8 @@ Two things had to be decided beyond the obvious.
    pruning tombstones the record, which removes the index row with it.)
 5. **No localStorage fallback.** Todo/Note/Bookmark still have one for
    tabverses that were not saved yet, but a tabverse is born saved
-   (`needAutoSave()` is `true` and returns `true`), so that branch is dead
-   weight and history does without it.
+   (`needAutoSave()` is `true` and returns `true` - both gone now, see the note
+   above), so that branch is dead weight and history does without it.
 6. **`SavedClosedTab` is in `NOTIFY_TABLES`** (data/repo/localTables.ts): a
    tab closed on another device has to show up in the open manager page.
 

@@ -286,3 +286,55 @@ test('a history row written by another device reloads the open list', async () =
   expect(loaded.length).toEqual(1);
   expect(loaded[0].url).toEqual('https://www.remote.com');
 });
+
+test('history survives a reload: a page that closes a tab before opening History prunes nothing', async () => {
+  // the tabverse's history, as an earlier session left it
+  recordClosedTab(aTab('https://www.one.com'), 1000);
+  recordClosedTab(aTab('https://www.two.com'), 2000);
+  await saveAllClosedTabs();
+  expect((await queryClosedTabs(TABSPACE_ID)).length).toEqual(2);
+
+  // a reload: the page's in-memory store is new, the rows are not. This is what
+  // `chrome://extensions` -> Reload, a browser restart and a second tabverse in
+  // the same window all look like from here.
+  closedTabStoreApi.update(newEmptyAllClosedTab());
+  expect($allClosedTab.getState().mayPrune).toBe(false);
+
+  // the user closes a tab before ever opening the History panel
+  recordClosedTab(aTab('https://www.three.com'), 3000);
+  await saveAllClosedTabs();
+
+  // the two earlier rows are still there: a store that has read nothing must not
+  // prune what it has not read, and those deletes went to the server as
+  // tombstones, so losing them here lost them on every device
+  expect(
+    (await queryClosedTabs(TABSPACE_ID)).map((row) => row.url).sort(),
+  ).toEqual([
+    'https://www.one.com',
+    'https://www.three.com',
+    'https://www.two.com',
+  ]);
+  // and the panel, when it is finally opened, reads all three
+  await loadClosedTabsByTabSpaceId(TABSPACE_ID);
+  expect($allClosedTab.getState().closedTabs.size).toEqual(3);
+});
+
+test('a store that has read the history does prune it', async () => {
+  // the counterpart, so the guard above cannot turn into "never delete anything"
+  await loadClosedTabsByTabSpaceId(TABSPACE_ID);
+  expect($allClosedTab.getState().mayPrune).toBe(true);
+  recordClosedTab(aTab('https://www.one.com'), 1000);
+  await saveAllClosedTabs();
+  recordClosedTab(aTab('https://www.two.com'), 2000);
+  await saveAllClosedTabs();
+  expect((await queryClosedTabs(TABSPACE_ID)).length).toEqual(2);
+
+  // newest first, so this is the row just recorded
+  const [newest] = $allClosedTab.getState().closedTabs.toArray();
+  deleteClosedTab(newest.id);
+  await saveAllClosedTabs();
+
+  expect((await queryClosedTabs(TABSPACE_ID)).map((row) => row.url)).toEqual([
+    'https://www.one.com',
+  ]);
+});

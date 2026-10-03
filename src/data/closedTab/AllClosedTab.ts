@@ -23,6 +23,22 @@ import { produce } from 'immer';
 export interface AllClosedTab extends IBase {
   tabSpaceId: string;
   closedTabs: List<ClosedTab>;
+  /**
+   * Whether a save may delete rows of this tabverse that the store does not
+   * hold. That sweep is how "forget this one", "clear all" and the history cap
+   * prune - and it is only ever true of rows the store is authoritative about.
+   *
+   * Two things make a store authoritative: it has *read* the tabverse's history
+   * (`allClosedTabFromRows`), or the user has just said a row is gone
+   * (`removeClosedTab`, `clearClosedTabs`). Merely recording closed tabs is
+   * neither: on a page that has just loaded - a reload, a browser restart - the
+   * store holds one new row and knows nothing about the rest, and pruning there
+   * takes the tabverse's history with it. Those deletes are not local either:
+   * they go to the server as tombstones, so every device loses the rows too.
+   *
+   * False is the honest default: nothing has been read and nothing was deleted.
+   */
+  mayPrune: boolean;
 }
 
 export function newEmptyAllClosedTab(): AllClosedTab {
@@ -30,6 +46,7 @@ export function newEmptyAllClosedTab(): AllClosedTab {
     ...newEmptyBase(),
     tabSpaceId: NotTabSpaceId,
     closedTabs: List(),
+    mayPrune: false,
   };
 }
 
@@ -113,12 +130,16 @@ export function removeClosedTab(
 ): AllClosedTab {
   return produce(target, (draft) => {
     draft.closedTabs = draft.closedTabs.filter((t) => t.id !== tid).toList();
+    // the user said this row is gone, so the save may prune it from the
+    // database even if this store never read the tabverse's history
+    draft.mayPrune = true;
   });
 }
 
 export function clearClosedTabs(target: AllClosedTab): AllClosedTab {
   return produce(target, (draft) => {
     draft.closedTabs = List();
+    draft.mayPrune = true;
   });
 }
 
@@ -128,6 +149,8 @@ export function updateTabSpaceId(
 ): AllClosedTab {
   return produce(target, (draft) => {
     draft.tabSpaceId = tabSpaceId;
+    // naming the tabverse is not reading it, and it is not a deletion either
+    draft.mayPrune = false;
     draft.closedTabs = draft.closedTabs
       .map((closedTab) => setTabSpaceId(tabSpaceId, closedTab))
       .toList();
@@ -161,6 +184,8 @@ export function allClosedTabFromRows(
 ): AllClosedTab {
   return produce(newEmptyAllClosedTab(), (draft) => {
     draft.tabSpaceId = tabSpaceId;
+    // read from the database, so the store is authoritative for this tabverse
+    draft.mayPrune = true;
     draft.closedTabs = sortByClosedAt(List(rows)).slice(0, HISTORY_MAX_ENTRIES);
   });
 }
