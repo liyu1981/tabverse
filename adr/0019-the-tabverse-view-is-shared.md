@@ -128,10 +128,11 @@ extension's own entry builder. The view around them stays the console's.**
   their colours from the extension's compiled SCSS rather than from the
   console's custom properties. The values are the same numbers; the theming is
   no longer the console's to change.
-- Split views cannot appear in the console: `splitViewId` is session-scoped and
-  never synced (ADR 0016), so `SplitBlock` has nothing to draw there. It is
-  imported anyway, because the day a tabverse records a split, both pages should
-  show it.
+- Split views could not appear in the console, because the pairing was only ever
+  `splitViewId` — session-scoped, never saved. `SplitBlock` was imported anyway,
+  "because the day a tabverse records a split, both pages should show it". That
+  day came: ADR 0022 records the pairing as the partner's tab id and syncs it, so
+  a split view now draws here, in a group or loose.
 - The console's own tabverse view model (`tabverseView.ts`) and the CSS that went
   with it are deleted. The one thing worth keeping from them - which tab belongs
   to which group - is `tabverseEntries`, and now there is one of it.

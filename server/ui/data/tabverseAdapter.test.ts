@@ -1,6 +1,7 @@
 import { expect, test } from 'vitest';
 
 import { bundleGroups, toStoredTab, toTabSpace } from './tabverseAdapter';
+import { tabverseEntries } from '../../../src/data/tabSpace/tabEntries';
 import type { BundleRow, TabspaceBundle } from './types';
 
 /**
@@ -129,4 +130,62 @@ test('a tabverse stored before groups existed, or by a newer client, is not a cr
     url: '',
     pinned: false,
   });
+});
+
+// A split view is part of the tabverse, so it is in the record and the console
+// draws it (ADR 0022). This is the seam that was dropping it.
+test('a stored tab keeps the split pairing the record carries', () => {
+  const tab = toStoredTab(
+    row({ data: { ...row().data, splitWith: 't2' } }),
+    'ts_1',
+  );
+  expect(tab.splitWith).toBe('t2');
+  // Not Chrome's split view id: that one is scoped to the browser session that
+  // issued it, so two devices on one account would each have a "split view 7"
+  // and the console would pair up four tabs that have nothing to do with each
+  // other. `splitViewId` stays undefined - see the "not a live tab" test.
+  expect(tab.splitViewId).toBeUndefined();
+});
+
+test('a pairing that is not a tab id is ignored', () => {
+  const blank = toStoredTab(
+    row({ data: { ...row().data, splitWith: '' } }),
+    'ts_1',
+  );
+  expect(blank.splitWith).toBeUndefined();
+  const wrongType = toStoredTab(
+    row({ data: { ...row().data, splitWith: 7 } } as Partial<BundleRow>),
+    'ts_1',
+  );
+  expect(wrongType.splitWith).toBeUndefined();
+});
+
+test('the bundle draws the split it describes', () => {
+  const space = toTabSpace(
+    bundle({
+      tabs: [
+        row({
+          id: 't1',
+          position: 0,
+          data: { title: 'Left', splitWith: 't2' },
+        }),
+        row({
+          id: 't2',
+          position: 1,
+          data: { title: 'Right', splitWith: 't1' },
+        }),
+      ],
+    }),
+  );
+  // The extension's own entry builder, so what is asserted is what the drawer
+  // renders: one split block, not two loose tabs.
+  expect(
+    tabverseEntries(space).map((entry) =>
+      entry.kind === 'split'
+        ? `split:${entry.tabs.map((t) => t.title).join('+')}`
+        : entry.kind === 'tab'
+          ? `tab:${entry.tab.title}`
+          : `group:${entry.group.title}`,
+    ),
+  ).toEqual(['split:Left+Right']);
 });

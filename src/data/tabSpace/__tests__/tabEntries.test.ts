@@ -97,8 +97,6 @@ test('pinned and tab groups survive a save and load', async () => {
 
 test('a loaded tabverse reads as its groups and plain tabs', () => {
   const { tabSpace } = tabverseWithEverything();
-  // a split view is session scoped, like chromeTabId: it is not saved, so the
-  // saved list can only ever show groups and single tabs
   // a group appears where its first tab is, not in a block of its own
   expect(describeEntries(tabSpace)).toEqual([
     'tab:Pinned',
@@ -107,6 +105,31 @@ test('a loaded tabverse reads as its groups and plain tabs', () => {
     'tab:Loose',
   ]);
 
+  // A tabverse read back off disk has no live split id - Chrome's id is
+  // session scoped - and the pairing it carries is the record's own (ADR 0022).
+  // It has to draw the same block, or a reloaded tabverse and a console looking
+  // at the same account would disagree about how the window looked.
+  const fromDisk = produce(tabSpace, (draft) => {
+    draft.tabs = draft.tabs.map((t) =>
+      t.splitViewId === undefined
+        ? t
+        : {
+            ...t,
+            splitViewId: undefined,
+            splitWith: draft.tabs.find(
+              (o) => o.splitViewId === t.splitViewId && o.id !== t.id,
+            )?.id,
+          },
+    );
+  });
+  expect(describeEntries(fromDisk)).toEqual([
+    'tab:Pinned',
+    'split:Left+Right',
+    'group:Work(1)',
+    'tab:Loose',
+  ]);
+
+  // ...and with neither it nor a pairing, the two are just two tabs.
   const withoutSplit = produce(tabSpace, (draft) => {
     draft.tabs = draft.tabs.map((t) => ({ ...t, splitViewId: undefined }));
   });

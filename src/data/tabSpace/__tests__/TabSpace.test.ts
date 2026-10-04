@@ -17,6 +17,7 @@ import {
   setChromeWindowId,
   setId,
   setTabGroups,
+  withSplitPartners,
   setName,
   updateTab,
   updateTabSpace,
@@ -26,7 +27,8 @@ import {
   setChromeWindowId as tabSetChromeWindowId,
   setId as tabSetId,
 } from '../Tab';
-import { newEmptyTab } from '../Tab';
+import { SPLIT_VIEW_ID_NONE, Tab, newEmptyTab } from '../Tab';
+import { List } from 'immutable';
 
 test('constructor', () => {
   const ts = newEmptyTabSpace();
@@ -275,4 +277,86 @@ test('group membership for tabs that are gone is dropped, empty groups with it',
   expect(tabSpace.tabGroups).toEqual([
     { id: 'g2', title: 'kept', color: 'green', tabIds: ['t1'] },
   ]);
+});
+
+// A split view is how the window looked, so the saved tabverse keeps it
+// (ADR 0022). The pairing is written as the partner's tab id rather than as
+// Chrome's split view id, because only the former means the same thing on every
+// device - and these tests are what stop the two from being confused later.
+describe('the save writes the split pairing', () => {
+  const splitPair = (leftId: string, rightId: string) =>
+    List<Tab>([
+      { ...newEmptyTab(), id: 'loose', title: 'Loose' },
+      { ...newEmptyTab(), id: leftId, title: 'Left', splitViewId: 7 },
+      { ...newEmptyTab(), id: rightId, title: 'Right', splitViewId: 7 },
+    ]);
+
+  const savedSplitWith = (tabs: List<Tab>) =>
+    convertAndGetTabSpaceSavePayload({
+      ...newEmptyTabSpace(),
+      tabs,
+    }).tabSavePayloads.map((tab) => tab.splitWith ?? null);
+
+  it('names each half of the split after the other', () => {
+    expect(savedSplitWith(splitPair('t1', 't2'))).toEqual([null, 't2', 't1']);
+  });
+
+  it('drops the pairing when chrome names a split the tabverse no longer holds', () => {
+    // Chrome has this tab in a split view, but the other half is not in the
+    // tabverse any more. There is nothing to point at, so the row is corrected.
+    const half = List<Tab>([
+      {
+        ...newEmptyTab(),
+        id: 't1',
+        title: 'Left',
+        splitWith: 'gone',
+        splitViewId: 7,
+      },
+    ]);
+    expect(savedSplitWith(half)).toEqual([null]);
+  });
+
+  it('keeps the pairing a restored tabverse already had', () => {
+    // A tabverse restored from disk has no live split ids - nothing has been
+    // recreated in the window, and it cannot be (ADR 0022) - so the save must
+    // take the record's word for the pairing instead of erasing it.
+    const restored = List<Tab>([
+      { ...newEmptyTab(), id: 't1', title: 'Left', splitWith: 't2' },
+      { ...newEmptyTab(), id: 't2', title: 'Right', splitWith: 't1' },
+    ]);
+    expect(savedSplitWith(restored)).toEqual(['t2', 't1']);
+  });
+
+  it('drops the pairing when chrome says the tab is in no split', () => {
+    // The closed split, retired. Chrome's "not in a split" is a value rather
+    // than an absence (ADR 0022), so it is this case - and only this case - that
+    // may throw a pairing away.
+    const closed = splitPair('t1', 't2').map((tab) => ({
+      ...tab,
+      splitWith: tab.id === 'loose' ? undefined : tab.id === 't1' ? 't2' : 't1',
+      splitViewId: SPLIT_VIEW_ID_NONE,
+    }));
+    expect(savedSplitWith(closed)).toEqual([null, null, null]);
+  });
+
+  it('keeps the pairing when chrome has no split view support at all', () => {
+    // A browser before 140 answers nothing, and neither does a tab that is not
+    // in a window - a tabverse restored from disk, or a row the console read.
+    // Believing that silence would erase every pairing on every save, which is
+    // the bug ADR 0022 exists to fix.
+    const restored = List<Tab>([
+      { ...newEmptyTab(), id: 't1', title: 'Left', splitWith: 't2' },
+      { ...newEmptyTab(), id: 't2', title: 'Right', splitWith: 't1' },
+    ]);
+    expect(savedSplitWith(restored)).toEqual(['t2', 't1']);
+  });
+
+  it('returns the same rows when there is nothing to correct', () => {
+    // Identity, not just equality: a new object for an unchanged row would look
+    // like a changed tab and pull another save in behind it.
+    const corrected = withSplitPartners(splitPair('t1', 't2'));
+    expect(withSplitPartners(corrected).toArray()).toEqual(corrected.toArray());
+    const loose = List<Tab>([{ ...newEmptyTab(), id: 'solo' }]);
+    expect(withSplitPartners(loose).first()).toBe(loose.first());
+  });
 });

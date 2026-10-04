@@ -64,6 +64,15 @@ export function toStoredTab(row: BundleRow, tabspaceId: string): Tab {
     favIconUrl: typeof data.favIconUrl === 'string' ? data.favIconUrl : '',
     pinned: data.pinned === true,
     suspended: data.suspended === true,
+    // The split pairing, as the record carries it: the *partner's tab id*
+    // (`TabCore.splitWith`), which the device that had the split open wrote and
+    // which means the same thing here. Deliberately not `splitViewId` - that one
+    // is scoped to the browser session that issued it, so reading it would pair
+    // up whichever tabs on whichever devices happened to share a number.
+    splitWith:
+      typeof data.splitWith === 'string' && data.splitWith !== ''
+        ? data.splitWith
+        : undefined,
     // The bundle knows when the record was last written and nothing else about
     // the tab's own timeline.
     createdAt: 0,

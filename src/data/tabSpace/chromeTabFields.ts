@@ -8,8 +8,15 @@ import { produce } from 'immer';
  * Only the fields that describe the tab itself are copied, and each one is
  * copied only when chrome has something to say: an unloaded tab has no title,
  * no favicon and (before it navigates) no url, and those are the fields a
- * restore of a *kept* tab must not blank out. Split view is the exception -
- * `SPLIT_VIEW_ID_NONE` is a value, not an absence, so it clears the field.
+ * restore of a *kept* tab must not blank out.
+ *
+ * Split view is the exception, because it is the one field where chrome's
+ * silence is not the absence of an answer: `SPLIT_VIEW_ID_NONE` is a value, and
+ * it is how chrome says "this tab is not in a split view". It is copied through
+ * as it is, so a closed split can be told apart from a tab nobody has looked
+ * at (ADR 0022). Storing it as `undefined` - which is what this used to do -
+ * made those two the same thing, and a closed split could then never retire the
+ * pairing it had written.
  */
 export function copyChromeTabFields(
   chromeTab: chrome.tabs.Tab,
@@ -32,10 +39,7 @@ export function copyChromeTabFields(
       draft.suspended = chromeTab.discarded;
     }
     if (chromeTab.splitViewId !== undefined) {
-      draft.splitViewId =
-        chromeTab.splitViewId === chrome.tabs.SPLIT_VIEW_ID_NONE
-          ? undefined
-          : chromeTab.splitViewId;
+      draft.splitViewId = chromeTab.splitViewId;
     }
   });
 }

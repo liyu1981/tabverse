@@ -177,3 +177,54 @@ test('a tab without an icon gets the extension`s placeholder, which is remote', 
   const html = renderToStaticMarkup(<TabverseTabs bundle={bundle()} />);
   expect(html).toContain('dummyimage.com');
 });
+
+// Reported as: a tabverse with a split and a split inside a group shows every
+// tab in the console, but the splits are gone - the window layout the user had is
+// not in the console's picture of the account. The pairing is in the record now
+// (ADR 0022), so it draws; `SplitBlock` was imported for exactly this.
+test('a split view is drawn, from the pairing the record carries', () => {
+  const html = renderToStaticMarkup(
+    <TabverseTabs
+      bundle={bundle({
+        tabspace_data: {},
+        tabs: [
+          tab('t1', 0, { title: 'left', splitWith: 't2' }),
+          tab('t2', 1, { title: 'right', splitWith: 't1' }),
+          tab('t3', 2, { title: 'loose' }),
+        ],
+      })}
+    />,
+  );
+  // The block's own label, which is what says "these two are side by side".
+  expect(say(html)).toContain('split view');
+  // Every tab is still there: a split block holds two cards, and the third is
+  // loose beside it.
+  expect(say(html)).toContain('left');
+  expect(say(html)).toContain('right');
+  expect(say(html)).toContain('loose');
+  expect(html).not.toContain('Close this tab');
+});
+
+test('a split inside a group is drawn inside the group', () => {
+  const html = renderToStaticMarkup(
+    <TabverseTabs
+      bundle={bundle({
+        tabspace_data: {
+          tabGroups: [
+            { id: 'g1', title: 'work', color: 'blue', tabIds: ['t1', 't2'] },
+          ],
+        },
+        tabs: [
+          tab('t1', 0, { title: 'left', splitWith: 't2' }),
+          tab('t2', 1, { title: 'right', splitWith: 't1' }),
+        ],
+      })}
+    />,
+  );
+  // The group's own colour rule is there, and the split inside it, rather than
+  // the two cards standing as plain tabs in the group.
+  expect(html).toContain('#3b6fd4');
+  expect(say(html)).toContain('split view');
+  expect(say(html)).toContain('left');
+  expect(say(html)).toContain('right');
+});

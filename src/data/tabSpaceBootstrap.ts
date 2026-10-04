@@ -1,4 +1,5 @@
 import { scanCurrentTabs, startMonitorTabChanges } from './tabSpace/chromeTab';
+import { startSplitViewRescan } from './tabSpace/splitView';
 
 import { loadPreviews } from './tabSpace/tabPreviewStore';
 import { monitorDbChanges, saveCurrentTabSpace } from './tabSpace/util';
@@ -31,6 +32,11 @@ export async function tabSpaceBootstrap(
   await scanCurrentTabs();
   await restoreTabPreviews();
   startMonitorTabChanges();
+  // A split view can be closed without anything else about the tab changing, so
+  // the event path is not enough on its own: ask Chrome again every minute what
+  // is true, rather than waiting for an event that may never arrive
+  // (splitView.ts, ADR 0022).
+  startSplitViewRescan();
   // The other tabverses open in this browser, for the sidebar's list. It is a
   // page concern: only a page draws it, and the worker is asleep most of the
   // time. Started after the scan, so the first read sees a settled window.

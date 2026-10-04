@@ -59,6 +59,14 @@ tool: one row per closed tab, capped at 999 per tabverse, `adr/0007`) plus the
 three per-tabspace ordered aggregates `allnote`, `alltodo`, `allbookmark`
 (they carry the display ordering, which cannot be rebuilt from entity rows).
 
+A tab record carries two layout facts. `tabGroups` is a hint on the tabverse
+payload, and `TabCore.splitWith` names the other half of a split view by its tab
+id (`adr/0022`): the layout is part of the tabverse, so it is saved and synced
+and both the saved view and the console draw it. Chrome's own `splitViewId` is
+deliberately not one of them — it is session scoped, so it is read from a live
+window and never believed as a record, because two devices on one account each
+have a "split view 7".
+
 ## Search (`src/data/search/`)
 
 There is no client side index. A search is an OR of AND-groups, each with a

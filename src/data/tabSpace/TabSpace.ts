@@ -1,8 +1,10 @@
 import { IBase, getNewId, setAttrForObject2 } from '../common';
 import {
+  SPLIT_VIEW_ID_NONE,
   Tab,
   TabCore,
   convertAndGetTabSavePayload,
+  findSplitPartnerByChromeId,
   isEqualWithoutCreatedAtUpdatedAt,
   setTabSpaceId,
 } from './Tab';
@@ -290,14 +292,57 @@ export function filterTabGroups(
   return out;
 }
 
+/**
+ * Writes the split pairing onto the rows about to be saved, so a saved tabverse
+ * still reads as the window did (ADR 0022).
+ *
+ * Chrome's answer is a tri-state and all three cases matter:
+ *
+ *   - a split view id → the pairing is that partner's tab id, which reads the
+ *     same on every device;
+ *   - `SPLIT_VIEW_ID_NONE` → chrome says the tab is in no split, so the pairing
+ *     is **dropped**. This is a closed split retiring itself;
+ *   - nothing at all → the row keeps the pairing it has. A browser before 140
+ *     cannot answer, and neither can a tab that is not in a window - a tabverse
+ *     restored from disk, or a row the console read. Believing that silence
+ *     would erase every split the record still remembered on the very next save,
+ *     which is the bug this exists to fix.
+ */
+export function withSplitPartners(tabs: List<Tab>): List<Tab> {
+  return tabs.map((tab) => {
+    if (tab.splitViewId === undefined) {
+      return tab;
+    }
+    const partner =
+      tab.splitViewId === SPLIT_VIEW_ID_NONE
+        ? undefined
+        : findSplitPartnerByChromeId(tab, tabs)?.id;
+    if (partner === tab.splitWith) {
+      // Already right. Returning the same object matters as much as the value:
+      // a new one would look like a changed row and pull another save in.
+      return tab;
+    }
+    if (partner === undefined) {
+      // Chrome has this tab in no split, or in one whose other half is not in
+      // the tabverse. Either way there is nothing to point at.
+      return omit(tab, 'splitWith') as Tab;
+    }
+    return { ...tab, splitWith: partner };
+  });
+}
+
 export function convertAndGetTabSpaceSavePayload(targetTabSpace: TabSpace): {
   tabSpace: TabSpace;
   tabSpaceSavePayload: TabSpaceSavePayload;
   tabSavePayloads: TabCore[];
 } {
-  const savedTabs = targetTabSpace.tabs
-    .map((tab: Tab) => convertAndGetTabSavePayload(tab, targetTabSpace.id).tab)
-    .toList();
+  const savedTabs = withSplitPartners(
+    targetTabSpace.tabs
+      .map(
+        (tab: Tab) => convertAndGetTabSavePayload(tab, targetTabSpace.id).tab,
+      )
+      .toList(),
+  );
   const savedBase = convertToSavedBase(targetTabSpace);
   const savedTabGroups = filterTabGroups(
     targetTabSpace.tabGroups,
