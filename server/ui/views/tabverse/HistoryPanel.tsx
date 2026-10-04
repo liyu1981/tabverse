@@ -1,9 +1,23 @@
 import React from 'react';
 
 import { calendarLabel } from '../../../../src/time';
+import { usePageControl } from '../../../../src/ui/common/usePageControl';
 import historyClasses from '../../../../src/ui/history/HistoryView.module.scss';
 import type { ClosedTab } from '../../data/tabverseAdapter';
-import classes from './tabverse.module.scss';
+
+/**
+ * How many closed tabs a page holds here.
+ *
+ * Ten, and the extension's own number: the console reuses `HistoryView`'s
+ * stylesheet and `usePageControl`, so this list pages exactly as the extension's
+ * History does and the two cannot drift.
+ *
+ * It could not stay unpaginated either. A tabverse keeps up to 999 closed tabs
+ * (`adr/0007`) and the drawer handed every one of them to this panel, so the
+ * worst case was a drawer with a thousand rows in it and no way to reach the
+ * bottom of a tool whose whole job is to be read.
+ */
+const HISTORY_PAGE_LIMIT = 10;
 
 /**
  * The extension's history, read.
@@ -16,6 +30,11 @@ import classes from './tabverse.module.scss';
  * reopened by this one; the button would only be able to lie.
  */
 export function HistoryPanel(props: { history: ClosedTab[] }) {
+  const [getCurrentPageItems, renderPageControl] = usePageControl<ClosedTab>(
+    props.history,
+    HISTORY_PAGE_LIMIT,
+  );
+
   if (!props.history.length) {
     return (
       <div className={historyClasses.noticeContainer}>
@@ -24,10 +43,12 @@ export function HistoryPanel(props: { history: ClosedTab[] }) {
     );
   }
 
+  const shown = getCurrentPageItems();
+
   return (
     <div className={historyClasses.container}>
       <ul className={historyClasses.listContainer}>
-        {props.history.map((closed) => (
+        {shown.map((closed) => (
           <li key={closed.id}>
             <div className={historyClasses.listItemView}>
               <div className={historyClasses.favIcon}>
@@ -60,6 +81,11 @@ export function HistoryPanel(props: { history: ClosedTab[] }) {
           </li>
         ))}
       </ul>
+      {/* The extension's own page control, on the extension's own class - a
+          console that drew its own would be the second one to drift. */}
+      <div className={historyClasses.pageControlContainer}>
+        {renderPageControl()}
+      </div>
     </div>
   );
 }

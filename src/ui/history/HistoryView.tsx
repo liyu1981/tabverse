@@ -31,7 +31,15 @@ import { usePageControl } from '../common/usePageControl';
 import { useStore } from 'effector-react';
 import classes from './HistoryView.module.scss';
 
-const HISTORY_PAGE_LIMIT = 20;
+/**
+ * How many closed tabs a page holds.
+ *
+ * Ten, the same as the Bookmark tool (`BOOKMARK_PAGE_LIMIT`), so the two lists
+ * a person flips between page the same way. A closed tab is a row of two lines
+ * plus its controls, and twenty of them is a list that has to be scrolled to be
+ * read at all; the page control exists to stop exactly that.
+ */
+const HISTORY_PAGE_LIMIT = 10;
 
 interface IHistoryItemProps {
   closedTab: ClosedTab;

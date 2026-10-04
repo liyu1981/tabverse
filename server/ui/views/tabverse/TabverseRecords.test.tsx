@@ -242,6 +242,47 @@ test('history cannot be restored, bookmarked or deleted from here', () => {
   expect(html).not.toContain('bp6-icon-undo');
 });
 
+test('history pages at ten, the number the extension uses', () => {
+  // A tabverse keeps up to 999 closed tabs (adr/0007) and the drawer has the lot,
+  // so an unpaginated panel was a thousand rows with no way to the bottom. Ten is
+  // the extension's own HISTORY_PAGE_LIMIT and BookmarkView's, and this panel
+  // pages with the extension's hook, so the two cannot drift apart.
+  const many = Array.from({ length: 25 }, (_, i) =>
+    closed({ id: `c${i + 1}`, title: `closed ${i + 1}` }),
+  );
+  const html = renderToStaticMarkup(<HistoryPanel history={many} />);
+  // ten rows, and not the twenty-five
+  expect((html.match(/<li>/g) ?? []).length).toBe(10);
+  expect(html).toContain('closed 1');
+  expect(html).not.toContain('closed 11');
+  // the page control is the extension's, which says how many pages there are -
+  // so it is visible that this is one page of the list and not all of it
+  expect(html).toContain('1/3');
+  expect(html).toContain('chevron-right');
+});
+
+test('a history that fits on one page carries no page control', () => {
+  const few = Array.from({ length: 4 }, (_, i) =>
+    closed({ id: `c${i + 1}`, title: `closed ${i + 1}` }),
+  );
+  const html = renderToStaticMarkup(<HistoryPanel history={few} />);
+  expect((html.match(/<li>/g) ?? []).length).toBe(4);
+  expect(html).not.toContain('chevron-left');
+});
+
+test('the first page is the newest ten, in the order the bundle sent them', () => {
+  // The panel does not sort: the server ordered the bundle, and the extension's
+  // list does the same (ADR 0015 reads the client's own ordering).
+  const many = Array.from({ length: 12 }, (_, i) =>
+    closed({ id: `c${i + 1}`, title: `closed ${i + 1}` }),
+  );
+  const said = renderToStaticMarkup(<HistoryPanel history={many} />)
+    .replace(/<[^>]+>/g, '')
+    .replace(/\s+/g, ' ');
+  expect(said.indexOf('closed 1')).toBeLessThan(said.indexOf('closed 10'));
+  expect(said).not.toContain('closed 11');
+});
+
 test('no history at all is the extension`s own notice', () => {
   const html = renderToStaticMarkup(<HistoryPanel history={[]} />);
   expect(html).toContain('No closed tab');
