@@ -138,6 +138,48 @@ other's `tabIds` and the tabverse's tab list flip-flops between the two windows.
 The `CountExit` guard does not help - it only catches two manager pages in the
 *same* window.
 
+## Pairing: two ways in (`adr/0020`)
+
+There are two, and both end at the same `SyncConfig` in `chrome.storage.local`:
+
+```
+custom     invite code   POST /api/v1/auth/pair        → config(kind: custom)
+wizard     sign in       POST /api/v1/console/pair     → config(kind: official)
+           (console session)   → page → chrome.runtime.sendMessage → extension
+```
+
+**The custom path** is unchanged and is how a self-hosted `tabversed` is paired:
+an account mints a code, the extension redeems it. It needs no sign-in anywhere
+the extension can reach.
+
+**The wizard** exists because an extension cannot sign in to a site - the session
+is a cookie in the browser's jar for that origin - so the *console page* does the
+signing in and carries the token back:
+
+1. The extension opens `https://tabversed.liyu1981.xyz/#pair=1&ext=<its own
+   id>&nonce=<uuid>` (the fragment, so the nonce is never in a request log), and
+   remembers the nonce in `chrome.storage.session`.
+2. The person signs in and approves a device name; the page calls
+   `POST /api/v1/console/pair`, which mints a device and a token for **the
+   session's account** (`writeDevice`, the same function `auth/pair` uses) and
+   refuses an impersonating session.
+3. The page sends `{credentials, nonce}` to the extension over
+   `chrome.runtime.sendMessage`, allowed to exactly one origin by the manifest's
+   `externally_connectable` entry.
+4. `onMessageExternal` - in the worker, which is what Chrome wakes for it, and in
+   the dialog that opened the window, which is open by construction - checks
+   message type, sender origin, the nonce (spent on read) and the credentials,
+   then saves the config as `kind: 'official'` and tells the open pages.
+
+`kind` is display only: both kinds sync identically, and **absent means custom**,
+so every config written before the wizard existed is read correctly without a
+migration. The sync dialog is two tabs because of it - *Status* (what sync is:
+host, device, account, last sync, sync now / upload / disconnect) and *Setup* (a
+switch between the two ways in).
+
+The invite code is not a step the wizard drops; it is the reason a self-hosted
+server needs no account it did not create, no redirect, and no message channel.
+
 ## Restoring a tabverse into a window (`src/data/tabSpace/restorePlan.ts`)
 
 Loading a saved tabverse into the window its manager page is in used to be

@@ -24,7 +24,17 @@ export interface SyncConfig {
   enabled: boolean;
   /** How often the background worker flushes/pulls. */
   autoSyncIntervalMs?: number;
+  /**
+   * Which setup produced this config (adr/0020): the official-server wizard, or
+   * a server the user runs and paired with a code. Display only - both kinds are
+   * the same config as far as syncing is concerned. **Absent means custom**,
+   * which is every config written before the wizard existed, so no migration
+   * reads it: this field answers a question about the past.
+   */
+  kind?: SyncSetupKind;
 }
+
+export type SyncSetupKind = 'official' | 'custom';
 
 export const DEFAULT_SYNC_INTERVAL_MS = 60 * 1000;
 
@@ -52,6 +62,8 @@ export async function loadSyncConfig(
     userId: raw.userId,
     deviceId: raw.deviceId,
     enabled: raw.enabled !== false,
+    // a config from before the wizard has no kind, and it was a code pairing
+    kind: raw.kind === 'official' ? 'official' : 'custom',
     autoSyncIntervalMs:
       typeof raw.autoSyncIntervalMs === 'number'
         ? raw.autoSyncIntervalMs
@@ -95,6 +107,32 @@ export async function pairWithServer(
     userId: credentials.user_id,
     deviceId: credentials.device_id,
     enabled: true,
+    kind: 'custom',
+  };
+  await saveSyncConfig(config, storage);
+  return config;
+}
+
+/**
+ * Take over credentials the official-server wizard created for us (adr/0020).
+ *
+ * The same shape `pairWithServer` persists, minus the invite leg: the console
+ * minted the device and the token after the person signed in and agreed, and
+ * handed them to this extension over the externally_connectable channel. That is
+ * the only difference, so this is deliberately the same few lines.
+ */
+export async function adoptCredentials(
+  baseUrl: string,
+  credentials: DeviceCredentials,
+  storage: StorageAreaLike = defaultStorage(),
+): Promise<SyncConfig> {
+  const config: SyncConfig = {
+    baseUrl: baseUrl.replace(/\/+$/, ''),
+    token: credentials.token,
+    userId: credentials.user_id,
+    deviceId: credentials.device_id,
+    enabled: true,
+    kind: 'official',
   };
   await saveSyncConfig(config, storage);
   return config;

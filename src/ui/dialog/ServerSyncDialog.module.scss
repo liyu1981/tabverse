@@ -122,3 +122,12 @@
   margin-right: 4px;
   color: global.$color-d;
 }
+
+/*
+ * The switch between the two ways to set sync up (adr/0020): two halves of one
+ * control, not two links, because a link in each panel would say the same thing
+ * twice - and the choice is which half is *on*, which is a button's job.
+ */
+.modeRow {
+  margin-bottom: 16px;
+}

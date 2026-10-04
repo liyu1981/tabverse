@@ -223,8 +223,15 @@ test('history says when a tab was closed, in the extension`s own words', () => {
   const html = renderToStaticMarkup(<HistoryPanel history={[closed()]} />);
   expect(html).toContain('a search result');
   expect(html).toContain('https://example.com/search?q=tabverse');
-  // `calendarLabel` from src/time.ts, reused rather than re-worded
-  expect(html).toMatch(/October \d+(st|nd|rd|th) 2026|Today|Yesterday/);
+  // `calendarLabel` from src/time.ts, reused rather than re-worded. It answers
+  // with Today/Tomorrow/Yesterday, a weekday, "Last <weekday>", or a dd/MM/yyyy
+  // date - never "October 12th 2026", which the first version of this assertion
+  // waited for and never got: the fixture is a fixed date, so its label moves
+  // with the calendar, and a regex that only covers two days of it fails on the
+  // other 364.
+  expect(html).toMatch(
+    /Today|Tomorrow|Yesterday|Last [A-Za-z]+|\d{2}\/\d{2}\/\d{4}/,
+  );
   // a tab closed three times says so, as the extension says so
   expect(html).toContain('x3');
 });

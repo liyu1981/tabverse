@@ -32,6 +32,9 @@
     "alarms"
   ],
   "host_permissions": ["<all_urls>"],
+  "externally_connectable": {
+    "matches": ["https://tabversed.liyu1981.xyz/*"]
+  },
   "content_security_policy": {
     "extension_pages": "default-src 'self'; script-src 'self'; connect-src 'self' https: wss: http: ws:; img-src * data: blob:; frame-src 'self' http: https:; object-src 'self'"
   }

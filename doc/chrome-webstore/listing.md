@@ -24,6 +24,7 @@ All requested permissions below exist to serve that one purpose.
 | `idle` | Run the local database audit when the browser is idle instead of while the user is working. |
 | `alarms` | Schedule the optional periodic sync and background work; service workers are killed by Chrome, so `setTimeout` cannot be relied on. |
 | `host_permissions: <all_urls>` | Read page favicons and capture screenshots of arbitrary pages the user is saving. No page content is read or injected; there are **no content scripts**. |
+| `externally_connectable: https://tabversed.liyu1981.xyz/*` | Lets Tabverse's **own** server's pairing page hand this extension its device token when the user approves a one-click connection (ADR 0020). No other origin can send it a message; a token is accepted only when it answers a pairing *this device started* (message type, sender origin, single-use nonce) and it is never rendered by the page. |
 
 ## Data collection & use disclosures
 
@@ -57,7 +58,7 @@ Answers to give in the dashboard:
 
 | Question | Answer |
 |---|---|
-| Does this item collect user content? | **Yes — only when the user enables sync** (tab URLs/titles, notes, todos, bookmarks), stored on a server the user controls. |
+| Does this item collect user content? | **Yes — only when the user enables sync** (tab URLs/titles, notes, todos, bookmarks), stored on the sync server the user chose: one they run themselves, or Tabverse's own server (tabversed.liyu1981.xyz) with the one-click connection. Nothing is sent until sync is set up. |
 | Does it collect browsing history? | **Yes — only when the user enables sync**, for the purpose of restoring tab groups. Never sold or shared. |
 | Does it collect personally identifiable information? | No. There are no accounts, emails or names beyond a self-chosen device label. |
 | Is it used for analytics/advertising? | No. |
@@ -66,7 +67,9 @@ Answers to give in the dashboard:
 
 None. All code ships inside the package (`dist/`), all CSS/fonts are bundled
 at build time from npm dependencies, and the manifest CSP forbids remote
-scripts. The only network call is the user-configured sync server.
+scripts. The only network call is the sync server the user connected to; the
+extension additionally *receives* a single message from its own pairing page
+while a pairing is in progress (see `externally_connectable` above).
 
 ## Release checklist
 

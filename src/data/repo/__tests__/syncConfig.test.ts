@@ -1,4 +1,5 @@
 import {
+  adoptCredentials,
   clearSyncConfig,
   loadSyncConfig,
   memoryStorage,
@@ -119,4 +120,67 @@ test('pair failure leaves no config behind', async () => {
   ).rejects.toMatchObject({ status: 401, code: 'invalid_invite' });
 
   expect(await loadSyncConfig(storage)).toBeNull();
+});
+
+// ---- the two ways in (adr/0020) -------------------------------------------
+
+test("the wizard's credentials are saved as an official setup", async () => {
+  const storage = memoryStorage();
+  const config = await adoptCredentials(
+    'https://tabversed.liyu1981.xyz/',
+    {
+      user_id: 'usr_1',
+      device_id: 'dev_1',
+      token: 'tok-wizard',
+      server_rev: 0,
+      issued_at: 1,
+    },
+    storage,
+  );
+
+  expect(config.kind).toEqual('official');
+  expect(config.baseUrl).toEqual('https://tabversed.liyu1981.xyz'); // no trailing slash
+  // and it is the same config shape the sync runtime reads: nothing about the
+  // wizard changes what the worker does with it
+  const loaded = await loadSyncConfig(storage);
+  expect(loaded).toMatchObject({
+    baseUrl: 'https://tabversed.liyu1981.xyz',
+    token: 'tok-wizard',
+    enabled: true,
+    kind: 'official',
+  });
+});
+
+test('a code pairing says custom, and a config written before the wizard says custom too', async () => {
+  const storage = memoryStorage();
+  const config = await pairWithServer(
+    'http://192.168.0.221:8223/',
+    'CODE',
+    'chrome',
+    storage,
+    async () =>
+      ({
+        status: 201,
+        json: async () => ({
+          user_id: 'usr_1',
+          device_id: 'dev_1',
+          token: 'tok',
+          server_rev: 0,
+          issued_at: 1,
+        }),
+      }) as any,
+  );
+  expect(config.kind).toEqual('custom');
+
+  // every config that already exists was a code pairing, and it has no field
+  // saying so - loading one must not report it as something it was not
+  const legacy = {
+    baseUrl: 'https://old.example',
+    token: 'old-tok',
+    enabled: true,
+    // no kind
+  };
+  await saveSyncConfig(legacy, storage);
+  const loaded = await loadSyncConfig(storage);
+  expect(loaded?.kind).toEqual('custom');
 });

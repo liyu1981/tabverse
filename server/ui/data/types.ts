@@ -136,6 +136,20 @@ export interface Invite {
   expires_at: IsoTime;
 }
 
+/**
+ * What `POST /api/v1/console/pair` returns, once, and what the pair view hands
+ * straight to the extension (adr/0020). It is the same shape the invite-code
+ * flow has always returned - one device, one token - which is why the
+ * extension can save it with the config it already has.
+ */
+export interface DeviceCredentials {
+  user_id: string;
+  device_id: string;
+  token: string;
+  server_rev: number;
+  issued_at: IsoTime;
+}
+
 export interface ArchiveOutcome {
   archived: number;
   unarchived: number;

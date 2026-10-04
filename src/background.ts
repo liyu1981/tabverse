@@ -10,6 +10,9 @@ import {
   registerDbAuditor,
 } from './storage/dbAuditorManager';
 import { startBackgroundSync } from './data/repo/backgroundSync';
+import { acceptPairCredentials } from './data/repo/officialServer';
+import { adoptCredentials } from './data/repo/syncConfig';
+import { BackgroundMsg, sendChromeMessage } from './message/message';
 import { forgetPreview } from './data/tabSpace/tabPreviewStore';
 import { describeReap, reapPreviews } from './data/tabSpace/previewReaper';
 import {
@@ -53,6 +56,47 @@ chrome.idle.onStateChanged.addListener(
 // which keeps local-only usage intact.
 logger.info('start server sync runtime...');
 void startBackgroundSync();
+
+// The official-server wizard (adr/0020). The console page the extension opened
+// sends the token back over the channel the manifest's externally_connectable
+// entry allows, and this is the context that is always here to take it - a
+// message can arrive with no page open at all, which is the normal case, since
+// the person is looking at the wizard window rather than at Tabverse.
+chrome.runtime.onMessageExternal.addListener(
+  (message, sender, sendResponse) => {
+    void acceptPairCredentials(message, sender, {
+      save: (baseUrl, credentials) =>
+        adoptCredentials(baseUrl, {
+          user_id: credentials.user_id,
+          device_id: credentials.device_id,
+          token: credentials.token,
+          server_rev: credentials.server_rev,
+          issued_at: credentials.issued_at,
+        }),
+      notify: () => {
+        void sendChromeMessage({
+          type: BackgroundMsg.SyncConfigChanged,
+          payload: true,
+        });
+      },
+    })
+      .then((accepted) => {
+        logger.info(
+          accepted
+            ? 'official server pairing accepted, sync config saved'
+            : 'official server pairing message refused',
+        );
+        sendResponse?.({ ok: accepted === true });
+      })
+      .catch((err) => {
+        logger.error('official server pairing failed', err);
+        sendResponse?.({ ok: false, error: 'pairing failed' });
+      });
+    // the page waits for this answer before it says the extension could not be
+    // reached, so it is held open rather than dropped
+    return true;
+  },
+);
 
 // Tab previews (src/data/tabSpace/previewReaper). The table is a cache of
 // thumbnails keyed by chrome tab id, so it is only ever worth keeping while

@@ -127,6 +127,13 @@ func (s *Server) Handler() http.Handler {
 		// The sign-in form posts here rather than straight to the library, so
 		// the account exists before the link that claims it.
 		mux.HandleFunc("POST /api/v1/console/signin-link", s.handleConsoleSigninLink)
+		// Pairing a browser extension from the console's own page (the official
+		// server wizard, adr/0020). It takes the console credential - a session
+		// for one's own account - and nothing else: no invite, no operator. The
+		// token it returns is handed to the extension over the
+		// externally_connectable channel, which is why the page is the one that
+		// has to be signed in rather than the code having to be carried.
+		mux.HandleFunc("POST /api/v1/console/pair", s.admin(s.handleConsolePair))
 		// Starting an assumed identity is an operator action, so it goes
 		// through the same gate as the operator views.
 		mux.Handle("POST /api/v1/admin/users/{user_id}/impersonate",

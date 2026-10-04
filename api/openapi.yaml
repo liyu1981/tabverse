@@ -53,6 +53,11 @@ tags:
   - name: auth
   - name: sync
   - name: search
+  - name: console
+    description: |
+      Session-scoped endpoints the web console (`GET /`) calls - a signed-in
+      account acting on its own account, never a device token (see
+      `securitySchemes`).
   - name: admin
     description: |
       Operator surface behind the web console (`GET /`), see ADR 0009. Gated
@@ -146,6 +151,55 @@ paths:
                   code: { type: string, examples: ['BSKT-VT6V-7SX3-XVCQ'] }
                   expires_at: { type: integer, description: unix ms }
         '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/v1/console/pair:
+    post:
+      tags: [console]
+      summary: Mint a device and its token for the signed-in account
+      description: |
+        The official-server pairing wizard (adr/0020). The extension opens the
+        console in a window with its own id and a nonce in the URL; the person
+        signs in there, names the device and approves it; this endpoint creates
+        the device and its token **for the session's account**, and the page
+        hands the token to the extension over `chrome.runtime.sendMessage` (the
+        extension's `externally_connectable` channel), never rendering it.
+
+        Security: the console session cookie and its XSRF header, not a device
+        token. There is **no account parameter**: the account is the session's,
+        so a page that could name one would be the invite endpoint with extra
+        steps. An assumed identity (impersonation) is refused, as on every other
+        mutating console route - a token issued under one would outlive it.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [device_name]
+              properties:
+                device_name:
+                  { type: string, examples: ['Chrome on Windows'] }
+                extension_id:
+                  type: string
+                  description: >-
+                    the extension that asked, recorded on the device row so the
+                    account's device list says which browser paired it
+      responses:
+        '201':
+          description: device + token, returned once
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DeviceCredentials' }
+        '401':
+          description: no session, or the session does not resolve to an account
+          content:
+            application/json:
+              schema: { type: object }
+        '403':
+          description: read only - the caller is impersonating an account
+          content:
+            application/json:
+              schema: { type: object }
 
   /api/v1/sync:
     get:

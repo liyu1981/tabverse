@@ -60,6 +60,26 @@ handlers[BackgroundMsg.LocalTablesChanged] = function (
   sendResponse && sendResponse();
 };
 
+// The wizard landed a token in the worker (adr/0020): an open sync dialog has
+// to redraw, and this is the same "another context changed something you draw"
+// notice the other two are.
+handlers[BackgroundMsg.SyncConfigChanged] = function (
+  message: {
+    type: BackgroundMsg.SyncConfigChanged;
+    payload: boolean;
+  },
+  sender: chrome.runtime.MessageSender,
+  sendResponse: (response?: any) => void,
+) {
+  logger.log(
+    'chromeMessage got:',
+    BackgroundMsg.SyncConfigChanged,
+    message.payload,
+  );
+  sendPubSubMessage(SyncMsg.ConfigChanged, message.payload === true);
+  sendResponse && sendResponse();
+};
+
 handlers[BackgroundMsg.SyncActivityChanged] = function (
   message: {
     type: BackgroundMsg.SyncActivityChanged;

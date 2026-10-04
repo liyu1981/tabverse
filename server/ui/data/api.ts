@@ -16,6 +16,7 @@
 import type {
   AdminSearchResult,
   ArchiveOutcome,
+  DeviceCredentials,
   Impersonation,
   Invite,
   Me,
@@ -92,6 +93,15 @@ export interface ConsoleApi {
   setRole(userId: string, role: string): Promise<void>;
   deleteUser(userId: string): Promise<void>;
   createInvite(userId: string, ttlSeconds: number): Promise<Invite>;
+  /**
+   * Mint a device and its token for the *signed-in* account, with no invite
+   * code: the official server wizard (adr/0020). The page passes the extension
+   * it is talking to so the account's device list says which browser asked.
+   */
+  pairExtension(input: {
+    device_name: string;
+    extension_id?: string;
+  }): Promise<DeviceCredentials>;
   revokeDevice(userId: string, deviceId: string): Promise<void>;
   setDeviceArchived(
     userId: string,
@@ -266,6 +276,14 @@ export function createConsoleApi(fetchFn: FetchLike = fetch): ConsoleApi {
     createInvite: (userId: string, ttlSeconds: number) =>
       call<Invite>('POST', userPath(userId, '/invites'), {
         ttl_seconds: ttlSeconds,
+      }),
+
+    // The signed-in account, not one named in the path: this is the wizard's
+    // endpoint and it takes no account parameter at all.
+    pairExtension: (input: { device_name: string; extension_id?: string }) =>
+      call<DeviceCredentials>('POST', '/api/v1/console/pair', {
+        device_name: input.device_name,
+        extension_id: input.extension_id,
       }),
 
     revokeDevice: (userId: string, deviceId: string) =>

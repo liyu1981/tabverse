@@ -177,6 +177,13 @@ curl -s 'localhost:8223/api/v1/search?q=hello' -H 'Authorization: Bearer <token>
 # 5. pair another device: mint a code on device A, redeem it on device B
 curl -s -X POST localhost:8223/api/v1/auth/invites -H 'Authorization: Bearer <token>' -d '{"ttl_seconds":300}'
 curl -s -X POST localhost:8223/api/v1/auth/pair -d '{"invite_code":"XXXX-XXXX-XXXX-XXXX","device_name":"laptop"}'
+
+# 6. or pair from the console's own session instead - the wizard (adr/0020).
+#    The extension opens `/` with #pair=1, the person signs in there, and the
+#    page calls this with their session cookie + XSRF header:
+#      POST /api/v1/console/pair  {"device_name":"chrome","extension_id":"<id>"}
+#    -> {"user_id":"usr_...","device_id":"dev_...","token":"..."}
+#    No invite code, no account parameter: the account is the session's.
 ```
 
 Realtime: `ws://host/api/v1/sync/stream?access_token=<token>` receives
@@ -261,6 +268,18 @@ which is what a LAN-only deployment wants. GitHub and Google are offered when
 configured; a self hosted OpenID Connect provider is *not* wired (the auth
 library's custom provider speaks plain OAuth2, not OIDC discovery with id_token
 validation, and a button that half-works is worse than none).
+
+**Pairing a browser out of that session** (`adr/0020`): the extension opens this
+console at `/#pair=1&ext=<its id>&nonce=<uuid>`, the person signs in with the
+flow above and approves a device name, and the page calls
+`POST /api/v1/console/pair` with the session. It mints a device and a token for
+the signed-in account - the same thing `POST /api/v1/auth/pair` does for an
+invite code, minus the code, because this person is the owner of the account
+rather than holding a key to it - and the page hands the token to the extension
+over `chrome.runtime.sendMessage`, which the manifest's `externally_connectable`
+entry allows from this origin alone. The token is never rendered. There is no
+account parameter (the account is the session's) and an impersonating session is
+refused, since a token issued under one would outlive the impersonation.
 
 **Google asks for the address, and that is the point** (`adr/0017`). The auth
 library's own Google preset requests the profile scope only and never receives an

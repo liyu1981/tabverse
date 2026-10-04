@@ -8,10 +8,12 @@ import {
   DEFAULT_CONNECT_SRC,
   withConnectSrc,
 } from './manifestPolicy.mts';
+import { OFFICIAL_SERVER_URL } from '../src/data/repo/officialServer';
 
 /** The manifest as it is checked in, i.e. what an unpacked build starts from. */
 function srcManifest(): {
   content_security_policy: { extension_pages: string };
+  externally_connectable?: { matches: string[] };
 } {
   return JSON.parse(
     readFileSync(
@@ -78,5 +80,33 @@ describe('connect-src policy', () => {
     // would only show up in a source install (or a future tool reading it).
     const csp = srcManifest().content_security_policy.extension_pages;
     expect(withConnectSrc(csp, connectSrcFor(undefined))).toBe(csp);
+  });
+});
+
+describe('externally_connectable policy (adr/0020)', () => {
+  it('allows exactly the official server, and agrees with the URL the wizard opens', () => {
+    // The manifest narrows *who may send this extension a message* to one
+    // origin, and that origin has to be the one the wizard opens - the two are
+    // in different files (src/manifest.json and officialServer.ts), and a
+    // mismatch would produce a pairing that can never be delivered, which
+    // nothing else would notice until somebody tried to pair.
+    const manifest = srcManifest();
+    expect(manifest.externally_connectable?.matches).toEqual([
+      `${new URL(OFFICIAL_SERVER_URL).origin}/*`,
+    ]);
+  });
+
+  it('never widens the channel to every origin or every extension', () => {
+    // A wildcard here would let any page send this extension a token to save,
+    // which is the one thing the nonce would then be standing alone against.
+    const manifest = srcManifest();
+    const matches = manifest.externally_connectable?.matches ?? [];
+    expect(matches.some((pattern) => pattern === '*://*/*')).toBe(false);
+    expect(matches.some((pattern) => pattern.includes('*.'))).toBe(false);
+    // and no "ids" entry: declaring this key without it is what stops *other*
+    // extensions from connecting to us, which is the narrowing we want
+    expect((manifest.externally_connectable as { ids?: string[] })?.ids).toBe(
+      undefined,
+    );
   });
 });

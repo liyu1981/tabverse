@@ -28,11 +28,19 @@ export enum BackgroundMsg {
    * manager pages can spin their sync icon (see data/repo/syncActivity.ts).
    */
   SyncActivityChanged = 'background_syncactivitychanged',
+  /**
+   * Sent by the service worker after the official-server wizard handed it a
+   * token (adr/0020), so an open sync dialog redraws itself as connected
+   * without being reopened.
+   */
+  SyncConfigChanged = 'background_syncconfigchanged',
 }
 
 /** In-process "a sync is running" notice; payload is a boolean. */
 export enum SyncMsg {
   Activity = 'sync_activity',
+  /** In-process "the sync config changed" notice (the wizard paired us). */
+  ConfigChanged = 'sync_config_changed',
 }
 
 export type TabSpaceId = string;
@@ -58,6 +66,11 @@ export async function sendChromeMessage(msgPayload: {
 
 export async function sendChromeMessage(msgPayload: {
   type: BackgroundMsg.SyncActivityChanged;
+  payload: boolean;
+}): Promise<any>;
+
+export async function sendChromeMessage(msgPayload: {
+  type: BackgroundMsg.SyncConfigChanged;
   payload: boolean;
 }): Promise<any>;
 
@@ -101,6 +114,11 @@ export function sendPubSubMessage(
 ): void;
 
 export function sendPubSubMessage(
+  type: SyncMsg.ConfigChanged,
+  payload: boolean,
+): void;
+
+export function sendPubSubMessage(
   type: string,
   payload: string[] | boolean,
 ): void {
@@ -114,6 +132,11 @@ export function subscribePubSubMessage(
 
 export function subscribePubSubMessage(
   type: SyncMsg.Activity,
+  callback: (message: string, data: boolean) => void,
+): string;
+
+export function subscribePubSubMessage(
+  type: SyncMsg.ConfigChanged,
   callback: (message: string, data: boolean) => void,
 ): string;
 
