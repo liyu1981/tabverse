@@ -7,6 +7,7 @@ import {
   changeTab,
   deleteAccount,
   renameAccount,
+  revokeSessions,
   signOut,
 } from '../data/actions';
 import { agoIso } from '../data/format';
@@ -52,6 +53,7 @@ export function AccountView() {
   });
   const [renaming, setRenaming] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [revoking, setRevoking] = useState(false);
 
   // An operator with no account of their own still has to reach the directory,
   // and an account that is half loaded (a reload cut short, a document from an
@@ -105,6 +107,14 @@ export function AccountView() {
               onClick={() => setDeleting(true)}
             >
               Delete account
+            </OwnerButton>
+            <OwnerButton
+              hidden={assumed}
+              intent="danger"
+              icon="log-out"
+              onClick={() => setRevoking(true)}
+            >
+              Sign out everywhere
             </OwnerButton>
             <Button
               minimal={true}
@@ -167,6 +177,25 @@ export function AccountView() {
             }}
           />
           <TypedConfirmDialog
+            isOpen={revoking}
+            title="Sign out everywhere"
+            expected={user.name || user.email || user.id}
+            body={
+              'This ends every browser session on this account, including this ' +
+              'one, and each of them has to sign in again. Use it when you think ' +
+              'somebody else has been in your account.\n\n' +
+              'Your paired devices keep syncing: their tokens are a separate ' +
+              'credential and are not touched. Unpair them from Devices & ' +
+              'Tokens if that is what you want.'
+            }
+            confirmLabel="Sign out everywhere"
+            onCancel={() => setRevoking(false)}
+            onConfirm={async () => {
+              setRevoking(false);
+              await revokeSessions();
+            }}
+          />
+          <TypedConfirmDialog
             isOpen={deleting}
             title="Delete this account"
             expected={user.name || user.email || user.id}
@@ -211,7 +240,7 @@ function OwnerButton(props: {
   hidden: boolean;
   children: string;
   intent?: 'primary' | 'danger';
-  icon?: 'trash' | 'edit';
+  icon?: 'trash' | 'edit' | 'log-out';
   onClick: () => void;
 }) {
   if (props.hidden) return null;

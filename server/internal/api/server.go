@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/liyu1981/tabverse/server/internal/accounts"
 	"github.com/liyu1981/tabverse/server/internal/auth"
@@ -37,6 +38,13 @@ type Server struct {
 	// which is exactly the state that used to exist, and the one that had to be
 	// checked in every middleware.
 	accounts *accounts.Service
+	// signinThrottle bounds the one endpoint a stranger can reach that has an
+	// effect in the world: asking for a sign-in link creates an account and
+	// sends mail. Two limits, because either one alone is half the answer - a
+	// per-address cap stops one mailbox being bombed, a per-IP cap stops one
+	// script walking a list of addresses (ADR 0021).
+	signinByAddress *throttle
+	signinByIP      *throttle
 }
 
 // New builds the server, account layer included. It can fail, because the
@@ -49,7 +57,11 @@ func New(cfg config.Config, st *store.Store, h *hub.Hub, logger *slog.Logger) (*
 	if err != nil {
 		return nil, fmt.Errorf("account layer: %w", err)
 	}
-	return &Server{cfg: cfg, store: st, hub: h, logger: logger, accounts: svc}, nil
+	return &Server{
+		cfg: cfg, store: st, hub: h, logger: logger, accounts: svc,
+		signinByAddress: newThrottle(5, time.Hour),
+		signinByIP:      newThrottle(20, time.Hour),
+	}, nil
 }
 
 // The cookie and header names the console's JavaScript needs. They are exported
@@ -127,6 +139,13 @@ func (s *Server) Handler() http.Handler {
 		// The sign-in form posts here rather than straight to the library, so
 		// the account exists before the link that claims it.
 		mux.HandleFunc("POST /api/v1/console/signin-link", s.handleConsoleSigninLink)
+		// "Sign out everywhere" (ADR 0021). Ending the account's own console
+		// sessions is a session action, so it sits with the session routes and
+		// not with the operator ones; the same call for somebody else's account
+		// is an operator action, below.
+		mux.HandleFunc("POST /api/v1/console/revoke-sessions", s.admin(s.handleConsoleRevokeSessions))
+		mux.HandleFunc("PUT /api/v1/admin/users/{user_id}/revoke-sessions",
+			s.adminOnly(s.handleAdminRevokeSessions))
 		// Pairing a browser extension from the console's own page (the official
 		// server wizard, adr/0020). It takes the console credential - a session
 		// for one's own account - and nothing else: no invite, no operator. The
@@ -145,7 +164,7 @@ func (s *Server) Handler() http.Handler {
 	// authorized by a session or the admin token.
 	mux.Handle("/", webui.Handler())
 
-	return withCORS(mux)
+	return withCORS(withHSTS(mux, s.cfg.SecureCookies))
 }
 
 // ---- middleware -----------------------------------------------------------
@@ -199,6 +218,23 @@ func withCORS(next http.Handler) http.Handler {
 			w.WriteHeader(http.StatusNoContent)
 			return
 		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+// withHSTS tells the browser to insist on https for this host for a year.
+//
+// Only when the session cookie is Secure, i.e. when the deployment already
+// decided it is served over https: a browser ignores the header on a plain http
+// response, and sending it from a plain http deployment would be a claim this
+// server cannot make. includeSubDomains is left off deliberately - the console
+// may share a domain with things that are not ours (ADR 0021).
+func withHSTS(next http.Handler, secure bool) http.Handler {
+	if !secure {
+		return next
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Strict-Transport-Security", "max-age=31536000")
 		next.ServeHTTP(w, r)
 	})
 }

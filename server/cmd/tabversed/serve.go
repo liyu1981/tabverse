@@ -79,6 +79,14 @@ func serve(args []string) error {
 	if err := srv.BootstrapOperator(context.Background()); err != nil {
 		return fmt.Errorf("operator bootstrap: %w", err)
 	}
+	// Redeemed sign-in links are kept only so a link cannot be redeemed twice
+	// (adr/0021). They are swept once at start, which is enough: the table grows
+	// by one row per sign-in and every row is dead within its own 30 minutes.
+	if n, err := st.SweepVerifTokens(context.Background()); err != nil {
+		logger.Warn("could not sweep redeemed sign-in links", "err", err)
+	} else if n > 0 {
+		logger.Info("swept redeemed sign-in links", "rows", n)
+	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()

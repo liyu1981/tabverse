@@ -121,6 +121,18 @@ func (s *Store) migrate(ctx context.Context) error {
 			used_at    INTEGER
 		)`,
 		`CREATE INDEX IF NOT EXISTS email_tokens_hash ON email_tokens(purpose, token_hash)`,
+		// Redeemed sign-in links, so "works once" survives a restart and holds
+		// across replicas (ADR 0021).
+		//
+		// Its own table rather than email_tokens: that one has a NOT NULL
+		// foreign key to users, and a link is redeemed *before* the session
+		// resolves to an account - at redemption time all there is is a hash.
+		`CREATE TABLE IF NOT EXISTS verif_tokens (
+			token_hash TEXT PRIMARY KEY,
+			used_at    INTEGER NOT NULL,
+			expires_at INTEGER NOT NULL
+		)`,
+		`CREATE INDEX IF NOT EXISTS verif_tokens_expiry ON verif_tokens(expires_at)`,
 		// Subjects whose account was deleted. A session outlives its account, and
 		// without these a stale session would register a brand new one on its
 		// next request.

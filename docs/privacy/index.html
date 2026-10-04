@@ -56,7 +56,15 @@ Google, and only if the server operator configured that. Signing in adds your
 to, or what the sign-in provider returns for the account (with Google, that is
 the address you gave Google, and whether Google reports it as verified); it is
 never sent anywhere else. Sessions are cookies on that server only,
-and an operator of a multi-user server can open a <strong>read only, time limited,
+and they end on their own after a fixed period (a day, unless the person running
+the server changes it) - so a session left behind on a shared machine stops
+being usable by itself. If you think somebody else has been inside your
+account, a “sign out everywhere” button ends every one of them at once; it does
+not unpair your devices, because those use a separate credential that has no
+expiry, and you can revoke those from the same page whenever you want.
+When you sign in, and when a sign-in is refused, the server writes it to its own
+log together with the address it came from.
+An operator of a multi-user server can open a <strong>read only, time limited,
 logged</strong> view of your account to answer support questions; they cannot change
 anything that way. The console has no master password or token: the person who
 runs the server is an ordinary account, identified by an address the operator

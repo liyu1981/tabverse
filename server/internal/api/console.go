@@ -106,6 +106,47 @@ func (s *Server) handleConsoleSignOut(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// handleConsoleRevokeSessions ends every console session this account has,
+// including the one making the call (ADR 0021). It is the answer to "I think
+// somebody else got into my account", and it is deliberately not the same thing
+// as signing out, which only forgets this browser.
+func (s *Server) handleConsoleRevokeSessions(w http.ResponseWriter, r *http.Request) {
+	s.revokeSessions(w, r, "")
+}
+
+// handleAdminRevokeSessions is the operator doing the same for somebody else.
+func (s *Server) handleAdminRevokeSessions(w http.ResponseWriter, r *http.Request) {
+	s.revokeSessions(w, r, r.PathValue("user_id"))
+}
+
+func (s *Server) revokeSessions(w http.ResponseWriter, r *http.Request, requested string) {
+	userID, ok := s.resolveScope(w, r, requested)
+	if !ok {
+		return
+	}
+	if err := s.store.RevokeAllSessions(r.Context(), userID); err != nil {
+		writeStoreErr(w, err)
+		return
+	}
+	actor := userID
+	if s.accounts != nil {
+		if me, err := s.accounts.AccountFromRequest(r); err == nil {
+			actor = me.ID
+		}
+	}
+	_ = s.store.AppendAudit(r.Context(), store.AuditEntry{
+		Actor: actor, Target: userID, Action: store.AuditSessionsRevoked,
+		IP: clientIP(r), Detail: "console sessions ended; device tokens untouched",
+	})
+	s.logger.Info("console sessions revoked", "user", userID, "by", actor)
+	// The caller's own cookie is now worthless, so it is cleared here rather
+	// than leaving the page to make one more request and be refused.
+	if s.accounts != nil && actor == userID {
+		s.accounts.SignOut(w)
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 // selfHosted reports whether a social login is even possible: the OAuth
 // callbacks need a public URL the provider can reach, and a LAN address is not
 // one. The console hides the social buttons rather than offering something that
@@ -170,6 +211,18 @@ func (s *Server) handleConsoleSigninLink(w http.ResponseWriter, r *http.Request)
 		writeErr(w, http.StatusBadRequest, "bad_request", "address is required")
 		return
 	}
+	// Throttled before anything else happens, so a refusal costs one map lookup
+	// and not an account row. The address is lower-cased first: otherwise
+	// Alice@x.com and alice@x.com are two budgets for one mailbox.
+	addrKey := strings.ToLower(email)
+	if !s.signinByAddress.allow(addrKey) {
+		s.refuseSigninLink(w, r, addrKey)
+		return
+	}
+	if ip := clientIP(r); !s.signinByIP.allow(ip) {
+		s.refuseSigninLink(w, r, ip)
+		return
+	}
 	// The account and the identity the session will resolve to, both created
 	// before the link goes out: a session is checked against our accounts before
 	// the claim is mapped to one, so an account that did not exist yet would have
@@ -184,4 +237,13 @@ func (s *Server) handleConsoleSigninLink(w http.ResponseWriter, r *http.Request)
 	hijack := r.Clone(r.Context())
 	hijack.URL.Path = "/" + accounts.ProviderEmail + "/login"
 	s.accounts.Handlers().ServeHTTP(w, hijack)
+}
+
+// refuseSigninLink answers a throttled request. The body is the same for both
+// limits and says nothing about whether the address is registered, so the
+// endpoint cannot be used to find out who has an account.
+func (s *Server) refuseSigninLink(w http.ResponseWriter, r *http.Request, key string) {
+	s.logger.Warn("sign-in link throttled", "key", key, "ip", clientIP(r))
+	writeErr(w, http.StatusTooManyRequests, "rate_limited",
+		"too many sign-in links requested; wait an hour and try again")
 }

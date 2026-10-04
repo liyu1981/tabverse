@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -43,6 +44,49 @@ const (
 	// one value, and the audience is what it later promotes onto the user.
 	testAudienceForClaims = "tabversed"
 )
+
+// noExpiry is how "this deployment does not want a server-side session bound"
+// is expressed. The library falls back to 15 minutes when handed a zero
+// duration, so the honest way to say "unbounded" is a very long one; the actual
+// bound is enforced by sessionWithinTTL, not by this number.
+const noExpiry = 100 * 365 * 24 * time.Hour
+
+// sessionTokenTTL turns the configured lifetime into the library's duration.
+// Zero is the documented "no bound" and becomes noExpiry rather than 0, which
+// the library would read as "use my 15 minute default".
+func sessionTokenTTL(d time.Duration) time.Duration {
+	if d <= 0 {
+		return noExpiry
+	}
+	return d
+}
+
+// sessionCookieTTL is how long the browser keeps the cookie. Unset means the
+// same as the session, which is the point: a 30 day cookie outliving a 24 hour
+// session leaves a credential on a shared machine that the server would refuse
+// but the browser still presents.
+func sessionCookieTTL(cfg config.Config) time.Duration {
+	d := cfg.SessionCookieTTL
+	if d <= 0 {
+		d = cfg.SessionTTL
+	}
+	return sessionTokenTTL(d)
+}
+
+// loopbackURL reports whether a public URL points at this machine. Only those
+// may serve the console over plain http without being told about it twice.
+func loopbackURL(publicURL string) bool {
+	u, err := url.Parse(publicURL)
+	if err != nil {
+		return false
+	}
+	host := u.Hostname()
+	if host == "localhost" {
+		return true
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
+}
 
 // Service is the console's account layer: the library's service, wired to our
 // store, plus the two hooks that make its tokens mean something here.
@@ -108,12 +152,20 @@ func New(cfg config.Config, st *store.Store, logger *slog.Logger) (*Service, err
 	// the attribute follows the scheme of the public URL, loudly.
 	secureCookies := cfg.SecureCookies
 	if strings.HasPrefix(publicURL, "http://") {
-		if secureCookies {
-			logger.Warn("the console is served over plain http, so session cookies cannot be " +
-				"Secure; they will travel in the clear. Put https:// in " +
-				"TABVERSED_PUBLIC_URL for anything but a network you trust.")
-		}
 		secureCookies = false
+		if !loopbackURL(publicURL) {
+			msg := "the console is served over plain http on " + publicURL +
+				", so session cookies cannot be Secure; they will travel in the clear"
+			// Refusing is a deployment decision, not a library detail: a LAN
+			// deployment on http://192.168.x.x is a supported shape. So it is
+			// opt-in, and saying so loudly is the default.
+			if cfg.RequireHTTPS {
+				return nil, errors.New("TABVERSED_REQUIRE_HTTPS is set: " + msg +
+					"; set TABVERSED_PUBLIC_URL to an https:// address, or unset REQUIRE_HTTPS for a trusted LAN")
+			}
+			logger.Warn(msg + ". Put https:// in TABVERSED_PUBLIC_URL, or set " +
+				"TABVERSED_REQUIRE_HTTPS=true to refuse instead.")
+		}
 	}
 
 	// What the provider library is told its own root is: the public console plus
@@ -133,10 +185,11 @@ func New(cfg config.Config, st *store.Store, logger *slog.Logger) (*Service, err
 		// every provider answers redirect_uri_mismatch. (The library's own
 		// comment says the same thing: rootURL/{routingPath}/provider/callback.)
 		URL:           authRoot,
-		TokenDuration: 12 * time.Hour,
+		TokenDuration: sessionTokenTTL(cfg.SessionTTL),
 		// The cookie outlives the token so a refresh does not interrupt the user;
-		// the window is bounded by the revocation cut-off, not by this.
-		CookieDuration: 30 * 24 * time.Hour,
+		// by default it outlives it by nothing at all (see SessionCookieTTL), so
+		// the credential leaves the machine when the session does.
+		CookieDuration: sessionCookieTTL(cfg),
 		Issuer:         "tabversed",
 		SecureCookies:  secureCookies,
 		SameSiteCookie: http.SameSiteLaxMode,
@@ -151,8 +204,12 @@ func New(cfg config.Config, st *store.Store, logger *slog.Logger) (*Service, err
 		// we pass (ADR 0012).
 		AvatarStore: avatar.NewNoOp(),
 		UseGravatar: false,
-		ClaimsUpd:   token.ClaimsUpdFunc(s.claimRoles),
-		Validator:   token.ValidatorFunc(s.validate),
+		// "Works once" has to survive a restart and be shared by every replica,
+		// so the store is this deployment's database rather than the library's
+		// in-memory default (verif_store.go, ADR 0021).
+		VerifConfirmationStore: verifStore{svc: s},
+		ClaimsUpd:              token.ClaimsUpdFunc(s.claimRoles),
+		Validator:              token.ValidatorFunc(s.validate),
 		// The post-sign-in redirect is checked against this list by the
 		// library. It holds our own host, so the only place a sign-in can send
 		// somebody is the console itself - a crafted `?from=` in a link cannot
@@ -223,7 +280,9 @@ func New(cfg config.Config, st *store.Store, logger *slog.Logger) (*Service, err
 // console as the return target on every provider login.
 func (s *Service) Handlers() http.Handler {
 	authHandler, _ := s.auth.Handlers()
-	return s.withConsoleReturn(authHandler)
+	// withConsoleReturn first, so the audit wrapper sees the request the browser
+	// actually made and the response the library actually wrote.
+	return s.withLoginAudit(s.withConsoleReturn(authHandler))
 }
 
 // withConsoleReturn puts the console on the ?from= of every provider login.
@@ -265,7 +324,27 @@ func (s *Service) Guard(next http.Handler) http.Handler {
 // console calls *before* it knows whether anyone is signed in - /console/me and
 // sign out - which must answer "not signed in" rather than refuse.
 func (s *Service) Trace(next http.Handler) http.Handler {
-	return s.mw.Trace(s.mw.UpdateUser(middleware.UserUpdFunc(s.updater))(next))
+	return s.mw.Trace(s.mw.UpdateUser(middleware.UserUpdFunc(s.updater))(s.forgetDeadSession(next)))
+}
+
+// forgetDeadSession clears a session cookie that the soft guard has already
+// decided is no longer usable.
+//
+// The library's own Reset does not cover this path: with reqAuth false its
+// error handler serves the request and returns, so nothing clears the cookie and
+// the browser goes on presenting a credential that will never be honoured again.
+// Under the hard guard the ErrorHandler does it instead (see onAuthError); here
+// the answer is "the request reached the handler with no user in it, and a
+// session cookie came in", which is the same fact observed one step later.
+func (s *Service) forgetDeadSession(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if _, err := token.GetUserInfo(r); err != nil {
+			if c, err := r.Cookie(sessionCookie); err == nil && c.Value != "" {
+				s.mw.JWTService.Reset(w)
+			}
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 // GuardAdminOnly is Guard plus the operator role, for the user query interface.
@@ -392,16 +471,48 @@ func (s *Service) updater(u token.User) token.User {
 }
 
 // validate is the revocation hook: it runs inside the extractor, before the
-// claim is rewritten, so it resolves the account itself.
+// claim is rewritten, so it resolves the account itself. It is also where the
+// session lifetime is enforced server side, which the library by itself does
+// not do - see sessionWithinTTL.
 func (s *Service) validate(_ string, c token.Claims) bool {
 	if c.User == nil {
 		return true
+	}
+	if !s.sessionWithinTTL(c) {
+		return false
 	}
 	var issued time.Time
 	if c.IssuedAt != nil {
 		issued = c.IssuedAt.Time
 	}
 	return SessionAllowed(context.Background(), s.store, c.User.ID, issued)
+}
+
+// sessionWithinTTL is the half of the session lifetime the server owns.
+//
+// The library deliberately does not do this: token.Service.validate swallows
+// ErrTokenExpired, and Get only re-checks it for a token that did not arrive in
+// a cookie, so an expired cookie-borne token still authenticates - and then
+// Authenticator.Auth sees it expired, mints a fresh one and re-sets the cookie
+// with a full CookieDuration. Left alone that makes a console session slide
+// forever, which is the thing this exists to stop (ADR 0021).
+//
+// The authenticator calls the Validator *before* it refreshes
+// (middleware/auth.go:129 against :145), so returning false here means the
+// refresh never happens and the library resets both cookies on the way out. The
+// session therefore ends at the token's own expiry, and the console sees a
+// plain "sign in to continue".
+func (s *Service) sessionWithinTTL(c token.Claims) bool {
+	if s.cfg.SessionTTL <= 0 {
+		return true
+	}
+	if c.ExpiresAt == nil {
+		// A token that never says when it dies is a token that does not expire.
+		// Refusing it is the safer reading of the two, and the only claims
+		// without an expiry here are ones this server did not mint.
+		return false
+	}
+	return time.Now().Before(c.ExpiresAt.Time)
 }
 
 func (s *Service) providerOf(sessionID string) string {
@@ -418,6 +529,14 @@ func (s *Service) providerOf(sessionID string) string {
 func (s *Service) onAuthError(w http.ResponseWriter, r *http.Request, code int, err error) {
 	s.authErr = err
 	s.log.Debug("session refused", "path", r.URL.Path, "code", code, "err", err)
+	// The cookies are cleared *here*, before anything is written, and not by the
+	// library's Reset: it calls that after the error handler has already
+	// answered, so its Set-Cookie lands after the header is out and is dropped.
+	// Leaving a dead credential in the browser is the smaller half of the
+	// problem; the other half is a person who never gets asked to sign in again.
+	// Harmless when there was no session to begin with - a browser deletes a
+	// cookie it does not have.
+	s.mw.JWTService.Reset(w)
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(code)
 	_ = json.NewEncoder(w).Encode(map[string]string{

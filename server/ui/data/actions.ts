@@ -61,7 +61,9 @@ import {
   loadUsersFx,
   renameUserFx,
   revokeDeviceFx,
+  revokeSessionsFx,
   revokeTokenFx,
+  revokeUserSessionsFx,
   searchFx,
   setRoleFx,
   signOutFx,
@@ -464,6 +466,36 @@ export async function signOut(): Promise<void> {
   // Even when the call fails the page stops pretending it is signed in.
   await signOutFx().catch(() => undefined);
   if (typeof window !== 'undefined') window.location.reload();
+}
+
+/**
+ * End every console session this account has, this one included.
+ *
+ * The page reloads whatever the server says, because the cookie it is holding is
+ * worthless the moment the call succeeds - and if the call did not succeed, the
+ * account's sessions are all still live, so pretending to be signed out would be
+ * the one outcome that is not true either way.
+ */
+export async function revokeSessions(): Promise<void> {
+  const done = await attempt('Ending every session', () => revokeSessionsFx());
+  if (typeof window !== 'undefined') window.location.reload();
+  if (!done.ok) return;
+}
+
+/**
+ * The operator's version: end every session of somebody else's account.
+ *
+ * Unlike the call above this does not reload the page, because the operator is
+ * not signed out by it - they signed *this* account's sessions out somewhere
+ * else. The directory is reloaded so the row's "last active" reflects what just
+ * happened.
+ */
+export async function revokeUserSessions(userId: string): Promise<void> {
+  const done = await attempt('Ending every session', () =>
+    revokeUserSessionsFx(userId),
+  );
+  if (!done.ok) return;
+  await loadDirectory();
 }
 
 export async function requestSigninLink(email: string): Promise<boolean> {

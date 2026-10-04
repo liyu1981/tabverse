@@ -150,6 +150,9 @@ git-ignored, because it holds the auth secret and the provider secret - and
 | `TABVERSED_SEARCH_LIMIT`     | `50`                | max search hits                                             |
 | `TABVERSED_WS_ORIGINS`       | _(any)_             | comma separated Origin allow list for the WebSocket upgrade |
 | `TABVERSED_ADMIN_EMAIL`      | _(unset)_           | whose first registration becomes the operator (ADR 0013) |
+| `TABVERSED_SESSION_TTL`      | `24h`                | how long one console sign-in lasts; `0` = no bound (ADR 0021) |
+| `TABVERSED_SESSION_COOKIE_TTL` | _(same as the session)_ | how long the browser keeps the cookie; defaults to `TABVERSED_SESSION_TTL` so the credential never outlives the session |
+| `TABVERSED_REQUIRE_HTTPS`    | `false`              | refuse to start when the console is served over plain http on a non-loopback `TABVERSED_PUBLIC_URL` (ADR 0021); off by default so a LAN deployment is not broken |
 | `TABVERSED_ENV_FILE`       | _(unset)_           | read this file instead of `./.env`; unreadable is a startup error |
 
 ## API
@@ -445,3 +448,23 @@ is never at risk - to remove data, delete the account.
 Unarchiving never re-enables access: a revoked token stays revoked. A record
 that is edited again un-archives itself, because it is live again; tombstones
 are not restored.
+
+### Console sessions (ADR 0021)
+
+A console sign-in lasts `TABVERSED_SESSION_TTL` (default 24h) and then ends: the
+server refuses the token even though the browser is still offering it, and clears
+the cookie. Set `0` for the old behaviour, where a session in use renewed itself
+for as long as it kept being used.
+
+| Step | Endpoint | Who |
+| ---- | -------- | ---- |
+| Sign out of this browser | `POST /api/v1/console/signout` | anyone signed in |
+| Sign out of every browser | `POST /api/v1/console/revoke-sessions` | the account itself (audited) |
+| The same, for somebody else | `PUT .../admin/users/{user_id}/revoke-sessions` | an operator |
+
+"Sign out everywhere" moves the account's revocation cut-off
+(`users.tokens_valid_after`), so it ends console sessions and nothing else. The
+extension's device tokens are a different credential with no expiry, and they
+keep syncing - unpair them from **Devices & Tokens** if that is what you want.
+A cut-off is compared at second granularity, so a session minted in the same
+second survives it.

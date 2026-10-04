@@ -359,6 +359,26 @@ it is still the user's to check (AGENTS.md); the admin API is
 token and the admin token are not interchangeable, and both directions are
 tested.
 
+**A console session ends (`adr/0021`).** The session cookie is a stateless
+signed JWT, and the library by itself will not let one expire: it ignores a
+cookie-borne token's expiry, then mints a fresh one and re-sets the cookie, so a
+session slides for as long as it is used. So the bound is enforced here instead,
+in `Service.validate` - the `Validator` hook that already carries the account's
+revocation cut-off - which the authenticator calls *before* it refreshes.
+`TABVERSED_SESSION_TTL` (default `24h`, `0` for no bound) is the length of one
+sign-in, and `TABVERSED_SESSION_COOKIE_TTL` defaults to the same number so the
+credential leaves the machine when the session does.
+
+Ending every session on demand is `POST /api/v1/console/revoke-sessions`, which
+moves `users.tokens_valid_after` - the cut-off `SessionAllowed` already reads on
+every request. It is the same credential the extension's device tokens are *not*:
+the console's dialog says so, because "sign out everywhere" must not read as
+"unpair my devices". A sign-in is audited (`AuditLogin`, written from the
+`Set-Cookie` the library emits) because there is no login callback to hook, the
+sign-in link is throttled per address and per IP, and "works once" for that link
+is kept in `verif_tokens` rather than the library's in-memory map, so it survives
+a restart and holds across replicas.
+
 **Archiving (`adr/0011`) is bookkeeping, never deletion.** `archived_at` on
 `devices`, `tokens` and `records` hides a row from the console's default views
 (tabverse list, record browser, console search, all with `?archived=1` to

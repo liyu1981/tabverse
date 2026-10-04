@@ -16,6 +16,16 @@ info:
       cookie set by the auth library, plus an `X-XSRF-Token` header on every
       state changing request. A device token is refused there (ADR 0013).
 
+    ## Console sessions
+    A console sign-in lasts `TABVERSED_SESSION_TTL` (default `24h`) and then
+    ends: the server refuses the token's expiry rather than letting the auth
+    library renew it, and clears the cookie. `0` disables the bound.
+    `POST /api/v1/console/revoke-sessions` ends every session of the calling
+    account by moving its revocation cut-off, and the operator's
+    `PUT /api/v1/admin/users/{user_id}/revoke-sessions` does the same for
+    somebody else. Neither touches the extension's device tokens, which are a
+    different credential with no expiry (ADR 0021).
+
     ## Accounts
     Accounts are always on; there is no master credential. People register with
     a single-use email link (or a configured social provider) and manage their
@@ -190,6 +200,34 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/DeviceCredentials' }
+        '401':
+          description: no session, or the session does not resolve to an account
+          content:
+            application/json:
+              schema: { type: object }
+        '403':
+          description: read only - the caller is impersonating an account
+          content:
+            application/json:
+              schema: { type: object }
+
+  /api/v1/console/revoke-sessions:
+    post:
+      tags: [console]
+      summary: End every console session on this account
+      description: |
+        "Sign out everywhere" (adr/0021): moves the account's revocation
+        cut-off, so every session it ever issued - including this browser's,
+        which is why the response also clears the cookie - has to sign in
+        again. Audited as `sessions_revoked`.
+
+        **The extension's device tokens are not touched.** They are a different
+        credential with no expiry, and revoking them would silently stop
+        somebody's devices syncing; unpair them from the devices endpoints
+        instead. A cut-off is compared at second granularity, so a session
+        minted in the same second survives it.
+      responses:
+        '204': { description: every session of this account is now refused }
         '401':
           description: no session, or the session does not resolve to an account
           content:
@@ -508,6 +546,23 @@ paths:
         token by fingerprint and revoke it by hash, but never display it again.
       responses:
         '204': { description: revoked }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/admin/users/{user_id}/revoke-sessions:
+    parameters:
+      - { $ref: '#/components/parameters/userId' }
+    put:
+      tags: [admin]
+      summary: End every console session on this account (operator's move)
+      description: |
+        The operator's "sign out everywhere", for the case where the account to
+        fix is not the one at the keyboard (adr/0021). Moves the account's
+        revocation cut-off and audits `sessions_revoked` against both the actor
+        and the account. Device tokens are untouched - see
+        `POST /api/v1/console/revoke-sessions`.
+      responses:
+        '204': { description: every session of this account is now refused }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
 

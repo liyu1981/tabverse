@@ -5,6 +5,7 @@ import { useUnit } from 'effector-react';
 import {
   deleteAccount,
   loadDirectory,
+  revokeUserSessions,
   setUserRole,
   startImpersonation,
 } from '../data/actions';
@@ -25,6 +26,7 @@ type Pending =
   | { kind: 'role'; user: UserSummary; role: string }
   | { kind: 'delete'; user: UserSummary }
   | { kind: 'impersonate'; user: UserSummary }
+  | { kind: 'revoke'; user: UserSummary }
   | null;
 
 /**
@@ -75,6 +77,10 @@ export function AdminPanel() {
     }
     if (job.kind === 'impersonate') {
       await startImpersonation(job.user.id);
+      return;
+    }
+    if (job.kind === 'revoke') {
+      await revokeUserSessions(job.user.id);
       return;
     }
     if (await deleteAccount(job.user.id)) {
@@ -164,22 +170,33 @@ export function AdminPanel() {
       </p>
 
       <ConfirmDialog
-        isOpen={pending?.kind === 'impersonate' || pending?.kind === 'role'}
+        isOpen={
+          pending?.kind === 'impersonate' ||
+          pending?.kind === 'role' ||
+          pending?.kind === 'revoke'
+        }
         title={
           pending?.kind === 'impersonate'
             ? 'Look at this account as its owner?'
-            : pending?.kind === 'role' && pending.role === 'admin'
-              ? 'Make this person an operator?'
-              : 'Take operator access away?'
+            : pending?.kind === 'revoke'
+              ? 'Sign this account out everywhere?'
+              : pending?.kind === 'role' && pending.role === 'admin'
+                ? 'Make this person an operator?'
+                : 'Take operator access away?'
         }
+        intent={pending?.kind === 'revoke' ? 'danger' : undefined}
         body={
           pending?.kind === 'impersonate'
             ? 'Read only: nothing can be changed while you do, and both the start and the stop are recorded. The window is 15 minutes.'
-            : pending?.kind === 'role'
-              ? pending.role === 'admin'
-                ? `Make ${pending.user.name || pending.user.email} an operator?\n\nThey will be able to see every account on this server, mint pairing codes for anyone, and look through other accounts read only.`
-                : `Take operator access away from ${pending.user.name || pending.user.email}?\n\nThey keep their own account, devices and data.`
-              : ''
+            : pending?.kind === 'revoke'
+              ? `End every browser session on ${pending.user.name || pending.user.email || pending.user.id}?\n\n` +
+                'Each of them has to sign in again, and you will be signed out of nothing - this is their account, not yours. Use it when you think a session of theirs was stolen.\n\n' +
+                'Their devices keep syncing: those tokens are a different credential and are not touched.'
+              : pending?.kind === 'role'
+                ? pending.role === 'admin'
+                  ? `Make ${pending.user.name || pending.user.email} an operator?\n\nThey will be able to see every account on this server, mint pairing codes for anyone, and look through other accounts read only.`
+                  : `Take operator access away from ${pending.user.name || pending.user.email}?\n\nThey keep their own account, devices and data.`
+                : ''
         }
         onCancel={() => setPending(null)}
         onConfirm={run}
@@ -254,6 +271,14 @@ function RowActions(props: {
         }
       >
         {user.role === 'admin' ? 'Remove operator' : 'Make operator'}
+      </Button>
+      <Button
+        small={true}
+        minimal={true}
+        title="End every browser session on this account. Their devices keep syncing - those tokens are a different credential."
+        onClick={() => props.onAsk({ kind: 'revoke', user })}
+      >
+        Sign out everywhere
       </Button>
       <Button
         small={true}

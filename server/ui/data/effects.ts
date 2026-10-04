@@ -51,6 +51,14 @@ export const stopImpersonationFx = createEffect<void, void>(() =>
 
 export const signOutFx = createEffect<void, void>(() => api.signOut());
 
+export const revokeSessionsFx = createEffect<void, void>(() =>
+  api.revokeSessions(),
+);
+
+export const revokeUserSessionsFx = createEffect<string, void>((userId) =>
+  api.revokeUserSessions(userId),
+);
+
 export const loadTotalsFx = createEffect<void, Totals>(() => api.totals());
 
 // ---- accounts --------------------------------------------------------------

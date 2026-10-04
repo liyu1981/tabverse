@@ -33,6 +33,20 @@ type Config struct {
 	// default; turn it off only for plain http on a trusted LAN, and the server
 	// says so in the log.
 	SecureCookies bool
+	// RequireHTTPS refuses to start when the console is served over plain http
+	// on anything but loopback. Off by default, because a LAN deployment on
+	// http://192.168.x.x is a supported shape and this would break it on
+	// upgrade; the server warns about that case either way (see New).
+	RequireHTTPS bool
+	// SessionTTL is how long one console sign-in lasts. 0 disables the
+	// server-side bound, which is the pre-hardening behaviour (a session that
+	// slides for as long as it is used) and should only be wanted on a LAN.
+	SessionTTL time.Duration
+	// SessionCookieTTL is how long the browser is told to keep the session
+	// cookie. Unset means the same as SessionTTL, so the credential disappears
+	// from the machine at the moment the server stops honouring it rather than
+	// sitting on disk for weeks afterwards.
+	SessionCookieTTL time.Duration
 	// LinkByEmail links a social login to an existing account with the same
 	// verified address. Off for a deployment that cannot vouch for its
 	// providers, where such a login is refused instead.
@@ -144,6 +158,23 @@ func GetenvBool(name string, fallback bool) (bool, error) {
 	return b, nil
 }
 
+// GetenvDuration reads a duration in Go's own notation ("90m", "24h", "0"), so
+// the session lifetimes are readable rather than being seconds in an integer.
+func GetenvDuration(name string, fallback time.Duration) (time.Duration, error) {
+	v := strings.TrimSpace(os.Getenv(name))
+	if v == "" {
+		return fallback, nil
+	}
+	d, err := time.ParseDuration(v)
+	if err != nil {
+		return 0, fmt.Errorf("%s: %w", name, err)
+	}
+	if d < 0 {
+		return 0, fmt.Errorf("%s: must not be negative", name)
+	}
+	return d, nil
+}
+
 // DefaultAddr binds every interface on purpose: the extension is usually
 // loaded on another machine than the server during development, and Go's
 // ":port" shorthand already means all interfaces. The exposure warning in
@@ -178,6 +209,17 @@ func Load(version string) (Config, error) {
 	cfg.AuthSecret = Getenv("TABVERSED_AUTH_SECRET", "")
 	cfg.PublicURL = Getenv("TABVERSED_PUBLIC_URL", "")
 	if cfg.SecureCookies, err = GetenvBool("TABVERSED_SECURE_COOKIES", true); err != nil {
+		return Config{}, err
+	}
+	if cfg.RequireHTTPS, err = GetenvBool("TABVERSED_REQUIRE_HTTPS", false); err != nil {
+		return Config{}, err
+	}
+	if cfg.SessionTTL, err = GetenvDuration("TABVERSED_SESSION_TTL", 24*time.Hour); err != nil {
+		return Config{}, err
+	}
+	// The cookie outlives the token by exactly as much as it is asked to: unset
+	// means "the same", so the default cannot drift apart from SessionTTL.
+	if cfg.SessionCookieTTL, err = GetenvDuration("TABVERSED_SESSION_COOKIE_TTL", cfg.SessionTTL); err != nil {
 		return Config{}, err
 	}
 	if cfg.LinkByEmail, err = GetenvBool("TABVERSED_LINK_BY_EMAIL", true); err != nil {

@@ -45,6 +45,9 @@ const (
 	AuditImpersonateIn   = "impersonate_start"
 	AuditImpersonateOut  = "impersonate_end"
 	AuditImpersonateFail = "impersonate_denied"
+	// The console session and the extension's device token are different
+	// credentials, and this is the one that ends the former.
+	AuditSessionsRevoked = "sessions_revoked"
 	// The credential lifecycle, which is what an operator asks about after an
 	// incident: who added a device, who cut one off.
 	AuditPairingCode     = "pairing_code"
@@ -312,6 +315,34 @@ func (s *Store) TokensValidAfter(ctx context.Context, userID string) (int64, err
 		return 0, nil
 	}
 	return cut.Int64, nil
+}
+
+// RevokeAllSessions ends every console session this account has, by moving the
+// revocation cut-off to now (ADR 0021).
+//
+// It is the whole "I think somebody else is in my account" answer, and it needs
+// no per-session bookkeeping: the tokens are stateless, so what is invalidated
+// is the window they were minted in. Two consequences worth stating:
+//
+//   - the caller's own session dies too, which is the point - the console asks
+//     for a typed confirmation because the person clicking it is about to be
+//     signed out;
+//   - the extension's device tokens are untouched. They are a different
+//     credential in a different table with no expiry, and "sign out everywhere"
+//     must not quietly read as "unpair my devices".
+//
+// A session minted in the same second as the call survives it, because the
+// cut-off is compared at second granularity; see SessionRevocationWindow.
+func (s *Store) RevokeAllSessions(ctx context.Context, userID string) error {
+	res, err := s.db.ExecContext(ctx,
+		`UPDATE users SET tokens_valid_after = ? WHERE id = ?`, nowMS(), userID)
+	if err != nil {
+		return err
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return ErrNotFound
+	}
+	return nil
 }
 
 // ---- external identities --------------------------------------------------

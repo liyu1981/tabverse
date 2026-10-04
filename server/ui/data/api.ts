@@ -83,6 +83,13 @@ export interface ConsoleApi {
   whoAmI(): Promise<Me | null>;
   requestSigninLink(email: string): Promise<void>;
   signOut(): Promise<void>;
+  /**
+   * End every console session this account has, including this browser's
+   * (adr/0021). Not the same as signOut: that forgets one browser, this moves
+   * the account's revocation cut-off so no session survives. The extension's
+   * device tokens are not touched.
+   */
+  revokeSessions(): Promise<void>;
   impersonation(): Promise<Impersonation>;
   startImpersonation(userId: string): Promise<void>;
   stopImpersonation(): Promise<void>;
@@ -92,6 +99,11 @@ export interface ConsoleApi {
   renameUser(userId: string, name: string): Promise<void>;
   setRole(userId: string, role: string): Promise<void>;
   deleteUser(userId: string): Promise<void>;
+  /**
+   * The operator's version of revokeSessions, for the case where the account to
+   * fix is not the one at the keyboard (adr/0021).
+   */
+  revokeUserSessions(userId: string): Promise<void>;
   createInvite(userId: string, ttlSeconds: number): Promise<Invite>;
   /**
    * Mint a device and its token for the *signed-in* account, with no invite
@@ -238,6 +250,7 @@ export function createConsoleApi(fetchFn: FetchLike = fetch): ConsoleApi {
     },
 
     signOut: () => call('POST', '/api/v1/console/signout'),
+    revokeSessions: () => call('POST', '/api/v1/console/revoke-sessions'),
     impersonation: () =>
       call<Impersonation>('GET', '/api/v1/console/impersonation'),
 
@@ -272,6 +285,9 @@ export function createConsoleApi(fetchFn: FetchLike = fetch): ConsoleApi {
         'DELETE',
         userPath(userId) + '?confirm=' + encodeURIComponent(userId),
       ),
+
+    revokeUserSessions: (userId: string) =>
+      call('PUT', userPath(userId) + '/revoke-sessions'),
 
     createInvite: (userId: string, ttlSeconds: number) =>
       call<Invite>('POST', userPath(userId, '/invites'), {

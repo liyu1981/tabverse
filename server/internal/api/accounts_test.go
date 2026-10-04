@@ -773,19 +773,16 @@ func TestTheFirstOperatorJourney(t *testing.T) {
 	}
 	// ...and it reaches the operator views, which is the whole point.
 	client.do(t, http.MethodGet, "/api/v1/admin/users").mustStatus(t, http.StatusOK)
-	// The link is single use.
+	// The link is single use, and now provably so: the redemption is recorded in
+	// the database, so this holds across a restart and across replicas rather
+	// than only until the process that issued it died (adr/0021).
 	again := doRequest(t, ts, http.MethodGet, link)
-	if again.StatusCode == http.StatusOK {
-		// The library answers a replay with 403 (consumed) or 200 with a
-		// *new* link depending on whether a confirmation store is configured;
-		// what must never happen is a second session for the same token.
-		var replaySession *http.Cookie
-		for _, c := range again.Cookies() {
-			if c.Name == "tv_session" {
-				replaySession = c
-			}
-		}
-		if replaySession != nil && replaySession.Value == session.Value {
+	againBody := readAll(t, again)
+	if again.StatusCode != http.StatusForbidden {
+		t.Fatalf("replaying a used link = %d, want 403: %s", again.StatusCode, againBody)
+	}
+	for _, c := range again.Cookies() {
+		if c.Name == "tv_session" && c.Value != "" {
 			t.Fatal("following the same link twice produced a live session")
 		}
 	}
