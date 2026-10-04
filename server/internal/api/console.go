@@ -27,6 +27,10 @@ func (s *Server) handleConsoleMe(w http.ResponseWriter, r *http.Request) {
 			"admin_email":     s.cfg.AdminEmail,
 			"operator_exists": s.operatorExists(r),
 			"csrf_header":     accountsCSRFHeader,
+			// Whether a link can actually be posted. The sign-in view says where
+			// the link went, and it used to say "no mail server is configured" to
+			// everybody, which is false on every deployment that has one.
+			"smtp": s.cfg.SMTPConfigured(),
 		})
 		return
 	}
@@ -65,6 +69,7 @@ func (s *Server) handleConsoleMe(w http.ResponseWriter, r *http.Request) {
 		"providers":       s.cfg.SocialProviders(),
 		"admin_email":     s.cfg.AdminEmail,
 		"operator_exists": operator,
+		"smtp":            s.cfg.SMTPConfigured(),
 		// Set when this person is the address the operator is expected to be but
 		// nobody has claimed the role yet. The server can only fix that on the
 		// next start, so the console says so rather than pretending.

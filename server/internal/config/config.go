@@ -105,9 +105,15 @@ type Config struct {
 	AdminEmail string
 }
 
-// SocialProviders lists the configured social logins, for the console's login
-// buttons. An unconfigured provider is simply absent: a button that cannot work
-// is worse than no button.
+// SocialProviders lists the social logins the console may offer, which is the
+// ones this server actually wired. An unconfigured provider is simply absent: a
+// button that cannot work is worse than no button.
+//
+// OIDC is deliberately absent even when TABVERSED_OIDC_* is set. Those variables
+// are accepted and inert (see the OIDCIssuer comment above), no provider is
+// registered under that name, and listing it here produced a sign-in button that
+// answered 404 - which is the other half of "worse than no button". It comes
+// back when adr/0012 gives it a write path.
 func (c Config) SocialProviders() []string {
 	out := []string{}
 	if c.GitHubClientID != "" {
@@ -115,9 +121,6 @@ func (c Config) SocialProviders() []string {
 	}
 	if c.GoogleClientID != "" {
 		out = append(out, "google")
-	}
-	if c.OIDCIssuer != "" {
-		out = append(out, "sso")
 	}
 	return out
 }

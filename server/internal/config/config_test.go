@@ -117,3 +117,23 @@ func TestRequireHTTPSDefaultsOff(t *testing.T) {
 		t.Error("RequireHTTPS should default to false")
 	}
 }
+
+// A provider is advertised only when the server actually registered it. OIDC is
+// accepted and inert, so listing it produced a sign-in button that answered 404.
+func TestSocialProvidersListsOnlyWiredOnes(t *testing.T) {
+	cfg := Config{
+		GitHubClientID: "gh", GoogleClientID: "go", OIDCIssuer: "https://sso.example",
+	}
+	providers := cfg.SocialProviders()
+	if len(providers) != 2 {
+		t.Fatalf("SocialProviders = %v, want the two that are wired", providers)
+	}
+	for _, name := range providers {
+		if name == "sso" {
+			t.Fatal("the inert OIDC config must not be offered as a login")
+		}
+	}
+	if (Config{}).SocialProviders() != nil && len((Config{}).SocialProviders()) != 0 {
+		t.Fatalf("an unconfigured deployment offers %v", (Config{}).SocialProviders())
+	}
+}

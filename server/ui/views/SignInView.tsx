@@ -4,21 +4,40 @@ import { useUnit } from 'effector-react';
 
 import { requestSigninLink } from '../data/actions';
 import { $me } from '../data/stores/session';
+import { ProviderMark, providerLabel } from '../components/ProviderMark';
 import classes from '../layout.module.scss';
 
 /**
  * The sign-in form.
  *
  * There is nothing to sign in *to*: the session is a cookie the browser already
- * has, and the only question is whether the server still recognises it. What
- * this form does is ask for an address and have the server send a single-use
- * link (adr/0012), so there is no password to lose, reset or leak.
+ * has, and the only question is whether the server still recognises it. Two
+ * ways to answer it, and the order is the argument: the provider buttons come
+ * first because a person with a Google or GitHub account should be one click
+ * from signed in, and the address form is the fallback that works without either.
  *
  * The providers are links into the library's own login routes, without a return
  * address of our own: the server puts the console on every provider login, so
  * the target is chosen in one place and a stale console cannot leave somebody
  * landing on a page of JSON.
  */
+
+/**
+ * The order the buttons are offered in, which is a presentational decision and
+ * not the order the server lists them in. Anything not named here keeps its
+ * place at the end: a provider this file has never heard of is still a way in,
+ * and a button with no mark is better than no button.
+ */
+const PROVIDER_ORDER = ['google', 'github'];
+
+function orderedProviders(providers: string[]): string[] {
+  const known = PROVIDER_ORDER.filter((name) => providers.includes(name));
+  return [
+    ...known,
+    ...providers.filter((name) => !PROVIDER_ORDER.includes(name)),
+  ];
+}
+
 export function SignInView() {
   const me = useUnit($me);
   const [email, setEmail] = useState('');
@@ -26,7 +45,12 @@ export function SignInView() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
-  const providers = me?.providers ?? [];
+  const providers = orderedProviders(me?.providers ?? []);
+  // Whether the server can actually post mail. Without it the console used to
+  // tell everybody that no mail server was configured, which is a lie on every
+  // deployment that has one - and the person who most needs to know is the one
+  // who has just asked for a link and is waiting.
+  const canEmail = me?.smtp === true;
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -51,11 +75,36 @@ export function SignInView() {
       <Card className={classes.signinCard}>
         <h1>Sign in</h1>
         <p className="muted">
-          Enter your email address and we will send you a single-use link. There
-          is no password: the link signs you in, and only the server can read
-          your data.
+          Your Tabverse account, on this server and nowhere else.
         </p>
+
+        {providers.length ? (
+          <>
+            <div className={classes.socialList}>
+              {providers.map((name) => (
+                <a
+                  key={name}
+                  className={classes.socialButton}
+                  href={`/auth/${name}/login`}
+                >
+                  <span className={classes.socialMark}>
+                    <ProviderMark name={name} />
+                  </span>
+                  <span>Continue with {providerLabel(name)}</span>
+                </a>
+              ))}
+            </div>
+            <div className={classes.orRule}>
+              <span>or</span>
+            </div>
+          </>
+        ) : null}
+
         <form onSubmit={submit}>
+          <p className="muted small">
+            Enter your address and we will send you a link that works once.
+            There is no password to choose, forget or leak.
+          </p>
           <FormGroup label="Email" labelFor="signin-email">
             <input
               id="signin-email"
@@ -68,39 +117,19 @@ export function SignInView() {
               onChange={(event) => setEmail(event.currentTarget.value)}
             />
           </FormGroup>
-          <Button type="submit" intent="primary" loading={busy}>
+          <Button type="submit" intent="primary" fill={true} loading={busy}>
             Send sign-in link
           </Button>
         </form>
+
         {sent ? (
           <p className="muted small">
-            Check your email for the sign-in link. It works once and expires in
-            30 minutes.
+            {canEmail
+              ? 'Check your email for the link - the spam folder too. It works once and expires in 30 minutes.'
+              : 'This server has no mail server, so the link was printed in its own log. It works once and expires in 30 minutes.'}
           </p>
         ) : null}
         {error ? <p className="danger-text">{error}</p> : null}
-        {providers.length ? (
-          <div className={classes.providers}>
-            <span className="muted small">or continue with</span>
-            {providers.map((name) => (
-              <a
-                key={name}
-                className={classes.provider}
-                href={`/auth/${name}/login`}
-              >
-                {name === 'github'
-                  ? 'GitHub'
-                  : name === 'google'
-                    ? 'Google'
-                    : name}
-              </a>
-            ))}
-          </div>
-        ) : null}
-        <p className="muted small">
-          No mail server is configured, so the server prints the link in its own
-          log.
-        </p>
       </Card>
     </main>
   );

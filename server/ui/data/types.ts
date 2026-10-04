@@ -56,6 +56,12 @@ export interface Me {
   stats?: UserStats;
   devices?: DeviceInfo[];
   providers: string[];
+  /**
+   * Whether the server can post the sign-in link at all. With no SMTP host the
+   * sender logs the link instead, and the sign-in view says so rather than
+   * leaving somebody to wait for an email that was never sent.
+   */
+  smtp?: boolean;
   admin_email?: string;
   operator_exists?: boolean;
   /** Signed in, but nobody has claimed the operator role on this deployment. */

@@ -251,29 +251,70 @@
   color: var(--brand);
 }
 
-.providers {
+.socialList {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 8px;
-  flex-wrap: wrap;
-  border-top: 1px solid var(--border);
-  padding-top: 10px;
   margin-top: 2px;
 }
 
-.provider {
+/* A link that has to look like a button, because it is a button: it leaves the
+   page. The pill radius is the console's own (.bp6-button), so a provider and a
+   Blueprint button beside it are the same object to the eye. */
+.socialButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   border: 1px solid var(--border-strong);
   border-radius: 18px;
-  padding: 5px 14px;
-  text-decoration: none;
+  padding: 8px 14px;
   color: var(--text);
-  font-size: 13px;
+  font-size: 14px;
+  text-decoration: none;
 }
 
-.provider:hover {
+.socialButton:hover {
   background: var(--sunken);
   border-color: var(--brand);
-  color: var(--brand);
+  /* The label keeps its colour on hover: a social button turning the colour of
+     the brand reads as a different action, and the mark is already the brand's
+     own. */
+  color: var(--text);
+}
+
+.socialButton:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* One fixed slot for every mark, so a provider without one still has its label
+   where the others' labels are. */
+.socialMark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+/* The "or" between the two ways in: a hairline on each side of one word. */
+.orRule {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-muted);
+  font-size: 12px;
+  margin: 2px 0;
+}
+
+.orRule::before,
+.orRule::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
 }
 
 // ---- dialogs ---------------------------------------------------------------

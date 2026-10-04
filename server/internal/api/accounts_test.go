@@ -314,6 +314,11 @@ func TestConsoleMeBeforeAndAfterSignIn(t *testing.T) {
 	if _, ok := r.body["providers"].([]any); !ok {
 		t.Fatalf("the page needs the provider list, even empty: %s", r.raw)
 	}
+	// The sign-in view says where the link went, so it has to know whether the
+	// server can post mail at all. This deployment has no SMTP host.
+	if r.body["smtp"] != false {
+		t.Fatalf("smtp = %v, want false for a deployment with no SMTP host: %s", r.body["smtp"], r.raw)
+	}
 
 	alice := signInAs(t, ts, s, "alice@example.com")
 	r = alice.do(t, http.MethodGet, "/api/v1/console/me")
