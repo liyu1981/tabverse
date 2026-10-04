@@ -25,12 +25,6 @@ func archivedDevice(t *testing.T, st *Store, userID string) (deviceID, tokenHash
 	if err := st.RevokeToken(ctx, userID, hash); err != nil {
 		t.Fatalf("revoke: %v", err)
 	}
-	// backdate the pairing so the inactivity rule (30 days by default) is met
-	if _, err := st.DB().ExecContext(ctx,
-		`UPDATE devices SET created_at = ? WHERE id = ?`,
-		time.Now().Add(-90*24*time.Hour).UnixMilli(), device.ID); err != nil {
-		t.Fatalf("backdate device: %v", err)
-	}
 	return device.ID, hash
 }
 
@@ -80,12 +74,14 @@ func TestArchiveTokenRequiresRevocation(t *testing.T) {
 	}
 }
 
-func TestArchiveDeviceNeedsRevokedAndInactive(t *testing.T) {
+// Archiving a device is a deterministic teardown, not a wait: it revokes and
+// archives the device's tokens and then archives the device, immediately -
+// even a device that synced a moment ago, and even one whose token still works.
+func TestArchiveDeviceIsImmediateTeardown(t *testing.T) {
 	st := newTestStore(t)
 	ctx := context.Background()
 	userID := mustCreateUser(t, st, "alice")
 
-	// 1. a live token blocks it
 	live, err := st.CreateDevice(ctx, "dev_live", userID, "laptop")
 	if err != nil {
 		t.Fatalf("create device: %v", err)
@@ -93,52 +89,53 @@ func TestArchiveDeviceNeedsRevokedAndInactive(t *testing.T) {
 	if err := st.CreateToken(ctx, "h1", userID, live.ID); err != nil {
 		t.Fatalf("create token: %v", err)
 	}
-	if _, err := st.ArchiveDevice(ctx, userID, live.ID, 30); !errors.Is(err, ErrNotRevoked) {
-		t.Fatalf("archiving a device with a live token = %v, want ErrNotRevoked", err)
-	}
-
-	// 2. revoked, but used yesterday: still too recent
-	recent, err := st.CreateDevice(ctx, "dev_recent", userID, "phone")
-	if err != nil {
-		t.Fatalf("create device: %v", err)
-	}
-	if err := st.CreateToken(ctx, "h2", userID, recent.ID); err != nil {
-		t.Fatalf("create token: %v", err)
-	}
-	if err := st.RevokeToken(ctx, userID, "h2"); err != nil {
-		t.Fatalf("revoke: %v", err)
-	}
-	if err := st.TouchToken(ctx, "h2"); err != nil {
+	// it authenticated a moment ago, which used to block archiving for 30 days
+	if err := st.TouchToken(ctx, "h1"); err != nil {
 		t.Fatalf("touch: %v", err)
 	}
-	if _, err := st.ArchiveDevice(ctx, userID, recent.ID, 30); err == nil {
-		t.Fatal("a device used today should not be archivable")
-	} else if !errors.Is(err, ErrActive) {
-		t.Fatalf("err = %v, want ErrActive", err)
-	}
-	// ...unless the operator turns the check off
-	if _, err := st.ArchiveDevice(ctx, userID, recent.ID, 0); err != nil {
-		t.Fatalf("with the inactivity check disabled: %v", err)
+
+	// A live token does not refuse the archive: archiving revokes it.
+	out, err := st.ArchiveDevice(ctx, userID, live.ID)
+	if err != nil || out.Archived != 1 {
+		t.Fatalf("archive live device = %+v (%v)", out, err)
 	}
 
-	// 3. revoked and silent: allowed
-	silent, _ := archivedDevice(t, st, userID)
-	out, err := st.ArchiveDevice(ctx, userID, silent, 30)
-	if err != nil || out.Archived != 1 {
-		t.Fatalf("archive silent device = %+v (%v)", out, err)
-	}
+	// the device is retired...
 	devices, err := st.ListDevices(ctx, userID)
 	if err != nil {
 		t.Fatalf("list devices: %v", err)
 	}
 	for _, d := range devices {
-		if d.ID == silent && !d.Archived {
+		if d.ID == live.ID && !d.Archived {
 			t.Fatalf("device should be listed as archived: %+v", d)
 		}
 	}
-	// unarchive works and reports the device back
-	if out, err = st.UnarchiveDevice(ctx, userID, silent); err != nil || out.Unarchived != 1 {
+	// ...its token is revoked (so sync stops)...
+	revoked, err := st.IsRevoked(ctx, userID, "h1")
+	if err != nil || !revoked {
+		t.Fatalf("archiving the device must revoke its token: revoked=%v (%v)", revoked, err)
+	}
+	// ...and archived too, in the same step
+	tokens, err := st.ListTokens(ctx, userID)
+	if err != nil || len(tokens) != 1 {
+		t.Fatalf("list tokens = %+v (%v)", tokens, err)
+	}
+	if !tokens[0].Revoked || !tokens[0].Archived {
+		t.Fatalf("token should be revoked and archived: %+v", tokens[0])
+	}
+
+	// repeating it is a visible no-op, not a second archive
+	if out, err = st.ArchiveDevice(ctx, userID, live.ID); err != nil || out.Skipped != 1 {
+		t.Fatalf("second archive = %+v (%v), want skipped", out, err)
+	}
+
+	// unarchiving brings the device back; the token stays revoked and archived,
+	// because unarchiving never re-enables access
+	if out, err = st.UnarchiveDevice(ctx, userID, live.ID); err != nil || out.Unarchived != 1 {
 		t.Fatalf("unarchive device = %+v (%v)", out, err)
+	}
+	if revoked, err = st.IsRevoked(ctx, userID, "h1"); err != nil || !revoked {
+		t.Fatalf("unarchiving must not re-enable the token: revoked=%v (%v)", revoked, err)
 	}
 }
 
@@ -158,7 +155,7 @@ func TestArchivedRecordsStillSync(t *testing.T) {
 		t.Fatalf("apply: %v", err)
 	}
 
-	out, err := st.ArchiveDeviceRecords(ctx, userID, deviceID, 30)
+	out, err := st.ArchiveDeviceRecords(ctx, userID, deviceID)
 	if err != nil || out.Archived != 1 {
 		t.Fatalf("archive records = %+v (%v)", out, err)
 	}
@@ -223,7 +220,7 @@ func TestUnarchiveDoesNotRestoreTombstones(t *testing.T) {
 	}, 1<<20); err != nil {
 		t.Fatalf("apply: %v", err)
 	}
-	if _, err := st.ArchiveDeviceRecords(ctx, userID, deviceID, 30); err != nil {
+	if _, err := st.ArchiveDeviceRecords(ctx, userID, deviceID); err != nil {
 		t.Fatalf("archive: %v", err)
 	}
 	if _, err := st.UnarchiveDeviceRecords(ctx, userID, deviceID); err != nil {

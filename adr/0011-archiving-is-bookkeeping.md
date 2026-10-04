@@ -1,6 +1,8 @@
 # ADR 0011: archiving is bookkeeping, never deletion
 
-Status: accepted (2026-09)
+Status: accepted (2026-09); revised: archiving a *device* is now the teardown
+itself and is immediate, instead of a wait for silence. See "The revision"
+below.
 
 Extends [ADR 0009](0009-multi-tenant-and-server-console.md) (the admin API and
 console) and the retention decision in
@@ -49,14 +51,16 @@ so the semantics have to be chosen before the code, not after.
    still authenticates is refused with `409 not_revoked`: revoking is how access
    is cut, and archiving a live credential would hide from the console the very
    access that is still open. Unarchiving never re-enables anything - a
-   revoked token stays revoked, and re-enabling is pairing again.
+   revoked token stays revoked, and re-enabling is pairing again. *(For a
+   device, the revision below makes archiving do the revoking itself.)*
 
 4. **Devices additionally have to look abandoned.**
    `TABVERSED_DEVICE_INACTIVE_DAYS` (default 30) is the silence required, measured
    by the newest successful authentication of any of its tokens. A device that
    has *never* authenticated is exempt: it has no activity to wait out, and a
    mis-issued pairing code that was revoked straight away should not leave a
-   phantom device in the list for a month. `0` disables the check.
+   phantom device in the list for a month. `0` disables the check. *(Removed by
+   the revision below.)*
 
 5. **Records a device wrote come back on their own.** Every accepted write clears
    `archived_at`, because a record somebody just changed is live again. Without
@@ -89,3 +93,30 @@ search index rows with it (ADR 0009).
   retention policy. The actual age-based pruning of `session` records is
   `TABVERSED_RETENTION_DAYS` (ADR 0001), and the only way an operator removes
   user data is to delete the account.
+
+### The revision: archiving a device is the teardown, not a wait
+
+The first version made archiving a *device* wait. It was refused while the
+device still had a usable token (point 3), and again until the device had been
+silent for `TABVERSED_DEVICE_INACTIVE_DAYS` (point 4). In practice that read as
+the server refusing the operator's own decision - "still active: last synced
+2d ago, needs 30 days of silence" - and it left a device that had just been
+archived looking active, because revoking was a separate step the operator had
+to remember first.
+
+Archiving a device is now one deterministic, immediate, server-side action:
+
+1. every token the device holds is revoked, so sync stops;
+2. those tokens are archived;
+3. the device is archived,
+
+all in a single transaction. There is no inactivity window and no "revoke it
+first" for a device: `TABVERSED_DEVICE_INACTIVE_DAYS` is gone, and
+`ArchiveDevice` has no precondition beyond the device existing. Unarchiving
+still only brings the device back - its tokens stay revoked and archived,
+because unarchiving never re-enables access (point 3).
+
+Archiving an individual *token* is unchanged: a live token is still refused
+with `409 not_revoked`, since nothing revokes it for you. Archiving a device's
+*records* still requires no usable token left on it, which archiving the device
+satisfies.

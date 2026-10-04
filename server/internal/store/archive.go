@@ -4,8 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
-	"time"
 )
 
 // Archiving (ADR 0011).
@@ -27,15 +25,15 @@ import (
 // Removing user data is still the client's business (ADR 0001: a delete is a
 // tombstone the client writes) or the account's, by deleting the account.
 
-// ErrNotRevoked is returned when an operator tries to archive a credential
-// that still works. Revoking is how a credential is disabled; archiving is how
-// a dead one is tidied away, and conflating the two would let a live device
-// silently vanish from the console while still syncing.
+// ErrNotRevoked is returned when an operator tries to archive a token, or a
+// device's records, while the credential can still authenticate. Revoking is
+// how access is cut; archiving a token is how a dead one is tidied away, and
+// conflating the two would let a live credential silently vanish from the
+// console while it still works.
+//
+// Archiving a *device* is the exception: it revokes the device's tokens itself
+// (see ArchiveDevice), so there is nothing left to refuse.
 var ErrNotRevoked = errors.New("not revoked yet: revoke it first")
-
-// ErrActive is returned when a device is still in use. Inactivity is measured
-// by the last successful authentication (tokens.last_used).
-var ErrActive = errors.New("still active")
 
 // ArchiveOutcome reports what an archive or unarchive changed.
 type ArchiveOutcome struct {
@@ -129,11 +127,10 @@ func (s *Store) UnarchiveToken(ctx context.Context, userID, hash string) (Archiv
 	return out, nil
 }
 
-// deviceState is what the archive precondition is decided on: a device must
-// have no usable token left, and must look abandoned.
+// deviceState is what the archive preconditions are decided on: a device whose
+// records are being archived must have nothing that can still authenticate.
 type deviceState struct {
 	liveTokens int
-	lastUsed   int64
 	archivedAt sql.NullInt64
 }
 
@@ -142,10 +139,9 @@ func (s *Store) deviceStateOf(ctx context.Context, userID, deviceID string) (dev
 	var id string
 	err := s.db.QueryRowContext(ctx, `
 		SELECT d.id, d.archived_at,
-		       (SELECT COUNT(*) FROM tokens t WHERE t.device_id = d.id AND t.revoked = 0),
-		       COALESCE((SELECT MAX(t.last_used) FROM tokens t WHERE t.device_id = d.id), 0)
+		       (SELECT COUNT(*) FROM tokens t WHERE t.device_id = d.id AND t.revoked = 0)
 		FROM devices d WHERE d.id = ? AND d.user_id = ?`, deviceID, userID).
-		Scan(&id, &st.archivedAt, &st.liveTokens, &st.lastUsed)
+		Scan(&id, &st.archivedAt, &st.liveTokens)
 	if errors.Is(err, sql.ErrNoRows) {
 		return st, ErrNotFound
 	}
@@ -155,18 +151,10 @@ func (s *Store) deviceStateOf(ctx context.Context, userID, deviceID string) (dev
 	return st, nil
 }
 
-// InactiveSince is how long a device has to go unused before archiving it is
-// allowed. Zero or negative days disables the check, leaving only "revoked".
-func inactiveSince(days int) time.Duration {
-	if days <= 0 {
-		return 0
-	}
-	return time.Duration(days) * 24 * time.Hour
-}
-
-// checkArchivable applies the precondition for archiving a device: nothing may
-// still authenticate with it, and it must look abandoned.
-func (s *Store) checkArchivable(ctx context.Context, userID, deviceID string, inactiveDays int) (deviceState, error) {
+// checkRevoked applies the one precondition left for archiving a device's
+// records: nothing may still authenticate with it. Archiving the device itself
+// has no precondition, because it revokes as part of the teardown.
+func (s *Store) checkRevoked(ctx context.Context, userID, deviceID string) (deviceState, error) {
 	st, err := s.deviceStateOf(ctx, userID, deviceID)
 	if err != nil {
 		return st, err
@@ -174,24 +162,21 @@ func (s *Store) checkArchivable(ctx context.Context, userID, deviceID string, in
 	if st.liveTokens > 0 {
 		return st, ErrNotRevoked
 	}
-	if wait := inactiveSince(inactiveDays); wait > 0 && st.lastUsed != 0 {
-		// A device that has never authenticated once has no activity to wait
-		// out, so the window does not apply to it: a mis-issued pairing code
-		// that was revoked straight away should not leave a phantom device
-		// sitting in the list for a month.
-		if time.Since(unixMS(st.lastUsed)) < wait {
-			days := int(wait.Hours() / 24)
-			return st, fmt.Errorf("%w: last synced %s, needs %d days of silence",
-				ErrActive, humanAge(unixMS(st.lastUsed)), days)
-		}
-	}
 	return st, nil
 }
 
-// ArchiveDevice retires a revoked, abandoned device in the console's lists.
-func (s *Store) ArchiveDevice(ctx context.Context, userID, deviceID string, inactiveDays int) (ArchiveOutcome, error) {
+// ArchiveDevice retires a device and cuts it off, in one deterministic step.
+//
+// Archiving a device is the operator's decisive teardown: it revokes every
+// token the device holds, archives those tokens and archives the device, all
+// in one transaction, so an archived device can never be left looking active
+// or still syncing. It is immediate - there is no inactivity window to wait
+// out. Nothing is deleted: the records it wrote stay stored and keep syncing
+// to the user's other devices (ADR 0011), and only the console stops listing
+// the rows. Unarchiving brings the device back; its tokens stay revoked.
+func (s *Store) ArchiveDevice(ctx context.Context, userID, deviceID string) (ArchiveOutcome, error) {
 	out := ArchiveOutcome{}
-	st, err := s.checkArchivable(ctx, userID, deviceID, inactiveDays)
+	st, err := s.deviceStateOf(ctx, userID, deviceID)
 	if err != nil {
 		return out, err
 	}
@@ -199,9 +184,32 @@ func (s *Store) ArchiveDevice(ctx context.Context, userID, deviceID string, inac
 		out.Skipped = 1
 		return out, nil
 	}
-	if _, err := s.db.ExecContext(ctx,
+	now := nowMS()
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return out, err
+	}
+	// Rollback is a no-op once Commit has run; the deferred call covers every
+	// early return above it.
+	defer func() { _ = tx.Rollback() }()
+	// Cut access first, so nothing can authenticate with a device that is about
+	// to vanish from the console.
+	if _, err := tx.ExecContext(ctx,
+		`UPDATE tokens SET revoked = 1 WHERE user_id = ? AND device_id = ? AND revoked = 0`,
+		userID, deviceID); err != nil {
+		return out, err
+	}
+	if _, err := tx.ExecContext(ctx,
+		`UPDATE tokens SET archived_at = ? WHERE user_id = ? AND device_id = ? AND archived_at IS NULL`,
+		now, userID, deviceID); err != nil {
+		return out, err
+	}
+	if _, err := tx.ExecContext(ctx,
 		`UPDATE devices SET archived_at = ? WHERE id = ? AND user_id = ?`,
-		nowMS(), deviceID, userID); err != nil {
+		now, deviceID, userID); err != nil {
+		return out, err
+	}
+	if err := tx.Commit(); err != nil {
 		return out, err
 	}
 	out.Archived = 1
@@ -244,11 +252,12 @@ func (s *Store) UnarchiveDevice(ctx context.Context, userID, deviceID string) (A
 // ArchiveDeviceRecords archives every live record this device last wrote. The
 // rows are untouched otherwise: they still sync to the user's other devices
 // (ADR 0011), they only stop showing up in the console's default listings.
-func (s *Store) ArchiveDeviceRecords(ctx context.Context, userID, deviceID string, inactiveDays int) (ArchiveOutcome, error) {
+func (s *Store) ArchiveDeviceRecords(ctx context.Context, userID, deviceID string) (ArchiveOutcome, error) {
 	out := ArchiveOutcome{}
-	// Same precondition as archiving the device itself: this is the "and its
-	// records" half of retiring it, and it is no more reversible than that.
-	if _, err := s.checkArchivable(ctx, userID, deviceID, inactiveDays); err != nil {
+	// The records a device wrote are only retired once nothing can still
+	// authenticate with it. (Archiving the device revokes its tokens, so this
+	// passes by the time the console offers this half.)
+	if _, err := s.checkRevoked(ctx, userID, deviceID); err != nil {
 		return out, err
 	}
 	res, err := s.db.ExecContext(ctx, `
@@ -305,19 +314,4 @@ func (s *Store) ArchivedRecordCount(ctx context.Context, userID, deviceID string
 		WHERE user_id = ? AND device_id = ? AND deleted = 0 AND archived_at IS NOT NULL`,
 		userID, deviceID).Scan(&n)
 	return n, err
-}
-
-// humanAge is a short "3d ago" for the precondition's error message.
-func humanAge(t time.Time) string {
-	d := time.Since(t)
-	switch {
-	case d < time.Minute:
-		return "just now"
-	case d < time.Hour:
-		return fmt.Sprintf("%dm", int(d.Minutes()))
-	case d < 24*time.Hour:
-		return fmt.Sprintf("%dh", int(d.Hours()))
-	default:
-		return fmt.Sprintf("%dd", int(d.Hours()/24))
-	}
 }

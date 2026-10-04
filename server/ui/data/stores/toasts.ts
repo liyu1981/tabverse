@@ -31,9 +31,9 @@ export const $toasts = createStore<Toast[]>([])
 
 /**
  * The server's own sentence, or a prefix saying which call failed. A 409 is a
- * precondition the server explains ("revoke it first", "last active 2d ago,
- * needs 30 days") and that is exactly what the operator needs to read, so it is
- * shown as it is rather than flattened into "operation failed".
+ * precondition the server explains ("revoke it first") and that is exactly what
+ * the operator needs to read, so it is shown as it is rather than flattened
+ * into "operation failed".
  */
 export function reportFailure(what: string, error: unknown): void {
   const status = (error as { status?: number })?.status;

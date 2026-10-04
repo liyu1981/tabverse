@@ -364,11 +364,13 @@ tested.
 (tabverse list, record browser, console search, all with `?archived=1` to
 include). The record stays stored and keeps syncing to the user's own devices,
 and the extension's own search is not filtered - archiving is an operator's
-filing decision, not a retention policy. A token must be revoked before it can
-be archived, and a device additionally has to have no usable token and no
-successful authentication for `TABVERSED_DEVICE_INACTIVE_DAYS` (a device that
-never authenticated is exempt). Every accepted write clears `archived_at`,
-because a record somebody just changed is live again.
+filing decision, not a retention policy. Archiving a *device* is the operator's
+decisive teardown: it revokes and archives the device's tokens and then
+archives the device, in one transaction and immediately - no inactivity window.
+A token archived on its own still has to be revoked first, and a device's
+records can only be archived once it has no usable token left. Every accepted
+write clears `archived_at`, because a record somebody just changed is live
+again.
 
 ## Status
 

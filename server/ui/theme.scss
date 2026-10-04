@@ -107,15 +107,26 @@ p {
   padding: 16px;
 }
 
+/* Blueprint rounds the dialog itself, its header and its fixed footer to 4px,
+   and they are three separate boxes. The product's radius is 18px, so all
+   three have to agree, or the white header and footer sit inside a
+   differently-rounded shell - and the header/footer keep Blueprint's own 4px
+   unless they are overridden. The dialog's `padding-bottom` used to leave a
+   16px strip of the dialog background below the fixed footer, which is what
+   made the bottom corners look wrong; the footer reaches the bottom edge. */
 .bp6-dialog {
   border-radius: var(--radius);
-  padding-bottom: 16px;
 }
 
 .bp6-dialog-header {
   background: var(--surface);
+  border-radius: var(--radius) var(--radius) 0 0;
   box-shadow: none;
   padding: 14px 16px 8px;
+}
+
+.bp6-dialog-footer-fixed {
+  border-radius: 0 0 var(--radius) var(--radius);
 }
 
 .bp6-heading {

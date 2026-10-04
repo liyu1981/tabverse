@@ -297,8 +297,8 @@ type DeviceInfo struct {
 	// successful authentication of any of them.
 	ActiveTokens int   `json:"active_tokens"`
 	LastUsed     int64 `json:"last_used"`
-	// ArchivedAt is set when an operator retired this device (ADR 0011): it
-	// must have had no usable token left and been silent for a while.
+	// ArchivedAt is set when an operator retired this device (ADR 0011): the
+	// store revoked and archived its tokens first, then archived the device.
 	ArchivedAt int64 `json:"archived_at"`
 	Archived   bool  `json:"archived"`
 	// ArchivedRecords counts the live records this device last wrote that are

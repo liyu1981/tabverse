@@ -758,7 +758,7 @@ func archiveFlow(t *testing.T, op *sessionClient) (userID, deviceID, tokenHash, 
 	return userID, deviceID, tokenHash, deviceToken
 }
 
-func TestArchiveRefusesWhileStillUsable(t *testing.T) {
+func TestArchiveTokenRefusesWhileStillUsable(t *testing.T) {
 	_, op := newAdminServer(t)
 	userID, _ := seedUser(t, op, "alice")
 	r := adminDo(t, op, http.MethodGet, "/api/v1/admin/users/"+userID, nil)
@@ -766,9 +766,6 @@ func TestArchiveRefusesWhileStillUsable(t *testing.T) {
 	tokens, _ := r.body["tokens"].([]any)
 	tok, _ := tokens[0].(map[string]any)
 	hash, _ := tok["hash"].(string)
-	devices, _ := r.body["devices"].([]any)
-	dev, _ := devices[0].(map[string]any)
-	deviceID, _ := dev["id"].(string)
 
 	// A live token cannot be archived: revoking is how access is cut, and
 	// archiving a usable credential would hide it from the console while it
@@ -779,12 +776,41 @@ func TestArchiveRefusesWhileStillUsable(t *testing.T) {
 	if r.body["error"] != "not_revoked" {
 		t.Fatalf("error = %v, want not_revoked: %s", r.body["error"], r.raw)
 	}
-	// the same for a device that still has a usable token
+}
+
+// Archiving a device is the operator's decisive teardown: one call revokes and
+// archives its tokens and archives the device, even while it is still live and
+// authenticated a moment ago.
+func TestArchiveDeviceRevokesAndArchivesItsTokens(t *testing.T) {
+	_, op := newAdminServer(t)
+	userID, _ := seedUser(t, op, "alice")
+	r := adminDo(t, op, http.MethodGet, "/api/v1/admin/users/"+userID, nil)
+	r.mustStatus(t, http.StatusOK)
+	devices, _ := r.body["devices"].([]any)
+	dev, _ := devices[0].(map[string]any)
+	deviceID, _ := dev["id"].(string)
+	if active, _ := dev["active_tokens"].(float64); active != 1 {
+		t.Fatalf("seed device should have one live token: %v", dev)
+	}
+
 	r = adminDo(t, op, http.MethodPut,
 		"/api/v1/admin/users/"+userID+"/devices/"+deviceID+"/archive", nil)
-	r.mustStatus(t, http.StatusConflict)
-	if r.body["error"] != "not_revoked" {
-		t.Fatalf("device error = %v: %s", r.body["error"], r.raw)
+	r.mustStatus(t, http.StatusOK)
+
+	r = adminDo(t, op, http.MethodGet, "/api/v1/admin/users/"+userID, nil)
+	r.mustStatus(t, http.StatusOK)
+	devices, _ = r.body["devices"].([]any)
+	dev, _ = devices[0].(map[string]any)
+	if dev["archived"] != true {
+		t.Fatalf("device not listed as archived: %v", dev)
+	}
+	if active, _ := dev["active_tokens"].(float64); active != 0 {
+		t.Fatalf("archiving must revoke the token: %v", dev)
+	}
+	tokens, _ := r.body["tokens"].([]any)
+	tok, _ := tokens[0].(map[string]any)
+	if tok["revoked"] != true || tok["archived"] != true {
+		t.Fatalf("token should be revoked and archived: %v", tok)
 	}
 }
 
@@ -792,18 +818,19 @@ func TestArchiveDeviceAndItsRecords(t *testing.T) {
 	_, op := newAdminServer(t)
 	userID, deviceID, _, _ := archiveFlow(t, op)
 
-	// records archive first, then the device itself
+	// the device is archived first: that revokes and archives its token, which
+	// is what lets the records be retired next
 	r := adminDo(t, op, http.MethodPut,
+		"/api/v1/admin/users/"+userID+"/devices/"+deviceID+"/archive", nil)
+	r.mustStatus(t, http.StatusOK)
+
+	r = adminDo(t, op, http.MethodPut,
 		"/api/v1/admin/users/"+userID+"/devices/"+deviceID+"/records/archive",
 		nil)
 	r.mustStatus(t, http.StatusOK)
 	if archived, _ := r.body["archived"].(float64); archived != 1 {
 		t.Fatalf("archived = %v, want 1: %s", r.body["archived"], r.raw)
 	}
-
-	r = adminDo(t, op, http.MethodPut,
-		"/api/v1/admin/users/"+userID+"/devices/"+deviceID+"/archive", nil)
-	r.mustStatus(t, http.StatusOK)
 
 	// the console's default listing hides the record...
 	r = adminDo(t, op, http.MethodGet,
@@ -901,7 +928,7 @@ func TestTotalsCountArchived(t *testing.T) {
 	r := adminDo(t, op, http.MethodGet, "/api/v1/admin/totals", nil)
 	r.mustStatus(t, http.StatusOK)
 	for field, want := range map[string]float64{
-		"archived_devices": 1, "archived_records": 1, "archived_tokens": 0,
+		"archived_devices": 1, "archived_records": 1, "archived_tokens": 1,
 		// archiving hides a record from the console, it does not unstore it
 		"live_records": 1,
 	} {

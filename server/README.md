@@ -150,7 +150,6 @@ git-ignored, because it holds the auth secret and the provider secret - and
 | `TABVERSED_SEARCH_LIMIT`     | `50`                | max search hits                                             |
 | `TABVERSED_WS_ORIGINS`       | _(any)_             | comma separated Origin allow list for the WebSocket upgrade |
 | `TABVERSED_ADMIN_EMAIL`      | _(unset)_           | whose first registration becomes the operator (ADR 0013) |
-| `TABVERSED_DEVICE_INACTIVE_DAYS` | `30`           | silence required before a device may be archived (ADR 0011); a device that never authenticated is exempt, `0` disables the check |
 | `TABVERSED_ENV_FILE`       | _(unset)_           | read this file instead of `./.env`; unreadable is a startup error |
 
 ## API
@@ -422,7 +421,7 @@ curl -s -b $J -X POST "$B/api/v1/admin/users/$U/impersonate"
 curl -s -b $J "$B/api/v1/console/impersonation"
 curl -s -b $J -X POST "$B/api/v1/console/impersonate/stop"
 
-# then retire the dead device (revoked + silent), and what it last wrote
+# then retire the dead device (revokes and archives its tokens, then archives it)
 curl -s -b $J -X PUT "$B/api/v1/admin/users/$U/devices/dev_.../archive"
 curl -s -b $J -X PUT "$B/api/v1/admin/users/$U/devices/dev_.../records/archive"
 curl -s -b $J "$B/api/v1/admin/users/$U/records?archived=1"   # show archived
@@ -439,8 +438,8 @@ is never at risk - to remove data, delete the account.
 | Step | Endpoint | Precondition |
 | ---- | -------- | ------------ |
 | Archive a token | `PUT .../tokens/{hash}/archive` | the token must be revoked |
-| Archive a device | `PUT .../devices/{id}/archive` | no usable token left, **and** silent for `TABVERSED_DEVICE_INACTIVE_DAYS` (a device that never authenticated is exempt) |
-| Archive what it wrote | `PUT .../devices/{id}/records/archive` | the same two rules |
+| Archive a device | `PUT .../devices/{id}/archive` | none: it revokes and archives the device's tokens, then archives the device, in one step |
+| Archive what it wrote | `PUT .../devices/{id}/records/archive` | no usable token left (archiving the device satisfies this) |
 | Undo any of the above | `DELETE` the same paths | - |
 
 Unarchiving never re-enables access: a revoked token stays revoked. A record

@@ -81,9 +81,10 @@ export function CredentialsPanel() {
         <div>
           <h2>Devices &amp; Tokens</h2>
           <p className="muted small">
-            Revoking cuts a device off. Archiving retires it from these tables,
-            and it never deletes anything: the row stays stored and keeps
-            syncing to the user's own devices.
+            Revoking cuts a device off. Archiving a device cuts it off too, and
+            retires it: its tokens are revoked and archived, then the device is
+            archived, all at once. Nothing is ever deleted - the rows stay
+            stored and their records keep syncing to the user's own devices.
           </p>
         </div>
         {/* One control for both tables, because archived is the same question of
@@ -314,10 +315,11 @@ function Stat(props: { value: number; label: string }) {
 }
 
 /**
- * The device row's buttons, in the order the workflow goes: cut access, then
- * retire it, then (optionally) retire what it last wrote. Archive is only
- * offered once there is nothing left to revoke - the server enforces it too,
- * with a 409 the console shows as a sentence rather than a failure.
+ * The device row's buttons. Revoking is the lighter option: it cuts access but
+ * leaves the device visible. Archiving is the teardown - it revokes and
+ * archives the device's tokens and then archives the device, in one step - so
+ * it is offered on a live device too. Both are the server's to enforce, not
+ * this row's.
  */
 function DeviceActions(props: {
   device: DeviceInfo;
@@ -325,27 +327,26 @@ function DeviceActions(props: {
   onAsk: (what: 'revoke' | 'archive' | 'records') => void;
 }) {
   const dev = props.device;
-  if (dev.active_tokens) {
-    return (
-      <Button
-        small={true}
-        minimal={true}
-        intent="danger"
-        onClick={() => props.onAsk('revoke')}
-      >
-        Revoke
-      </Button>
-    );
-  }
   return (
     <>
+      {dev.active_tokens ? (
+        <Button
+          small={true}
+          minimal={true}
+          intent="danger"
+          title="Cut this device off without retiring it. Archiving does this too, and then hides the device."
+          onClick={() => props.onAsk('revoke')}
+        >
+          Revoke
+        </Button>
+      ) : null}
       <Button
         small={true}
         minimal={true}
         title={
           dev.archived
             ? 'Bring this device back into the default views. It stays revoked.'
-            : 'Hide this device from the default views. Its records stay stored and keep syncing to your devices, and this is reversible (adr/0011).'
+            : 'Revoke and archive its tokens, then hide the device from the default views. Its records stay stored and keep syncing to your devices, and this is reversible (adr/0011).'
         }
         onClick={() => props.onAsk('archive')}
       >
@@ -359,7 +360,7 @@ function DeviceActions(props: {
         >
           Restore records
         </Button>
-      ) : props.hasRecords ? (
+      ) : !dev.active_tokens && props.hasRecords ? (
         <Button
           small={true}
           minimal={true}
@@ -369,7 +370,9 @@ function DeviceActions(props: {
           Archive its records
         </Button>
       ) : null}
-      {!dev.archived ? <span className="muted small">revoked</span> : null}
+      {!dev.archived && !dev.active_tokens ? (
+        <span className="muted small">revoked</span>
+      ) : null}
     </>
   );
 }
@@ -403,7 +406,9 @@ function explain(pending: NonNullable<Pending>): string {
           'A record edited later comes back on its own.';
   }
   return dev.archived
-    ? `Bringing "${dev.name}" back into the default views. It stays revoked.`
-    : `Archiving hides "${dev.name}" from the default views. Nothing is deleted: ` +
-        'its records stay stored and keep syncing to your devices.';
+    ? `Bringing "${dev.name}" back into the default views. Its tokens stay revoked, so it has to pair again to sync.`
+    : `Archiving "${dev.name}" stops it syncing: its tokens are revoked and ` +
+        'archived, then the device is hidden from the default views, all at ' +
+        'once. Nothing is deleted - the records it wrote stay stored and keep ' +
+        'syncing to your other devices.';
 }

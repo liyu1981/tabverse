@@ -506,7 +506,8 @@ func (s *Server) archiveToken(w http.ResponseWriter, r *http.Request, archive bo
 	writeJSON(w, http.StatusOK, outcome)
 }
 
-// handleAdminArchiveDevice retires a revoked, abandoned device.
+// handleAdminArchiveDevice retires a device and cuts it off: the store revokes
+// and archives its tokens, then archives the device, in one step.
 func (s *Server) handleAdminArchiveDevice(w http.ResponseWriter, r *http.Request) {
 	s.archiveDevice(w, r, true)
 }
@@ -525,7 +526,7 @@ func (s *Server) archiveDevice(w http.ResponseWriter, r *http.Request, archive b
 	var outcome store.ArchiveOutcome
 	var err error
 	if archive {
-		outcome, err = s.store.ArchiveDevice(r.Context(), userID, deviceID, s.cfg.DeviceInactiveDays)
+		outcome, err = s.store.ArchiveDevice(r.Context(), userID, deviceID)
 	} else {
 		outcome, err = s.store.UnarchiveDevice(r.Context(), userID, deviceID)
 	}
@@ -558,7 +559,7 @@ func (s *Server) archiveDeviceRecords(w http.ResponseWriter, r *http.Request, ar
 	var outcome store.ArchiveOutcome
 	var err error
 	if archive {
-		outcome, err = s.store.ArchiveDeviceRecords(r.Context(), userID, deviceID, s.cfg.DeviceInactiveDays)
+		outcome, err = s.store.ArchiveDeviceRecords(r.Context(), userID, deviceID)
 	} else {
 		outcome, err = s.store.UnarchiveDeviceRecords(r.Context(), userID, deviceID)
 	}
@@ -583,8 +584,6 @@ func writeArchiveErr(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, store.ErrNotRevoked):
 		writeErr(w, http.StatusConflict, "not_revoked", err.Error())
-	case errors.Is(err, store.ErrActive):
-		writeErr(w, http.StatusConflict, "still_active", err.Error())
 	default:
 		writeStoreErr(w, err)
 	}

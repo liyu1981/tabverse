@@ -546,22 +546,17 @@ paths:
       - { name: device_id, in: path, required: true, schema: { type: string } }
     put:
       tags: [admin]
-      summary: Archive a revoked, abandoned device
+      summary: Archive a device (revoke and archive its tokens, then archive it)
       description: |
-        Requires no usable token left on the device **and** no successful
-        authentication for `TABVERSED_DEVICE_INACTIVE_DAYS` (default 30). A
-        device that never authenticated is exempt, so a mis-issued pairing code
-        revoked straight away can be tidied immediately. Hides the device from
-        the console's default lists; it stays stored (ADR 0011).
+        One deterministic teardown: every token the device holds is revoked,
+        those tokens are archived, and the device is archived, in a single
+        transaction. Immediate - there is no inactivity window to wait out and
+        no need to revoke first. Hides the rows from the console's default
+        lists; they stay stored and their records keep syncing (ADR 0011).
       responses:
         '200': { description: archived, or a no-op if it already was }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
-        '409':
-          description: still usable, or not silent for long enough
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/Error' }
     delete:
       tags: [admin]
       summary: Unarchive a device (its tokens stay revoked)
@@ -578,10 +573,11 @@ paths:
       tags: [admin]
       summary: Archive the records this device last wrote
       description: |
-        The same preconditions as archiving the device. The records stay
-        stored and keep syncing to the user's own devices, and the extension's
-        search is not filtered - only this console's views are. A record edited
-        again un-archives itself. Tombstones are left alone.
+        Requires the device to have no usable token left, which archiving the
+        device satisfies. The records stay stored and keep syncing to the
+        user's own devices, and the extension's search is not filtered - only
+        this console's views are. A record edited again un-archives itself.
+        Tombstones are left alone.
       responses:
         '200':
           description: how many records were archived
@@ -591,7 +587,7 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
         '409':
-          description: still usable, or not silent for long enough
+          description: still usable (revoke it first, or archive the device)
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Error' }

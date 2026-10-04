@@ -21,10 +21,6 @@ type Config struct {
 	// RetentionDays controls how long chrome session snapshots are kept.
 	// 0 disables server side retention.
 	RetentionDays int
-	// DeviceInactiveDays is how long a paired device must go without a
-	// successful authentication before an operator may archive it (adr/0011).
-	// 0 disables that check, leaving "has no usable token" as the only rule.
-	DeviceInactiveDays int
 
 	// AuthSecret signs the console's session cookies. Empty means "generate
 	// one on first boot and keep it in the database", so a self hosted
@@ -176,9 +172,6 @@ func Load(version string) (Config, error) {
 		cfg.MaxRecordBytes = int64(v)
 	}
 	if cfg.SyncBatchLimit, err = GetenvInt("TABVERSED_SYNC_BATCH_LIMIT", cfg.SyncBatchLimit); err != nil {
-		return Config{}, err
-	}
-	if cfg.DeviceInactiveDays, err = GetenvInt("TABVERSED_DEVICE_INACTIVE_DAYS", 30); err != nil {
 		return Config{}, err
 	}
 	cfg.AdminEmail = strings.ToLower(strings.TrimSpace(Getenv("TABVERSED_ADMIN_EMAIL", "")))
