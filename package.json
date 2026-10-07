@@ -12,7 +12,7 @@
     "test": "vitest run --coverage",
     "test:watch": "vitest",
     "build": "vite build",
-    "develop": "vite build --watch --mode development",
+    "dev": "vite build --watch --mode development",
     "build-doc": "./tools/builddoc.sh",
     "build-crx": "./tools/buildcrx.sh",
     "ui:build": "vite build --config server/ui/vite.config.mts && node -e \"require('fs').writeFileSync('server/internal/webui/dist/.gitkeep','')\"",

@@ -3,10 +3,11 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import React from 'react';
 
 import { BookmarkPanel } from './BookmarkPanel';
-import { HistoryPanel } from './HistoryPanel';
+import { HistoryList, HistoryPanel } from './HistoryPanel';
 import { NotePanel } from './NotePanel';
 import { TabverseRecords } from './TabverseRecords';
 import { TodoPanel } from './TodoPanel';
+import historyClasses from '../../../../src/ui/history/HistoryView.module.scss';
 import type {
   Bookmark,
   ClosedTab,
@@ -286,4 +287,41 @@ test('the first page is the newest ten, in the order the bundle sent them', () =
 test('no history at all is the extension`s own notice', () => {
   const html = renderToStaticMarkup(<HistoryPanel history={[]} />);
   expect(html).toContain('No closed tab');
+  // and nothing to search or group, so neither control is drawn
+  expect(html).not.toContain('bp6-icon-search');
+  expect(html).not.toContain('bp6-icon-group-objects');
+});
+
+test('history is searched and grouped by the extension`s own two answers', () => {
+  // The extension's card grew a search box and a switch to group by site, and it
+  // would be a second implementation to go stale if this panel answered those
+  // questions its own way: the box and the switch are the extension's
+  // `HistoryToolbar` on the extension's classes, and what they filter and group
+  // is the extension's `historyFilter`. What can be checked here is the wiring -
+  // the controls are the extension's and the grouped list is the extension's
+  // markup. Keystrokes and clicks are not: there is no DOM here (AGENTS.md).
+  const many = Array.from({ length: 25 }, (_, i) =>
+    closed({ id: `c${i + 1}`, title: `closed ${i + 1}` }),
+  );
+  const panel = renderToStaticMarkup(<HistoryPanel history={many} />);
+  expect(panel).toContain('bp6-icon-search');
+  expect(panel).toContain('search these closed tabs');
+  expect(panel).toContain('bp6-icon-group-objects');
+  expect(panel).toContain('aria-pressed="false"');
+
+  const grouped = renderToStaticMarkup(
+    <HistoryList entries={many} grouped={true} />,
+  );
+  // one header for the one site these rows are on, and all of them: the grouped
+  // view is the whole list, not another page of it
+  expect(grouped).toContain(historyClasses.groupHeader);
+  expect((grouped.match(/<li>/g) ?? []).length).toBe(25);
+  expect(grouped).not.toContain('chevron-right');
+
+  // and the flat list is still the paged one, with no header on it
+  const flat = renderToStaticMarkup(
+    <HistoryList entries={many} grouped={false} />,
+  );
+  expect((flat.match(/<li>/g) ?? []).length).toBe(10);
+  expect(flat).not.toContain(historyClasses.groupHeader);
 });

@@ -111,6 +111,48 @@ Two consequences worth writing down:
   server side: a tab is already on screen, and it is the user's own eyes that
   asked the question.
 
+## The history's box and its site groups (`src/data/closedTab/historyFilter.ts`)
+
+The History card's two controls ask about the closed tabs of one tabverse, and
+the answers are pure functions of the rows the store already holds: a substring
+test over the title and the url, and a bucket per site - the url's host, lower
+cased, without a leading `www.`, so `www.github.com` and `github.com` are one
+group (`historySiteOf`). The host, not the registrable domain: collapsing
+`mail.google.com` into `google.com` needs a public suffix list, and Chrome's own
+history does not do it either. A page the browser serves itself is named by its
+scheme instead (`chrome://extensions` under `chrome:` - its "host" is a page name,
+not a site), and a row that is not a url at all goes to `(no site)` rather than
+out of the list.
+
+Like the live tab filter, it is a filter over the rows on screen and not the
+search of `data/search`. Four things are worth writing down because they are
+choices, not consequences:
+
+- **It does not rank.** The live tab filter puts the best match first; the
+  history does not. Its list is a timeline, so a page closed an hour ago stays
+  above one closed last Tuesday however well the titles match - and each site's
+  rows are drawn newest first for that same reason.
+- **Groups follow the list.** A site appears in the order its newest page
+  appeared, so the site you were reading most recently is the first header. Grouping
+  never reorders: it only decides which rows sit under which header.
+- **A term may come from the title and another from the url.** This is looser
+  than `localSearch`, which needs every term inside one field, and deliberately
+  so: there the answer is a whole tabverse and the scope says which field; here
+  the rows are on screen, and "github issues" is one closed tab.
+- **The grouped view does not page.** The pager pages rows, and a page that
+  ended in the middle of a site's rows would print that site's header twice. So
+  the flat list pages at ten (`usePageControl`) and the grouped one draws every
+  entry under its site - which is what the search box is for. A tabverse keeps up
+  to 999 entries (`adr/0007`), so the grouped view is the one to search rather
+  than scroll.
+
+Both the box and the switch are one component (`ui/history/HistoryToolbar`),
+used by the extension's card and by the console's read-only panel alike - the
+console already reuses this card's stylesheet and `usePageControl`, and a filter
+drawn twice is a second one that will drift. The switch is a window-local
+setting (`storage/localSetting`), not a record: nothing about how a list is
+drawn is worth syncing to another device.
+
 ## The tabverses open in this browser (`src/data/tabSpace/openWindowStore.ts`)
 
 The sidebar's "Other Tabverses" list, and the rule that keeps a tabverse open in

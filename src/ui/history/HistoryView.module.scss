@@ -27,6 +27,106 @@
   list-style: none;
 }
 
+/*
+ * The search box and the group switch, on one row under the count.
+ *
+ * `align-items: center` and a fixed-ish input height are what keep the switch
+ * the same size as the field beside it; the box takes what is left, so the row
+ * works at the tabverse's width and in the console's narrower drawer column.
+ */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px 8px 12px;
+}
+
+.toolbar > :global(.bp6-input-group) {
+  flex: 1;
+  min-width: 0;
+}
+
+/*
+ * The count and the clear button, inside the box on the right.
+ *
+ * The group is `display: block` (Blueprint's own), so a right element is in
+ * flow and lands *below* the input unless it is taken out of it - hence the
+ * absolute positioning, measured as in the live tab filter's own box
+ * (ActiveTabSearch.module.scss), which is the same problem at the same size.
+ */
+.searchRight {
+  position: absolute;
+  top: -2px;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-right: 6px;
+  z-index: 1;
+}
+
+/*
+ * Room for the count and the clear button, which are out of the flow above:
+ * without this the input's text runs underneath them.
+ */
+.toolbar :global(.bp6-input-group) :global(.bp6-input) {
+  padding-right: 76px;
+}
+
+/*
+ * The clear button keeps its place whether or not there is anything to clear,
+ * so the count does not jump sideways the moment the box has text in it.
+ * `visibility` rather than `display`: a hidden button that took no space would
+ * defeat the point, and this one is out of the tab order while hidden.
+ */
+.searchClearHidden {
+  visibility: hidden;
+}
+
+/* A pill, like every other piece of chrome-size information in the extension. */
+.searchCount {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 10px;
+  background-color: global.$color-light-shade;
+  color: global.$color-d;
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/*
+ * The grouped view: a header per day, then that day's rows.
+ *
+ * The header is a div above its own `<ul>`, not a row in the list: a `<li>` is
+ * a closed tab here (the card's own markup and its tests both count those), and
+ * a day is not one.
+ */
+.groupedContainer {
+  border-top: 1px solid #ededed;
+}
+
+.groupSection + .groupSection {
+  border-top: 1px solid #ededed;
+}
+
+.groupHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background-color: global.$color-light-shade;
+  color: global.$color-d;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.groupCount {
+  color: global.$color-text;
+}
+
 .listItemView {
   display: flex;
   align-items: center;
