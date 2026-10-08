@@ -65,7 +65,10 @@ The flag is read in exactly two places: `tools/embedsite.sh`, which builds the
 Docusaurus site into `server/internal/webui/docs/` (and clears that directory
 first, so a default build after an official one cannot ship it by accident), and
 doc/tabverse-website's `docusaurus.config.js`, which switches `baseUrl` and `url`
-and puts **Login** in the navbar after *User Manual*. The absolute addresses the
+and puts **Login** in the navbar after *User Manual*. The script also installs
+the website's own dependencies first - it is a separate workspace with its own
+lockfile, so nothing the repository's install does reaches it - which is why a
+machine that has never built the docs can run the command as-is. The absolute addresses the
 docs emit (canonical, sitemap) come from `TABVERSED_PUBLIC_URL` when it is set,
 and default to `https://tabversed.liyu1981.xyz`.
 `tools/builddoc.sh` (the GitHub Pages build) unsets the flag.

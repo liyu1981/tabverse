@@ -28,6 +28,12 @@ touch "$DOCS_DIR/.gitkeep"
 
 if [ "${officialserver:-0}" = "1" ]; then
   echo "officialserver=1: building the documentation site into $DOCS_DIR"
-  (cd doc/tabverse-website && pnpm run build:official)
+  # The website is its own workspace with its own lockfile, so nothing the
+  # repository's install does reaches it - a machine that has never built the
+  # docs would otherwise die with "docusaurus: not found". So the script owns
+  # those dependencies too: `pnpm install --frozen-lockfile` is idempotent (a
+  # second or two with a warm store), refuses to drift from the lockfile, and
+  # is the same command CI runs.
+  (cd doc/tabverse-website && pnpm install --frozen-lockfile && pnpm run build:official)
   touch "$DOCS_DIR/.gitkeep"
 fi
