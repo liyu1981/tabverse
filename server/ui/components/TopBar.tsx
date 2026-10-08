@@ -1,4 +1,4 @@
-import { Button, Tag } from '@blueprintjs/core';
+import { AnchorButton, Button, Tag } from '@blueprintjs/core';
 import React from 'react';
 import { useUnit } from 'effector-react';
 
@@ -34,6 +34,20 @@ export function TopBar() {
             {totals.users} accounts · {totals.devices} devices ·{' '}
             {totals.active_tokens} tokens · {totals.live_records} records
           </span>
+        ) : null}
+        {/* A real link, not a route: "/" is the documentation - a different
+            page of this origin that the console's own state has nothing to do
+            with. Shown only when the server says it has one (`me.docs`). */}
+        {me?.docs ? (
+          <AnchorButton
+            minimal={true}
+            small={true}
+            icon="book"
+            href="/"
+            title="The documentation this server serves at /"
+          >
+            Docs
+          </AnchorButton>
         ) : null}
         <Button
           minimal={true}

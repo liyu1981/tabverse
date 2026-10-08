@@ -9,6 +9,7 @@ import { sessionExpired } from '../data/stores/session';
 import { setTab, $account } from '../data/stores/accounts';
 import { loadMeFx } from '../data/effects';
 import { AccountView } from './AccountView';
+import { TopBar } from '../components/TopBar';
 
 /**
  * The blank-page guard.
@@ -60,6 +61,32 @@ test('a visitor who is not signed in gets the sign-in form', () => {
   expect(html).toContain('tabversed');
   expect(html).toContain('Send sign-in link');
   expect(html).not.toContain('Pair Code');
+});
+
+test('the bar offers the way back to the index only when there is one', async () => {
+  // The link goes to "/", which in a build without the documentation is a
+  // page whose whole job is to send you back here - so the server says which
+  // flavour it is and the bar believes it (adr/0024).
+  stubApi({
+    signed_in: false,
+    csrf_header: 'X-Csrf-Token',
+    providers: [],
+    docs: true,
+  });
+  await loadMeFx();
+  const withSite = renderToStaticMarkup(<TopBar />);
+  expect(withSite).toContain('Docs');
+  expect(withSite).toContain('href="/"');
+
+  stubApi({
+    signed_in: false,
+    csrf_header: 'X-Csrf-Token',
+    providers: [],
+    docs: false,
+  });
+  await loadMeFx();
+  const withoutSite = renderToStaticMarkup(<TopBar />);
+  expect(withoutSite).not.toContain('Docs');
 });
 
 test('a signed-in person gets the account view, not the form', async () => {

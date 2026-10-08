@@ -64,7 +64,12 @@ question.
    an official one cannot ship it by accident), and `docusaurus.config.js`,
    which switches `baseUrl` (`/` vs `/tabverse/`), `url` (the deployment's
    `TABVERSED_PUBLIC_URL` vs GitHub Pages) and adds the **Login** navbar item
-   after *User Manual*. The Go side does not know the flag exists: it embeds
+   after *User Manual* - as a plain `<a href="/console/" target="_self">`,
+   because the console is not one of the site's routes: a link Docusaurus
+   recognises as internal is followed *inside* the site, and that renders the
+   site's own 404. `pathname://` is what tells it not to take the link over,
+   and the trailing slash is what the console is asked for. The Go side does not
+   know the flag exists: it embeds
    `home/` (a tracked redirect page, always present) and `docs/` (present only
    in an official build) and stats them at startup. So `go build`, `go vet` and
    `go test ./...` need no arguments either way, and the same test file checks
@@ -107,6 +112,13 @@ question.
   site:prepare` (the binary) are two builds of one configuration;
   `tools/builddoc.sh` unsets the flag so a shell used for one cannot produce the
   other's site for the wrong host.
+- The two halves link to each other, each on the other's terms. The docs'
+  **Login** is a plain anchor to `/console/` (decision 3) - a full page load,
+  because there is no router here to perform it. The console's top bar offers
+  **Docs** back at `/`, but only when the server says there is something there:
+  `handleConsoleMe` carries `docs: webui.HasDocs()`, since in a default build
+  `/` is the page whose only job is to redirect to the console, and a button
+  that comes straight back is worse than no button.
 - Old links pay for the move: `/#user=…` lands on the site rather than on an
   account, and `https://host/api/v1/…` lands on the documentation's 404. Neither
   is a client that cannot be updated - the first is a bookmark and the second

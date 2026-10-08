@@ -62,6 +62,13 @@ export interface Me {
    * leaving somebody to wait for an email that was never sent.
    */
   smtp?: boolean;
+  /**
+   * Whether there is a site at `/` worth going back to: this build carries the
+   * documentation rather than only the redirect page (adr/0024). The top bar
+   * offers the link on this answer alone, because in a build without the docs
+   * `/` is a page whose whole job is to send you straight back here.
+   */
+  docs?: boolean;
   admin_email?: string;
   operator_exists?: boolean;
   /** Signed in, but nobody has claimed the operator role on this deployment. */

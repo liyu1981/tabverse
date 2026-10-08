@@ -24,6 +24,7 @@ import (
 	"github.com/liyu1981/tabverse/server/internal/config"
 	"github.com/liyu1981/tabverse/server/internal/hub"
 	"github.com/liyu1981/tabverse/server/internal/store"
+	"github.com/liyu1981/tabverse/server/internal/webui"
 )
 
 // The console API answers to one credential now - a signed-in account
@@ -319,6 +320,17 @@ func TestConsoleMeBeforeAndAfterSignIn(t *testing.T) {
 	if r.body["smtp"] != false {
 		t.Fatalf("smtp = %v, want false for a deployment with no SMTP host: %s", r.body["smtp"], r.raw)
 	}
+	// Whether there is a site at "/" to go back to (adr/0024): the top bar
+	// offers the Docs link on this answer alone, and it is a fact about the
+	// build rather than about the caller - so it has to be here, before the
+	// page knows anything else about this person, and unchanged after.
+	docs, ok := r.body["docs"].(bool)
+	if !ok {
+		t.Fatalf("the page needs the docs flag: %s", r.raw)
+	}
+	if docs != webui.HasDocs() {
+		t.Fatalf("docs = %v, want %v - what this binary embedded", docs, webui.HasDocs())
+	}
 
 	alice := signInAs(t, ts, s, "alice@example.com")
 	r = alice.do(t, http.MethodGet, "/console/api/v1/console/me")
@@ -331,6 +343,9 @@ func TestConsoleMeBeforeAndAfterSignIn(t *testing.T) {
 	}
 	if r.body["csrf"] == "" || r.body["csrf_header"] == "" {
 		t.Fatalf("the console needs the XSRF token to make a single request: %s", r.raw)
+	}
+	if r.body["docs"] != docs {
+		t.Fatalf("docs = %v after signing in, want the same %v: %s", r.body["docs"], docs, r.raw)
 	}
 }
 

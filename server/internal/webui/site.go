@@ -36,13 +36,24 @@ const sitePrefix = "/console"
 // everything the router sends to "/" lands here, because the routes that matter
 // are all registered above it.
 func SiteHandler() http.Handler {
-	if docs, ok := sub(site, "docs"); ok && fileExists(docs, "index.html") {
-		return docsSite(docs)
+	if HasDocs() {
+		return docsSite(subMust(site, "docs"))
 	}
 	// The redirect page is tracked, so this is only reachable if the embed
 	// directive above is broken - i.e. at build time, not at runtime.
-	home := subMust(site, "home")
-	return homeSite(home)
+	return homeSite(subMust(site, "home"))
+}
+
+// HasDocs reports whether this binary carries the documentation site - whether
+// there is anything at "/" worth linking to rather than the redirect page
+// (adr/0024).
+//
+// The console asks for this on /console/api/v1/console/me, which is how the
+// "Docs" button knows whether to exist: a default build would send a person to
+// a page whose only job is to send them straight back.
+func HasDocs() bool {
+	_, err := fs.Stat(site, "docs/index.html")
+	return err == nil
 }
 
 // homeSite answers every path with one page: a refresh straight to the console.

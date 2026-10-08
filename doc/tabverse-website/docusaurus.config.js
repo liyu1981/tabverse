@@ -84,15 +84,21 @@ const config = {
             to: '/docs/intro',
           },
           // The console of the server this copy of the site is served from,
-          // right after the manual (adr/0024). `/console` is that server's
-          // route, not one of the site's, so the broken-link checker - which
-          // only knows routes Docusaurus owns - is told to leave it alone.
+          // right after the manual (adr/0024).
+          //
+          // Two things keep this an ordinary link instead of a navigation the
+          // site performs itself: `pathname://` tells Docusaurus the target is
+          // not one of *its* routes - following it client side would render the
+          // site's own 404 - and `target: '_self'` undoes the new tab a link
+          // carrying a protocol would otherwise get. What comes out is
+          // `<a href="/console/" target="_self">`, a full page load of the
+          // console, trailing slash and all.
           ...(official
             ? [
                 {
                   label: 'Login',
-                  to: '/console',
-                  'data-noBrokenLinkCheck': true,
+                  to: 'pathname:///console/',
+                  target: '_self',
                 },
               ]
             : []),

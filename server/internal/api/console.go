@@ -7,6 +7,7 @@ import (
 
 	"github.com/liyu1981/tabverse/server/internal/accounts"
 	"github.com/liyu1981/tabverse/server/internal/store"
+	"github.com/liyu1981/tabverse/server/internal/webui"
 )
 
 // The console's session endpoints (adr/0012). Two of them, because that is all
@@ -31,6 +32,10 @@ func (s *Server) handleConsoleMe(w http.ResponseWriter, r *http.Request) {
 			// the link went, and it used to say "no mail server is configured" to
 			// everybody, which is false on every deployment that has one.
 			"smtp": s.cfg.SMTPConfigured(),
+			// Whether there is a site to go back to at "/": this build carries the
+			// documentation or only the redirect page, and the page shows its
+			// "Docs" button on that answer (adr/0024).
+			"docs": webui.HasDocs(),
 		})
 		return
 	}
@@ -70,6 +75,9 @@ func (s *Server) handleConsoleMe(w http.ResponseWriter, r *http.Request) {
 		"admin_email":     s.cfg.AdminEmail,
 		"operator_exists": operator,
 		"smtp":            s.cfg.SMTPConfigured(),
+		// Whether there is a site to go back to at "/", for the same button as
+		// above: the flag does not depend on who is asking.
+		"docs": webui.HasDocs(),
 		// Set when this person is the address the operator is expected to be but
 		// nobody has claimed the role yet. The server can only fix that on the
 		// next start, so the console says so rather than pretending.
