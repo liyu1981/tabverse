@@ -1,7 +1,9 @@
-import { expect, test } from 'vitest';
+import { expect, test, vi } from 'vitest';
 
 import {
+  PAIR_PATH,
   PairRequest,
+  readPairFromUrl,
   readPairRequest,
   runPairFlow,
   sendCredentialsToExtension,
@@ -41,26 +43,42 @@ function apiWith(patch: Partial<ConsoleApi> = {}): ConsoleApi {
   return stub;
 }
 
-test('the pair parameters are read out of the query', () => {
+test('the pair parameters are read out of the pairing page query', () => {
   expect(
-    readPairRequest('?pair=1&ext=abcdefghijklmnoabcdefhijklmnoabc&nonce=n-1'),
+    readPairRequest('?ext=abcdefghijklmnoabcdefhijklmnoabc&nonce=n-1'),
   ).toEqual({ extensionId: 'abcdefghijklmnoabcdefhijklmnoabc', nonce: 'n-1' });
-  // no pair, or a pair without the two things that make one, is not a request
+  // no extension id, or no nonce, is not a request: both are what bind this
+  // window to the one extension that may answer it
   expect(readPairRequest('?user=usr_1')).toBeNull();
-  expect(readPairRequest('?pair=1&nonce=n-1')).toBeNull();
-  expect(readPairRequest('?pair=1&ext=abc')).toBeNull();
+  expect(readPairRequest('?nonce=n-1')).toBeNull();
+  expect(readPairRequest('?ext=abc')).toBeNull();
   expect(readPairRequest('')).toBeNull();
 });
 
-test('a pair request left in a fragment by an older link is still read', () => {
-  // The console moved to /console with its parameters in the query (adr/0023).
-  // A window opened by an already installed extension carries a fragment, and
-  // the server's / redirect hands it over unchanged - so it pairs rather than
-  // landing on a page with nothing to do.
-  expect(readPairRequest('#pair=1&ext=abc&nonce=n-1')).toEqual({
+test('a request is read only from the pairing page itself', () => {
+  // The path decides (adr/0024): /console/pair is the pairing page, and the
+  // console's own state rides in the query of /console, so the two cannot be
+  // mistaken for each other.
+  const at = (pathname: string, search: string) => {
+    vi.stubGlobal('window', { location: { pathname, search } });
+    return readPairFromUrl();
+  };
+
+  expect(at(PAIR_PATH, '?ext=abc&nonce=n-1')).toEqual({
     extensionId: 'abc',
     nonce: 'n-1',
   });
+  // a trailing slash is a link somebody typed, and the shell serves that too
+  expect(at(`${PAIR_PATH}/`, '?ext=abc&nonce=n-1')).toEqual({
+    extensionId: 'abc',
+    nonce: 'n-1',
+  });
+  // the same query on the console's own page is somebody else's business
+  expect(at('/console', '?ext=abc&nonce=n-1')).toBeNull();
+  // and no fragment is read at all any more
+  expect(at(PAIR_PATH, '')).toBeNull();
+
+  vi.unstubAllGlobals();
 });
 
 test('the flow mints a device and sends the token to the extension', async () => {

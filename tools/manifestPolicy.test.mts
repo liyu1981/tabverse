@@ -63,7 +63,7 @@ describe('connect-src policy', () => {
     expect(() => connectSrcFor('192.168.0.221:8223')).toThrow(
       /TABVERSE_ALLOWED_SERVERS/,
     );
-    expect(() => connectSrcFor('http://host/api/v1')).toThrow(
+    expect(() => connectSrcFor('http://host/console/api/v1')).toThrow(
       /TABVERSE_ALLOWED_SERVERS/,
     );
   });

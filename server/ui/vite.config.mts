@@ -25,7 +25,25 @@ export default defineConfig(({ mode }) => {
   return {
     // The project's own directory: the shell and every source live under it.
     root: fromUi('.'),
-    plugins: [react()],
+    plugins: [
+      react(),
+      // Dev only: the Go server answers `/console` and `/console/` alike, while
+      // vite's base covers the trailing slash form alone - so the slash-less URL
+      // is redirected here rather than answered with vite's 404.
+      {
+        name: 'console-slash-parity',
+        apply: 'serve',
+        configureServer(server) {
+          server.middlewares.use((req, res, next) => {
+            const [path, query] = (req.url || '').split('?');
+            if (path !== '/console') return next();
+            res.statusCode = 302;
+            res.setHeader('Location', '/console/' + (query ? `?${query}` : ''));
+            res.end();
+          });
+        },
+      },
+    ],
     // Production is served from /console/assets/, which is where the Go handler
     // looks; the dev server serves from /console/ so the page sits at the same
     // path it does in production and its /api and /auth calls can be proxied to
@@ -53,10 +71,14 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5174,
       strictPort: true,
-      // A console is never useful without a server behind it: /api and /auth
-      // go to a local tabversed, everything else is this project.
+      // A console is never useful without a server behind it: the API and the
+      // account library go to a local tabversed, everything else is this
+      // project. The API is under the console's own prefix on the real server
+      // (`/console/api/...`, adr/0024), so that is what is forwarded - a
+      // narrower key than the dev server's base, so the page itself still
+      // comes from Vite.
       proxy: {
-        '/api': 'http://127.0.0.1:8223',
+        '/console/api': 'http://127.0.0.1:8223',
         '/auth': 'http://127.0.0.1:8223',
       },
     },

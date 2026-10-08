@@ -12,7 +12,7 @@ import (
 
 // handlePull is the delta download side of the sync protocol:
 //
-//	GET /api/v1/sync?since=<rev>&limit=<n>
+//	GET /console/api/v1/sync?since=<rev>&limit=<n>
 //
 // Returns every record with rev > since, oldest first.
 func (s *Server) handlePull(w http.ResponseWriter, r *http.Request) {
@@ -53,7 +53,7 @@ func (s *Server) handlePull(w http.ResponseWriter, r *http.Request) {
 
 // handlePush is the delta upload side of the sync protocol:
 //
-//	POST /api/v1/sync  {"records":[{entity,id,updated_at,deleted,payload}]}
+//	POST /console/api/v1/sync  {"records":[{entity,id,updated_at,deleted,payload}]}
 //
 // Applies last-writer-wins per record, then notifies every other device of
 // the account over the realtime hub.
@@ -170,7 +170,7 @@ func (s *Server) handleDeleteEntity(w http.ResponseWriter, r *http.Request) {
 
 // ---- search ---------------------------------------------------------------
 
-// handleSearch answers GET /api/v1/search?q=<free text>&entity=&limit=.
+// handleSearch answers GET /console/api/v1/search?q=<free text>&entity=&limit=.
 func (s *Server) handleSearch(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query().Get("q")
 	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))

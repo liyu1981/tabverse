@@ -53,7 +53,7 @@ beforeEach(() => {
       ok: true,
       text: async () =>
         JSON.stringify(
-          url.startsWith('/api/v1/console/pair') ? CREDENTIALS : {},
+          url.startsWith('/console/api/v1/console/pair') ? CREDENTIALS : {},
         ),
     })),
   );

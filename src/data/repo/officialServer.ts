@@ -4,8 +4,8 @@
  * The custom flow is a form: a URL, a code the person copied, a device name. The
  * wizard replaces the copying with a browser window the server owns: this
  * extension opens it with its own id and a nonce in the URL (the console's
- * query, `?pair=1&ext=…&nonce=…`), the person signs in and agrees there, the
- * server mints a device and a token, and the page
+ * pairing page, `/console/pair?ext=…&nonce=…`), the person signs in and agrees
+ * there, the server mints a device and a token, and the page
  * sends the token back over `chrome.runtime.sendMessage` - the channel the
  * manifest's `externally_connectable` entry opens to exactly one origin.
  *
@@ -41,6 +41,15 @@ export const OFFICIAL_SERVER_ORIGIN = new URL(OFFICIAL_SERVER_URL).origin;
  */
 export const OFFICIAL_CONSOLE_URL = `${OFFICIAL_SERVER_URL}/console`;
 
+/**
+ * The pairing page itself: a route of the console (adr/0024), so the window the
+ * extension opens is one URL of the site the server already serves, and the
+ * two things it needs travel in that URL's query.
+ */
+export const OFFICIAL_PAIR_PATH = '/console/pair';
+
+export const OFFICIAL_PAIR_URL = `${OFFICIAL_SERVER_URL}${OFFICIAL_PAIR_PATH}`;
+
 /** The message the console page sends, and the only one this extension takes. */
 export const PAIR_CREDENTIALS_MESSAGE = 'tabverse_pair_credentials';
 
@@ -71,14 +80,14 @@ export function newPairNonce(): string {
 /**
  * The URL to open.
  *
- * The pair request travels in the query, on the console's own page
- * (`/console?pair=1&ext=…&nonce=…`, adr/0023): the whole URL is then an
- * ordinary HTTP URL - one the server serves, redirects and logs like any other,
- * and one whose meaning does not depend on a client-side router having run.
- * The nonce is known to the server this opens, so it appearing in an access log
- * costs nothing that the pairing itself does not already give away, and the
- * page stashes the request before any sign-in round trip in case the return
- * target arrives without it (see server/ui/data/pair.ts).
+ * The pairing page is a route of the console (`/console/pair?ext=…&nonce=…`,
+ * adr/0024): the whole URL is then an ordinary HTTP URL - one the server
+ * serves, redirects and logs like any other, and one whose meaning does not
+ * depend on a client-side router having run. The nonce is known to the server
+ * this opens, so it appearing in an access log costs nothing that the pairing
+ * itself does not already give away, and the page stashes the request before
+ * any sign-in round trip in case the return target arrives without it (see
+ * server/ui/data/pair.ts).
  */
 export function officialPairUrl(
   extensionId: string,
@@ -86,11 +95,10 @@ export function officialPairUrl(
   baseUrl: string = OFFICIAL_SERVER_URL,
 ): string {
   const query = new URLSearchParams({
-    pair: '1',
     ext: extensionId,
     nonce,
   });
-  return `${baseUrl.replace(/\/+$/, '')}/console?${query.toString()}`;
+  return `${baseUrl.replace(/\/+$/, '')}${OFFICIAL_PAIR_PATH}?${query.toString()}`;
 }
 
 /**

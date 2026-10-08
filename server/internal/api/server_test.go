@@ -101,7 +101,7 @@ type bootstrapResp struct {
 
 func bootstrap(t *testing.T, ts *httptest.Server) bootstrapResp {
 	t.Helper()
-	r := doJSON(t, http.MethodPost, ts.URL+"/api/v1/auth/bootstrap", "",
+	r := doJSON(t, http.MethodPost, ts.URL+"/console/api/v1/auth/bootstrap", "",
 		map[string]string{"name": "primary"})
 	r.mustStatus(t, http.StatusCreated)
 	var out bootstrapResp
@@ -130,7 +130,7 @@ type pushResp struct {
 
 func push(t *testing.T, ts *httptest.Server, token string, records []pushedRecord) (pushResp, apiResp) {
 	t.Helper()
-	r := doJSON(t, http.MethodPost, ts.URL+"/api/v1/sync", token, map[string]any{"records": records})
+	r := doJSON(t, http.MethodPost, ts.URL+"/console/api/v1/sync", token, map[string]any{"records": records})
 	var out pushResp
 	if r.status == http.StatusOK {
 		data, _ := json.Marshal(r.body)
@@ -151,7 +151,7 @@ type pullResp struct {
 func pull(t *testing.T, ts *httptest.Server, token string, since int64) pullResp {
 	t.Helper()
 	r := doJSON(t, http.MethodGet,
-		fmt.Sprintf("%s/api/v1/sync?since=%d", ts.URL, since), token, nil)
+		fmt.Sprintf("%s/console/api/v1/sync?since=%d", ts.URL, since), token, nil)
 	r.mustStatus(t, http.StatusOK)
 	data, _ := json.Marshal(r.body)
 	var out pullResp
@@ -176,7 +176,7 @@ func TestBootstrapOnlyOnce(t *testing.T) {
 	ts, _ := newTestServer(t)
 	bootstrap(t, ts)
 
-	r := doJSON(t, http.MethodPost, ts.URL+"/api/v1/auth/bootstrap", "",
+	r := doJSON(t, http.MethodPost, ts.URL+"/console/api/v1/auth/bootstrap", "",
 		map[string]string{"name": "second"})
 	r.mustStatus(t, http.StatusConflict)
 	if r.body["error"] != "already_bootstrapped" {
@@ -189,7 +189,7 @@ func TestPairingWithInviteCode(t *testing.T) {
 	primary := bootstrap(t, ts)
 
 	// mint an invite
-	r := doJSON(t, http.MethodPost, ts.URL+"/api/v1/auth/invites", primary.Token,
+	r := doJSON(t, http.MethodPost, ts.URL+"/console/api/v1/auth/invites", primary.Token,
 		map[string]int{"ttl_seconds": 300})
 	r.mustStatus(t, http.StatusCreated)
 	code, _ := r.body["code"].(string)
@@ -199,7 +199,7 @@ func TestPairingWithInviteCode(t *testing.T) {
 
 	// pair a second device, with sloppy human formatting
 	sloppy := strings.ToLower(strings.ReplaceAll(code, "-", " - "))
-	r = doJSON(t, http.MethodPost, ts.URL+"/api/v1/auth/pair", "",
+	r = doJSON(t, http.MethodPost, ts.URL+"/console/api/v1/auth/pair", "",
 		map[string]string{"invite_code": sloppy, "device_name": "laptop"})
 	r.mustStatus(t, http.StatusCreated)
 	var second bootstrapResp
@@ -212,7 +212,7 @@ func TestPairingWithInviteCode(t *testing.T) {
 	}
 
 	// codes are single use
-	r = doJSON(t, http.MethodPost, ts.URL+"/api/v1/auth/pair", "",
+	r = doJSON(t, http.MethodPost, ts.URL+"/console/api/v1/auth/pair", "",
 		map[string]string{"invite_code": code, "device_name": "again"})
 	r.mustStatus(t, http.StatusUnauthorized)
 }
@@ -222,17 +222,17 @@ func TestAuthRequired(t *testing.T) {
 	bootstrap(t, ts)
 
 	for _, tc := range []struct{ method, path string }{
-		{http.MethodGet, "/api/v1/sync"},
-		{http.MethodPost, "/api/v1/sync"},
-		{http.MethodGet, "/api/v1/search?q=x"},
-		{http.MethodPost, "/api/v1/auth/invites"},
+		{http.MethodGet, "/console/api/v1/sync"},
+		{http.MethodPost, "/console/api/v1/sync"},
+		{http.MethodGet, "/console/api/v1/search?q=x"},
+		{http.MethodPost, "/console/api/v1/auth/invites"},
 	} {
 		r := doJSON(t, tc.method, ts.URL+tc.path, "", map[string]any{})
 		if r.status != http.StatusUnauthorized {
 			t.Fatalf("%s %s without token = %d, want 401", tc.method, tc.path, r.status)
 		}
 	}
-	r := doJSON(t, http.MethodGet, ts.URL+"/api/v1/sync", "bogus-token", nil)
+	r := doJSON(t, http.MethodGet, ts.URL+"/console/api/v1/sync", "bogus-token", nil)
 	r.mustStatus(t, http.StatusUnauthorized)
 }
 
@@ -352,7 +352,7 @@ func TestDeleteCreatesTombstone(t *testing.T) {
 	})
 	resp.mustStatus(t, http.StatusOK)
 
-	r := doJSON(t, http.MethodDelete, ts.URL+"/api/v1/entities/bookmark/b1", a.Token, nil)
+	r := doJSON(t, http.MethodDelete, ts.URL+"/console/api/v1/entities/bookmark/b1", a.Token, nil)
 	r.mustStatus(t, http.StatusOK)
 
 	got := pull(t, ts, a.Token, 0)
@@ -367,15 +367,15 @@ func TestDeleteCreatesTombstone(t *testing.T) {
 	push(t, ts, a.Token, []pushedRecord{
 		{Entity: "note", ID: "n1", UpdatedAt: now, Payload: `{"title":"unique-term-xkcd"}`},
 	})
-	sr := doJSON(t, http.MethodGet, ts.URL+"/api/v1/search?q=unique-term-xkcd", a.Token, nil)
+	sr := doJSON(t, http.MethodGet, ts.URL+"/console/api/v1/search?q=unique-term-xkcd", a.Token, nil)
 	sr.mustStatus(t, http.StatusOK)
 	hits := sr.body["hits"].([]any)
 	if len(hits) != 1 {
 		t.Fatalf("note not searchable: %s", sr.raw)
 	}
-	r = doJSON(t, http.MethodDelete, ts.URL+"/api/v1/entities/note/n1", a.Token, nil)
+	r = doJSON(t, http.MethodDelete, ts.URL+"/console/api/v1/entities/note/n1", a.Token, nil)
 	r.mustStatus(t, http.StatusOK)
-	sr = doJSON(t, http.MethodGet, ts.URL+"/api/v1/search?q=unique-term-xkcd", a.Token, nil)
+	sr = doJSON(t, http.MethodGet, ts.URL+"/console/api/v1/search?q=unique-term-xkcd", a.Token, nil)
 	sr.mustStatus(t, http.StatusOK)
 	if len(sr.body["hits"].([]any)) != 0 {
 		t.Fatalf("deleted note still searchable: %s", sr.raw)
@@ -414,7 +414,7 @@ func TestSearch(t *testing.T) {
 		{"nosuchthing", "", 0},
 	}
 	for _, tc := range cases {
-		url := fmt.Sprintf("%s/api/v1/search?q=%s", ts.URL, tc.q)
+		url := fmt.Sprintf("%s/console/api/v1/search?q=%s", ts.URL, tc.q)
 		if tc.entity != "" {
 			url += "&entity=" + tc.entity
 		}
@@ -438,14 +438,14 @@ func TestSearch(t *testing.T) {
 	}
 
 	// prefix matching (as-you-type)
-	r := doJSON(t, http.MethodGet, ts.URL+"/api/v1/search?q=distrib", a.Token, nil)
+	r := doJSON(t, http.MethodGet, ts.URL+"/console/api/v1/search?q=distrib", a.Token, nil)
 	r.mustStatus(t, http.StatusOK)
 	if len(r.body["hits"].([]any)) != 1 {
 		t.Fatalf("prefix search failed: %s", r.raw)
 	}
 
 	// a crafted query must not blow up (fts injection attempt)
-	r = doJSON(t, http.MethodGet, ts.URL+"/api/v1/search?q=%22+OR+%22*", a.Token, nil)
+	r = doJSON(t, http.MethodGet, ts.URL+"/console/api/v1/search?q=%22+OR+%22*", a.Token, nil)
 	if r.status != http.StatusOK && r.status != http.StatusBadRequest {
 		t.Fatalf("unexpected status for tricky query: %d %s", r.status, r.raw)
 	}
@@ -467,7 +467,7 @@ func TestRealtimeStreamNotifiesOtherDevices(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	wsURL := "ws" + strings.TrimPrefix(ts.URL, "http") + "/api/v1/sync/stream?access_token=" + a.Token
+	wsURL := "ws" + strings.TrimPrefix(ts.URL, "http") + "/console/api/v1/sync/stream?access_token=" + a.Token
 	conn, _, err := websocket.Dial(ctx, wsURL, nil)
 	if err != nil {
 		t.Fatalf("websocket dial: %v", err)
@@ -537,7 +537,7 @@ func TestConcurrentPushesStayConsistent(t *testing.T) {
 					Entity: "todo", ID: fmt.Sprintf("w%d-i%d", w, i),
 					UpdatedAt: time.Now().UnixMilli(), Payload: `{"text":"x"}`,
 				}
-				r := doJSON(t, http.MethodPost, ts.URL+"/api/v1/sync", a.Token,
+				r := doJSON(t, http.MethodPost, ts.URL+"/console/api/v1/sync", a.Token,
 					map[string]any{"records": []pushedRecord{rec}})
 				if r.status != http.StatusOK {
 					done <- fmt.Errorf("writer %d push status %d: %s", w, r.status, r.raw)

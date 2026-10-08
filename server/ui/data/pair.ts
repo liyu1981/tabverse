@@ -2,11 +2,11 @@
  * The official-server pairing flow, as the console page performs it
  * (adr/0020).
  *
- * The extension opens this console in a window with three things in the URL
- * query - `?pair=1&ext=<extension id>&nonce=<uuid>` - signs in (the console's
- * own session), asks for a device name, and this module does the rest:
+ * The extension opens this console in a window at its pairing page -
+ * `/console/pair?ext=<extension id>&nonce=<uuid>` (adr/0024) - signs in (the
+ * console's own session), asks for a device name, and this module does the rest:
  *
- *   1. POST /api/v1/console/pair with the session -> one device + one token,
+ *   1. POST /console/api/v1/console/pair with the session -> one device + one token,
  *      returned once;
  *   2. `chrome.runtime.sendMessage(ext, {credentials, nonce})` -> the extension,
  *      which checks the nonce and saves the config.
@@ -53,10 +53,16 @@ export type PairOutcome =
   /** The server refused (session gone, impersonating, ...). */
   | { kind: 'refused'; message: string };
 
-/** Reads `?pair=1&ext=…&nonce=…` out of a query string (or a fragment). */
+/**
+ * Where the pairing page lives: a client side route of the console, so the
+ * server sends its shell for this path and the query below is all the page is
+ * told about who opened it.
+ */
+export const PAIR_PATH = '/console/pair';
+
+/** Reads `?ext=…&nonce=…` out of the pairing page's query string. */
 export function readPairRequest(search: string): PairRequest | null {
-  const params = new URLSearchParams(search.replace(/^[?#]/, ''));
-  if (params.get('pair') !== '1') return null;
+  const params = new URLSearchParams(search.replace(/^\?/, ''));
   const extensionId = (params.get('ext') || '').trim();
   const nonce = (params.get('nonce') || '').trim();
   if (!extensionId || !nonce) return null;
@@ -66,19 +72,18 @@ export function readPairRequest(search: string): PairRequest | null {
 /**
  * The pair request this window's URL names, if any.
  *
- * The query is where it lives now (adr/0023). A fragment is read as well, and
- * only so that a window opened by an extension built before the console moved
- * to `/console` still pairs: the server redirects `/` to `/console`, a browser
- * carries the fragment across that redirect, and a pairing that silently
- * refused would be a very confusing day.
+ * The *path* decides (adr/0024): `/console/pair` is the pairing page and its
+ * query carries the two things the extension opened the window with, while the
+ * console's own state (account, tab, tabverse) lives in the query of `/console`
+ * itself. Neither half can be mistaken for the other, which is why nothing here
+ * has to look for a marker key.
  */
 export function readPairFromUrl(): PairRequest | null {
   try {
     if (typeof window === 'undefined' || !window.location) return null;
-    return (
-      readPairRequest(window.location.search) ??
-      readPairRequest(window.location.hash)
-    );
+    // A trailing slash is a link somebody typed; the shell serves it too.
+    const path = window.location.pathname.replace(/\/+$/, '');
+    return path === PAIR_PATH ? readPairRequest(window.location.search) : null;
   } catch {
     return null;
   }

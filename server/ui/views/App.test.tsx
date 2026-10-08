@@ -74,19 +74,19 @@ test('a signed-in person gets the account view, not the form', async () => {
       providers: [],
     },
     {
-      '/api/v1/admin/users/usr_1/tabspaces': {
+      '/console/api/v1/admin/users/usr_1/tabspaces': {
         tabspaces: [],
         total: 0,
         limit: 24,
         offset: 0,
       },
-      '/api/v1/admin/users/usr_1/records': {
+      '/console/api/v1/admin/users/usr_1/records': {
         records: [],
         total: 0,
         limit: 50,
         offset: 0,
       },
-      '/api/v1/admin/users/usr_1': {
+      '/console/api/v1/admin/users/usr_1': {
         user: {
           id: 'usr_1',
           name: 'Person',
@@ -144,7 +144,7 @@ test('an account document that is not an account does not take the page down', a
   stubApi(
     { signed_in: true, providers: [] },
     {
-      '/api/v1/admin/users/usr_3': { nothing: true },
+      '/console/api/v1/admin/users/usr_3': { nothing: true },
     },
   );
   await openAccountAction('usr_3');
@@ -165,7 +165,7 @@ async function seedAccount(id: string, role: 'admin' | 'user'): Promise<void> {
   stubApi(
     { signed_in: true, providers: [] },
     {
-      '/api/v1/console/me': {
+      '/console/api/v1/console/me': {
         signed_in: true,
         user_id: id,
         name: 'Person',
@@ -174,20 +174,20 @@ async function seedAccount(id: string, role: 'admin' | 'user'): Promise<void> {
         csrf: 'tok',
         providers: [],
       },
-      '/api/v1/console/impersonation': { assuming: false },
-      [`/api/v1/admin/users/${id}/tabspaces`]: {
+      '/console/api/v1/console/impersonation': { assuming: false },
+      [`/console/api/v1/admin/users/${id}/tabspaces`]: {
         tabspaces: [],
         total: 0,
         limit: 24,
         offset: 0,
       },
-      [`/api/v1/admin/users/${id}/records`]: {
+      [`/console/api/v1/admin/users/${id}/records`]: {
         records: [],
         total: 0,
         limit: 50,
         offset: 0,
       },
-      [`/api/v1/admin/users/${id}`]: {
+      [`/console/api/v1/admin/users/${id}`]: {
         user: {
           id,
           name: 'Window-3',

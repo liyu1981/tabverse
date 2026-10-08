@@ -74,7 +74,7 @@ There is no client side index. A search is an OR of AND-groups, each with a
 (`adr/0008`):
 
 ```
-query ─┬─ paired device ─► GET /api/v1/search  ─► tabverse ids (bm25 ranked)
+query ─┬─ paired device ─► GET /console/api/v1/search  ─► tabverse ids (bm25 ranked)
        └─ otherwise  ───► localSearch.ts       ─► tabverse ids (table scan)
                                                      │
                           loadTabSpacesByIds ◄──────┘  (drops ids this device
@@ -193,8 +193,8 @@ The `CountExit` guard does not help - it only catches two manager pages in the
 There are two, and both end at the same `SyncConfig` in `chrome.storage.local`:
 
 ```
-custom     invite code   POST /api/v1/auth/pair        → config(kind: custom)
-wizard     sign in       POST /api/v1/console/pair     → config(kind: official)
+custom     invite code   POST /console/api/v1/auth/pair        → config(kind: custom)
+wizard     sign in       POST /console/api/v1/console/pair     → config(kind: official)
            (console session)   → page → chrome.runtime.sendMessage → extension
 ```
 
@@ -206,13 +206,14 @@ the extension can reach.
 is a cookie in the browser's jar for that origin - so the *console page* does the
 signing in and carries the token back:
 
-1. The extension opens `https://tabversed.liyu1981.xyz/console?pair=1&ext=<its
-   own id>&nonce=<uuid>` (the console's own page, and a plain HTTP URL since
-   `adr/0023` - it used to be a fragment at `/`, which is what kept the nonce
-   out of a log; see that ADR for why the trade flipped), and remembers the
-   nonce in `chrome.storage.session`.
+1. The extension opens
+   `https://tabversed.liyu1981.xyz/console/pair?ext=<its own id>&nonce=<uuid>`
+   - the console's pairing page, a plain HTTP URL since `adr/0023` (it used to
+   be a fragment at `/`, which is what kept the nonce out of a log; see those
+   ADRs for why the trade flipped) - and remembers the nonce in
+   `chrome.storage.session`.
 2. The person signs in and approves a device name; the page calls
-   `POST /api/v1/console/pair`, which mints a device and a token for **the
+   `POST /console/api/v1/console/pair`, which mints a device and a token for **the
    session's account** (`writeDevice`, the same function `auth/pair` uses) and
    refuses an impersonating session.
 3. The page sends `{credentials, nonce}` to the extension over
@@ -283,9 +284,9 @@ pnpm run build-crx      # production bundle + dist_crx/tabverse.zip (store packa
 
 ```sh
 pnpm run server:dev      # 0.0.0.0:8223, ./server/data/tabversed.db
-curl -X POST localhost:8223/api/v1/auth/bootstrap -d '{"name":"me"}'
+curl -X POST localhost:8223/console/api/v1/auth/bootstrap -d '{"name":"me"}'
 # on the extension: BottomNav -> sync button -> paste URL + pairing code
-curl -X POST localhost:8223/api/v1/auth/invites \
+curl -X POST localhost:8223/console/api/v1/auth/invites \
      -H 'Authorization: Bearer <token>' -d '{"ttl_seconds":300}'
 ```
 
@@ -308,6 +309,21 @@ See `server/README.md` for configuration, deployment and protocol semantics.
 
 ## Accounts, the admin API and the console (`adr/0009`)
 
+The URL space has three owners, and `/console` owns two of them
+(`adr/0023`, `adr/0024`):
+
+| path | what it is |
+|---|---|
+| `/console`, `/console/assets/<name>-<hash>`, `/console/<client route>` | the console page (its pairing page is `/console/pair?ext=…&nonce=…`) |
+| `/console/api/v1/*` | sync, entities, search, admin, console - the whole API |
+| `/auth/*` | the account library's sign-in routes |
+| `/healthz` | the probe |
+| `/` and anything else | the site: the documentation in an official build (`officialserver=1`), a page that redirects to `/console` otherwise |
+
+An endpoint under `/console/api/` that no route claims is a JSON `404`, never
+the page; anything else outside the API is the site. Both clients and the
+OpenAPI contract name `/console/api/v1` explicitly.
+
 The server's data model was tenant scoped from the start (`user_id` on
 `records`, `tokens`, `devices`, `invites`, `records_fts`; a per account
 `rev_seq`; a per account WebSocket topic; retention over `AllUserIDs()`), but
@@ -318,7 +334,7 @@ a deployment could hold exactly one.
 operator surface:
 
 ```
-                        ┌─ TABVERSED_ADMIN_TOKEN ─┬─ /api/v1/admin/*  (accounts, devices, tokens)
+                        ┌─ TABVERSED_ADMIN_TOKEN ─┬─ /console/api/v1/admin/*  (accounts, devices, tokens)
 browser ── GET /console ┤                        └─ read only: tabverses, records, search
 ```
 
@@ -330,7 +346,7 @@ browser ── GET /console ┤                        └─ read only: tabvers
   outside the extension would lose the next LWW comparison anyway
 
 **The one write over user data is deleting a tabverse (`adr/0015`).**
-`DELETE /api/v1/admin/users/{user_id}/tabspaces/{tabspace_id}?confirm=<id>`
+`DELETE /console/api/v1/admin/users/{user_id}/tabspaces/{tabspace_id}?confirm=<id>`
 tombstones the tabverse and every record that hangs off it (its tabs, notes,
 todos, bookmarks, closed tabs and the three ordering aggregates) and tells the
 account's devices, so their next sync removes its copy too - a delete that only
@@ -385,8 +401,11 @@ project under `server/ui` (`adr/0018`) that compiles into
 binary and its console are one build; a `.gitkeep` in `dist/` keeps the package
 compiling on a fresh clone, and a binary built without its UI serves a page that
 names the command rather than a blank one. The page is served under
-`/console` - shell at `/console`, assets at `/console/assets/<name>-<hash>`,
-and `/` answering with a redirect to it (`adr/0023`).
+`/console` - shell at `/console`, assets at `/console/assets/<name>-<hash>` -
+and `/` is the site: the embedded documentation when the binary was built with
+`officialserver=1`, a tracked `home/index.html` that redirects to `/console`
+otherwise (`adr/0024`). The flag is read by `tools/embedsite.sh` and by the
+Docusaurus config, never by Go.
 
 State is effector stores and effects (`server/ui/data/`), the client is a typed
 `fetch` wrapper mirroring `api/openapi.yaml`, and the components are Blueprint's
@@ -423,7 +442,7 @@ revocation cut-off - which the authenticator calls *before* it refreshes.
 sign-in, and `TABVERSED_SESSION_COOKIE_TTL` defaults to the same number so the
 credential leaves the machine when the session does.
 
-Ending every session on demand is `POST /api/v1/console/revoke-sessions`, which
+Ending every session on demand is `POST /console/api/v1/console/revoke-sessions`, which
 moves `users.tokens_valid_after` - the cut-off `SessionAllowed` already reads on
 every request. It is the same credential the extension's device tokens are *not*:
 the console's dialog says so, because "sign out everywhere" must not read as

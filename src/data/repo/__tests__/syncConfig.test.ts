@@ -85,7 +85,9 @@ test('pairWithServer redeems the code and persists credentials', async () => {
   );
 
   expect(calls).toHaveLength(1);
-  expect(calls[0].url).toBe('https://sync.example.com/api/v1/auth/pair');
+  expect(calls[0].url).toBe(
+    'https://sync.example.com/console/api/v1/auth/pair',
+  );
   expect(JSON.parse(calls[0].body)).toEqual({
     invite_code: 'ABCD-EFGH',
     device_name: 'laptop',

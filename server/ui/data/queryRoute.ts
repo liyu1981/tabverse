@@ -6,7 +6,9 @@
  * rewrite keeps it (adr/0018, decision 6). What adr/0023 changed is *where* it
  * lives: the query rather than the fragment, so the console's whole URL is an
  * ordinary HTTP URL - one the server serves under /console, and one that reads
- * the same in a log, a bookmark and a pasted line.
+ * the same in a log, a bookmark and a pasted line. adr/0024 keeps it that way:
+ * the pairing page's `ext` and `nonce` are in the query of `/console/pair`, the
+ * console's own state in the query of `/console`.
  *
  * The session is a cookie and never travels in a URL; the token-era `#token=`
  * is gone with ADR 0013.
@@ -43,8 +45,8 @@ export function readQuery(location: LocationLike): URLSearchParams {
  *
  * Every key already there is carried over, which is the point: the routing keys
  * share the query with the pairing request the extension opened this window
- * with (`?pair=…`), and dropping those mid-flow would lose a pairing the person
- * is in the middle of approving.
+ * with (`?ext=…&nonce=…`), and dropping those mid-flow would lose a pairing the
+ * person is in the middle of approving.
  */
 export function writeQuery(
   location: LocationLike,

@@ -1,5 +1,6 @@
 import { expect, test } from 'vitest';
 
+import { PAIR_PATH } from './pair';
 import { readQuery, writeQuery } from './queryRoute';
 
 function fakeLocation(search: string) {
@@ -49,16 +50,17 @@ test('an empty query stays empty rather than becoming a bare ?', () => {
 });
 
 test('the pairing request in the query survives a rewrite', () => {
-  // The window the extension opened carries ?pair=1&ext=…&nonce=…, and boot
-  // writes the account it lands on into the same query: neither half may eat
-  // the other (adr/0023).
-  const location = fakeLocation(
-    '?pair=1&ext=abcdefghijklmnoabcdefhijklmnoabc&nonce=n-1',
-  );
+  // The window the extension opened carries ?ext=…&nonce=… on the pairing
+  // page, and boot writes the account it lands on into the same query: neither
+  // half may eat the other (adr/0024).
+  const location = {
+    pathname: PAIR_PATH,
+    search: '?ext=abcdefghijklmnoabcdefhijklmnoabc&nonce=n-1',
+  };
   const history = fakeHistory();
   writeQuery(location, history, { user: 'usr_1' });
+  expect(history.replaced[0]).toMatch(/^\/console\/pair\?/);
   const written = new URLSearchParams(history.replaced[0].split('?')[1] ?? '');
-  expect(written.get('pair')).toBe('1');
   expect(written.get('ext')).toBe('abcdefghijklmnoabcdefhijklmnoabc');
   expect(written.get('nonce')).toBe('n-1');
   expect(written.get('user')).toBe('usr_1');

@@ -26,6 +26,15 @@ server authoritative sync protocol.
   data, plus a way to delete one tabverse, and the account, device and token
   management around it. It is a Vite/React app under `server/ui`, built into
   `internal/webui/dist` and embedded in the binary (ADR 0018)
+- **API:** everything the app calls is under the same prefix -
+  `/console/api/v1/*` (sync, entities, search, admin, console), the sign-in
+  routes under `/auth/*`, the probe at `/healthz`. An endpoint nobody claimed
+  is a JSON `404`, never a page (ADR 0024)
+- **Site:** `GET /` and anything else is the documentation when the binary was
+  built with `officialserver=1`, and a page that sends you to `/console`
+  otherwise. The flag is read at build time only - by `tools/embedsite.sh` and
+  by the Docusaurus config - so Go embeds whatever is there and needs no flag
+  of its own (ADR 0024)
 
 ## Run
 
@@ -34,11 +43,36 @@ Every build/run/cross-compile target is a package.json script at the repository 
 
 ```sh
 pnpm run ui:build        # the console -> server/internal/webui/dist (embedded, not committed)
+pnpm run site:prepare    # what lives at / : nothing by default (the redirect page is tracked)
+                         #   officialserver=1 -> the docs -> server/internal/webui/docs
 pnpm run server:dev      # go run: listens on 0.0.0.0:8223, db ./server/data/tabversed.db
 pnpm run server:build    # builds the console, then the binary at server/bin/tabversed
 # or
 pnpm run server:docker && docker run -p 8223:8223 -v tvdata:/data tabversed
 ```
+
+### Two flavours (`officialserver=1`)
+
+The same code serves two kinds of deployment, and the difference is what was
+embedded at the root (ADR 0024):
+
+```sh
+pnpm run server:build                        # self hosted: / redirects to /console
+officialserver=1 pnpm run server:build       # official:   / is the documentation
+```
+
+The flag is read in exactly two places: `tools/embedsite.sh`, which builds the
+Docusaurus site into `server/internal/webui/docs/` (and clears that directory
+first, so a default build after an official one cannot ship it by accident), and
+doc/tabverse-website's `docusaurus.config.js`, which switches `baseUrl` and `url`
+and puts **Login** in the navbar after *User Manual*. The absolute addresses the
+docs emit (canonical, sitemap) come from `TABVERSED_PUBLIC_URL` when it is set,
+and default to `https://tabversed.liyu1981.xyz`.
+`tools/builddoc.sh` (the GitHub Pages build) unsets the flag.
+
+Every Go target runs `pnpm run site:prepare` before compiling, and CI builds and
+tests both flavours - the official one in its own job, because nothing else
+builds it.
 
 The console's build output is **generated, not committed** (ADR 0018): every Go
 target runs `pnpm run ui:build` first, so a binary and its console are one
@@ -47,7 +81,7 @@ clone) still compiles - a tracked `.gitkeep` keeps the embed directory present -
 and serves a page naming the command to run.
 
 To work on the console itself, run the app and the server side by side; the dev
-server proxies `/api` and `/auth` to a `tabversed` on 127.0.0.1:8223:
+server proxies `/console/api` and `/auth` to a `tabversed` on 127.0.0.1:8223:
 
 ```sh
 pnpm run server:dev      # in one shell
@@ -161,34 +195,34 @@ See [`../api/openapi.yaml`](../api/openapi.yaml). Quick tour:
 
 ```sh
 # 1. create the account (only allowed while the server has no users)
-curl -s -X POST localhost:8223/api/v1/auth/bootstrap -d '{"name":"yli"}'
+curl -s -X POST localhost:8223/console/api/v1/auth/bootstrap -d '{"name":"yli"}'
 # -> {"user_id":"usr_...","device_id":"dev_...","token":"..."}
 
 # 2. upload data
-curl -s -X POST localhost:8223/api/v1/sync \
+curl -s -X POST localhost:8223/console/api/v1/sync \
   -H 'Authorization: Bearer <token>' \
   -d '{"records":[{"entity":"note","id":"n1","updated_at":1760000000000,
        "payload":"{\"title\":\"hello\"}"}]}'
 
 # 3. download everything changed since revision 0
-curl -s 'localhost:8223/api/v1/sync?since=0' -H 'Authorization: Bearer <token>'
+curl -s 'localhost:8223/console/api/v1/sync?since=0' -H 'Authorization: Bearer <token>'
 
 # 4. search
-curl -s 'localhost:8223/api/v1/search?q=hello' -H 'Authorization: Bearer <token>'
+curl -s 'localhost:8223/console/api/v1/search?q=hello' -H 'Authorization: Bearer <token>'
 
 # 5. pair another device: mint a code on device A, redeem it on device B
-curl -s -X POST localhost:8223/api/v1/auth/invites -H 'Authorization: Bearer <token>' -d '{"ttl_seconds":300}'
-curl -s -X POST localhost:8223/api/v1/auth/pair -d '{"invite_code":"XXXX-XXXX-XXXX-XXXX","device_name":"laptop"}'
+curl -s -X POST localhost:8223/console/api/v1/auth/invites -H 'Authorization: Bearer <token>' -d '{"ttl_seconds":300}'
+curl -s -X POST localhost:8223/console/api/v1/auth/pair -d '{"invite_code":"XXXX-XXXX-XXXX-XXXX","device_name":"laptop"}'
 
 # 6. or pair from the console's own session instead - the wizard (adr/0020).
 #    The extension opens `/console?pair=1`, the person signs in there, and the
 #    page calls this with their session cookie + XSRF header:
-#      POST /api/v1/console/pair  {"device_name":"chrome","extension_id":"<id>"}
+#      POST /console/api/v1/console/pair  {"device_name":"chrome","extension_id":"<id>"}
 #    -> {"user_id":"usr_...","device_id":"dev_...","token":"..."}
 #    No invite code, no account parameter: the account is the session's.
 ```
 
-Realtime: `ws://host/api/v1/sync/stream?access_token=<token>` receives
+Realtime: `ws://host/console/api/v1/sync/stream?access_token=<token>` receives
 
 ```json
 {"type":"hello","rev":12,"server_at":1760000000000}
@@ -274,8 +308,8 @@ validation, and a button that half-works is worse than none).
 **Pairing a browser out of that session** (`adr/0020`): the extension opens this
 console at `/console?pair=1&ext=<its id>&nonce=<uuid>`, the person signs in with the
 flow above and approves a device name, and the page calls
-`POST /api/v1/console/pair` with the session. It mints a device and a token for
-the signed-in account - the same thing `POST /api/v1/auth/pair` does for an
+`POST /console/api/v1/console/pair` with the session. It mints a device and a token for
+the signed-in account - the same thing `POST /console/api/v1/auth/pair` does for an
 invite code, minus the code, because this person is the owner of the account
 rather than holding a key to it - and the page hands the token to the extension
 over `chrome.runtime.sendMessage`, which the manifest's `externally_connectable`
@@ -333,7 +367,7 @@ extension is unaffected: it pairs with a device token exactly as before.
 
 ## Multi tenancy and the console (ADR 0009)
 
-By default the server is single tenant: `/api/v1/auth/bootstrap` is open only
+By default the server is single tenant: `/console/api/v1/auth/bootstrap` is open only
 while the database holds no account, and that account owns the deployment
 afterwards. Every tenant scoped table already carried `user_id`, so making a
 second account possible was a matter of letting an operator create one.
@@ -345,16 +379,16 @@ TABVERSED_ADMIN_EMAIL=you@example.com pnpm run server:dev
 
 With the token set:
 
-- **multi tenant** — `POST /api/v1/admin/users` creates accounts, each isolated
+- **multi tenant** — `POST /console/api/v1/admin/users` creates accounts, each isolated
   by `user_id` exactly as the devices of one account already were, and
-  `/api/v1/auth/bootstrap` now requires the admin token too (no more
+  `/console/api/v1/auth/bootstrap` now requires the admin token too (no more
   first-payer-wins on an exposed port)
 - **read only data browser** — the console lists an account's tabverses as rows,
   and clicking one slides in a drawer over the list with the same view the
   extension shows (name, when it was created and saved, "working on N tabs",
   the tab cards, tab groups), plus a raw record browser and the same FTS search
   the extension uses
-- **delete a tabverse** — `DELETE /api/v1/admin/users/{id}/tabspaces/{tid}?confirm={tid}`
+- **delete a tabverse** — `DELETE /console/api/v1/admin/users/{id}/tabspaces/{tid}?confirm={tid}`
   tombstones that tabverse and every record hanging off it (tabs, notes, todos,
   bookmarks, closed tabs, ordering aggregates) and tells the account's devices,
   so their next sync removes their copy too (ADR 0015)
@@ -378,7 +412,7 @@ admin surface is for operator state; the data stays the extension's to write.
 
 **Deleting a tabverse is the exception, and it is a delete rather than an edit**
 (`adr/0015`). It writes no content - it tombstones the tabverse and its records,
-exactly as the extension's own `DELETE /api/v1/entities/{entity}/{id}` does,
+exactly as the extension's own `DELETE /console/api/v1/entities/{entity}/{id}` does,
 because a delete has to travel the sync channel or the next push from any paired
 device puts the rows back. It needs the tabverse id back as `?confirm=`, it is
 refused while an operator is looking through somebody else's account, and it is
@@ -405,29 +439,29 @@ B=localhost:8223
 J=cookies.txt     # a signed-in session, from the sign-in link
 
 # who am I, and who runs this deployment
-curl -s -b $J $B/api/v1/console/me
+curl -s -b $J $B/console/api/v1/console/me
 
 # what the console does for a person, by hand
-curl -s -X POST "$B/api/v1/console/signin-link?user=me@example.com&address=me@example.com&site=$B"
+curl -s -X POST "$B/console/api/v1/console/signin-link?user=me@example.com&address=me@example.com&site=$B"
 U=usr_...
-curl -s -b $J -X POST "$B/api/v1/admin/users/$U/invites?ttl_seconds=300"
-curl -s -b $J "$B/api/v1/admin/users/$U/tabspaces"
-curl -s -b $J "$B/api/v1/admin/users/$U/tabspaces/ts_..."
-curl -s -b $J "$B/api/v1/admin/users/$U/search?q=hello"
-curl -s -b $J -X DELETE "$B/api/v1/admin/users/$U/devices/dev_..."
+curl -s -b $J -X POST "$B/console/api/v1/admin/users/$U/invites?ttl_seconds=300"
+curl -s -b $J "$B/console/api/v1/admin/users/$U/tabspaces"
+curl -s -b $J "$B/console/api/v1/admin/users/$U/tabspaces/ts_..."
+curl -s -b $J "$B/console/api/v1/admin/users/$U/search?q=hello"
+curl -s -b $J -X DELETE "$B/console/api/v1/admin/users/$U/devices/dev_..."
 
 # the operator's directory (and the filter it needs)
-curl -s -b $J "$B/api/v1/admin/users"
-curl -s -b $J "$B/api/v1/admin/users?q=alice"
-curl -s -b $J -X PUT "$B/api/v1/admin/users/$U/role" -d '{"role":"admin"}'
-curl -s -b $J -X POST "$B/api/v1/admin/users/$U/impersonate"
-curl -s -b $J "$B/api/v1/console/impersonation"
-curl -s -b $J -X POST "$B/api/v1/console/impersonate/stop"
+curl -s -b $J "$B/console/api/v1/admin/users"
+curl -s -b $J "$B/console/api/v1/admin/users?q=alice"
+curl -s -b $J -X PUT "$B/console/api/v1/admin/users/$U/role" -d '{"role":"admin"}'
+curl -s -b $J -X POST "$B/console/api/v1/admin/users/$U/impersonate"
+curl -s -b $J "$B/console/api/v1/console/impersonation"
+curl -s -b $J -X POST "$B/console/api/v1/console/impersonate/stop"
 
 # then retire the dead device (revokes and archives its tokens, then archives it)
-curl -s -b $J -X PUT "$B/api/v1/admin/users/$U/devices/dev_.../archive"
-curl -s -b $J -X PUT "$B/api/v1/admin/users/$U/devices/dev_.../records/archive"
-curl -s -b $J "$B/api/v1/admin/users/$U/records?archived=1"   # show archived
+curl -s -b $J -X PUT "$B/console/api/v1/admin/users/$U/devices/dev_.../archive"
+curl -s -b $J -X PUT "$B/console/api/v1/admin/users/$U/devices/dev_.../records/archive"
+curl -s -b $J "$B/console/api/v1/admin/users/$U/records?archived=1"   # show archived
 ```
 
 ### Archiving (ADR 0011)
@@ -458,8 +492,8 @@ for as long as it kept being used.
 
 | Step | Endpoint | Who |
 | ---- | -------- | ---- |
-| Sign out of this browser | `POST /api/v1/console/signout` | anyone signed in |
-| Sign out of every browser | `POST /api/v1/console/revoke-sessions` | the account itself (audited) |
+| Sign out of this browser | `POST /console/api/v1/console/signout` | anyone signed in |
+| Sign out of every browser | `POST /console/api/v1/console/revoke-sessions` | the account itself (audited) |
 | The same, for somebody else | `PUT .../admin/users/{user_id}/revoke-sessions` | an operator |
 
 "Sign out everywhere" moves the account's revocation cut-off

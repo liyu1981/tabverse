@@ -98,7 +98,7 @@ func operatorSession(t *testing.T, ts *httptest.Server, s *Server) *sessionClien
 	// No manual promotion: registering with TABVERSED_ADMIN_EMAIL *is* the
 	// operator bootstrap, so the tests use the real one.
 	client := signInAs(t, ts, s, testAdminEmail)
-	if role, _ := client.do(t, http.MethodGet, "/api/v1/console/me").body["role"].(string); role != store.RoleAdmin {
+	if role, _ := client.do(t, http.MethodGet, "/console/api/v1/console/me").body["role"].(string); role != store.RoleAdmin {
 		t.Fatalf("the admin email should have made this an operator, role = %v", role)
 	}
 	// Helpers that stand in for a registration need the store, and the
@@ -148,7 +148,7 @@ func signInAs(t *testing.T, ts *httptest.Server, s *Server, email string) *sessi
 		t.Fatalf("sign in: %v", err)
 	}
 	client := &sessionClient{cookies: rec.Result().Cookies(), ts: ts, xsrfHeader: "X-XSRF-Token"}
-	client.do(t, http.MethodGet, "/api/v1/console/me")
+	client.do(t, http.MethodGet, "/console/api/v1/console/me")
 	return client
 }
 
@@ -303,7 +303,7 @@ func TestConsoleMeBeforeAndAfterSignIn(t *testing.T) {
 
 	// Before signing in, the page learns who it is talking to and what the
 	// deployment offers - there is no longer a token to fall back on.
-	r := (&sessionClient{ts: ts}).do(t, http.MethodGet, "/api/v1/console/me")
+	r := (&sessionClient{ts: ts}).do(t, http.MethodGet, "/console/api/v1/console/me")
 	r.mustStatus(t, http.StatusOK)
 	if r.body["signed_in"] != false {
 		t.Fatalf("signed out: %s", r.raw)
@@ -321,7 +321,7 @@ func TestConsoleMeBeforeAndAfterSignIn(t *testing.T) {
 	}
 
 	alice := signInAs(t, ts, s, "alice@example.com")
-	r = alice.do(t, http.MethodGet, "/api/v1/console/me")
+	r = alice.do(t, http.MethodGet, "/console/api/v1/console/me")
 	r.mustStatus(t, http.StatusOK)
 	if r.body["signed_in"] != true || r.body["user_id"] == "" {
 		t.Fatalf("signed in: %s", r.raw)
@@ -342,21 +342,21 @@ func TestAPersonReachesTheirOwnAccountAndNobodyElses(t *testing.T) {
 	if err != nil {
 		t.Fatalf("bob: %v", err)
 	}
-	me, _ := alice.do(t, http.MethodGet, "/api/v1/console/me").body["user_id"].(string)
+	me, _ := alice.do(t, http.MethodGet, "/console/api/v1/console/me").body["user_id"].(string)
 
 	// Their own account: yes, with no user id in the URL at all.
-	r := alice.do(t, http.MethodGet, "/api/v1/admin/users/"+me)
+	r := alice.do(t, http.MethodGet, "/console/api/v1/admin/users/"+me)
 	r.mustStatus(t, http.StatusOK)
 
 	// Somebody else's: a clear refusal, not an empty page that looks fine.
-	r = alice.do(t, http.MethodGet, "/api/v1/admin/users/"+bobID)
+	r = alice.do(t, http.MethodGet, "/console/api/v1/admin/users/"+bobID)
 	r.mustStatus(t, http.StatusForbidden)
 	if r.body["error"] != "forbidden" {
 		t.Fatalf("expected a refusal, got %s", r.raw)
 	}
 
 	// And the data browser is scoped the same way.
-	r = alice.do(t, http.MethodGet, "/api/v1/admin/users/"+bobID+"/tabspaces")
+	r = alice.do(t, http.MethodGet, "/console/api/v1/admin/users/"+bobID+"/tabspaces")
 	r.mustStatus(t, http.StatusForbidden)
 }
 
@@ -366,13 +366,13 @@ func TestAMintedDeviceTokenCannotStandInForASession(t *testing.T) {
 	_, token := seedUser(t, op, "carol")
 
 	// A device token is a credential for the extension, not for the console.
-	r := doJSON(t, http.MethodGet, ts.URL+"/api/v1/admin/users", token, nil)
+	r := doJSON(t, http.MethodGet, ts.URL+"/console/api/v1/admin/users", token, nil)
 	r.mustStatus(t, http.StatusUnauthorized)
 
 	// And the console API with a session is a different thing from a device
 	// token: the session works, the device token does not.
 	dave := signInAs(t, ts, s, "dave@example.com")
-	dave.do(t, http.MethodGet, "/api/v1/console/me").mustStatus(t, http.StatusOK)
+	dave.do(t, http.MethodGet, "/console/api/v1/console/me").mustStatus(t, http.StatusOK)
 }
 
 func TestAPersonCannotReachTheOperatorViews(t *testing.T) {
@@ -380,13 +380,13 @@ func TestAPersonCannotReachTheOperatorViews(t *testing.T) {
 	alice := signInAs(t, ts, s, "alice@example.com")
 
 	// The account list is the operator's: it is the user query interface.
-	r := alice.do(t, http.MethodGet, "/api/v1/admin/users")
+	r := alice.do(t, http.MethodGet, "/console/api/v1/admin/users")
 	r.mustStatus(t, http.StatusForbidden)
 	if r.body["error"] != "forbidden" {
 		t.Fatalf("expected forbidden, got %s", r.raw)
 	}
 	// So are the deployment totals.
-	alice.do(t, http.MethodGet, "/api/v1/admin/totals").mustStatus(t, http.StatusForbidden)
+	alice.do(t, http.MethodGet, "/console/api/v1/admin/totals").mustStatus(t, http.StatusForbidden)
 
 	// Account creation is not an API at all: registration is the only way one
 	// comes into existence (ADR 0014), so the endpoint is gone rather than
@@ -394,7 +394,7 @@ func TestAPersonCannotReachTheOperatorViews(t *testing.T) {
 	before, _ := s.store.CountAccounts(context.Background())
 	// The response is the console's HTML now (the SPA catches unknown paths), so
 	// this is a raw request: what matters is that nothing was created.
-	created := doRequest(t, ts, http.MethodPost, "/api/v1/admin/users")
+	created := doRequest(t, ts, http.MethodPost, "/console/api/v1/admin/users")
 	created.Body.Close()
 	if created.StatusCode == http.StatusCreated {
 		t.Fatal("there is still a way to create an account")
@@ -407,9 +407,9 @@ func TestAPersonCannotReachTheOperatorViews(t *testing.T) {
 	// An operator does reach them, and a device token does not: the extension's
 	// credential is not a console credential.
 	op := operatorSession(t, ts, s)
-	op.do(t, http.MethodGet, "/api/v1/admin/users").mustStatus(t, http.StatusOK)
+	op.do(t, http.MethodGet, "/console/api/v1/admin/users").mustStatus(t, http.StatusOK)
 	_, deviceToken := seedUser(t, op, "carol")
-	doJSON(t, http.MethodGet, ts.URL+"/api/v1/admin/users", deviceToken, nil).
+	doJSON(t, http.MethodGet, ts.URL+"/console/api/v1/admin/users", deviceToken, nil).
 		mustStatus(t, http.StatusUnauthorized)
 }
 
@@ -421,7 +421,7 @@ func TestTheAdminEmailMakesTheFirstOperator(t *testing.T) {
 	ts, s := newAccountServer(t)
 
 	// Nobody yet, and the console says so.
-	r := (&sessionClient{ts: ts}).do(t, http.MethodGet, "/api/v1/console/me")
+	r := (&sessionClient{ts: ts}).do(t, http.MethodGet, "/console/api/v1/console/me")
 	r.mustStatus(t, http.StatusOK)
 	if r.body["operator_exists"] != false {
 		t.Fatalf("a fresh deployment should have no operator: %s", r.raw)
@@ -432,20 +432,20 @@ func TestTheAdminEmailMakesTheFirstOperator(t *testing.T) {
 
 	// A different person registers first: an ordinary account.
 	other := signInAs(t, ts, s, "someone@example.com")
-	other.do(t, http.MethodGet, "/api/v1/admin/users").mustStatus(t, http.StatusForbidden)
-	r = other.do(t, http.MethodGet, "/api/v1/console/me")
+	other.do(t, http.MethodGet, "/console/api/v1/admin/users").mustStatus(t, http.StatusForbidden)
+	r = other.do(t, http.MethodGet, "/console/api/v1/console/me")
 	if r.body["awaiting_operator"] == true {
 		t.Fatalf("only the configured address is awaiting the role: %s", r.raw)
 	}
 
 	// The configured address registers and is the operator from the start.
 	op := signInAs(t, ts, s, testAdminEmail)
-	me := op.do(t, http.MethodGet, "/api/v1/console/me").body
+	me := op.do(t, http.MethodGet, "/console/api/v1/console/me").body
 	if me["role"] != store.RoleAdmin {
 		t.Fatalf("registering with the admin email should be an operator: %v", me["role"])
 	}
-	op.do(t, http.MethodGet, "/api/v1/admin/users").mustStatus(t, http.StatusOK)
-	op.do(t, http.MethodGet, "/api/v1/admin/totals").mustStatus(t, http.StatusOK)
+	op.do(t, http.MethodGet, "/console/api/v1/admin/users").mustStatus(t, http.StatusOK)
+	op.do(t, http.MethodGet, "/console/api/v1/admin/totals").mustStatus(t, http.StatusOK)
 
 	// And it is on the record.
 	entries, err := s.store.ListAudit(context.Background(), store.AuditRoleChanged, "", 10)
@@ -467,12 +467,12 @@ func TestStartupPromotesAnExistingAdminEmailAccount(t *testing.T) {
 	// The person uses the address that will *become* the operator address, but
 	// at this point it is just an ordinary registration.
 	existing := signInAs(t, ts, s, testAdminEmail)
-	existingID, _ := existing.do(t, http.MethodGet, "/api/v1/console/me").body["user_id"].(string)
+	existingID, _ := existing.do(t, http.MethodGet, "/console/api/v1/console/me").body["user_id"].(string)
 	if acc, err := s.store.AccountByID(ctx, existingID); err != nil || acc.IsAdmin() {
 		t.Fatalf("the account should not be an operator yet: %+v (%v)", acc, err)
 	}
 	// The console says what is missing.
-	r := existing.do(t, http.MethodGet, "/api/v1/console/me")
+	r := existing.do(t, http.MethodGet, "/console/api/v1/console/me")
 	if r.body["awaiting_operator"] == true {
 		t.Fatalf("without the variable configured there is nothing to await: %s", r.raw)
 	}
@@ -487,7 +487,7 @@ func TestStartupPromotesAnExistingAdminEmailAccount(t *testing.T) {
 		t.Fatalf("the restart did not promote the account: %+v (%v)", acc, err)
 	}
 	fresh := signInAs(t, restarted, srv, testAdminEmail)
-	fresh.do(t, http.MethodGet, "/api/v1/admin/users").mustStatus(t, http.StatusOK)
+	fresh.do(t, http.MethodGet, "/console/api/v1/admin/users").mustStatus(t, http.StatusOK)
 }
 
 // ---- impersonation --------------------------------------------------------
@@ -502,14 +502,14 @@ func TestImpersonationIsReadOnlyAndAudited(t *testing.T) {
 
 	// An operator and an ordinary person.
 	root := signInAs(t, ts, s, "root@example.com")
-	rootID, _ := root.do(t, http.MethodGet, "/api/v1/console/me").body["user_id"].(string)
+	rootID, _ := root.do(t, http.MethodGet, "/console/api/v1/console/me").body["user_id"].(string)
 	if err := s.store.SetRole(ctx, rootID, store.RoleAdmin); err != nil {
 		t.Fatalf("promote: %v", err)
 	}
 	root = signInAs(t, ts, s, "root@example.com")
 
 	alice := signInAs(t, ts, s, "alice@example.com")
-	aliceID, _ := alice.do(t, http.MethodGet, "/api/v1/console/me").body["user_id"].(string)
+	aliceID, _ := alice.do(t, http.MethodGet, "/console/api/v1/console/me").body["user_id"].(string)
 	// something of alice's to look at
 	if _, r := push(t, ts, mintDeviceToken(t, ts, s, aliceID), []pushedRecord{
 		{Entity: "tabspace", ID: "ts_alice", UpdatedAt: 1700000000000,
@@ -520,7 +520,7 @@ func TestImpersonationIsReadOnlyAndAudited(t *testing.T) {
 
 	// Start looking through her eyes. do() keeps the cookies the server set,
 	// which is how the browser would behave.
-	r := root.do(t, http.MethodPost, "/api/v1/admin/users/"+aliceID+"/impersonate")
+	r := root.do(t, http.MethodPost, "/console/api/v1/admin/users/"+aliceID+"/impersonate")
 	r.mustStatus(t, http.StatusOK)
 	if r.body["read_only"] != true {
 		t.Fatalf("impersonation should be read only: %s", r.raw)
@@ -530,13 +530,13 @@ func TestImpersonationIsReadOnlyAndAudited(t *testing.T) {
 	}
 
 	// She now sees her own account, with her data.
-	r = root.do(t, http.MethodGet, "/api/v1/admin/users/"+aliceID+"/tabspaces")
+	r = root.do(t, http.MethodGet, "/console/api/v1/admin/users/"+aliceID+"/tabspaces")
 	r.mustStatus(t, http.StatusOK)
 	if total, _ := r.body["total"].(float64); total != 1 {
 		t.Fatalf("the operator should see her tabverse: %s", r.raw)
 	}
 	// And the console can tell it is assuming, for the banner.
-	r = root.do(t, http.MethodGet, "/api/v1/console/impersonation")
+	r = root.do(t, http.MethodGet, "/console/api/v1/console/impersonation")
 	r.mustStatus(t, http.StatusOK)
 	if r.body["assuming"] != true || r.body["read_only"] != true {
 		t.Fatalf("impersonation status: %s", r.raw)
@@ -551,7 +551,7 @@ func TestImpersonationIsReadOnlyAndAudited(t *testing.T) {
 	if err != nil {
 		t.Fatalf("audit: %v", err)
 	}
-	r = root.do(t, http.MethodPost, "/api/v1/admin/users/"+aliceID+"/invites")
+	r = root.do(t, http.MethodPost, "/console/api/v1/admin/users/"+aliceID+"/invites")
 	r.mustStatus(t, http.StatusForbidden)
 	if r.body["error"] != "read_only" {
 		t.Fatalf("expected read_only, got %s", r.raw)
@@ -572,14 +572,14 @@ func TestImpersonationIsReadOnlyAndAudited(t *testing.T) {
 	}
 
 	// Stop, and the operator is themselves again.
-	root.do(t, http.MethodPost, "/api/v1/console/impersonate/stop").
+	root.do(t, http.MethodPost, "/console/api/v1/console/impersonate/stop").
 		mustStatus(t, http.StatusNoContent)
-	r = root.do(t, http.MethodGet, "/api/v1/console/impersonation")
+	r = root.do(t, http.MethodGet, "/console/api/v1/console/impersonation")
 	if r.body["assuming"] != false {
 		t.Fatalf("still assuming after stop: %s", r.raw)
 	}
 	// ...and can write again.
-	root.do(t, http.MethodPost, "/api/v1/admin/users/"+rootID+"/invites").
+	root.do(t, http.MethodPost, "/console/api/v1/admin/users/"+rootID+"/invites").
 		mustStatus(t, http.StatusCreated)
 
 	out, err := s.store.ListAudit(ctx, store.AuditImpersonateOut, aliceID, 10)
@@ -593,18 +593,18 @@ func TestAnOperatorCannotImpersonateAnotherOperator(t *testing.T) {
 	ctx := context.Background()
 
 	first := signInAs(t, ts, s, "first@example.com")
-	firstID, _ := first.do(t, http.MethodGet, "/api/v1/console/me").body["user_id"].(string)
+	firstID, _ := first.do(t, http.MethodGet, "/console/api/v1/console/me").body["user_id"].(string)
 	if err := s.store.SetRole(ctx, firstID, store.RoleAdmin); err != nil {
 		t.Fatalf("promote: %v", err)
 	}
 	second := signInAs(t, ts, s, "second@example.com")
-	secondID, _ := second.do(t, http.MethodGet, "/api/v1/console/me").body["user_id"].(string)
+	secondID, _ := second.do(t, http.MethodGet, "/console/api/v1/console/me").body["user_id"].(string)
 	if err := s.store.SetRole(ctx, secondID, store.RoleAdmin); err != nil {
 		t.Fatalf("promote: %v", err)
 	}
 
 	first = signInAs(t, ts, s, "first@example.com")
-	r := first.do(t, http.MethodPost, "/api/v1/admin/users/"+secondID+"/impersonate")
+	r := first.do(t, http.MethodPost, "/console/api/v1/admin/users/"+secondID+"/impersonate")
 	r.mustStatus(t, http.StatusForbidden)
 	if r.body["error"] != "cannot_impersonate_admin" {
 		t.Fatalf("expected a refusal, got %s", r.raw)
@@ -624,7 +624,7 @@ func TestAPersonCannotImpersonateAtAll(t *testing.T) {
 	if err != nil {
 		t.Fatalf("bob: %v", err)
 	}
-	r := alice.do(t, http.MethodPost, "/api/v1/admin/users/"+bobID+"/impersonate")
+	r := alice.do(t, http.MethodPost, "/console/api/v1/admin/users/"+bobID+"/impersonate")
 	r.mustStatus(t, http.StatusForbidden)
 	if r.body["error"] == "" {
 		t.Fatalf("expected an explanation, got %s", r.raw)
@@ -643,10 +643,10 @@ func mintDeviceToken(t *testing.T, ts *httptest.Server, s *Server, userID string
 	// takes, without a browser.
 	owner := signInAs(t, ts, s, acc.Email)
 	r := owner.doJSON(t, http.MethodPost,
-		"/api/v1/admin/users/"+acc.ID+"/invites?ttl_seconds=300", nil)
+		"/console/api/v1/admin/users/"+acc.ID+"/invites?ttl_seconds=300", nil)
 	r.mustStatus(t, http.StatusCreated)
 	c, _ := r.body["code"].(string)
-	paired := doJSON(t, http.MethodPost, ts.URL+"/api/v1/auth/pair", "",
+	paired := doJSON(t, http.MethodPost, ts.URL+"/console/api/v1/auth/pair", "",
 		map[string]string{"invite_code": c, "device_name": "seed"})
 	paired.mustStatus(t, http.StatusCreated)
 	tok, _ := paired.body["token"].(string)
@@ -719,7 +719,7 @@ func TestTheFirstOperatorJourney(t *testing.T) {
 		"site":    {"http://127.0.0.1:8223"},
 	}
 	form := doRequest(t, ts, http.MethodPost,
-		"/api/v1/console/signin-link?"+query.Encode())
+		"/console/api/v1/console/signin-link?"+query.Encode())
 	if form.StatusCode != http.StatusOK {
 		t.Fatalf("the sign-in form = %d, want 200: %s", form.StatusCode, readAll(t, form))
 	}
@@ -769,7 +769,7 @@ func TestTheFirstOperatorJourney(t *testing.T) {
 
 	// 3. that session is the operator
 	client := &sessionClient{ts: ts, cookies: []*http.Cookie{session, xsrf}, xsrfHeader: "X-XSRF-Token"}
-	me := client.do(t, http.MethodGet, "/api/v1/console/me").body
+	me := client.do(t, http.MethodGet, "/console/api/v1/console/me").body
 	if me["signed_in"] != true {
 		t.Fatalf("the session from the link does not work: %v", me)
 	}
@@ -777,7 +777,7 @@ func TestTheFirstOperatorJourney(t *testing.T) {
 		t.Fatalf("the first operator is %v, want admin", me["role"])
 	}
 	// ...and it reaches the operator views, which is the whole point.
-	client.do(t, http.MethodGet, "/api/v1/admin/users").mustStatus(t, http.StatusOK)
+	client.do(t, http.MethodGet, "/console/api/v1/admin/users").mustStatus(t, http.StatusOK)
 	// The link is single use, and now provably so: the redemption is recorded in
 	// the database, so this holds across a restart and across replicas rather
 	// than only until the process that issued it died (adr/0021).
@@ -828,7 +828,7 @@ func TestDebugJourney(t *testing.T) {
 	var sentTo, sentText string
 	s.accounts.SetSenderOverride(func(a, txt string) error { sentTo, sentText = a, txt; return nil })
 	q := url.Values{"user": {testAdminEmail}, "address": {testAdminEmail}, "site": {"http://127.0.0.1:8223"}}
-	form := doRequest(t, ts, http.MethodPost, "/api/v1/console/signin-link?"+q.Encode())
+	form := doRequest(t, ts, http.MethodPost, "/console/api/v1/console/signin-link?"+q.Encode())
 	t.Logf("form: %d %s", form.StatusCode, readAll(t, form))
 	t.Logf("sent to %q: %q", sentTo, sentText)
 	link := sentText[strings.Index(sentText, "http"):]
@@ -875,7 +875,7 @@ func TestPlainHttpGetsUsableCookies(t *testing.T) {
 		"address": {testAdminEmail},
 		"site":    {"http://127.0.0.1:8223"},
 	}
-	doRequest(t, ts, http.MethodPost, "/api/v1/console/signin-link?"+q.Encode()).Body.Close()
+	doRequest(t, ts, http.MethodPost, "/console/api/v1/console/signin-link?"+q.Encode()).Body.Close()
 
 	link := sentText[strings.Index(sentText, "http"):]
 	link = link[:strings.IndexAny(link, " \n")]
@@ -903,11 +903,11 @@ func TestDeletingAccounts(t *testing.T) {
 	ts, s := newAccountServer(t)
 	ctx := context.Background()
 	own := signInAs(t, ts, s, "alice@example.com")
-	ownID, _ := own.do(t, http.MethodGet, "/api/v1/console/me").body["user_id"].(string)
+	ownID, _ := own.do(t, http.MethodGet, "/console/api/v1/console/me").body["user_id"].(string)
 
 	// The confirmation is required whatever else is true: this one is
 	// irreversible.
-	r := own.doJSON(t, http.MethodDelete, "/api/v1/admin/users/"+ownID, nil)
+	r := own.doJSON(t, http.MethodDelete, "/console/api/v1/admin/users/"+ownID, nil)
 	r.mustStatus(t, http.StatusBadRequest)
 	if r.body["error"] != "confirmation_required" {
 		t.Fatalf("an unconfirmed delete = %s", r.raw)
@@ -915,7 +915,7 @@ func TestDeletingAccounts(t *testing.T) {
 
 	// A person, on their own account, with the confirmation: allowed.
 	own.doJSON(t, http.MethodDelete,
-		"/api/v1/admin/users/"+ownID+"?confirm="+ownID, nil).
+		"/console/api/v1/admin/users/"+ownID+"?confirm="+ownID, nil).
 		mustStatus(t, http.StatusNoContent)
 	if _, err := s.store.AccountByID(ctx, ownID); !errors.Is(err, store.ErrNotFound) {
 		t.Fatalf("the account is still there: %v", err)
@@ -923,9 +923,9 @@ func TestDeletingAccounts(t *testing.T) {
 
 	// An operator, on their own account: refused, with the reason.
 	op := operatorSession(t, ts, s)
-	opID, _ := op.do(t, http.MethodGet, "/api/v1/console/me").body["user_id"].(string)
+	opID, _ := op.do(t, http.MethodGet, "/console/api/v1/console/me").body["user_id"].(string)
 	r = op.doJSON(t, http.MethodDelete,
-		"/api/v1/admin/users/"+opID+"?confirm="+opID, nil)
+		"/console/api/v1/admin/users/"+opID+"?confirm="+opID, nil)
 	r.mustStatus(t, http.StatusConflict)
 	if r.body["error"] != "cannot_delete_self" {
 		t.Fatalf("an operator deleting their own account = %s", r.raw)

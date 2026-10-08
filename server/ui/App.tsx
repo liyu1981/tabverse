@@ -22,11 +22,10 @@ import { readPairFromUrl, takeStashedPairRequest } from './data/pair';
  */
 export function App() {
   const status = useUnit($bootStatus);
-  // The extension opened this page with `?pair=1&ext=…&nonce=…` (adr/0020,
-  // adr/0023). The request is read from the query string, or from the stash a
-  // sign-in round trip left behind, and while one is pending this is the pair
-  // view - even signed out, because that is the page the person was sent here
-  // to use.
+  // The extension opened this page at `/console/pair?ext=…&nonce=…` (adr/0020,
+  // adr/0024). The request is read from the URL, or from the stash a sign-in
+  // round trip left behind, and while one is pending this is the pair view -
+  // even signed out, because that is the page the person was sent here to use.
   const [pairRequest, setPairRequest] = React.useState(
     () => readPairFromUrl() ?? takeStashedPairRequest(),
   );

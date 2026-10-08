@@ -24,12 +24,15 @@ tmp_dir = "server/tmp"
 [build]
   # The console first: `go build` embeds whatever is in
   # server/internal/webui/dist at that moment, so this has to finish before the
-  # binary is compiled.
+  # binary is compiled. Then the site that lives outside /console, which is
+  # either nothing (the tracked redirect page) or the documentation - this is
+  # where `officialserver=1` is read, the same way the other Go targets read it
+  # (adr/0024).
   # Both of these run in the directory air was started in - server/ - not in
   # root, which is a distinction air's own file makes easy to get wrong: `pnpm`
   # finds the workspace root from there on its own, and the build path is
   # already the server's.
-  pre_cmd = ["pnpm run ui:build"]
+  pre_cmd = ["pnpm run ui:build", "pnpm run site:prepare"]
   cmd = "go build -o ./bin/tabversed ./cmd/tabversed"
   # `entrypoint` rather than the older `bin` + `args_bin`: air deprecated those,
   # and with them ignored the binary started with no arguments - which for this
@@ -54,6 +57,10 @@ tmp_dir = "server/tmp"
     # there. Watching the output of your own build step is how a watcher
     # rebuilds itself forever, and it did exactly that until it was excluded.
     "server/internal/webui/dist",
+    # ...and the site's, for the same reason: tools/embedsite.sh clears and
+    # rewrites server/internal/webui/docs, and watching the output of a build
+    # step is how a watcher rebuilds itself forever.
+    "server/internal/webui/docs",
   ]
   # Tests are not the running program; editing one should not restart anything.
   exclude_regex = ["_test\\.go$"]

@@ -231,7 +231,7 @@ func (r testRig) signIn(t *testing.T, srv *httptest.Server, claims token.Claims,
 		t.Fatalf("expected a session and an XSRF cookie, got %d", len(cookies))
 	}
 	return func(withXSRF bool) int {
-		req, err := http.NewRequest(method, srv.URL+"/api/v1/admin/users", nil)
+		req, err := http.NewRequest(method, srv.URL+"/console/api/v1/admin/users", nil)
 		if err != nil {
 			t.Fatalf("request: %v", err)
 		}

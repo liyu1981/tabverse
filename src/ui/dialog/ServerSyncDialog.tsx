@@ -35,6 +35,7 @@ import {
 } from '../../data/repo/syncConfig';
 import {
   OFFICIAL_CONSOLE_URL,
+  OFFICIAL_PAIR_URL,
   OFFICIAL_SERVER_URL,
   closePairWindow,
   newPairNonce,
@@ -414,7 +415,7 @@ export const ServerSyncDialog = (props: {
         <p className={classes.pairingHint}>
           Run your own <code>tabversed</code> server, create an account on it,
           then generate a one time pairing code with
-          <code> POST /api/v1/auth/invites</code> and paste it below.
+          <code> POST /console/api/v1/auth/invites</code> and paste it below.
         </p>
       </Callout>
       <FormGroup label="Server URL" labelFor="sync-url-input">
@@ -482,7 +483,7 @@ export const ServerSyncDialog = (props: {
     <div className={classes.section}>
       <Callout intent={Intent.PRIMARY} title="Waiting for the Tabverse window">
         <p className={classes.pairingHint}>
-          A window opened at <code>{OFFICIAL_CONSOLE_URL}</code>. Sign in there,
+          A window opened at <code>{OFFICIAL_PAIR_URL}</code>. Sign in there,
           name this device and allow it - the token comes back on its own, and
           this dialog follows.
         </p>
@@ -501,7 +502,8 @@ export const ServerSyncDialog = (props: {
           name this device and approve it - there is no code to copy.
         </p>
         <p className={classes.pairingHint}>
-          <code>{OFFICIAL_SERVER_URL}</code>
+          <code>{OFFICIAL_SERVER_URL}</code> - the documentation lives there,
+          the console at <code>{OFFICIAL_CONSOLE_URL}</code>
         </p>
       </Callout>
       <div className={classes.buttonRow}>

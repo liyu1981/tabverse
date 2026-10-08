@@ -88,7 +88,7 @@ export class ServerApiClient {
   streamUrl(): string {
     return (
       this.baseUrl.replace(/^http/, 'ws') +
-      '/api/v1/sync/stream?access_token=' +
+      '/console/api/v1/sync/stream?access_token=' +
       encodeURIComponent(this.token)
     );
   }
@@ -146,7 +146,10 @@ export class ServerApiClient {
     if (limit) {
       query.push(`limit=${limit}`);
     }
-    return this.request<PullResult>('GET', `/api/v1/sync?${query.join('&')}`);
+    return this.request<PullResult>(
+      'GET',
+      `/console/api/v1/sync?${query.join('&')}`,
+    );
   }
 
   /** Batch upload; per record LWW outcomes. */
@@ -154,7 +157,9 @@ export class ServerApiClient {
     if (records.length === 0) {
       return Promise.resolve({ results: [], server_rev: -1 });
     }
-    return this.request<PushResult>('POST', '/api/v1/sync', { records });
+    return this.request<PushResult>('POST', '/console/api/v1/sync', {
+      records,
+    });
   }
 
   search(
@@ -173,14 +178,14 @@ export class ServerApiClient {
     }
     return this.request<{ query: string; hits: SearchHit[] }>(
       'GET',
-      `/api/v1/search?${parts.join('&')}`,
+      `/console/api/v1/search?${parts.join('&')}`,
     );
   }
 
   getRecord(entity: EntityName, id: string): Promise<SyncRecord> {
     return this.request<SyncRecord>(
       'GET',
-      `/api/v1/entities/${encodeURIComponent(entity)}/${encodeURIComponent(
+      `/console/api/v1/entities/${encodeURIComponent(entity)}/${encodeURIComponent(
         id,
       )}`,
     );
@@ -189,7 +194,7 @@ export class ServerApiClient {
   deleteRecord(entity: EntityName, id: string): Promise<PushResult> {
     return this.request<PushResult>(
       'DELETE',
-      `/api/v1/entities/${encodeURIComponent(entity)}/${encodeURIComponent(
+      `/console/api/v1/entities/${encodeURIComponent(entity)}/${encodeURIComponent(
         id,
       )}`,
     );
@@ -199,7 +204,7 @@ export class ServerApiClient {
   createInvite(
     ttlSeconds = 900,
   ): Promise<{ code: string; expires_at: number }> {
-    return this.request('POST', '/api/v1/auth/invites', {
+    return this.request('POST', '/console/api/v1/auth/invites', {
       ttl_seconds: ttlSeconds,
     });
   }
@@ -214,7 +219,7 @@ export class ServerApiClient {
   ): Promise<DeviceCredentials> {
     return ServerApiRaw.post(
       baseUrl,
-      '/api/v1/auth/bootstrap',
+      '/console/api/v1/auth/bootstrap',
       { name },
       fetchFn,
     );
@@ -229,7 +234,7 @@ export class ServerApiClient {
   ): Promise<DeviceCredentials> {
     return ServerApiRaw.post(
       baseUrl,
-      '/api/v1/auth/pair',
+      '/console/api/v1/auth/pair',
       { invite_code: inviteCode, device_name: deviceName },
       fetchFn,
     );

@@ -59,12 +59,13 @@ function memorySession() {
   };
 }
 
-test('the window URL carries the extension id and a nonce, in the query', () => {
+test('the window URL is the pairing page with the id and a nonce', () => {
   const url = officialPairUrl('abcdefghijklmnoabcdefhijklmnoabc', 'n-1');
-  expect(url.startsWith(`${OFFICIAL_SERVER_URL}/console?`)).toBe(true);
-  // on the console's own page, as a plain HTTP URL (adr/0023)
+  expect(url.startsWith(`${OFFICIAL_SERVER_URL}/console/pair?`)).toBe(true);
+  // a route of the console, as a plain HTTP URL (adr/0024) - no fragment and
+  // no marker key: the path says this is the pairing page
   expect(url).not.toContain('#');
-  expect(url).toContain('pair=1');
+  expect(url).not.toContain('pair=1');
   expect(url).toContain('ext=abcdefghijklmnoabcdefhijklmnoabc');
   expect(url).toContain('nonce=n-1');
 });
@@ -210,9 +211,9 @@ test('the origin of a sender is read from its url when it has no origin', () => 
   expect(senderOrigin({ origin: 'https://a.example' })).toEqual(
     'https://a.example',
   );
-  expect(senderOrigin({ url: 'https://b.example/console?pair=1' })).toEqual(
-    'https://b.example',
-  );
+  expect(
+    senderOrigin({ url: 'https://b.example/console/pair?ext=abc' }),
+  ).toEqual('https://b.example');
   expect(senderOrigin({})).toEqual('');
   expect(senderOrigin(undefined)).toEqual('');
 });
@@ -231,11 +232,11 @@ test('opening the wizard returns the window it made, and closing it is safe', as
   };
 
   const id = await openOfficialPairWindow(
-    'https://tabversed.liyu1981.xyz/console?pair=1',
+    'https://tabversed.liyu1981.xyz/console/pair?ext=abc',
     { windows },
   );
   expect(id).toEqual(42);
-  expect(created[0].url).toContain('pair=1');
+  expect(created[0].url).toContain('/console/pair');
 
   await closePairWindow(id, { windows });
   expect(removed).toEqual([42]);

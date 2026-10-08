@@ -58,7 +58,7 @@ func newSessionServer(t *testing.T, adminEmail string, tweak func(*config.Config
 func expiredSessionClient(t *testing.T, ts *httptest.Server, s *Server, email string) *sessionClient {
 	t.Helper()
 	fresh := signInAs(t, ts, s, email)
-	userID := fresh.do(t, http.MethodGet, "/api/v1/console/me").body["user_id"].(string)
+	userID := fresh.do(t, http.MethodGet, "/console/api/v1/console/me").body["user_id"].(string)
 
 	rec := httptest.NewRecorder()
 	claims := sessionClaimsFor(userID, email)
@@ -110,7 +110,7 @@ func realSession(t *testing.T, s *Server, ts *httptest.Server, email, label stri
 	q := url.Values{
 		"user": {label}, "address": {email}, "site": {"http://127.0.0.1:8223"},
 	}
-	res := doRequest(t, ts, http.MethodPost, "/api/v1/console/signin-link?"+q.Encode())
+	res := doRequest(t, ts, http.MethodPost, "/console/api/v1/console/signin-link?"+q.Encode())
 	res.Body.Close()
 	if res.StatusCode != http.StatusOK || !strings.Contains(sentText, "?token=") {
 		t.Fatalf("asking for a link: %d, nothing sent", res.StatusCode)
@@ -141,7 +141,7 @@ func realSession(t *testing.T, s *Server, ts *httptest.Server, email, label stri
 	}
 	// The one request that resolves the identity row, so the sessions this test
 	// makes are revocable ones.
-	if me := client.do(t, http.MethodGet, "/api/v1/console/me").body; me["signed_in"] != true {
+	if me := client.do(t, http.MethodGet, "/console/api/v1/console/me").body; me["signed_in"] != true {
 		t.Fatalf("the real sign-in does not work: %v", me)
 	}
 	return client
@@ -156,7 +156,7 @@ func TestExpiredSessionIsRefusedAndItsCookiesCleared(t *testing.T) {
 
 	// /me is under the soft guard, so it answers rather than refusing - and the
 	// answer is "nobody is signed in".
-	if me := client.do(t, http.MethodGet, "/api/v1/console/me").body; me["signed_in"] != false {
+	if me := client.do(t, http.MethodGet, "/console/api/v1/console/me").body; me["signed_in"] != false {
 		t.Fatalf("an expired session still reads as signed in: %v", me)
 	}
 	// The refusal also clears the cookies, so the browser stops presenting a
@@ -169,7 +169,7 @@ func TestExpiredSessionIsRefusedAndItsCookiesCleared(t *testing.T) {
 	}
 
 	// A guarded route is a plain 401.
-	if r := client.do(t, http.MethodGet, "/api/v1/admin/users"); r.status != http.StatusUnauthorized {
+	if r := client.do(t, http.MethodGet, "/console/api/v1/admin/users"); r.status != http.StatusUnauthorized {
 		t.Fatalf("an expired session on an operator route = %d, want 401: %s", r.status, r.raw)
 	}
 }
@@ -183,7 +183,7 @@ func TestZeroSessionTTLMeansNoBound(t *testing.T) {
 		c.SessionCookieTTL = 0
 	})
 	client := expiredSessionClient(t, ts, s, testAdminEmail)
-	if me := client.do(t, http.MethodGet, "/api/v1/console/me").body; me["signed_in"] != true {
+	if me := client.do(t, http.MethodGet, "/console/api/v1/console/me").body; me["signed_in"] != true {
 		t.Fatalf("SessionTTL=0 should not expire anything: %v", me)
 	}
 }
@@ -193,7 +193,7 @@ func TestZeroSessionTTLMeansNoBound(t *testing.T) {
 func TestRevokeSessionsEndsEverySession(t *testing.T) {
 	ts, s := newSessionServer(t, testAdminEmail, nil)
 	first := realSession(t, s, ts, testAdminEmail, testAdminEmail)
-	userID, _ := first.do(t, http.MethodGet, "/api/v1/console/me").body["user_id"].(string)
+	userID, _ := first.do(t, http.MethodGet, "/console/api/v1/console/me").body["user_id"].(string)
 
 	// A second browser on the same account: "everywhere" is every session of
 	// *this* account, not every account on the server. Asking for the link again
@@ -203,11 +203,11 @@ func TestRevokeSessionsEndsEverySession(t *testing.T) {
 		t.Fatal("the two sessions are the same object")
 	}
 
-	first.doJSON(t, http.MethodPost, "/api/v1/console/revoke-sessions", nil).
+	first.doJSON(t, http.MethodPost, "/console/api/v1/console/revoke-sessions", nil).
 		mustStatus(t, http.StatusNoContent)
 
 	for name, client := range map[string]*sessionClient{"the caller": first, "the other browser": second} {
-		if body := client.do(t, http.MethodGet, "/api/v1/console/me").body; body["signed_in"] != false {
+		if body := client.do(t, http.MethodGet, "/console/api/v1/console/me").body; body["signed_in"] != false {
 			t.Fatalf("%s is still signed in after the revocation: %v", name, body)
 		}
 	}
@@ -237,7 +237,7 @@ func TestRevokeSessionsLeavesDeviceTokensAlone(t *testing.T) {
 		t.Fatalf("the device does not sync before the revocation: %s", before.raw)
 	}
 
-	op.doJSON(t, http.MethodPost, "/api/v1/console/revoke-sessions", nil).
+	op.doJSON(t, http.MethodPost, "/console/api/v1/console/revoke-sessions", nil).
 		mustStatus(t, http.StatusNoContent)
 
 	// After: it still does. The sync path is a bearer token out of the tokens
@@ -253,7 +253,7 @@ func TestRevokeSessionsLeavesDeviceTokensAlone(t *testing.T) {
 	// And it can still read, which is checked with the device token rather than
 	// the console's: the revocation signed *this* browser out, so the operator
 	// routes are exactly what can no longer be called here.
-	pull := doJSON(t, http.MethodGet, op.ts.URL+"/api/v1/sync?since=0", deviceToken, nil)
+	pull := doJSON(t, http.MethodGet, op.ts.URL+"/console/api/v1/sync?since=0", deviceToken, nil)
 	pull.mustStatus(t, http.StatusOK)
 	rows, _ := pull.body["records"].([]any)
 	if len(rows) != 2 {
@@ -268,7 +268,7 @@ func TestOperatorCanRevokeSomebodyElsesSessions(t *testing.T) {
 	userID, _ := seedUser(t, op, "alice")
 
 	op.doJSON(t, http.MethodPut,
-		"/api/v1/admin/users/"+userID+"/revoke-sessions", nil).
+		"/console/api/v1/admin/users/"+userID+"/revoke-sessions", nil).
 		mustStatus(t, http.StatusNoContent)
 
 	entries, err := op.srv.store.ListAudit(context.Background(), store.AuditSessionsRevoked, userID, 10)
@@ -284,7 +284,7 @@ func TestRevokeSessionsIsScopedToTheCaller(t *testing.T) {
 	userID, _ := seedUser(t, op, "alice")
 	plain := signInAs(t, op.ts, op.srv, "plain@example.com")
 	if r := plain.doJSON(t, http.MethodPut,
-		"/api/v1/admin/users/"+userID+"/revoke-sessions", nil); r.status == http.StatusNoContent {
+		"/console/api/v1/admin/users/"+userID+"/revoke-sessions", nil); r.status == http.StatusNoContent {
 		t.Fatalf("a plain account revoked somebody else's sessions: %s", r.raw)
 	}
 }
@@ -301,13 +301,13 @@ func TestSigninLinkIsThrottled(t *testing.T) {
 	}
 	// Five an hour is the per-address limit.
 	for i := 1; i <= 5; i++ {
-		res := doRequest(t, ts, http.MethodPost, "/api/v1/console/signin-link?"+q.Encode())
+		res := doRequest(t, ts, http.MethodPost, "/console/api/v1/console/signin-link?"+q.Encode())
 		res.Body.Close()
 		if res.StatusCode != http.StatusOK {
 			t.Fatalf("request %d = %d, want 200", i, res.StatusCode)
 		}
 	}
-	res := doRequest(t, ts, http.MethodPost, "/api/v1/console/signin-link?"+q.Encode())
+	res := doRequest(t, ts, http.MethodPost, "/console/api/v1/console/signin-link?"+q.Encode())
 	body := readAll(t, res)
 	if res.StatusCode != http.StatusTooManyRequests {
 		t.Fatalf("the sixth request = %d, want 429: %s", res.StatusCode, body)
@@ -332,7 +332,7 @@ func TestSigninIsAudited(t *testing.T) {
 		"user": {testAdminEmail}, "address": {testAdminEmail},
 		"site": {"http://127.0.0.1:8223"},
 	}
-	doRequest(t, ts, http.MethodPost, "/api/v1/console/signin-link?"+q.Encode()).Body.Close()
+	doRequest(t, ts, http.MethodPost, "/console/api/v1/console/signin-link?"+q.Encode()).Body.Close()
 
 	link := strings.TrimSpace(sentText[strings.Index(sentText, "http"):])
 	link = link[:strings.IndexAny(link, " \n")]
@@ -380,7 +380,7 @@ func TestSigninLinkCannotBeRedeemedTwice(t *testing.T) {
 		"user": {testAdminEmail}, "address": {testAdminEmail},
 		"site": {"http://127.0.0.1:8223"},
 	}
-	doRequest(t, ts, http.MethodPost, "/api/v1/console/signin-link?"+q.Encode()).Body.Close()
+	doRequest(t, ts, http.MethodPost, "/console/api/v1/console/signin-link?"+q.Encode()).Body.Close()
 	link := strings.TrimSpace(sentText[strings.Index(sentText, "http"):])
 	link = link[:strings.IndexAny(link, " \n")]
 	u, err := url.Parse(link)

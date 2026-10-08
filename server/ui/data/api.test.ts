@@ -41,13 +41,15 @@ function stub(
 }
 
 test('a 204 is a null result, not a parse error', async () => {
-  const { api } = stub({ '/api/v1/console/signout': { status: 204 } });
+  const { api } = stub({ '/console/api/v1/console/signout': { status: 204 } });
   await expect(api.signOut()).resolves.toBeNull();
 });
 
 test('the deployment config is one unauthenticated GET', async () => {
   const { calls, api } = stub({
-    '/api/v1/admin/config': { body: { admin_enabled: true, version: '0.5.0' } },
+    '/console/api/v1/admin/config': {
+      body: { admin_enabled: true, version: '0.5.0' },
+    },
   });
   await expect(api.getConfig()).resolves.toEqual({
     admin_enabled: true,
@@ -55,7 +57,7 @@ test('the deployment config is one unauthenticated GET', async () => {
   });
   expect(calls[0]).toMatchObject({
     method: 'GET',
-    url: '/api/v1/admin/config',
+    url: '/console/api/v1/admin/config',
   });
 });
 
@@ -63,14 +65,17 @@ test('an unauthorized "who am I" is null, not a thrown error', async () => {
   // Boot has one branch for "nobody is signed in" and one for "the server
   // cannot say"; both come back as null, and the page shows the sign-in form.
   const { api } = stub({
-    '/api/v1/console/me': { status: 401, body: { error: 'unauthorized' } },
+    '/console/api/v1/console/me': {
+      status: 401,
+      body: { error: 'unauthorized' },
+    },
   });
   await expect(api.whoAmI()).resolves.toBeNull();
 });
 
 test('an error keeps the status and the code the server sent', async () => {
   const { api } = stub({
-    '/api/v1/admin/users/usr_1/tabspaces/ts_9': {
+    '/console/api/v1/admin/users/usr_1/tabspaces/ts_9': {
       status: 404,
       body: { error: 'not_found', message: 'no such tabverse' },
     },
@@ -129,9 +134,9 @@ test('a delete sends the id back as the confirmation the server demands', async 
   const { calls, api } = stub();
   await api.deleteUser('usr_1');
   await api.deleteTabspace('usr_1', 'ts_2');
-  expect(calls[0].url).toBe('/api/v1/admin/users/usr_1?confirm=usr_1');
+  expect(calls[0].url).toBe('/console/api/v1/admin/users/usr_1?confirm=usr_1');
   expect(calls[1].url).toBe(
-    '/api/v1/admin/users/usr_1/tabspaces/ts_2?confirm=ts_2',
+    '/console/api/v1/admin/users/usr_1/tabspaces/ts_2?confirm=ts_2',
   );
   expect(calls.every((call) => call.method === 'DELETE')).toBe(true);
 });
@@ -144,15 +149,15 @@ test('archiving is a PUT and unarchiving is a DELETE of the same path', async ()
   await api.setDeviceRecordsArchived('usr_1', 'dev_1', true);
   expect(calls[0]).toMatchObject({
     method: 'PUT',
-    url: '/api/v1/admin/users/usr_1/devices/dev_1/archive',
+    url: '/console/api/v1/admin/users/usr_1/devices/dev_1/archive',
   });
   expect(calls[1]).toMatchObject({ method: 'DELETE' });
   expect(calls[2]).toMatchObject({
     method: 'PUT',
-    url: '/api/v1/admin/users/usr_1/tokens/hash/archive',
+    url: '/console/api/v1/admin/users/usr_1/tokens/hash/archive',
   });
   expect(calls[3].url).toBe(
-    '/api/v1/admin/users/usr_1/devices/dev_1/records/archive',
+    '/console/api/v1/admin/users/usr_1/devices/dev_1/records/archive',
   );
 });
 
@@ -170,19 +175,19 @@ test('a listing sends only the filters that are on', async () => {
   // offset goes out as 0 rather than being dropped, because a page that forgets
   // its place is worse than a redundant parameter.
   expect(calls[0].url).toBe(
-    '/api/v1/admin/users/usr_1/records?limit=50&offset=0&archived=1',
+    '/console/api/v1/admin/users/usr_1/records?limit=50&offset=0&archived=1',
   );
 });
 
 test('an id is escaped, not pasted', async () => {
   const { calls, api } = stub();
   await api.getUser('usr/../admin');
-  expect(calls[0].url).toBe('/api/v1/admin/users/usr%2F..%2Fadmin');
+  expect(calls[0].url).toBe('/console/api/v1/admin/users/usr%2F..%2Fadmin');
 });
 
 test('the directory filter and the user list come back as a list', async () => {
   const { api } = stub({
-    '/api/v1/admin/users': { body: { users: [{ id: 'usr_1' }] } },
+    '/console/api/v1/admin/users': { body: { users: [{ id: 'usr_1' }] } },
   });
   await expect(api.listUsers('ali')).resolves.toEqual([{ id: 'usr_1' }]);
   await expect(api.listUsers()).resolves.toEqual([{ id: 'usr_1' }]);

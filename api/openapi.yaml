@@ -5,14 +5,18 @@ info:
   description: |
     Contract for `tabversed`, the Tabverse sync server.
 
+    Every endpoint below lives under `/console/api/v1`: the console page, its
+    API and its pairing page share one prefix, and the rest of the server's URL
+    space is the site or the account library's routes (ADR 0024).
+
     ## Authentication
     Two credentials, and they are not interchangeable.
 
     * **The extension** sends `Authorization: Bearer <device token>` on
-      `/api/v1/sync`, `/api/v1/entities/*` and `/api/v1/search`. It pairs
-      (`POST /api/v1/auth/pair`) and never signs in: no password, no session,
+      `/console/api/v1/sync`, `/console/api/v1/entities/*` and `/console/api/v1/search`. It pairs
+      (`POST /console/api/v1/auth/pair`) and never signs in: no password, no session,
       no cookie (ADR 0002).
-    * **The console** (`/api/v1/admin/*`, `/api/v1/console/*`) uses the session
+    * **The console** (`/console/api/v1/admin/*`, `/console/api/v1/console/*`) uses the session
       cookie set by the auth library, plus an `X-XSRF-Token` header on every
       state changing request. A device token is refused there (ADR 0013).
 
@@ -20,9 +24,9 @@ info:
     A console sign-in lasts `TABVERSED_SESSION_TTL` (default `24h`) and then
     ends: the server refuses the token's expiry rather than letting the auth
     library renew it, and clears the cookie. `0` disables the bound.
-    `POST /api/v1/console/revoke-sessions` ends every session of the calling
+    `POST /console/api/v1/console/revoke-sessions` ends every session of the calling
     account by moving its revocation cut-off, and the operator's
-    `PUT /api/v1/admin/users/{user_id}/revoke-sessions` does the same for
+    `PUT /console/api/v1/admin/users/{user_id}/revoke-sessions` does the same for
     somebody else. Neither touches the extension's device tokens, which are a
     different credential with no expiry (ADR 0021).
 
@@ -30,14 +34,14 @@ info:
     Accounts are always on; there is no master credential. People register with
     a single-use email link (or a configured social provider) and manage their
     own account; the first registration with `TABVERSED_ADMIN_EMAIL` becomes the
-    operator, and an operator may name others. `POST /api/v1/auth/bootstrap` is
+    operator, and an operator may name others. `POST /console/api/v1/auth/bootstrap` is
     refused as soon as the deployment has a user or an account.
 
     ## Revisions
     The server keeps a per-user monotonic revision counter (`rev_seq`). Every
     accepted record write assigns the next value as the record's `rev`.
     Clients persist the highest revision they have seen and download deltas
-    with `GET /api/v1/sync?since=<rev>`.
+    with `GET /console/api/v1/sync?since=<rev>`.
 
     ## Conflict resolution
     Last-writer-wins on the client supplied `updated_at` (unix milliseconds).
@@ -45,7 +49,7 @@ info:
     attached as `current`.
 
     ## Realtime stream (WebSocket)
-    `GET /api/v1/sync/stream` upgrades to a WebSocket (token may be passed as
+    `GET /console/api/v1/sync/stream` upgrades to a WebSocket (token may be passed as
     `?access_token=` because browsers cannot set handshake headers).
     Server -> client frames:
 
@@ -91,7 +95,7 @@ paths:
                   status: { type: string, const: ok }
                   version: { type: string }
 
-  /api/v1/auth/bootstrap:
+  /console/api/v1/auth/bootstrap:
     post:
       tags: [auth]
       summary: Create the first account of a deployment
@@ -114,7 +118,7 @@ paths:
               schema: { $ref: '#/components/schemas/DeviceCredentials' }
         '409': { $ref: '#/components/responses/Conflict' }
 
-  /api/v1/auth/pair:
+  /console/api/v1/auth/pair:
     post:
       tags: [auth]
       summary: Redeem a single use pairing code for a device token
@@ -136,7 +140,7 @@ paths:
               schema: { $ref: '#/components/schemas/DeviceCredentials' }
         '401': { $ref: '#/components/responses/Unauthorized' }
 
-  /api/v1/auth/invites:
+  /console/api/v1/auth/invites:
     post:
       tags: [auth]
       summary: Mint a pairing code for another device of this account
@@ -162,7 +166,7 @@ paths:
                   expires_at: { type: integer, description: unix ms }
         '401': { $ref: '#/components/responses/Unauthorized' }
 
-  /api/v1/console/pair:
+  /console/api/v1/console/pair:
     post:
       tags: [console]
       summary: Mint a device and its token for the signed-in account
@@ -212,7 +216,7 @@ paths:
             application/json:
               schema: { type: object }
 
-  /api/v1/console/revoke-sessions:
+  /console/api/v1/console/revoke-sessions:
     post:
       tags: [console]
       summary: End every console session on this account
@@ -240,7 +244,7 @@ paths:
             application/json:
               schema: { type: object }
 
-  /api/v1/sync:
+  /console/api/v1/sync:
     get:
       tags: [sync]
       summary: Delta download of records changed since a revision
@@ -300,7 +304,7 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '413': { $ref: '#/components/responses/TooLarge' }
 
-  /api/v1/entities/{entity}/{id}:
+  /console/api/v1/entities/{entity}/{id}:
     parameters:
       - { $ref: '#/components/parameters/entity' }
       - { name: id, in: path, required: true, schema: { type: string } }
@@ -322,7 +326,7 @@ paths:
         '200': { $ref: '#/components/responses/SyncResult' }
         '401': { $ref: '#/components/responses/Unauthorized' }
 
-  /api/v1/search:
+  /console/api/v1/search:
     get:
       tags: [search]
       summary: Full text search over this account's records
@@ -371,7 +375,7 @@ paths:
                     items: { $ref: '#/components/schemas/SearchHit' }
         '401': { $ref: '#/components/responses/Unauthorized' }
 
-  /api/v1/sync/stream:
+  /console/api/v1/sync/stream:
     get:
       tags: [sync]
       summary: Realtime change notifications (WebSocket upgrade)
@@ -384,7 +388,7 @@ paths:
         '101': { description: switching protocols }
         '401': { $ref: '#/components/responses/Unauthorized' }
 
-  /api/v1/admin/config:
+  /console/api/v1/admin/config:
     get:
       tags: [admin]
       security: []
@@ -405,7 +409,7 @@ paths:
                   admin_enabled: { type: boolean }
                   version: { type: string }
 
-  /api/v1/admin/totals:
+  /console/api/v1/admin/totals:
     get:
       tags: [admin]
       summary: Deployment wide counters (the console header)
@@ -418,7 +422,7 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/AdminDisabled' }
 
-  /api/v1/admin/users:
+  /console/api/v1/admin/users:
     get:
       tags: [admin]
       summary: "The operator's directory: every account, with its counters"
@@ -448,11 +452,11 @@ paths:
                     items: { $ref: '#/components/schemas/UserSummary' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/AdminDisabled' }
-  # There is no POST /api/v1/admin/users: registration is the only way an
+  # There is no POST /console/api/v1/admin/users: registration is the only way an
   # account is created (ADR 0014), so there is exactly one path that can prove
   # an address.
 
-  /api/v1/admin/users/{user_id}:
+  /console/api/v1/admin/users/{user_id}:
     parameters: [{ $ref: '#/components/parameters/userId' }]
     get:
       tags: [admin]
@@ -489,14 +493,14 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
 
-  /api/v1/admin/users/{user_id}/invites:
+  /console/api/v1/admin/users/{user_id}/invites:
     parameters: [{ $ref: '#/components/parameters/userId' }]
     post:
       tags: [admin]
       summary: Mint a pairing code for this account
       description: |
         Lets an operator add a device to an account they did not create. The
-        code is single use and short lived; `POST /api/v1/auth/pair` exchanges
+        code is single use and short lived; `POST /console/api/v1/auth/pair` exchanges
         it for a device token.
       requestBody:
         content:
@@ -519,7 +523,7 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
 
-  /api/v1/admin/users/{user_id}/devices/{device_id}:
+  /console/api/v1/admin/users/{user_id}/devices/{device_id}:
     parameters:
       - { $ref: '#/components/parameters/userId' }
       - { name: device_id, in: path, required: true, schema: { type: string } }
@@ -531,7 +535,7 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
 
-  /api/v1/admin/users/{user_id}/tokens/{hash}:
+  /console/api/v1/admin/users/{user_id}/tokens/{hash}:
     parameters:
       - { $ref: '#/components/parameters/userId' }
       - name: hash
@@ -550,7 +554,7 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
 
-  /api/v1/admin/users/{user_id}/revoke-sessions:
+  /console/api/v1/admin/users/{user_id}/revoke-sessions:
     parameters:
       - { $ref: '#/components/parameters/userId' }
     put:
@@ -561,13 +565,13 @@ paths:
         fix is not the one at the keyboard (adr/0021). Moves the account's
         revocation cut-off and audits `sessions_revoked` against both the actor
         and the account. Device tokens are untouched - see
-        `POST /api/v1/console/revoke-sessions`.
+        `POST /console/api/v1/console/revoke-sessions`.
       responses:
         '204': { description: every session of this account is now refused }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
 
-  /api/v1/admin/users/{user_id}/tokens/{hash}/archive:
+  /console/api/v1/admin/users/{user_id}/tokens/{hash}/archive:
     parameters:
       - { $ref: '#/components/parameters/userId' }
       - { name: hash, in: path, required: true, schema: { type: string } }
@@ -596,7 +600,7 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
 
-  /api/v1/admin/users/{user_id}/devices/{device_id}/archive:
+  /console/api/v1/admin/users/{user_id}/devices/{device_id}/archive:
     parameters:
       - { $ref: '#/components/parameters/userId' }
       - { name: device_id, in: path, required: true, schema: { type: string } }
@@ -621,7 +625,7 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
 
-  /api/v1/admin/users/{user_id}/devices/{device_id}/records/archive:
+  /console/api/v1/admin/users/{user_id}/devices/{device_id}/records/archive:
     parameters:
       - { $ref: '#/components/parameters/userId' }
       - { name: device_id, in: path, required: true, schema: { type: string } }
@@ -659,7 +663,7 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
 
-  /api/v1/admin/users/{user_id}/tabspaces:
+  /console/api/v1/admin/users/{user_id}/tabspaces:
     parameters: [{ $ref: '#/components/parameters/userId' }]
     get:
       tags: [admin]
@@ -690,7 +694,7 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
 
-  /api/v1/admin/users/{user_id}/tabspaces/{tabspace_id}:
+  /console/api/v1/admin/users/{user_id}/tabspaces/{tabspace_id}:
     parameters:
       - { $ref: '#/components/parameters/userId' }
       - { name: tabspace_id, in: path, required: true, schema: { type: string } }
@@ -748,7 +752,7 @@ paths:
               schema: { $ref: '#/components/schemas/Error' }
         '404': { $ref: '#/components/responses/NotFound' }
 
-  /api/v1/admin/users/{user_id}/records:
+  /console/api/v1/admin/users/{user_id}/records:
     parameters: [{ $ref: '#/components/parameters/userId' }]
     get:
       tags: [admin]
@@ -784,7 +788,7 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
 
-  /api/v1/admin/users/{user_id}/search:
+  /console/api/v1/admin/users/{user_id}/search:
     parameters: [{ $ref: '#/components/parameters/userId' }]
     get:
       tags: [admin]

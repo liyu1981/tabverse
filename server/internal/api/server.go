@@ -79,72 +79,72 @@ func (s *Server) Handler() http.Handler {
 
 	mux.HandleFunc("GET /healthz", s.handleHealth)
 
-	mux.HandleFunc("POST /api/v1/auth/bootstrap", s.handleBootstrap)
-	mux.HandleFunc("POST /api/v1/auth/pair", s.handlePair)
-	mux.HandleFunc("POST /api/v1/auth/invites", s.auth(s.handleCreateInvite))
+	mux.HandleFunc("POST /console/api/v1/auth/bootstrap", s.handleBootstrap)
+	mux.HandleFunc("POST /console/api/v1/auth/pair", s.handlePair)
+	mux.HandleFunc("POST /console/api/v1/auth/invites", s.auth(s.handleCreateInvite))
 
-	mux.HandleFunc("GET /api/v1/sync", s.auth(s.handlePull))
-	mux.HandleFunc("POST /api/v1/sync", s.auth(s.handlePush))
-	mux.HandleFunc("GET /api/v1/entities/{entity}/{id}", s.auth(s.handleGetEntity))
-	mux.HandleFunc("DELETE /api/v1/entities/{entity}/{id}", s.auth(s.handleDeleteEntity))
-	mux.HandleFunc("GET /api/v1/search", s.auth(s.handleSearch))
+	mux.HandleFunc("GET /console/api/v1/sync", s.auth(s.handlePull))
+	mux.HandleFunc("POST /console/api/v1/sync", s.auth(s.handlePush))
+	mux.HandleFunc("GET /console/api/v1/entities/{entity}/{id}", s.auth(s.handleGetEntity))
+	mux.HandleFunc("DELETE /console/api/v1/entities/{entity}/{id}", s.auth(s.handleDeleteEntity))
+	mux.HandleFunc("GET /console/api/v1/search", s.auth(s.handleSearch))
 
 	// WebSocket upgrade does its own auth (browsers cannot set headers on
 	// a WebSocket handshake, so a query parameter is also accepted).
-	mux.HandleFunc("GET /api/v1/sync/stream", s.handleStream)
+	mux.HandleFunc("GET /console/api/v1/sync/stream", s.handleStream)
 
 	// Admin API: the operator surface behind the console (adr/0009). Every
 	// route answers 404 while TABVERSED_ADMIN_TOKEN is unset, so a personal
 	// deployment has no admin attack surface at all.
 	admin := func(h http.HandlerFunc) http.HandlerFunc { return s.admin(h) }
-	mux.HandleFunc("GET /api/v1/admin/config", s.handleAdminConfig) // unauthenticated: tells the console whether to ask for a token
-	mux.HandleFunc("GET /api/v1/admin/totals", s.adminOnly(s.handleAdminTotals))
-	mux.HandleFunc("GET /api/v1/admin/users", s.adminOnly(s.handleAdminListUsers))
-	// There is no POST /api/v1/admin/users: registration is the only way an
+	mux.HandleFunc("GET /console/api/v1/admin/config", s.handleAdminConfig) // unauthenticated: tells the console whether to ask for a token
+	mux.HandleFunc("GET /console/api/v1/admin/totals", s.adminOnly(s.handleAdminTotals))
+	mux.HandleFunc("GET /console/api/v1/admin/users", s.adminOnly(s.handleAdminListUsers))
+	// There is no POST /console/api/v1/admin/users: registration is the only way an
 	// account is created (ADR 0014).
-	mux.HandleFunc("GET /api/v1/admin/users/{user_id}", admin(s.handleAdminGetUser))
-	mux.HandleFunc("PUT /api/v1/admin/users/{user_id}", admin(s.handleAdminRenameUser))
-	mux.HandleFunc("PUT /api/v1/admin/users/{user_id}/role", s.adminOnly(s.handleAdminSetRole))
-	mux.HandleFunc("DELETE /api/v1/admin/users/{user_id}", admin(s.handleAdminDeleteUser))
-	mux.HandleFunc("POST /api/v1/admin/users/{user_id}/invites", admin(s.handleAdminCreateInvite))
-	mux.HandleFunc("DELETE /api/v1/admin/users/{user_id}/devices/{device_id}", admin(s.handleAdminRevokeDevice))
-	mux.HandleFunc("DELETE /api/v1/admin/users/{user_id}/tokens/{hash}", admin(s.handleAdminRevokeToken))
+	mux.HandleFunc("GET /console/api/v1/admin/users/{user_id}", admin(s.handleAdminGetUser))
+	mux.HandleFunc("PUT /console/api/v1/admin/users/{user_id}", admin(s.handleAdminRenameUser))
+	mux.HandleFunc("PUT /console/api/v1/admin/users/{user_id}/role", s.adminOnly(s.handleAdminSetRole))
+	mux.HandleFunc("DELETE /console/api/v1/admin/users/{user_id}", admin(s.handleAdminDeleteUser))
+	mux.HandleFunc("POST /console/api/v1/admin/users/{user_id}/invites", admin(s.handleAdminCreateInvite))
+	mux.HandleFunc("DELETE /console/api/v1/admin/users/{user_id}/devices/{device_id}", admin(s.handleAdminRevokeDevice))
+	mux.HandleFunc("DELETE /console/api/v1/admin/users/{user_id}/tokens/{hash}", admin(s.handleAdminRevokeToken))
 	// archiving a dead credential and the records it last wrote (adr/0011).
 	// Reversible, and never a delete: those rows keep syncing to the user's
 	// devices, they only stop showing up in the console's default views.
-	mux.HandleFunc("PUT /api/v1/admin/users/{user_id}/tokens/{hash}/archive", admin(s.handleAdminArchiveToken))
-	mux.HandleFunc("DELETE /api/v1/admin/users/{user_id}/tokens/{hash}/archive", admin(s.handleAdminUnarchiveToken))
-	mux.HandleFunc("PUT /api/v1/admin/users/{user_id}/devices/{device_id}/archive", admin(s.handleAdminArchiveDevice))
-	mux.HandleFunc("DELETE /api/v1/admin/users/{user_id}/devices/{device_id}/archive", admin(s.handleAdminUnarchiveDevice))
-	mux.HandleFunc("PUT /api/v1/admin/users/{user_id}/devices/{device_id}/records/archive", admin(s.handleAdminArchiveDeviceRecords))
-	mux.HandleFunc("DELETE /api/v1/admin/users/{user_id}/devices/{device_id}/records/archive", admin(s.handleAdminUnarchiveDeviceRecords))
+	mux.HandleFunc("PUT /console/api/v1/admin/users/{user_id}/tokens/{hash}/archive", admin(s.handleAdminArchiveToken))
+	mux.HandleFunc("DELETE /console/api/v1/admin/users/{user_id}/tokens/{hash}/archive", admin(s.handleAdminUnarchiveToken))
+	mux.HandleFunc("PUT /console/api/v1/admin/users/{user_id}/devices/{device_id}/archive", admin(s.handleAdminArchiveDevice))
+	mux.HandleFunc("DELETE /console/api/v1/admin/users/{user_id}/devices/{device_id}/archive", admin(s.handleAdminUnarchiveDevice))
+	mux.HandleFunc("PUT /console/api/v1/admin/users/{user_id}/devices/{device_id}/records/archive", admin(s.handleAdminArchiveDeviceRecords))
+	mux.HandleFunc("DELETE /console/api/v1/admin/users/{user_id}/devices/{device_id}/records/archive", admin(s.handleAdminUnarchiveDeviceRecords))
 	// read only data browsing
-	mux.HandleFunc("GET /api/v1/admin/users/{user_id}/tabspaces", admin(s.handleAdminListTabspaces))
-	mux.HandleFunc("GET /api/v1/admin/users/{user_id}/tabspaces/{tabspace_id}", admin(s.handleAdminGetTabspace))
+	mux.HandleFunc("GET /console/api/v1/admin/users/{user_id}/tabspaces", admin(s.handleAdminListTabspaces))
+	mux.HandleFunc("GET /console/api/v1/admin/users/{user_id}/tabspaces/{tabspace_id}", admin(s.handleAdminGetTabspace))
 	// ...and the one write over user data: a delete, which tombstones the
 	// tabverse and its records so the devices learn about it too (adr/0015).
-	mux.HandleFunc("DELETE /api/v1/admin/users/{user_id}/tabspaces/{tabspace_id}", admin(s.handleAdminDeleteTabspace))
-	mux.HandleFunc("GET /api/v1/admin/users/{user_id}/records", admin(s.handleAdminListRecords))
-	mux.HandleFunc("GET /api/v1/admin/users/{user_id}/search", admin(s.handleAdminSearch))
+	mux.HandleFunc("DELETE /console/api/v1/admin/users/{user_id}/tabspaces/{tabspace_id}", admin(s.handleAdminDeleteTabspace))
+	mux.HandleFunc("GET /console/api/v1/admin/users/{user_id}/records", admin(s.handleAdminListRecords))
+	mux.HandleFunc("GET /console/api/v1/admin/users/{user_id}/search", admin(s.handleAdminSearch))
 
 	// The library's login routes, mounted where the console expects them.
 	{
 		mux.Handle("/auth/", http.StripPrefix("/auth", s.accounts.Handlers()))
 		// The soft guard, because these two are what the page calls before it
 		// knows whether anyone is signed in.
-		mux.Handle("GET /api/v1/console/me", s.accounts.Trace(http.HandlerFunc(s.handleConsoleMe)))
-		mux.Handle("POST /api/v1/console/signout", s.accounts.Trace(http.HandlerFunc(s.handleConsoleSignOut)))
-		mux.Handle("GET /api/v1/console/impersonation", s.accounts.Trace(http.HandlerFunc(s.handleConsoleImpersonation)))
-		mux.Handle("POST /api/v1/console/impersonate/stop", s.accounts.Trace(http.HandlerFunc(s.handleConsoleImpersonateStop)))
+		mux.Handle("GET /console/api/v1/console/me", s.accounts.Trace(http.HandlerFunc(s.handleConsoleMe)))
+		mux.Handle("POST /console/api/v1/console/signout", s.accounts.Trace(http.HandlerFunc(s.handleConsoleSignOut)))
+		mux.Handle("GET /console/api/v1/console/impersonation", s.accounts.Trace(http.HandlerFunc(s.handleConsoleImpersonation)))
+		mux.Handle("POST /console/api/v1/console/impersonate/stop", s.accounts.Trace(http.HandlerFunc(s.handleConsoleImpersonateStop)))
 		// The sign-in form posts here rather than straight to the library, so
 		// the account exists before the link that claims it.
-		mux.HandleFunc("POST /api/v1/console/signin-link", s.handleConsoleSigninLink)
+		mux.HandleFunc("POST /console/api/v1/console/signin-link", s.handleConsoleSigninLink)
 		// "Sign out everywhere" (ADR 0021). Ending the account's own console
 		// sessions is a session action, so it sits with the session routes and
 		// not with the operator ones; the same call for somebody else's account
 		// is an operator action, below.
-		mux.HandleFunc("POST /api/v1/console/revoke-sessions", s.admin(s.handleConsoleRevokeSessions))
-		mux.HandleFunc("PUT /api/v1/admin/users/{user_id}/revoke-sessions",
+		mux.HandleFunc("POST /console/api/v1/console/revoke-sessions", s.admin(s.handleConsoleRevokeSessions))
+		mux.HandleFunc("PUT /console/api/v1/admin/users/{user_id}/revoke-sessions",
 			s.adminOnly(s.handleAdminRevokeSessions))
 		// Pairing a browser extension from the console's own page (the official
 		// server wizard, adr/0020). It takes the console credential - a session
@@ -152,12 +152,21 @@ func (s *Server) Handler() http.Handler {
 		// token it returns is handed to the extension over the
 		// externally_connectable channel, which is why the page is the one that
 		// has to be signed in rather than the code having to be carried.
-		mux.HandleFunc("POST /api/v1/console/pair", s.admin(s.handleConsolePair))
+		mux.HandleFunc("POST /console/api/v1/console/pair", s.admin(s.handleConsolePair))
 		// Starting an assumed identity is an operator action, so it goes
 		// through the same gate as the operator views.
-		mux.Handle("POST /api/v1/admin/users/{user_id}/impersonate",
+		mux.Handle("POST /console/api/v1/admin/users/{user_id}/impersonate",
 			s.adminOnly(http.HandlerFunc(s.handleConsoleImpersonateStart).ServeHTTP))
 	}
+
+	// Anything under /console/api/ that no route above claimed is an API 404,
+	// not a page: without this the console shell below would answer an unknown
+	// endpoint with HTML and a 200, which is the one thing an API client cannot
+	// work with. Registered as a subtree so it outranks the shell's own
+	// /console/ pattern but never a route that names its full path.
+	mux.Handle(webui.Mount+"/api/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		writeErr(w, http.StatusNotFound, "not_found", "no such endpoint")
+	}))
 
 	// The console itself: embedded static files, mounted under /console so the
 	// API's URL space and the page's are separate (adr/0023). The page is
@@ -166,22 +175,10 @@ func (s *Server) Handler() http.Handler {
 	console := webui.Handler()
 	mux.Handle(webui.Mount, console)
 	mux.Handle(webui.Mount+"/", console)
-	// "/" is not the console's address any more. It answers with a redirect, so
-	// a link minted before the move - the extension's pairing window among them
-	// - still lands on the page (a browser keeps the fragment a Location does
-	// not name, and the query is carried over here), and any other unknown path
-	// is a 404 rather than a page pretending to be one.
-	mux.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/" {
-			http.NotFound(w, r)
-			return
-		}
-		to := webui.Mount
-		if r.URL.RawQuery != "" {
-			to += "?" + r.URL.RawQuery
-		}
-		http.Redirect(w, r, to, http.StatusMovedPermanently)
-	}))
+	// Everything else is the site: the docs in an official build, a page that
+	// sends you to the console otherwise (adr/0024). Registered last, so the
+	// routes above - including /healthz - always win.
+	mux.Handle("/", webui.SiteHandler())
 
 	return withCORS(withHSTS(mux, s.cfg.SecureCookies))
 }

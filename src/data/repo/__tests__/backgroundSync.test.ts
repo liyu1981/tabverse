@@ -91,7 +91,9 @@ test('runtime connects realtime and pulls with the device token', async () => {
   await runtime.syncNow();
 
   expect(calls).toHaveLength(1);
-  expect(calls[0].url).toBe('https://sync.example.com/api/v1/sync?since=0');
+  expect(calls[0].url).toBe(
+    'https://sync.example.com/console/api/v1/sync?since=0',
+  );
   expect(calls[0].headers.Authorization).toBe('Bearer device-token');
 
   runtime.stop();

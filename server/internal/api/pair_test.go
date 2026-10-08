@@ -26,9 +26,9 @@ func TestPairingAnExtensionNeedsASignedInAccount(t *testing.T) {
 func TestASignedInAccountMintsADeviceAndItsToken(t *testing.T) {
 	ts, s := newAccountServer(t)
 	alice := signInAs(t, ts, s, "alice@example.com")
-	aliceID, _ := alice.do(t, http.MethodGet, "/api/v1/console/me").body["user_id"].(string)
+	aliceID, _ := alice.do(t, http.MethodGet, "/console/api/v1/console/me").body["user_id"].(string)
 
-	resp := alice.postJSON(t, "/api/v1/console/pair", map[string]string{
+	resp := alice.postJSON(t, "/console/api/v1/console/pair", map[string]string{
 		"device_name":  "alice's laptop",
 		"extension_id": "abcdefghijklmnoabcdefhijklmnoabc",
 	})
@@ -45,7 +45,7 @@ func TestASignedInAccountMintsADeviceAndItsToken(t *testing.T) {
 	// The device is on the account's detail, named as the page asked - so
 	// "which browser is this" is answerable later. The console reads the list
 	// from the account itself (there is no separate devices route).
-	detail := alice.do(t, http.MethodGet, "/api/v1/admin/users/"+aliceID)
+	detail := alice.do(t, http.MethodGet, "/console/api/v1/admin/users/"+aliceID)
 	detail.mustStatus(t, http.StatusOK)
 	if !bodyContains(detail.body, "alice's laptop") {
 		t.Fatalf("the named device is not on the account: %s", detail.raw)
@@ -56,7 +56,7 @@ func TestASignedInAccountMintsADeviceAndItsToken(t *testing.T) {
 
 	// And the token is a real device credential: the extension's first request
 	// with it is a sync pull, which is the whole point of handing it over.
-	pull := bearerGet(t, ts, "/api/v1/sync?since=0", token)
+	pull := bearerGet(t, ts, "/console/api/v1/sync?since=0", token)
 	if pull.status != http.StatusOK {
 		t.Fatalf("the new token cannot sync: %d %s", pull.status, pull.raw)
 	}
@@ -65,7 +65,7 @@ func TestASignedInAccountMintsADeviceAndItsToken(t *testing.T) {
 func TestTheDeviceNameDefaultsWhenThePageAsksForNothing(t *testing.T) {
 	ts, s := newAccountServer(t)
 	alice := signInAs(t, ts, s, "alice@example.com")
-	resp := alice.postJSON(t, "/api/v1/console/pair", map[string]string{})
+	resp := alice.postJSON(t, "/console/api/v1/console/pair", map[string]string{})
 	resp.mustStatus(t, http.StatusCreated)
 	if resp.body["token"] == "" {
 		t.Fatalf("no token came back: %s", resp.raw)
@@ -78,9 +78,9 @@ func TestPairingTwiceIsTwoDevices(t *testing.T) {
 	ts, s := newAccountServer(t)
 	alice := signInAs(t, ts, s, "alice@example.com")
 
-	first := alice.postJSON(t, "/api/v1/console/pair", map[string]string{"device_name": "laptop"})
+	first := alice.postJSON(t, "/console/api/v1/console/pair", map[string]string{"device_name": "laptop"})
 	first.mustStatus(t, http.StatusCreated)
-	second := alice.postJSON(t, "/api/v1/console/pair", map[string]string{"device_name": "desktop"})
+	second := alice.postJSON(t, "/console/api/v1/console/pair", map[string]string{"device_name": "desktop"})
 	second.mustStatus(t, http.StatusCreated)
 	if first.body["device_id"] == second.body["device_id"] {
 		t.Fatal("two pairings made one device")
@@ -96,9 +96,9 @@ func TestAnAccountCannotNameTheAccountItPairs(t *testing.T) {
 	ts, s := newAccountServer(t)
 	alice := signInAs(t, ts, s, "alice@example.com")
 	bob := signInAs(t, ts, s, "bob@example.com")
-	bobID, _ := bob.do(t, http.MethodGet, "/api/v1/console/me").body["user_id"].(string)
+	bobID, _ := bob.do(t, http.MethodGet, "/console/api/v1/console/me").body["user_id"].(string)
 
-	resp := alice.postJSON(t, "/api/v1/console/pair", map[string]string{
+	resp := alice.postJSON(t, "/console/api/v1/console/pair", map[string]string{
 		"device_name": "sneaky",
 		"user_id":     bobID,
 	})
@@ -114,23 +114,23 @@ func TestPairingIsRefusedWhileLookingAtSomebodyElse(t *testing.T) {
 	// assumed identity would outlive the impersonation.
 	ts, s := newAccountServer(t)
 	root := operatorSession(t, ts, s)
-	rootID, _ := root.do(t, http.MethodGet, "/api/v1/console/me").body["user_id"].(string)
+	rootID, _ := root.do(t, http.MethodGet, "/console/api/v1/console/me").body["user_id"].(string)
 	alice := signInAs(t, ts, s, "alice@example.com")
-	aliceID, _ := alice.do(t, http.MethodGet, "/api/v1/console/me").body["user_id"].(string)
+	aliceID, _ := alice.do(t, http.MethodGet, "/console/api/v1/console/me").body["user_id"].(string)
 
-	root.do(t, http.MethodPost, "/api/v1/admin/users/"+aliceID+"/impersonate").
+	root.do(t, http.MethodPost, "/console/api/v1/admin/users/"+aliceID+"/impersonate").
 		mustStatus(t, http.StatusOK)
 
-	resp := root.postJSON(t, "/api/v1/console/pair", map[string]string{"device_name": "not hers"})
+	resp := root.postJSON(t, "/console/api/v1/console/pair", map[string]string{"device_name": "not hers"})
 	resp.mustStatus(t, http.StatusForbidden)
 	if resp.body["error"] != "read_only" {
 		t.Fatalf("expected the read-only refusal, got %s", resp.raw)
 	}
 
 	// Stop impersonating, and the operator's own account can pair again.
-	root.do(t, http.MethodPost, "/api/v1/console/impersonate/stop").
+	root.do(t, http.MethodPost, "/console/api/v1/console/impersonate/stop").
 		mustStatus(t, http.StatusNoContent)
-	own := root.postJSON(t, "/api/v1/console/pair", map[string]string{"device_name": "operator's browser"})
+	own := root.postJSON(t, "/console/api/v1/console/pair", map[string]string{"device_name": "operator's browser"})
 	own.mustStatus(t, http.StatusCreated)
 	if got, _ := own.body["user_id"].(string); got != rootID {
 		t.Fatalf("the operator paired %v, want their own account %s", got, rootID)
@@ -177,7 +177,7 @@ func cookieHeader(c *sessionClient) string {
 func rawPair(t *testing.T, ts *httptest.Server, cookie string, body map[string]string, withCSRF bool) apiResp {
 	t.Helper()
 	data, _ := json.Marshal(body)
-	req, err := http.NewRequest(http.MethodPost, ts.URL+"/api/v1/console/pair", bytes.NewReader(data))
+	req, err := http.NewRequest(http.MethodPost, ts.URL+"/console/api/v1/console/pair", bytes.NewReader(data))
 	if err != nil {
 		t.Fatalf("request: %v", err)
 	}

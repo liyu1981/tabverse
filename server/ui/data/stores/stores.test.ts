@@ -135,13 +135,13 @@ function bundle(over: Partial<TabspaceBundle> = {}): TabspaceBundle {
 
 test('opening an account loads it and lands on a tab that has something in it', async () => {
   stubApi({
-    '/api/v1/admin/users/usr_1/tabspaces': {
+    '/console/api/v1/admin/users/usr_1/tabspaces': {
       body: { tabspaces: [], total: 0, limit: 24, offset: 0 },
     },
-    '/api/v1/admin/users/usr_1/records': {
+    '/console/api/v1/admin/users/usr_1/records': {
       body: { records: [], total: 0, limit: 50, offset: 0 },
     },
-    '/api/v1/admin/users/usr_1': {
+    '/console/api/v1/admin/users/usr_1': {
       body: {
         user: userSummary(),
         stats: {
@@ -167,7 +167,7 @@ test('opening an account loads it and lands on a tab that has something in it', 
 
 test('an account with no device lands on the pairing tab', async () => {
   stubApi({
-    '/api/v1/admin/users/usr_1': {
+    '/console/api/v1/admin/users/usr_1': {
       body: {
         user: userSummary({ device_count: 0 }),
         stats: {
@@ -190,14 +190,14 @@ test('an account with no device lands on the pairing tab', async () => {
 });
 
 test('a 401 sends the whole page back to the sign-in form', async () => {
-  stubApi({ '/api/v1/admin/users/usr_1': { status: 401 } });
+  stubApi({ '/console/api/v1/admin/users/usr_1': { status: 401 } });
   await openAccountAction('usr_1');
   expect($account.getState()).toBeNull();
 });
 
 test('a refusal from the server is visible, not silent', async () => {
   stubApi({
-    '/api/v1/admin/users/usr_1/tabspaces': {
+    '/console/api/v1/admin/users/usr_1/tabspaces': {
       status: 409,
       body: { error: 'conflict', message: 'revoke the device first' },
     },
@@ -254,7 +254,7 @@ test('archived credentials are hidden unless asked for, and the hidden ones are 
 
 test('the drawer opens a tabverse, and closing it forgets which one it was', async () => {
   stubApi({
-    '/api/v1/admin/users/usr_1/tabspaces/ts_1': { body: bundle() },
+    '/console/api/v1/admin/users/usr_1/tabspaces/ts_1': { body: bundle() },
   });
   openAccount('usr_1');
   await openTabspaceById('ts_1');
@@ -268,7 +268,7 @@ test('the drawer opens a tabverse, and closing it forgets which one it was', asy
 
 test('a tabverse that is not there closes the drawer rather than opening an empty one', async () => {
   stubApi({
-    '/api/v1/admin/users/usr_1/tabspaces/ts_9': {
+    '/console/api/v1/admin/users/usr_1/tabspaces/ts_9': {
       status: 404,
       body: { error: 'not_found', message: 'no such tabverse' },
     },

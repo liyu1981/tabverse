@@ -195,7 +195,7 @@ export function createConsoleApi(fetchFn: FetchLike = fetch): ConsoleApi {
   };
 
   const userPath = (userId: string, rest = '') =>
-    `/api/v1/admin/users/${encodeURIComponent(userId)}${rest}`;
+    `/console/api/v1/admin/users/${encodeURIComponent(userId)}${rest}`;
 
   const listParams = (params: ListParams) =>
     query({
@@ -217,7 +217,7 @@ export function createConsoleApi(fetchFn: FetchLike = fetch): ConsoleApi {
       csrfToken = token || '';
     },
 
-    getConfig: () => call<ServerConfig>('GET', '/api/v1/admin/config'),
+    getConfig: () => call<ServerConfig>('GET', '/console/api/v1/admin/config'),
 
     /**
      * `null` means the server could not say who this is at all (it is older than
@@ -226,7 +226,7 @@ export function createConsoleApi(fetchFn: FetchLike = fetch): ConsoleApi {
      */
     async whoAmI() {
       try {
-        return await call<Me>('GET', '/api/v1/console/me');
+        return await call<Me>('GET', '/console/api/v1/console/me');
       } catch (e) {
         if (e instanceof ApiError && e.isUnauthorized) return null;
         return null;
@@ -246,28 +246,33 @@ export function createConsoleApi(fetchFn: FetchLike = fetch): ConsoleApi {
         address: email,
         site: window.location.origin,
       });
-      await call('POST', `/api/v1/console/signin-link?${search.toString()}`);
+      await call(
+        'POST',
+        `/console/api/v1/console/signin-link?${search.toString()}`,
+      );
     },
 
-    signOut: () => call('POST', '/api/v1/console/signout'),
-    revokeSessions: () => call('POST', '/api/v1/console/revoke-sessions'),
+    signOut: () => call('POST', '/console/api/v1/console/signout'),
+    revokeSessions: () =>
+      call('POST', '/console/api/v1/console/revoke-sessions'),
     impersonation: () =>
-      call<Impersonation>('GET', '/api/v1/console/impersonation'),
+      call<Impersonation>('GET', '/console/api/v1/console/impersonation'),
 
     startImpersonation: (userId: string) =>
       call(
         'POST',
-        `/api/v1/admin/users/${encodeURIComponent(userId)}/impersonate`,
+        `/console/api/v1/admin/users/${encodeURIComponent(userId)}/impersonate`,
       ),
 
-    stopImpersonation: () => call('POST', '/api/v1/console/impersonate/stop'),
+    stopImpersonation: () =>
+      call('POST', '/console/api/v1/console/impersonate/stop'),
 
-    totals: () => call<Totals>('GET', '/api/v1/admin/totals'),
+    totals: () => call<Totals>('GET', '/console/api/v1/admin/totals'),
 
     async listUsers(queryText?: string) {
       const data = await call<UserList>(
         'GET',
-        '/api/v1/admin/users' + query({ q: queryText }),
+        '/console/api/v1/admin/users' + query({ q: queryText }),
       );
       return data.users || [];
     },
@@ -297,7 +302,7 @@ export function createConsoleApi(fetchFn: FetchLike = fetch): ConsoleApi {
     // The signed-in account, not one named in the path: this is the wizard's
     // endpoint and it takes no account parameter at all.
     pairExtension: (input: { device_name: string; extension_id?: string }) =>
-      call<DeviceCredentials>('POST', '/api/v1/console/pair', {
+      call<DeviceCredentials>('POST', '/console/api/v1/console/pair', {
         device_name: input.device_name,
         extension_id: input.extension_id,
       }),

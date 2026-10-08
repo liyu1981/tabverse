@@ -35,13 +35,13 @@ export type EntityName = (typeof ENTITIES)[number];
 
 // ---- session ---------------------------------------------------------------
 
-/** `GET /api/v1/admin/config`: the one unauthenticated admin route. */
+/** `GET /console/api/v1/admin/config`: the one unauthenticated admin route. */
 export interface ServerConfig {
   admin_enabled: boolean;
   version?: string;
 }
 
-/** `GET /api/v1/console/me`: who the page is talking as, in every state. */
+/** `GET /console/api/v1/console/me`: who the page is talking as, in every state. */
 export interface Me {
   signed_in: boolean;
   user_id?: string;
@@ -68,7 +68,7 @@ export interface Me {
   awaiting_operator?: boolean;
 }
 
-/** `GET /api/v1/console/impersonation`: the read-only window, if any. */
+/** `GET /console/api/v1/console/impersonation`: the read-only window, if any. */
 export interface Impersonation {
   assuming: boolean;
   user_id?: string;
@@ -143,7 +143,7 @@ export interface Invite {
 }
 
 /**
- * What `POST /api/v1/console/pair` returns, once, and what the pair view hands
+ * What `POST /console/api/v1/console/pair` returns, once, and what the pair view hands
  * straight to the extension (adr/0020). It is the same shape the invite-code
  * flow has always returned - one device, one token - which is why the
  * extension can save it with the config it already has.

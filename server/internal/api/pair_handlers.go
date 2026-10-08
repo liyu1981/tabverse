@@ -7,7 +7,7 @@ import (
 
 // Pairing a browser extension from the console's own page.
 //
-// The invite-code flow (`POST /api/v1/auth/pair`) is what a self-hosted
+// The invite-code flow (`POST /console/api/v1/auth/pair`) is what a self-hosted
 // deployment uses: the account mints a code, and whoever holds it redeems it.
 // That is one step too many for the *official* server, where the person at the
 // keyboard is the person who owns the account and wants their own browser in.

@@ -1,6 +1,9 @@
 # ADR 0023: the console lives at /console, and its parameters live in the query
 
-Status: accepted (2026-10)
+Status: accepted (2026-10); decisions 2, 3 and 4 are superseded by
+[ADR 0024](0024-the-root-is-a-site-and-the-api-moved.md) - the root became the
+site, the API moved under `/console/api`, and the pairing request moved onto a
+path of its own. The mount itself stands.
 
 Supersedes the "page at `/`, files at `/assets/`" half of the URL space
 established by [ADR 0009](0009-multi-tenant-and-server-console.md) and kept by
@@ -46,7 +49,11 @@ which is one more than a reader has to hold.
    The dev server serves from `/console/` too, so a page developed at
    `http://localhost:5174/console/` is the page production serves.
 
-2. **`/` redirects to `/console`, and nothing else lives at the root.** The
+2. **`/` redirects to `/console`, and nothing else lives at the root.** *(Superseded
+   by [ADR 0024](0024-the-root-is-a-site-and-the-api-moved.md), which put a site
+   at the root instead - the documentation in an official build, this redirect
+   page otherwise - and left a JSON 404 under `/console/api/` to say what a path
+   is not.)* The
    redirect keeps the query (so `/?pair=1…` lands as `/console?pair=1…`) and a
    browser keeps the fragment the server never sees, which is what lets a
    window opened by an already installed extension pair after the move. Any
@@ -56,11 +63,18 @@ which is one more than a reader has to hold.
 
 3. **The parameters are real HTTP parameters.** `readQuery`/`writeQuery`
    (`server/ui/data/queryRoute.ts`) read and rewrite the query, and
-   `readPairRequest` takes `?pair=1&ext=…&nonce=…`. A rewrite carries every key
-   it did not change, so the routing keys and the pairing request share the one
-   query without either eating the other.
+   `readPairRequest` reads the pairing request out of one - `?ext=…&nonce=…` on
+   `/console/pair` since
+   [ADR 0024](0024-the-root-is-a-site-and-the-api-moved.md); it was
+   `?pair=1&ext=…` here. A rewrite carries every key it did not change, so the
+   routing keys and the pairing request share the one query without either
+   eating the other.
 
-4. **A fragment is still read for the pair request, and only for that.** The
+4. **A fragment is still read for the pair request, and only for that.**
+   *(Superseded by
+   [ADR 0024](0024-the-root-is-a-site-and-the-api-moved.md), which dropped the
+   fragment read altogether: the pairing page is a path now, and old extension
+   builds are not carried across.)* The
    server's `/` redirect hands an old `#pair=…` over unchanged, and a pairing
    that silently refused would be the most confusing day in the wizard. Nothing
    else reads or writes the fragment.

@@ -41,10 +41,11 @@ paired.**
    closes itself), does not depend on navigating to an `chrome-extension://` URL
    (not a supported hand-back), and does not need the session in the extension.
 2. **The request travels in the URL, the answer in a message.** The
-   window the extension opens is `?pair=1&ext=<its own id>&nonce=<uuid>` on the
-   console's own page (superseded by
-   [ADR 0023](0023-the-console-has-its-own-prefix.md), which moved it out of the
-   fragment: it was `#pair=1&…`, and the fragment kept the nonce out of a log).
+   window the extension opens is the console's pairing page,
+   `/console/pair?ext=<its own id>&nonce=<uuid>` (it began as the fragment
+   `#pair=1&…`, moved into the query with
+   [ADR 0023](0023-the-console-has-its-own-prefix.md) and onto a path of its own
+   with [ADR 0024](0024-the-root-is-a-site-and-the-api-moved.md)).
    The id is the extension's own, which is what makes an unpacked build work;
    the nonce is what makes an unsolicited message ignorable.
 3. **The server mints from the session.** `POST /api/v1/console/pair` takes

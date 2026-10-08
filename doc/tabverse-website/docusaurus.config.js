@@ -1,12 +1,37 @@
 // @ts-check
 const { themes: prismThemes } = require('prism-react-renderer');
 
+/**
+ * One flag says which site this is (adr/0024):
+ *
+ *   officialserver=1  the copy that goes *inside* the tabversed binary: it is
+ *                     served from the root of a server next to its /console,
+ *                     so the base URL is "/", the canonical address is that
+ *                     server's, and the navbar offers the console.
+ *   (unset)           the GitHub Pages site at liyu1981.github.io/tabverse.
+ *
+ * `officialserver` is set by tools/embedsite.sh (the only thing that builds
+ * this flavour) and cleared by tools/builddoc.sh (the only thing that builds
+ * the Pages one), so one shell cannot produce a site for the wrong host.
+ * @type {boolean}
+ */
+const official = process.env.officialserver === '1';
+
+// TABVERSED_PUBLIC_URL is where the deployment is reached: an origin, the same
+// value the server itself is configured with. It only decides the absolute
+// URLs the docs emit (canonical, sitemap, og), never where the files live.
+const officialUrl =
+  (process.env.TABVERSED_PUBLIC_URL || 'https://tabversed.liyu1981.xyz').replace(
+    /\/+$/,
+    '',
+  );
+
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'Tabverse',
   tagline: 'An Opinionated Way of Managing Tabs',
-  url: 'https://liyu1981.github.io/',
-  baseUrl: '/tabverse/',
+  url: official ? officialUrl : 'https://liyu1981.github.io/',
+  baseUrl: official ? '/' : '/tabverse/',
   onBrokenLinks: 'throw',
   // Paths are resolved against the static directory, and get the baseUrl
   // prefixed automatically, both in dev and in the production build.
@@ -58,6 +83,19 @@ const config = {
             label: 'User Manual',
             to: '/docs/intro',
           },
+          // The console of the server this copy of the site is served from,
+          // right after the manual (adr/0024). `/console` is that server's
+          // route, not one of the site's, so the broken-link checker - which
+          // only knows routes Docusaurus owns - is told to leave it alone.
+          ...(official
+            ? [
+                {
+                  label: 'Login',
+                  to: '/console',
+                  'data-noBrokenLinkCheck': true,
+                },
+              ]
+            : []),
           {
             href: 'https://github.com/liyu1981/tabverse',
             label: 'GitHub',

@@ -10,6 +10,7 @@
     "docusaurus": "docusaurus",
     "start": "docusaurus start",
     "build": "docusaurus build --out-dir ../../docs/",
+    "build:official": "docusaurus build --out-dir ../../server/internal/webui/docs/",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus deploy",
     "clear": "docusaurus clear",

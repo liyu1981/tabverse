@@ -84,7 +84,7 @@ function setup(delays = [10, 10, 10]) {
   const scheduler = new ManualScheduler();
 
   const client = new RealtimeClient({
-    url: 'wss://sync.example.com/api/v1/sync/stream?access_token=t',
+    url: 'wss://sync.example.com/console/api/v1/sync/stream?access_token=t',
     factory: () => {
       const s = new FakeSocket();
       sockets.push(s);

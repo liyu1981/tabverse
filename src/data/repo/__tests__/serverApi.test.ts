@@ -58,7 +58,7 @@ test('pull builds the delta URL and sends the bearer token', async () => {
   expect(calls).toHaveLength(1);
   // trailing slash of the base url is normalized exactly once
   expect(calls[0].url).toBe(
-    'https://sync.example.com/api/v1/sync?since=41&limit=100',
+    'https://sync.example.com/console/api/v1/sync?since=41&limit=100',
   );
   expect(calls[0].method).toBe('GET');
   expect(calls[0].headers.Authorization).toBe('Bearer tok');
@@ -148,7 +148,9 @@ test('a rejected fetch on the pairing call says what to check', async () => {
     caught = err;
   }
   expect(caught.code).toBe('network');
-  expect(caught.message).toContain('network error for POST /api/v1/auth/pair');
+  expect(caught.message).toContain(
+    'network error for POST /console/api/v1/auth/pair',
+  );
   expect(caught.message).toContain('scheme, host and port');
   expect(caught.message).toContain('older build');
 });
@@ -164,9 +166,11 @@ test('search encodes the query and optional filters', async () => {
   await api.search('x');
 
   expect(calls[0].url).toBe(
-    'https://sync.example.com/api/v1/search?q=a%20b%26c&entity=note&limit=10',
+    'https://sync.example.com/console/api/v1/search?q=a%20b%26c&entity=note&limit=10',
   );
-  expect(calls[1].url).toBe('https://sync.example.com/api/v1/search?q=x');
+  expect(calls[1].url).toBe(
+    'https://sync.example.com/console/api/v1/search?q=x',
+  );
 });
 
 test('bootstrap and pair are unauthenticated POSTs', async () => {
@@ -189,7 +193,9 @@ test('bootstrap and pair are unauthenticated POSTs', async () => {
 
   const creds = await ServerApiClient.bootstrap(BASE, 'yli', fetchFn);
   expect(creds.token).toBe('t');
-  expect(calls[0].url).toBe('https://sync.example.com/api/v1/auth/bootstrap');
+  expect(calls[0].url).toBe(
+    'https://sync.example.com/console/api/v1/auth/bootstrap',
+  );
   expect(calls[0].headers.Authorization).toBeUndefined();
   expect(JSON.parse(calls[0].body!)).toEqual({ name: 'yli' });
 
@@ -230,6 +236,6 @@ test('streamUrl maps http(s) to ws(s) and carries the token', () => {
     fetchFn: async () => jsonResponse({}),
   });
   expect(api.streamUrl()).toBe(
-    'wss://sync.example.com/api/v1/sync/stream?access_token=a%20b%2Fc',
+    'wss://sync.example.com/console/api/v1/sync/stream?access_token=a%20b%2Fc',
   );
 });
