@@ -65,12 +65,12 @@ tags:
   - name: search
   - name: console
     description: |
-      Session-scoped endpoints the web console (`GET /`) calls - a signed-in
+      Session-scoped endpoints the web console (`GET /console`) calls - a signed-in
       account acting on its own account, never a device token (see
       `securitySchemes`).
   - name: admin
     description: |
-      Operator surface behind the web console (`GET /`), see ADR 0009. Gated
+      Operator surface behind the web console (`GET /console`), see ADR 0009. Gated
       by `TABVERSED_ADMIN_TOKEN`; every route answers `404` while it is unset.
       Read only over user data by design.
 
@@ -168,7 +168,8 @@ paths:
       summary: Mint a device and its token for the signed-in account
       description: |
         The official-server pairing wizard (adr/0020). The extension opens the
-        console in a window with its own id and a nonce in the URL; the person
+        console in a window at `/console?pair=1&ext=…&nonce=…` with its own id
+        and a nonce in the query; the person
         signs in there, names the device and approves it; this endpoint creates
         the device and its token **for the session's account**, and the page
         hands the token to the extension over `chrome.runtime.sendMessage` (the

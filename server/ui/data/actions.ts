@@ -5,8 +5,9 @@
  * which is where the three decisions that are not about rendering live:
  *
  *  - **the URL follows the state.** Every action that changes what the console
- *    is looking at writes the fragment too (adr/0018, decision 6), so a
- *    bookmark or a pasted link lands where the operator expects;
+ *    is looking at writes the query too (adr/0018, decision 6; the query
+ *    rather than the fragment since adr/0023), so a bookmark or a pasted link
+ *    lands where the operator expects;
  *  - **a 401 is one event.** Whatever call noticed that the session is gone
  *    fires `sessionExpired` once and every view goes back to the sign-in form,
  *    rather than each of them inventing its own answer;
@@ -15,7 +16,7 @@
  */
 
 import { ApiError, api } from './api';
-import { writeHash } from './hashRoute';
+import { readQuery, writeQuery } from './queryRoute';
 import {
   $dataArchived,
   $directoryQuery,
@@ -80,7 +81,7 @@ function route(patch: {
   q?: string;
 }): void {
   if (typeof window === 'undefined') return;
-  writeHash(window.location, window.history, patch);
+  writeQuery(window.location, window.history, patch);
 }
 
 /**
@@ -128,7 +129,7 @@ export async function boot(): Promise<void> {
   loadTotalsFx().catch(() => undefined);
 
   if (typeof window === 'undefined') return;
-  const params = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+  const params = readQuery(window.location);
   const target = params.get('user') || $ownUserId.getState();
   if (!target) return;
   await openAccount(target);

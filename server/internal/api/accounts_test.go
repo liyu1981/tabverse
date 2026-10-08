@@ -751,7 +751,7 @@ func TestTheFirstOperatorJourney(t *testing.T) {
 		t.Fatalf("following the link = %d, want a redirect to the console: %s",
 			followed.StatusCode, readAll(t, followed))
 	}
-	if to := followed.Header.Get("Location"); to != "http://127.0.0.1:8223" {
+	if to := followed.Header.Get("Location"); to != "http://127.0.0.1:8223/console" {
 		t.Fatalf("the sign-in sends the person to %q, want the console", to)
 	}
 	var session, xsrf *http.Cookie

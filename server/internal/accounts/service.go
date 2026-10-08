@@ -25,6 +25,7 @@ import (
 
 	"github.com/liyu1981/tabverse/server/internal/config"
 	"github.com/liyu1981/tabverse/server/internal/store"
+	"github.com/liyu1981/tabverse/server/internal/webui"
 )
 
 // ProviderEmail is the name the passwordless email login registers under. It is
@@ -108,14 +109,21 @@ type Service struct {
 	// secureCookies is the resolved value: false when the public URL is plain
 	// http, because a browser drops a Secure cookie there.
 	secureCookies bool
-	// publicURL is where the console lives, as configured. The sign-in link and
-	// the post-sign-in redirect are both built from it, so a person who follows
-	// the link ends up in the console rather than staring at JSON.
+	// publicURL is the address this deployment is reached on, as configured. The
+	// sign-in link and the post-sign-in redirect are both built from it, so a
+	// person who follows the link ends up in the console rather than staring at
+	// JSON.
 	publicURL string
 }
 
-// ConsoleURL is the address the console is reached at, as configured.
-func (s *Service) ConsoleURL() string { return s.publicURL }
+// ConsoleURL is the address the console is reached at: the public URL plus the
+// prefix the page is mounted under (adr/0023).
+//
+// It is the return target every sign-in carries in `?from=`, so it has to name
+// the page itself and not the server's root.
+func (s *Service) ConsoleURL() string {
+	return strings.TrimRight(s.publicURL, "/") + webui.Mount
+}
 
 // New builds the account service.
 //

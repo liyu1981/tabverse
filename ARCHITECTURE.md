@@ -206,9 +206,11 @@ the extension can reach.
 is a cookie in the browser's jar for that origin - so the *console page* does the
 signing in and carries the token back:
 
-1. The extension opens `https://tabversed.liyu1981.xyz/#pair=1&ext=<its own
-   id>&nonce=<uuid>` (the fragment, so the nonce is never in a request log), and
-   remembers the nonce in `chrome.storage.session`.
+1. The extension opens `https://tabversed.liyu1981.xyz/console?pair=1&ext=<its
+   own id>&nonce=<uuid>` (the console's own page, and a plain HTTP URL since
+   `adr/0023` - it used to be a fragment at `/`, which is what kept the nonce
+   out of a log; see that ADR for why the trade flipped), and remembers the
+   nonce in `chrome.storage.session`.
 2. The person signs in and approves a device name; the page calls
    `POST /api/v1/console/pair`, which mints a device and a token for **the
    session's account** (`writeDevice`, the same function `auth/pair` uses) and
@@ -316,13 +318,13 @@ a deployment could hold exactly one.
 operator surface:
 
 ```
-                    ┌─ TABVERSED_ADMIN_TOKEN ─┬─ /api/v1/admin/*  (accounts, devices, tokens)
-browser ── GET / ───┤                        └─ read only: tabverses, records, search
+                        ┌─ TABVERSED_ADMIN_TOKEN ─┬─ /api/v1/admin/*  (accounts, devices, tokens)
+browser ── GET /console ┤                        └─ read only: tabverses, records, search
 ```
 
 - **unset** (the default) — single tenant, open bootstrap until the first pairer,
   every admin route `404`
-- **set** — the console at `/` provisions accounts, hands out pairing codes,
+- **set** — the console at `/console` provisions accounts, hands out pairing codes,
   revokes leaked devices, and shows what each account stored, **read only**:
   there is no endpoint that edits a user's records, because a record written
   outside the extension would lose the next LWW comparison anyway
@@ -382,7 +384,9 @@ project under `server/ui` (`adr/0018`) that compiles into
 `//go:embed all:dist`. Every Go target runs `pnpm run ui:build` first, so a
 binary and its console are one build; a `.gitkeep` in `dist/` keeps the package
 compiling on a fresh clone, and a binary built without its UI serves a page that
-names the command rather than a blank one.
+names the command rather than a blank one. The page is served under
+`/console` - shell at `/console`, assets at `/console/assets/<name>-<hash>`,
+and `/` answering with a redirect to it (`adr/0023`).
 
 State is effector stores and effects (`server/ui/data/`), the client is a typed
 `fetch` wrapper mirroring `api/openapi.yaml`, and the components are Blueprint's

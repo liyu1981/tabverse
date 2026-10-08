@@ -1,7 +1,8 @@
 # ADR 0009: an admin token, and a read only console
 
 Status: accepted (2026-09); the operator token is superseded by
-[ADR 0013](0013-no-master-credential.md)
+[ADR 0013](0013-no-master-credential.md), the console's URL space by
+[ADR 0023](0023-the-console-has-its-own-prefix.md)
 
 Extends [ADR 0001](0001-server-authoritative-sync.md) (the sync protocol) and
 [ADR 0002](0002-privacy-posture.md) (who may reach a server).

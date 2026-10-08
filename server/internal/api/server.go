@@ -159,10 +159,29 @@ func (s *Server) Handler() http.Handler {
 			s.adminOnly(http.HandlerFunc(s.handleConsoleImpersonateStart).ServeHTTP))
 	}
 
-	// The console itself: embedded static files. The page is public (a login
-	// screen has to be loadable to exist) and every API call it makes is
-	// authorized by a session or the admin token.
-	mux.Handle("/", webui.Handler())
+	// The console itself: embedded static files, mounted under /console so the
+	// API's URL space and the page's are separate (adr/0023). The page is
+	// public (a login screen has to be loadable to exist) and every API call it
+	// makes is authorized by a session or the admin token.
+	console := webui.Handler()
+	mux.Handle(webui.Mount, console)
+	mux.Handle(webui.Mount+"/", console)
+	// "/" is not the console's address any more. It answers with a redirect, so
+	// a link minted before the move - the extension's pairing window among them
+	// - still lands on the page (a browser keeps the fragment a Location does
+	// not name, and the query is carried over here), and any other unknown path
+	// is a 404 rather than a page pretending to be one.
+	mux.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			http.NotFound(w, r)
+			return
+		}
+		to := webui.Mount
+		if r.URL.RawQuery != "" {
+			to += "?" + r.URL.RawQuery
+		}
+		http.Redirect(w, r, to, http.StatusMovedPermanently)
+	}))
 
 	return withCORS(withHSTS(mux, s.cfg.SecureCookies))
 }

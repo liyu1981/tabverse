@@ -3,7 +3,7 @@
  * (adr/0020).
  *
  * The extension opens this console in a window with three things in the URL
- * fragment - `#pair=1&ext=<extension id>&nonce=<uuid>` - signs in (the console's
+ * query - `?pair=1&ext=<extension id>&nonce=<uuid>` - signs in (the console's
  * own session), asks for a device name, and this module does the rest:
  *
  *   1. POST /api/v1/console/pair with the session -> one device + one token,
@@ -53,14 +53,35 @@ export type PairOutcome =
   /** The server refused (session gone, impersonating, ...). */
   | { kind: 'refused'; message: string };
 
-/** Reads `#pair=1&ext=…&nonce=…` out of a URL fragment. */
-export function readPairRequest(hash: string): PairRequest | null {
-  const params = new URLSearchParams(hash.replace(/^#/, ''));
+/** Reads `?pair=1&ext=…&nonce=…` out of a query string (or a fragment). */
+export function readPairRequest(search: string): PairRequest | null {
+  const params = new URLSearchParams(search.replace(/^[?#]/, ''));
   if (params.get('pair') !== '1') return null;
   const extensionId = (params.get('ext') || '').trim();
   const nonce = (params.get('nonce') || '').trim();
   if (!extensionId || !nonce) return null;
   return { extensionId, nonce };
+}
+
+/**
+ * The pair request this window's URL names, if any.
+ *
+ * The query is where it lives now (adr/0023). A fragment is read as well, and
+ * only so that a window opened by an extension built before the console moved
+ * to `/console` still pairs: the server redirects `/` to `/console`, a browser
+ * carries the fragment across that redirect, and a pairing that silently
+ * refused would be a very confusing day.
+ */
+export function readPairFromUrl(): PairRequest | null {
+  try {
+    if (typeof window === 'undefined' || !window.location) return null;
+    return (
+      readPairRequest(window.location.search) ??
+      readPairRequest(window.location.hash)
+    );
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -173,9 +194,9 @@ export function sendCredentialsToExtension(
  * The wizard is the one flow where the page is *not* where it started when it
  * becomes able to do its job: a person who is not signed in has to sign in
  * first, and both sign-in paths (the emailed link and every provider) come back
- * to the console's root - `withConsoleReturn` sets `?from=` to the console URL
- * on purpose, so a caller-supplied return target is deliberately ignored. The
- * fragment carrying `ext` and `nonce` would be lost with it.
+ * to the console at `/console` - `withConsoleReturn` sets `?from=` to the console
+ * URL on purpose, so a caller-supplied return target is deliberately ignored.
+ * The query carrying `ext` and `nonce` would be lost with it.
  *
  * So the pair page puts the request in `sessionStorage` before it sends the
  * person away, and reads it back after. `sessionStorage` and not `localStorage`

@@ -10,11 +10,12 @@ import { defineConfig } from 'vite';
  * committed - the Go targets run `pnpm run ui:build` first, and the console
  * job in CI does the same.
  *
- * The URL space is the one ADR 0009 established and the Go handler still
- * serves: the shell at `/`, its files under `/assets/`. `base` is what makes
- * the emitted `index.html` point there, and the entry/asset name patterns keep
- * the files at the root of the output so `/assets/<name>-<hash>.js` is the
- * whole story for the embed.
+ * The URL space is the one ADR 0009 established, now under the console's own
+ * prefix (adr/0023): the Go handler serves the shell at `/console` and its
+ * files at `/console/assets/<name>`. `base` is what makes the emitted
+ * `index.html` point there, and the entry/asset name patterns keep the files at
+ * the root of the output so `/console/assets/<name>-<hash>.js` is the whole
+ * story for the embed.
  */
 const fromUi = (p: string) => new URL(p, import.meta.url).pathname;
 
@@ -25,11 +26,11 @@ export default defineConfig(({ mode }) => {
     // The project's own directory: the shell and every source live under it.
     root: fromUi('.'),
     plugins: [react()],
-    // Production is served from /assets/, which is where the Go handler looks;
-    // the dev server serves from / so the console is at
-    // http://localhost:5174/ and its /api calls can be proxied to a real
-    // tabversed.
-    base: isDev ? '/' : '/assets/',
+    // Production is served from /console/assets/, which is where the Go handler
+    // looks; the dev server serves from /console/ so the page sits at the same
+    // path it does in production and its /api and /auth calls can be proxied to
+    // a real tabversed.
+    base: isDev ? '/console/' : '/console/assets/',
     build: {
       outDir: fromUi('../internal/webui/dist'),
       emptyOutDir: true,

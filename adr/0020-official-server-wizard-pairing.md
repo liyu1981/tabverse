@@ -40,11 +40,13 @@ paired.**
    survives a closed `window.opener` (the popup that could open the window
    closes itself), does not depend on navigating to an `chrome-extension://` URL
    (not a supported hand-back), and does not need the session in the extension.
-2. **The request travels in the URL fragment, the answer in a message.** The
-   window the extension opens is `#pair=1&ext=<its own id>&nonce=<uuid>`. The
-   fragment never reaches the server, so the nonce is not in a log; the id is
-   the extension's own, which is what makes an unpacked build work; the nonce is
-   what makes an unsolicited message ignorable.
+2. **The request travels in the URL, the answer in a message.** The
+   window the extension opens is `?pair=1&ext=<its own id>&nonce=<uuid>` on the
+   console's own page (superseded by
+   [ADR 0023](0023-the-console-has-its-own-prefix.md), which moved it out of the
+   fragment: it was `#pair=1&…`, and the fragment kept the nonce out of a log).
+   The id is the extension's own, which is what makes an unpacked build work;
+   the nonce is what makes an unsolicited message ignorable.
 3. **The server mints from the session.** `POST /api/v1/console/pair` takes
    `{device_name, extension_id}` and calls the existing `writeDevice`. The
    account is the session's — there is **no account parameter** — and an assumed

@@ -10,7 +10,7 @@ import { AccountView } from './views/AccountView';
 import { LoadingView, SignInView } from './views/SignInView';
 import { PairView } from './views/PairView';
 import { TabverseDrawer } from './views/tabverse/TabverseDrawer';
-import { readPairRequest, takeStashedPairRequest } from './data/pair';
+import { readPairFromUrl, takeStashedPairRequest } from './data/pair';
 
 /**
  * The whole console: a frame that never changes (the brand bar, the read-only
@@ -22,14 +22,13 @@ import { readPairRequest, takeStashedPairRequest } from './data/pair';
  */
 export function App() {
   const status = useUnit($bootStatus);
-  // The extension opened this page with `#pair=1&ext=…&nonce=…` (adr/0020). The
-  // request is read from the fragment, or from the stash a sign-in round trip
-  // left behind, and while one is pending this is the pair view - even signed
-  // out, because that is the page the person was sent here to use.
-  const [pairRequest, setPairRequest] = React.useState(() =>
-    typeof window !== 'undefined'
-      ? (readPairRequest(window.location.hash) ?? takeStashedPairRequest())
-      : null,
+  // The extension opened this page with `?pair=1&ext=…&nonce=…` (adr/0020,
+  // adr/0023). The request is read from the query string, or from the stash a
+  // sign-in round trip left behind, and while one is pending this is the pair
+  // view - even signed out, because that is the page the person was sent here
+  // to use.
+  const [pairRequest, setPairRequest] = React.useState(
+    () => readPairFromUrl() ?? takeStashedPairRequest(),
   );
 
   useEffect(() => {
@@ -40,12 +39,14 @@ export function App() {
     if (typeof window === 'undefined') {
       return undefined;
     }
-    const onHash = () => {
-      const request = readPairRequest(window.location.hash);
+    // Back and forward move the query, and a pair request that appears that way
+    // has to be picked up the way the one in the address bar was.
+    const onPop = () => {
+      const request = readPairFromUrl();
       if (request) setPairRequest(request);
     };
-    window.addEventListener('hashchange', onHash);
-    return () => window.removeEventListener('hashchange', onHash);
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
   }, []);
 
   // The pair view waits for the session the way every other view does: until

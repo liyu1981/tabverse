@@ -23,7 +23,7 @@ import { SignInView } from './SignInView';
 /**
  * Pairing a browser extension to this account (adr/0020).
  *
- * The page was opened by the extension, not by a person: the URL fragment
+ * The page was opened by the extension, not by a person: the URL query
  * carries the extension's id and a nonce, and this view is the "agree" step in
  * between. It is the one place in the console where a credential is created by
  * the page rather than minted as a code the extension redeems - the token goes
@@ -38,7 +38,7 @@ import { SignInView } from './SignInView';
  */
 
 export interface PairViewProps {
-  /** Read from the URL fragment; null when the page was not opened by one. */
+  /** Read from the URL query; null when the page was not opened by one. */
   request: PairRequest | null;
   /** Injectable so a test does not need `chrome.runtime`. */
   sendToExtension?: typeof sendCredentialsToExtension;
@@ -69,8 +69,9 @@ export function PairView(props: PairViewProps) {
   const [phase, setPhase] = useState<Phase>({ kind: 'idle' });
 
   // A pending request is stashed before a sign-in round trip, because both
-  // return paths come back to the console's root (withConsoleReturn sets the
-  // return target server side) and the fragment carrying ext+nonce would be lost.
+  // return paths come back to the console at /console (withConsoleReturn sets
+  // the return target server side) and the query carrying ext+nonce would be
+  // lost with it.
   useEffect(() => {
     if (props.request && me && !me.signed_in) {
       stashPairRequest(props.request);

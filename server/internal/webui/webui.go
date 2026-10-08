@@ -25,6 +25,15 @@ import (
 //go:embed all:dist
 var dist embed.FS
 
+// Mount is the URL prefix the console is served under, and the one every part
+// of it has to agree on: the asset URLs the built shell names, the route the
+// router registers, and the return target a sign-in comes back to (`?from=`).
+//
+// It is a constant rather than a setting because it is not a deployment's
+// choice: the console is this server's own page, and a prefix that could be
+// configured would be three places to keep in step for no benefit (adr/0023).
+const Mount = "/console"
+
 // notBuilt is what the console answers with before it has been built. A binary
 // built without its UI is not a broken deployment - the API works and nothing
 // is lost - so this is a page, not an error, and it names the command.
@@ -49,8 +58,9 @@ API, pairing, the accounts - works; only this page is missing.</p>
 // loadable to exist), and nothing under dist/ contains data.
 //
 // The embed root is the dist/ directory, so the URL space is rewritten on the
-// way in: the page lives at /, its files at /assets/<name>-<hash>.<ext> - the
-// same space ADR 0009 established.
+// way in: the page lives at /console, its files at /console/assets/<name>-<hash>.<ext>
+// - the space ADR 0009 established, now under the console's own prefix so the
+// API's URL space and the page's do not overlap (adr/0023).
 func Handler() http.Handler {
 	sub, err := fs.Sub(dist, "dist")
 	if err != nil {
@@ -77,16 +87,18 @@ func Handler() http.Handler {
 		w.Header().Set("Referrer-Policy", "no-referrer")
 
 		clone := r.Clone(r.Context())
-		// The URL space is `/` for the shell and `/assets/<name>` for its
-		// files, while the bundle's root holds the shell and its files side by
-		// side - so the prefix is stripped on the way in.
-		clone.URL.Path = strings.TrimPrefix(r.URL.Path, "/")
+		// The URL space is `/console` for the shell and `/console/assets/<name>`
+		// for its files, while the bundle's root holds the shell and its files
+		// side by side - so the mount is stripped first, then the assets prefix,
+		// leaving the path the bundle's own root is addressed by.
+		trimmed := strings.TrimPrefix(r.URL.Path, Mount)
+		clone.URL.Path = strings.TrimPrefix(trimmed, "/")
 		clone.URL.Path = strings.TrimPrefix(clone.URL.Path, "assets/")
 		name := path.Clean(clone.URL.Path)
 
 		if builtErr != nil {
 			w.Header().Set("Cache-Control", "no-store")
-			if strings.HasPrefix(r.URL.Path, "/assets/") {
+			if strings.HasPrefix(trimmed, "/assets/") {
 				http.NotFound(w, clone)
 				return
 			}
@@ -97,9 +109,10 @@ func Handler() http.Handler {
 		}
 
 		// isAsset remembers which side of the rewrite the request came from: a
-		// missing file under /assets/ is a broken build and has to look broken,
-		// while any other unknown path is a client side route and gets the shell.
-		isAsset := strings.HasPrefix(r.URL.Path, "/assets/")
+		// missing file under /console/assets/ is a broken build and has to look
+		// broken, while any other unknown path is a client side route and gets
+		// the shell.
+		isAsset := strings.HasPrefix(trimmed, "/assets/")
 		if name != "index.html" {
 			if _, err := fs.Stat(sub, name); err != nil {
 				if isAsset {

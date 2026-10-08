@@ -11,6 +11,7 @@ import (
 
 	"github.com/liyu1981/tabverse/server/internal/accounts"
 	"github.com/liyu1981/tabverse/server/internal/store"
+	"github.com/liyu1981/tabverse/server/internal/webui"
 )
 
 const testAdminEmail = "operator@example.com"
@@ -662,13 +663,13 @@ func TestDeletingAnUnknownTabverseIs404(t *testing.T) {
 func TestConsoleIsServed(t *testing.T) {
 	ts, op := newAdminServer(t)
 
-	page := doJSON(t, http.MethodGet, ts.URL+"/", "", nil)
+	page := doJSON(t, http.MethodGet, ts.URL+webui.Mount, "", nil)
 	page.mustStatus(t, http.StatusOK)
 	if !strings.Contains(page.raw, "<div id=\"root\">") {
-		t.Fatalf("/ did not serve the console shell: %s", page.raw)
+		t.Fatalf("%s did not serve the console shell: %s", webui.Mount, page.raw)
 	}
 
-	assets := regexp.MustCompile(`(?:src|href)="(/assets/[^"]+)"`).FindAllStringSubmatch(page.raw, -1)
+	assets := regexp.MustCompile(`(?:src|href)="(/console/assets/[^"]+)"`).FindAllStringSubmatch(page.raw, -1)
 	if len(assets) < 2 {
 		t.Fatalf("the console shell references %d assets, want a script and a stylesheet: %s",
 			len(assets), page.raw)
@@ -683,7 +684,7 @@ func TestConsoleIsServed(t *testing.T) {
 
 	// A client side route falls back to the shell rather than 404ing. The
 	// response is HTML, so this cannot go through the JSON helper.
-	res, err := http.Get(op.ts.URL + "/anything/else")
+	res, err := http.Get(op.ts.URL + webui.Mount + "/anything/else")
 	if err != nil {
 		t.Fatalf("get: %v", err)
 	}
@@ -692,10 +693,35 @@ func TestConsoleIsServed(t *testing.T) {
 		t.Fatalf("a client side route = %d, want 200", res.StatusCode)
 	}
 
-	// A missing asset under /assets/ is a broken build and has to look broken,
-	// not quietly become the shell.
-	missing := doJSON(t, http.MethodGet, ts.URL+"/assets/index-notthere.js", "", nil)
+	// A missing asset under /console/assets/ is a broken build and has to look
+	// broken, not quietly become the shell.
+	missing := doJSON(t, http.MethodGet, ts.URL+webui.Mount+"/assets/index-notthere.js", "", nil)
 	missing.mustStatus(t, http.StatusNotFound)
+}
+
+// The console lives at /console now, and the old address says so rather than
+// answering 404: a bookmark, a link in a terminal and the pairing window an
+// already installed extension opens are all at "/". The query is carried over,
+// and a browser keeps the fragment the server never sees, so a link minted
+// before the move still works.
+func TestTheRootRedirectsToTheConsole(t *testing.T) {
+	ts, _ := newAdminServer(t)
+
+	res := doRequest(t, ts, http.MethodGet, "/?pair=1&nonce=n-1")
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusMovedPermanently {
+		t.Fatalf("GET /?pair=1 = %d, want 301", res.StatusCode)
+	}
+	if to := res.Header.Get("Location"); to != webui.Mount+"?pair=1&nonce=n-1" {
+		t.Fatalf("GET / redirected to %q, want %s with its query", to, webui.Mount)
+	}
+
+	// Anything else under the root is not the console's URL space any more.
+	unknown := doRequest(t, ts, http.MethodGet, "/nope")
+	unknown.Body.Close()
+	if unknown.StatusCode != http.StatusNotFound {
+		t.Fatalf("GET /nope = %d, want 404", unknown.StatusCode)
+	}
 }
 
 // The console is public, the data behind it is not: a device token must not

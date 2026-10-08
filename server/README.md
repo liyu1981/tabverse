@@ -22,7 +22,7 @@ server authoritative sync protocol.
   configured social provider) and manage their own account; the first
   registration with `TABVERSED_ADMIN_EMAIL` is the operator. There is no master
   credential (ADR 0012, ADR 0013)
-- **Console:** `GET /` serves the console: a read only browser over stored
+- **Console:** `GET /console` serves the console: a read only browser over stored
   data, plus a way to delete one tabverse, and the account, device and token
   management around it. It is a Vite/React app under `server/ui`, built into
   `internal/webui/dist` and embedded in the binary (ADR 0018)
@@ -51,7 +51,7 @@ server proxies `/api` and `/auth` to a `tabversed` on 127.0.0.1:8223:
 
 ```sh
 pnpm run server:dev      # in one shell
-pnpm run ui:dev          # in another: http://localhost:5174/
+pnpm run ui:dev          # in another: http://localhost:5174/console/
 ```
 
 ### The command line
@@ -181,7 +181,7 @@ curl -s -X POST localhost:8223/api/v1/auth/invites -H 'Authorization: Bearer <to
 curl -s -X POST localhost:8223/api/v1/auth/pair -d '{"invite_code":"XXXX-XXXX-XXXX-XXXX","device_name":"laptop"}'
 
 # 6. or pair from the console's own session instead - the wizard (adr/0020).
-#    The extension opens `/` with #pair=1, the person signs in there, and the
+#    The extension opens `/console?pair=1`, the person signs in there, and the
 #    page calls this with their session cookie + XSRF header:
 #      POST /api/v1/console/pair  {"device_name":"chrome","extension_id":"<id>"}
 #    -> {"user_id":"usr_...","device_id":"dev_...","token":"..."}
@@ -272,7 +272,7 @@ library's custom provider speaks plain OAuth2, not OIDC discovery with id_token
 validation, and a button that half-works is worse than none).
 
 **Pairing a browser out of that session** (`adr/0020`): the extension opens this
-console at `/#pair=1&ext=<its id>&nonce=<uuid>`, the person signs in with the
+console at `/console?pair=1&ext=<its id>&nonce=<uuid>`, the person signs in with the
 flow above and approves a device name, and the page calls
 `POST /api/v1/console/pair` with the session. It mints a device and a token for
 the signed-in account - the same thing `POST /api/v1/auth/pair` does for an

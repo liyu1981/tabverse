@@ -54,12 +54,12 @@ func TestTheShellReferencesOnlyEmbeddedFiles(t *testing.T) {
 		if strings.HasPrefix(url, "data:") || strings.HasPrefix(url, "#") {
 			continue
 		}
-		if !strings.HasPrefix(url, "/assets/") {
-			t.Errorf("index.html references %q, which is outside the /assets/ space the handler serves", url)
+		if !strings.HasPrefix(url, "/console/assets/") {
+			t.Errorf("index.html references %q, which is outside the /console/assets/ space the handler serves", url)
 			continue
 		}
-		// /assets/<name> is the URL space; the bundle's root holds the files.
-		name := strings.TrimPrefix(url, "/assets/")
+		// /console/assets/<name> is the URL space; the bundle's root holds the files.
+		name := strings.TrimPrefix(url, "/console/assets/")
 		if _, err := fs.Stat(dist, "dist/"+name); err != nil {
 			t.Errorf("index.html references %q, which is not in the embedded bundle: %v", url, err)
 			continue
@@ -106,30 +106,32 @@ func get(t *testing.T, url string) *httptest.ResponseRecorder {
 	return rec
 }
 
-func TestTheRootServesTheShell(t *testing.T) {
+func TestTheConsolePathServesTheShell(t *testing.T) {
 	requireBundle(t)
-	rec := get(t, "/")
-	if rec.Code != http.StatusOK {
-		t.Fatalf("GET / = %d, want 200", rec.Code)
-	}
-	if !strings.Contains(rec.Body.String(), "<div id=\"root\">") {
-		t.Errorf("GET / did not serve the console shell: %q", rec.Body.String()[:min(200, rec.Body.Len())])
-	}
-	if got := rec.Header().Get("Content-Security-Policy"); !strings.Contains(got, "default-src 'none'") {
-		t.Errorf("CSP = %q, want the tight policy", got)
-	}
-	if got := rec.Header().Get("Cache-Control"); got != "no-cache" {
-		t.Errorf("shell Cache-Control = %q, want no-cache", got)
+	for _, url := range []string{Mount, Mount + "/"} {
+		rec := get(t, url)
+		if rec.Code != http.StatusOK {
+			t.Fatalf("GET %s = %d, want 200", url, rec.Code)
+		}
+		if !strings.Contains(rec.Body.String(), "<div id=\"root\">") {
+			t.Errorf("GET %s did not serve the console shell: %q", url, rec.Body.String()[:min(200, rec.Body.Len())])
+		}
+		if got := rec.Header().Get("Content-Security-Policy"); !strings.Contains(got, "default-src 'none'") {
+			t.Errorf("CSP = %q, want the tight policy", got)
+		}
+		if got := rec.Header().Get("Cache-Control"); got != "no-cache" {
+			t.Errorf("shell Cache-Control = %q, want no-cache", got)
+		}
 	}
 }
 
 // TestAnUnknownPathIsAClientSideRoute: the console is one page, so anything the
-// server does not recognise is the shell again rather than a 404.
+// server does not recognise under its prefix is the shell again rather than a 404.
 func TestAnUnknownPathIsAClientSideRoute(t *testing.T) {
 	requireBundle(t)
-	rec := get(t, "/accounts/usr_1")
+	rec := get(t, Mount+"/accounts/usr_1")
 	if rec.Code != http.StatusOK {
-		t.Fatalf("GET /accounts/usr_1 = %d, want the shell", rec.Code)
+		t.Fatalf("GET %s/accounts/usr_1 = %d, want the shell", Mount, rec.Code)
 	}
 	if !strings.Contains(rec.Body.String(), "<div id=\"root\">") {
 		t.Error("a client side route did not get the shell")
@@ -140,7 +142,7 @@ func TestAnUnknownPathIsAClientSideRoute(t *testing.T) {
 // missing file that quietly became the shell would fail as a page that never
 // boots, with nothing in the network tab to explain it.
 func TestABrokenAssetIsA404(t *testing.T) {
-	rec := get(t, "/assets/index-notthere.js")
+	rec := get(t, Mount+"/assets/index-notthere.js")
 	if rec.Code != http.StatusNotFound {
 		t.Errorf("GET a missing asset = %d, want 404", rec.Code)
 	}
@@ -152,7 +154,7 @@ func TestAssetsAreServedImmutable(t *testing.T) {
 	if err != nil {
 		t.Fatalf("read index.html: %v", err)
 	}
-	match := regexp.MustCompile(`src="(/assets/[^"]+\.js)"`).FindStringSubmatch(string(shell))
+	match := regexp.MustCompile(`src="(/console/assets/[^"]+\.js)"`).FindStringSubmatch(string(shell))
 	if match == nil {
 		t.Skip("the shell references no script to check")
 	}

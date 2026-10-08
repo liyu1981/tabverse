@@ -1,6 +1,8 @@
 # ADR 0018: the console is a Vite app, built and embedded
 
-Status: accepted (2026-10)
+Status: accepted (2026-10). Decision 6's *fragment* and the page-at-`/` URL
+space are superseded by [ADR 0023](0023-the-console-has-its-own-prefix.md): the
+same links, in the query, under `/console`.
 
 Supersedes the "three embedded files, no framework, no build step" decision of
 [ADR 0009](0009-multi-tenant-and-server-console.md) (decision 6). Everything
@@ -49,7 +51,7 @@ component base.**
    (`react`, `react-dom`, `effector`, `@blueprintjs/core`,
    `@blueprintjs/icons`, `sass`, `@vitejs/plugin-react`, `vitest`) is already
    there. No new `package.json`, no second `pnpm-lock.yaml`, nothing new to
-   install. It has its own `vite.config.mts` (base `/assets/`, `outDir`
+   install. It has its own `vite.config.mts` (base `/console/assets/`, `outDir`
    pointing into the Go package) so the extension's build is untouched.
 
 2. **The build output is not committed.** `server/internal/webui/dist/` is
@@ -91,8 +93,10 @@ component base.**
    the read-only banner, 409 is a precondition the server explains in a
    sentence (`revoke it first`), which the UI shows rather than calls a failure.
 
-6. **The URL fragment stays.** Operators bookmark and paste
-   `#user=…&tab=…&tabspace=…&q=…`; the routing module keeps reading and writing
+6. **The URL stays** - in the query since
+   [ADR 0023](0023-the-console-has-its-own-prefix.md), which this decision
+   wrote as the fragment. Operators bookmark and paste
+   `user=…&tab=…&tabspace=…&q=…`; the routing module keeps reading and writing
    it, and the boot sequence honours a link that names an account, a tab and a
    tabverse. This is a workflow that exists in the field, not a detail.
 

@@ -34,6 +34,7 @@ import {
   pairWithServer,
 } from '../../data/repo/syncConfig';
 import {
+  OFFICIAL_CONSOLE_URL,
   OFFICIAL_SERVER_URL,
   closePairWindow,
   newPairNonce,
@@ -481,7 +482,7 @@ export const ServerSyncDialog = (props: {
     <div className={classes.section}>
       <Callout intent={Intent.PRIMARY} title="Waiting for the Tabverse window">
         <p className={classes.pairingHint}>
-          A window opened at <code>{OFFICIAL_SERVER_URL}</code>. Sign in there,
+          A window opened at <code>{OFFICIAL_CONSOLE_URL}</code>. Sign in there,
           name this device and allow it - the token comes back on its own, and
           this dialog follows.
         </p>

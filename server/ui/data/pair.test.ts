@@ -41,15 +41,26 @@ function apiWith(patch: Partial<ConsoleApi> = {}): ConsoleApi {
   return stub;
 }
 
-test('the pair parameters are read out of the fragment', () => {
+test('the pair parameters are read out of the query', () => {
   expect(
-    readPairRequest('#pair=1&ext=abcdefghijklmnoabcdefhijklmnoabc&nonce=n-1'),
+    readPairRequest('?pair=1&ext=abcdefghijklmnoabcdefhijklmnoabc&nonce=n-1'),
   ).toEqual({ extensionId: 'abcdefghijklmnoabcdefhijklmnoabc', nonce: 'n-1' });
   // no pair, or a pair without the two things that make one, is not a request
-  expect(readPairRequest('#user=usr_1')).toBeNull();
-  expect(readPairRequest('#pair=1&nonce=n-1')).toBeNull();
-  expect(readPairRequest('#pair=1&ext=abc')).toBeNull();
+  expect(readPairRequest('?user=usr_1')).toBeNull();
+  expect(readPairRequest('?pair=1&nonce=n-1')).toBeNull();
+  expect(readPairRequest('?pair=1&ext=abc')).toBeNull();
   expect(readPairRequest('')).toBeNull();
+});
+
+test('a pair request left in a fragment by an older link is still read', () => {
+  // The console moved to /console with its parameters in the query (adr/0023).
+  // A window opened by an already installed extension carries a fragment, and
+  // the server's / redirect hands it over unchanged - so it pairs rather than
+  // landing on a page with nothing to do.
+  expect(readPairRequest('#pair=1&ext=abc&nonce=n-1')).toEqual({
+    extensionId: 'abc',
+    nonce: 'n-1',
+  });
 });
 
 test('the flow mints a device and sends the token to the extension', async () => {
@@ -150,8 +161,8 @@ test('a browser without the messaging API reports no receiver rather than hangin
 
 test('the request survives a sign-in round trip', () => {
   // The stash is what makes the wizard work when the person has to sign in
-  // first: both sign-in paths come back to the console root, losing the
-  // fragment (server/ui/data/pair.ts, and withConsoleReturn on the server).
+  // first: both sign-in paths come back to the console at /console, losing the
+  // query (server/ui/data/pair.ts, and withConsoleReturn on the server).
   const memory = new Map<string, string>();
   const storage = {
     setItem: (k: string, v: string) => void memory.set(k, v),

@@ -59,11 +59,11 @@ function memorySession() {
   };
 }
 
-test('the window URL carries the extension id and a nonce, in the fragment', () => {
+test('the window URL carries the extension id and a nonce, in the query', () => {
   const url = officialPairUrl('abcdefghijklmnoabcdefhijklmnoabc', 'n-1');
-  expect(url.startsWith(`${OFFICIAL_SERVER_URL}/#`)).toBe(true);
-  // the fragment, not the query: a nonce in a query is a nonce in a log
-  expect(url).not.toContain('?');
+  expect(url.startsWith(`${OFFICIAL_SERVER_URL}/console?`)).toBe(true);
+  // on the console's own page, as a plain HTTP URL (adr/0023)
+  expect(url).not.toContain('#');
   expect(url).toContain('pair=1');
   expect(url).toContain('ext=abcdefghijklmnoabcdefhijklmnoabc');
   expect(url).toContain('nonce=n-1');
@@ -210,7 +210,7 @@ test('the origin of a sender is read from its url when it has no origin', () => 
   expect(senderOrigin({ origin: 'https://a.example' })).toEqual(
     'https://a.example',
   );
-  expect(senderOrigin({ url: 'https://b.example/#pair=1' })).toEqual(
+  expect(senderOrigin({ url: 'https://b.example/console?pair=1' })).toEqual(
     'https://b.example',
   );
   expect(senderOrigin({})).toEqual('');
@@ -231,7 +231,7 @@ test('opening the wizard returns the window it made, and closing it is safe', as
   };
 
   const id = await openOfficialPairWindow(
-    'https://tabversed.liyu1981.xyz/#pair=1',
+    'https://tabversed.liyu1981.xyz/console?pair=1',
     { windows },
   );
   expect(id).toEqual(42);

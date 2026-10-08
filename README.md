@@ -20,7 +20,7 @@ The sync server's console is a second Vite project, at `server/ui`, built into
 the Go binary rather than into `dist/`:
 
 ```sh
-pnpm run ui:dev      # the console at http://localhost:5174/, proxying /api to a server on :8223
+pnpm run ui:dev      # the console at http://localhost:5174/console/, proxying /api to a server on :8223
 pnpm run ui:build    # console -> server/internal/webui/dist (embedded, never committed)
 ```
 

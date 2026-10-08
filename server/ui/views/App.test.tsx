@@ -44,7 +44,12 @@ beforeEach(() => {
   // that boot the console get the same globals a browser hands it. It is the
   // only thing stubbed here: everything below the page is the real app.
   vi.stubGlobal('window', {
-    location: { hash: '', pathname: '/', search: '', origin: 'http://console' },
+    location: {
+      hash: '',
+      pathname: '/console',
+      search: '',
+      origin: 'http://console',
+    },
     history: { replaceState: () => undefined },
   });
 });
