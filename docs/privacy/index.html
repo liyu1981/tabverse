@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.10.2">
 <title data-rh="true">Tabverse</title><meta data-rh="true" property="og:title" content="Tabverse"><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://liyu1981.github.io/tabverse/privacy"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docusaurus_tag" content="default"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docsearch:docusaurus_tag" content="default"><meta data-rh="true" name="description" content="Privacy Policy"><meta data-rh="true" property="og:description" content="Privacy Policy"><link data-rh="true" rel="icon" href="/tabverse/img/icon19.png"><link data-rh="true" rel="canonical" href="https://liyu1981.github.io/tabverse/privacy"><link data-rh="true" rel="alternate" href="https://liyu1981.github.io/tabverse/privacy" hreflang="en"><link data-rh="true" rel="alternate" href="https://liyu1981.github.io/tabverse/privacy" hreflang="x-default"><link rel="stylesheet" href="/tabverse/assets/css/styles.9d5257e0.css">
-<script src="/tabverse/assets/js/runtime~main.75073410.js" defer="defer"></script>
+<script src="/tabverse/assets/js/runtime~main.e7ffab2b.js" defer="defer"></script>
 <script src="/tabverse/assets/js/main.6ecb7d81.js" defer="defer"></script>
 </head>
 <body>
@@ -27,6 +27,14 @@ Privacy Policy.</p>
 <p>Tabverse stores your data <strong>on your own device</strong> (in the browser&#x27;s local
 database). By default nothing is transmitted anywhere, and the app works
 fully without an account or a network connection.</p>
+<p><strong>On-device AI</strong></p>
+<p>Where Chrome ships its built-in AI model, Tabverse can suggest a name for a
+tab collection. That feature runs entirely on this device: the tab titles
+and sites of the current collection are handed to the model inside the
+browser and are never sent anywhere - not to us, not to a third party. The
+model itself is downloaded once by Chrome when you first use the feature;
+Tabverse makes no network request of its own for it, and without Chrome&#x27;s
+built-in model the feature simply does not appear.</p>
 <p><strong>Optional server sync</strong></p>
 <p>You can choose to pair your browser with your own sync server (an open source
 Go program called <code>tabversed</code>). Only when you do this: setting up the
@@ -37,17 +45,8 @@ your existing data on the device. Either way, what reaches the server is sent
 to <strong>the server you configured</strong> over an encrypted connection:</p>
 <ul>
 <li class="">tab URLs and titles, saved tab groups, notes, todos and bookmarks</li>
-<li class="">the tabs that were closed in a tabverse (its History)</li>
+<li class="">periodically captured session snapshots (window/tab listings)</li>
 </ul>
-<p>Alternatively you can connect in one click to <strong>Tabverse&#x27;s own
-server</strong> (<code>tabversed.liyu1981.xyz</code>): the settings dialog opens
-that site in its own window, you sign in there - the same options as described
-under Console accounts - name the device and approve it, and the token it issues
-comes straight back to the extension. The same data reaches that server, nothing
-more, and nothing at all before you approve it. The extension accepts messages
-from that one site (and only while it is pairing), which is what carries the
-token back; no other site can send it anything, and the pairing page never
-displays the token.</p>
 <p><strong>Console accounts.</strong> You can sign in to the server&#x27;s own web console to add
 devices and look at your data. Signing in means either a single-use link sent to
 your email address - there is no password to store anywhere - or GitHub or
@@ -56,15 +55,7 @@ Google, and only if the server operator configured that. Signing in adds your
 to, or what the sign-in provider returns for the account (with Google, that is
 the address you gave Google, and whether Google reports it as verified); it is
 never sent anywhere else. Sessions are cookies on that server only,
-and they end on their own after a fixed period (a day, unless the person running
-the server changes it) - so a session left behind on a shared machine stops
-being usable by itself. If you think somebody else has been inside your
-account, a “sign out everywhere” button ends every one of them at once; it does
-not unpair your devices, because those use a separate credential that has no
-expiry, and you can revoke those from the same page whenever you want.
-When you sign in, and when a sign-in is refused, the server writes it to its own
-log together with the address it came from.
-An operator of a multi-user server can open a <strong>read only, time limited,
+and an operator of a multi-user server can open a <strong>read only, time limited,
 logged</strong> view of your account to answer support questions; they cannot change
 anything that way. The console has no master password or token: the person who
 runs the server is an ordinary account, identified by an address the operator

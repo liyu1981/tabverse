@@ -1,0 +1,54 @@
+@use '../../../global.scss';
+
+/*
+ * The popover is portaled (portalClassName below), so the radius and shadow
+ * have to be applied to Blueprint's popover element the same way TabCard's
+ * preview does it - otherwise the panel keeps Blueprint's 6px corners next to
+ * the extension's one 12px card radius.
+ */
+.suggestPopover :global(.bp6-popover) {
+  border-radius: global.$radius-card;
+  box-shadow: 0 8px 24px rgb(16 22 26 / 20%);
+}
+
+.suggestPopover :global(.bp6-popover-arrow) {
+  display: none;
+}
+
+.suggestPopover :global(.bp6-popover) :global(.bp6-popover-content) {
+  border-radius: global.$radius-card;
+}
+
+.content {
+  padding: 8px 10px;
+  min-width: 220px;
+  max-width: 300px;
+}
+
+.candidates {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/*
+ * fill buttons in a column are full width already; alignText puts the label
+ * left so long names read as a list instead of a row of pills.
+ */
+.candidate {
+  white-space: normal;
+  text-align: left;
+  overflow-wrap: break-word;
+}
+
+.hint {
+  margin: 0;
+  font-size: 0.9em;
+  color: global.$color-light-accent;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 6px;
+}

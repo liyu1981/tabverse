@@ -19,6 +19,7 @@
 | -------------------- | -------------------------------------------------------------------------------------------------------- |
 | `src/`               | the extension (unchanged entry points: `background.ts`, `ui/popup.tsx`, `ui/manager.tsx`)                |
 | `src/data/repo/`     | **new** sync layer: types, HTTP client, outbox, delta engine, realtime client, Dexie bridge, change feed |
+| `src/ai/`            | Chrome's built-in AI (Gemma Nano): availability state, cached model session, and the name suggester - optional, feature-tested, fails soft like `src/capabilities.ts` |
 | `server/`            | the `tabversed` sync server (pure Go, no cgo)                                                            |
 | `server/ui/`         | the console: a Vite/React app, built into `server/internal/webui/dist` and embedded in the binary (`adr/0018`)  |
 | `api/openapi.yaml`   | wire contract for the server                                                                             |

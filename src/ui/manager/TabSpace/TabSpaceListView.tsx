@@ -30,6 +30,7 @@ import {
 } from '../../../data/bookmark/Bookmark';
 
 import { CapabilityWarning } from './CapabilityWarning';
+import { SuggestNameButton } from './SuggestNameButton';
 import { ActiveTabSearch } from './ActiveTabSearch';
 import { ErrorBoundary } from '../../common/ErrorBoundary';
 import { List } from 'immutable';
@@ -50,6 +51,7 @@ import {
 import { filterActiveTabs } from '../../../data/tabSpace/activeTabFilter';
 import { focusLiveTabUtil } from '../../../data/tabSpace/chromeUtil';
 import { updateTabSpaceName } from '../../../data/tabSpace/chromeTab';
+import { type NameTab } from '../../../ai/naming';
 import { useStore } from 'effector-react';
 import clsx from 'clsx';
 
@@ -124,6 +126,25 @@ export function TabSpaceListView() {
 
   const onActiveMatchChange = useCallback((tab: Tab | null) => {
     setActiveTabId(tab ? tab.id : null);
+  }, []);
+
+  // What the name suggester may read: titles and hosts of this tabverse's
+  // tabs, nothing else (plan D5). Recomputed on tab change so a tab opened
+  // a moment ago is in the next offer.
+  const nameTabs = useMemo<NameTab[]>(
+    () =>
+      tabSpace.tabs
+        .toArray()
+        .map((tab) => ({ title: tab.title, url: tab.url })),
+    [tabSpace.tabs],
+  );
+
+  // Applying a suggestion is exactly what typing the name does (plan D7):
+  // local title state first, so the EditableText redraws, then the store
+  // save that syncs it. No second write path.
+  const applySuggestedName = useCallback((name: string) => {
+    setTitle(name);
+    updateTabSpaceName(name);
   }, []);
 
   // `/` focuses the box from anywhere on the page, unless the user is already
@@ -279,6 +300,7 @@ export function TabSpaceListView() {
         </h1>
       </div>
       <div className={classes.titleButtons}>
+        <SuggestNameButton tabs={nameTabs} onApply={applySuggestedName} />
         <Tooltip content="Save and close">
           <Button
             className="tv-icon-button"

@@ -21,6 +21,16 @@ Tabverse stores your data **on your own device** (in the browser's local
 database). By default nothing is transmitted anywhere, and the app works
 fully without an account or a network connection.
 
+**On-device AI**
+
+Where Chrome ships its built-in AI model, Tabverse can suggest a name for a
+tab collection. That feature runs entirely on this device: the tab titles
+and sites of the current collection are handed to the model inside the
+browser and are never sent anywhere - not to us, not to a third party. The
+model itself is downloaded once by Chrome when you first use the feature;
+Tabverse makes no network request of its own for it, and without Chrome's
+built-in model the feature simply does not appear.
+
 **Optional server sync**
 
 You can choose to pair your browser with your own sync server (an open source
