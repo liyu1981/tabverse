@@ -6,6 +6,7 @@ import { ErrorBoundary } from '../common/ErrorBoundary';
 import { ManagerViewContextSupport } from './ManagerViewContext';
 import { IManagerQueryParams, ManagerViewRoute } from './routes';
 import { SavedTabSpaceView } from './SavedTabSpace/SavedTabSpaceView';
+import { ServerConsoleDrawer } from './ServerConsole/ServerConsoleDrawer';
 import { Sidebar } from './Sidebar/Sidebar';
 import { SidebarContainer } from '../common/SidebarContainer';
 import { TabSpaceView } from './TabSpace/TabSpaceView';
@@ -60,6 +61,9 @@ export const ManagerView = (props: IManagerContainerProps) => {
           {renderView(currentRoute)}
         </SidebarContainer>
         <ManagerViewContextSupport />
+        {/* The server console is not one of the tabverse views: it is a panel
+            on the right edge of whichever view is showing (adr/0025). */}
+        <ServerConsoleDrawer />
       </div>
     </ErrorBoundary>
   );

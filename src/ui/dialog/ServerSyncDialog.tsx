@@ -45,6 +45,7 @@ import {
   takePendingPair,
 } from '../../data/repo/officialServer';
 import {
+  sendPubSubMessage,
   SyncMsg,
   subscribePubSubMessage,
   unsubscribePubSubMessage,
@@ -272,6 +273,11 @@ export const ServerSyncDialog = (props: {
       );
       setConfig(cfg);
       setInviteCode('');
+      // the config changed in this page, so the pages that watch it (the
+      // console tool in the right panel) hear it the same way they hear the
+      // wizard's arrival: the wizard path broadcasts from the worker, this
+      // one has no worker to broadcast from
+      sendPubSubMessage(SyncMsg.ConfigChanged, true);
       // the pair itself triggers a first sync cycle, so the time is worth
       // reading as soon as the credentials are in
       void refreshLastSync();
@@ -395,6 +401,10 @@ export const ServerSyncDialog = (props: {
       stopBackgroundSync();
       await clearSyncConfig();
       setConfig(null);
+      // the same broadcast as above, inverted: "no server" is a config change
+      // too, and the console tool must not keep showing an iframe of a server
+      // this device is no longer paired with
+      sendPubSubMessage(SyncMsg.ConfigChanged, false);
       setLastSyncAt(null);
       setStatus({
         intent: Intent.NONE,

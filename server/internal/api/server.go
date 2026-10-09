@@ -172,7 +172,7 @@ func (s *Server) Handler() http.Handler {
 	// API's URL space and the page's are separate (adr/0023). The page is
 	// public (a login screen has to be loadable to exist) and every API call it
 	// makes is authorized by a session or the admin token.
-	console := webui.Handler()
+	console := webui.Handler(s.cfg.FrameAncestors)
 	mux.Handle(webui.Mount, console)
 	mux.Handle(webui.Mount+"/", console)
 	// Everything else is the site: the docs in an official build, a page that

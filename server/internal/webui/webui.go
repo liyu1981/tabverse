@@ -57,11 +57,18 @@ API, pairing, the accounts - works; only this page is missing.</p>
 // set (adr/0012); the assets themselves are public (a sign-in screen has to be
 // loadable to exist), and nothing under dist/ contains data.
 //
+// `frameAncestors` is the CSP `frame-ancestors` source list: who may put the
+// console in an iframe. It comes from configuration (TABVERSED_FRAME_ANCESTORS,
+// adr/0025) because the Tabverse extension shows the console in a side panel -
+// an embedder policy is a deployment's decision, not this package's. An empty
+// value refuses all framing, which is the safe answer for a caller that does
+// not think about it.
+//
 // The embed root is the dist/ directory, so the URL space is rewritten on the
 // way in: the page lives at /console, its files at /console/assets/<name>-<hash>.<ext>
 // - the space ADR 0009 established, now under the console's own prefix so the
 // API's URL space and the page's do not overlap (adr/0023).
-func Handler() http.Handler {
+func Handler(frameAncestors string) http.Handler {
 	sub, err := fs.Sub(dist, "dist")
 	if err != nil {
 		// Only reachable if the embed directive above is broken, i.e. at build
@@ -74,15 +81,19 @@ func Handler() http.Handler {
 	_, builtErr := fs.Stat(sub, "index.html")
 	files := http.FileServer(http.FS(sub))
 
+	if strings.TrimSpace(frameAncestors) == "" {
+		frameAncestors = "'none'"
+	}
+	// The console loads no third party code and talks only to its own origin,
+	// so the policy can be this tight. 'unsafe-inline' is needed for the styles
+	// Blueprint sets from JS (a Popover's position); scripts stay external and
+	// same-origin. `frame-ancestors` is the one directive a deployment sets.
+	policy := "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; " +
+		"img-src 'self' data: https: http:; connect-src 'self'; base-uri 'none'; " +
+		"form-action 'none'; frame-ancestors " + frameAncestors
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// The console loads no third party code and talks only to its own
-		// origin, so the policy can be this tight. 'unsafe-inline' is needed
-		// for the styles Blueprint sets from JS (a Popover's position); scripts
-		// stay external and same-origin.
-		w.Header().Set("Content-Security-Policy",
-			"default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; "+
-				"img-src 'self' data: https: http:; connect-src 'self'; base-uri 'none'; "+
-				"form-action 'none'; frame-ancestors 'none'")
+		w.Header().Set("Content-Security-Policy", policy)
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("Referrer-Policy", "no-referrer")
 

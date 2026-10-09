@@ -102,8 +102,32 @@ func TestAssetNamesAreHashed(t *testing.T) {
 func get(t *testing.T, url string) *httptest.ResponseRecorder {
 	t.Helper()
 	rec := httptest.NewRecorder()
-	Handler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, url, nil))
+	Handler("chrome-extension:").ServeHTTP(rec, httptest.NewRequest(http.MethodGet, url, nil))
 	return rec
+}
+
+// The console's frame-ancestors is the deployment's decision (adr/0025): the
+// extension embeds the console in a side panel, so the shipped default admits
+// browser extensions and nobody else, `'none'` restores the old refusal, and an
+// empty value (a caller that did not think about it) is the refusal too.
+func TestTheConsoleFrameAncestorsAreConfigurable(t *testing.T) {
+	requireBundle(t)
+	tests := []struct {
+		value string
+		want  string
+	}{
+		{"chrome-extension:", "frame-ancestors chrome-extension:"},
+		{"chrome-extension://abcdefghijklmnopabcdefghijklmnop", "frame-ancestors chrome-extension://abcdefghijklmnopabcdefghijklmnop"},
+		{"'none'", "frame-ancestors 'none'"},
+		{"", "frame-ancestors 'none'"},
+	}
+	for _, tc := range tests {
+		rec := httptest.NewRecorder()
+		Handler(tc.value).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, Mount+"/", nil))
+		if got := rec.Header().Get("Content-Security-Policy"); !strings.Contains(got, tc.want) {
+			t.Errorf("frame-ancestors %q: CSP = %q, want it to contain %q", tc.value, got, tc.want)
+		}
+	}
 }
 
 func TestTheConsolePathServesTheShell(t *testing.T) {

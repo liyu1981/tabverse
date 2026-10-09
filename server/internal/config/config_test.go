@@ -1,6 +1,7 @@
 package config
 
 import (
+	"os"
 	"testing"
 	"time"
 )
@@ -115,6 +116,65 @@ func TestRequireHTTPSDefaultsOff(t *testing.T) {
 	}
 	if cfg.RequireHTTPS {
 		t.Error("RequireHTTPS should default to false")
+	}
+}
+
+// TestFrameAncestorsShippedDefaultAllowsExtensions: with the variable unset,
+// the console admits browser extensions (the extension's side panel, adr/0025)
+// and nothing else.
+func TestFrameAncestorsShippedDefaultAllowsExtensions(t *testing.T) {
+	// t.Setenv records the original so cleanup restores it; the unset is what
+	// this test is about.
+	t.Setenv("TABVERSED_FRAME_ANCESTORS", "sentinel")
+	if err := os.Unsetenv("TABVERSED_FRAME_ANCESTORS"); err != nil {
+		t.Fatalf("unset: %v", err)
+	}
+	cfg, err := Load("test")
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.FrameAncestors != "chrome-extension:" {
+		t.Errorf("FrameAncestors = %q, want chrome-extension:", cfg.FrameAncestors)
+	}
+}
+
+// The value is used verbatim, so a deployment can narrow it to one extension
+// id or restore the old refusal.
+func TestFrameAncestorsIsConfigurable(t *testing.T) {
+	for _, value := range []string{"chrome-extension://abc", "'none'", "'self' https://ops.example"} {
+		t.Setenv("TABVERSED_FRAME_ANCESTORS", value)
+		cfg, err := Load("test")
+		if err != nil {
+			t.Fatalf("Load: %v", err)
+		}
+		if cfg.FrameAncestors != value {
+			t.Errorf("FrameAncestors = %q, want %q", cfg.FrameAncestors, value)
+		}
+	}
+}
+
+// An operator who sets the variable to nothing gets the refusal, not an empty
+// source list that CSP would read as nothing (and not a console open to all).
+// Empty is unset, like every other variable here - so an operator who clears
+// the variable gets the shipped default, and the documented way to refuse
+// framing is the word `'none'`.
+func TestFrameAncestorsEmptyFallsBackToTheDefault(t *testing.T) {
+	t.Setenv("TABVERSED_FRAME_ANCESTORS", "")
+	cfg, err := Load("test")
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.FrameAncestors != "chrome-extension:" {
+		t.Errorf("FrameAncestors = %q, want chrome-extension:", cfg.FrameAncestors)
+	}
+}
+
+// The value becomes a response header, so a line break in it is refused rather
+// than passed on.
+func TestFrameAncestorsRefusesLineBreaks(t *testing.T) {
+	t.Setenv("TABVERSED_FRAME_ANCESTORS", "chrome-extension:\r\nX-Evil: 1")
+	if _, err := Load("test"); err == nil {
+		t.Fatal("Load accepted a value containing a line break")
 	}
 }
 

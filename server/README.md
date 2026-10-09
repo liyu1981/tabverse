@@ -193,6 +193,7 @@ git-ignored, because it holds the auth secret and the provider secret - and
 | `TABVERSED_SESSION_TTL`      | `24h`                | how long one console sign-in lasts; `0` = no bound (ADR 0021) |
 | `TABVERSED_SESSION_COOKIE_TTL` | _(same as the session)_ | how long the browser keeps the cookie; defaults to `TABVERSED_SESSION_TTL` so the credential never outlives the session |
 | `TABVERSED_REQUIRE_HTTPS`    | `false`              | refuse to start when the console is served over plain http on a non-loopback `TABVERSED_PUBLIC_URL` (ADR 0021); off by default so a LAN deployment is not broken |
+| `TABVERSED_FRAME_ANCESTORS`  | `chrome-extension:`  | CSP `frame-ancestors` source list for the console, i.e. who may embed it (ADR 0025). The default admits browser extensions - the Tabverse extension shows the console in a side panel - and no web page. `'none'` restores the refusal; `chrome-extension://<id>` narrows it to one extension |
 | `TABVERSED_ENV_FILE`       | _(unset)_           | read this file instead of `./.env`; unreadable is a startup error |
 
 ## API

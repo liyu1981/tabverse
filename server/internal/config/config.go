@@ -38,6 +38,15 @@ type Config struct {
 	// http://192.168.x.x is a supported shape and this would break it on
 	// upgrade; the server warns about that case either way (see New).
 	RequireHTTPS bool
+	// FrameAncestors is the CSP `frame-ancestors` source list for the console,
+	// i.e. who is allowed to put it in an iframe. The default is
+	// `chrome-extension:`, because the Tabverse extension shows the console in
+	// a side panel (adr/0025) and an installed extension is already trusted to
+	// read the same cookies through its host permissions - while a web page
+	// still cannot frame it, which is what `frame-ancestors` defends against.
+	// `'none'` restores the refusal, and `chrome-extension://<id>` narrows it
+	// to one extension.
+	FrameAncestors string
 	// SessionTTL is how long one console sign-in lasts. 0 disables the
 	// server-side bound, which is the pre-hardening behaviour (a session that
 	// slides for as long as it is used) and should only be wanted on a LAN.
@@ -216,6 +225,19 @@ func Load(version string) (Config, error) {
 	}
 	if cfg.RequireHTTPS, err = GetenvBool("TABVERSED_REQUIRE_HTTPS", false); err != nil {
 		return Config{}, err
+	}
+	// A response header is being built from this value, so the length of a
+	// line is not the operator's to decide: a CR or LF here would be header
+	// injection, and the value itself has no reason to contain one.
+	// A response header is being built from this value, so the length of a line
+	// is not the operator's to decide: a CR or LF here would be header
+	// injection, and the value itself has no reason to contain one. Empty is
+	// unset, like every other variable in this config, so a variable cleared by
+	// accident gets the shipped default rather than an empty directive;
+	// `'none'` is how an operator refuses.
+	cfg.FrameAncestors = strings.TrimSpace(Getenv("TABVERSED_FRAME_ANCESTORS", "chrome-extension:"))
+	if strings.ContainsAny(cfg.FrameAncestors, "\r\n\x00") {
+		return Config{}, fmt.Errorf("TABVERSED_FRAME_ANCESTORS must be one CSP source list, without line breaks")
 	}
 	if cfg.SessionTTL, err = GetenvDuration("TABVERSED_SESSION_TTL", 24*time.Hour); err != nil {
 		return Config{}, err
