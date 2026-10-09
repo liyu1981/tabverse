@@ -115,10 +115,10 @@ question.
 - The two halves link to each other, each on the other's terms. The docs'
   **Login** is a plain anchor to `/console/` (decision 3) - a full page load,
   because there is no router here to perform it. The console's top bar offers
-  **Docs** back at `/`, but only when the server says there is something there:
+  **tabverse** back at `/`, but only when the server says there is something there:
   `handleConsoleMe` carries `docs: webui.HasDocs()`, since in a default build
-  `/` is the page whose only job is to redirect to the console, and a button
-  that comes straight back is worse than no button.
+  `/` is the page whose only job is to redirect to the console, and a link
+  that comes straight back is worse than no link.
 - Old links pay for the move: `/#user=…` lands on the site rather than on an
   account, and `https://host/api/v1/…` lands on the documentation's 404. Neither
   is a client that cannot be updated - the first is a bookmark and the second

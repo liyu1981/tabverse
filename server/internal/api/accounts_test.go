@@ -321,7 +321,7 @@ func TestConsoleMeBeforeAndAfterSignIn(t *testing.T) {
 		t.Fatalf("smtp = %v, want false for a deployment with no SMTP host: %s", r.body["smtp"], r.raw)
 	}
 	// Whether there is a site at "/" to go back to (adr/0024): the top bar
-	// offers the Docs link on this answer alone, and it is a fact about the
+	// offers its link back on this answer alone, and it is a fact about the
 	// build rather than about the caller - so it has to be here, before the
 	// page knows anything else about this person, and unchanged after.
 	docs, ok := r.body["docs"].(bool)

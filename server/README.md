@@ -35,7 +35,7 @@ server authoritative sync protocol.
   otherwise. The flag is read at build time only - by `tools/embedsite.sh` and
   by the Docusaurus config - so Go embeds whatever is there and needs no flag
   of its own (ADR 0024). The two halves link to each other: the docs' navbar
-  offers **Login** at `/console/`, and the console's top bar offers **Docs**
+  offers **Login** at `/console/`, and the console's top bar offers **tabverse**
   back at `/` whenever `/console/api/v1/console/me` reports `docs: true` -
   which it does only when there is a site to go to.
 

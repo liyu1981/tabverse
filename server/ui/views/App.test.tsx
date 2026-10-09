@@ -75,8 +75,10 @@ test('the bar offers the way back to the index only when there is one', async ()
   });
   await loadMeFx();
   const withSite = renderToStaticMarkup(<TopBar />);
-  expect(withSite).toContain('Docs');
   expect(withSite).toContain('href="/"');
+  // the link names where it goes: the project's own index
+  const link = /<a[^>]*href="\/"[^>]*>[\s\S]*?<\/a>/.exec(withSite);
+  expect(link?.[0] ?? '').toContain('tabverse');
 
   stubApi({
     signed_in: false,
@@ -86,7 +88,7 @@ test('the bar offers the way back to the index only when there is one', async ()
   });
   await loadMeFx();
   const withoutSite = renderToStaticMarkup(<TopBar />);
-  expect(withoutSite).not.toContain('Docs');
+  expect(withoutSite).not.toContain('href="/"');
 });
 
 test('a signed-in person gets the account view, not the form', async () => {

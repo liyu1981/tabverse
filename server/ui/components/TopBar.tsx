@@ -35,18 +35,19 @@ export function TopBar() {
             {totals.active_tokens} tokens · {totals.live_records} records
           </span>
         ) : null}
-        {/* A real link, not a route: "/" is the documentation - a different
-            page of this origin that the console's own state has nothing to do
-            with. Shown only when the server says it has one (`me.docs`). */}
+        {/* A real link, not a route: "/" is this project's own index - a
+            different page of this origin that the console's own state has
+            nothing to do with. Shown only when the server says it has one
+            (`me.docs`), and named for what it is rather than for what the
+            index happens to hold. */}
         {me?.docs ? (
           <AnchorButton
             minimal={true}
             small={true}
-            icon="book"
             href="/"
-            title="The documentation this server serves at /"
+            title="tabverse, at this server's index"
           >
-            Docs
+            tabverse
           </AnchorButton>
         ) : null}
         <Button

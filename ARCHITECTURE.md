@@ -327,7 +327,7 @@ OpenAPI contract name `/console/api/v1` explicitly.
 The two halves link to each other: the documentation offers **Login** at
 `/console/` (a plain anchor - the console is not a route of the site, so a
 client-side link would land on the site's own 404), and the console offers
-**Docs** back at `/` - only when the server says there is a site there, which
+**tabverse** back at `/` - only when the server says there is a site there, which
 `GET /console/api/v1/console/me` reports as `docs`.
 
 The server's data model was tenant scoped from the start (`user_id` on

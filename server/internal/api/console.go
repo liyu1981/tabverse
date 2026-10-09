@@ -33,8 +33,8 @@ func (s *Server) handleConsoleMe(w http.ResponseWriter, r *http.Request) {
 			// everybody, which is false on every deployment that has one.
 			"smtp": s.cfg.SMTPConfigured(),
 			// Whether there is a site to go back to at "/": this build carries the
-			// documentation or only the redirect page, and the page shows its
-			// "Docs" button on that answer (adr/0024).
+			// documentation or only the redirect page, and the bar shows its
+			// "tabverse" link back on that answer (adr/0024).
 			"docs": webui.HasDocs(),
 		})
 		return

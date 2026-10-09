@@ -49,8 +49,8 @@ func SiteHandler() http.Handler {
 // (adr/0024).
 //
 // The console asks for this on /console/api/v1/console/me, which is how the
-// "Docs" button knows whether to exist: a default build would send a person to
-// a page whose only job is to send them straight back.
+// bar's link back to "/" knows whether to exist: a default build would send a
+// person to a page whose only job is to send them straight back.
 func HasDocs() bool {
 	_, err := fs.Stat(site, "docs/index.html")
 	return err == nil
