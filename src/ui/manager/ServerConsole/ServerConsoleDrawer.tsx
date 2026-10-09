@@ -185,14 +185,16 @@ export function ServerConsoleDrawer() {
   }
 
   return (
-    <button
-      type="button"
-      className={classes.handle}
-      aria-label="Open the sync server console"
-      title="Server console"
-      onClick={() => setExpanded(true)}
-    >
-      <Icon icon="cloud-server" />
-    </button>
+    <div className={classes.rail}>
+      <button
+        type="button"
+        className={classes.handle}
+        aria-label="Open the sync server console"
+        title="Server console"
+        onClick={() => setExpanded(true)}
+      >
+        <Icon icon="cloud-server" />
+      </button>
+    </div>
   );
 }

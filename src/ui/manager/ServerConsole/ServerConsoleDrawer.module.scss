@@ -1,18 +1,25 @@
 @use '../../../global.scss';
 
 /*
- * The collapsed handle: a slim tab on the right edge, vertically centred. It
- * sits above the page content but *below* Blueprint's overlays (20), so a
- * popover opened near the edge still wins; nothing about the panel should ever
- * cover a dialog.
+ * The panel is a column of the manager page, not an overlay (see
+ * ManagerView.module.scss): `flex: 0 0 …` reserves its width, the page's
+ * content column shrinks by it, and opening the console pushes the tabverse
+ * left instead of floating over the list the person was reading.
+ */
+.rail {
+  flex: 0 0 30px;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/*
+ * The collapsed state's one control. The rail reserves the column so the page
+ * does not shift when the panel opens or closes; the button is the same
+ * rounded tab it was when it floated.
  */
 .handle {
-  position: fixed;
-  top: 50%;
-  right: 0;
-  transform: translateY(-50%);
-  z-index: 19;
-
   display: flex;
   align-items: center;
   justify-content: center;
@@ -32,23 +39,21 @@
 }
 
 /*
- * The expanded panel: full height, fixed to the right edge, wide enough for
- * the console's own layout without taking the whole window. `min()` keeps it
- * sane on a laptop.
+ * The expanded panel: full height, wide enough for the console's own layout
+ * without taking the whole window. `min()` keeps it sane on a laptop, and it
+ * can give way (`flex-shrink: 1`, floor 300px) when the window is too narrow
+ * for the sidebar, the tabverse and the console at once - the alternative is
+ * a panel that pushes everything else off screen.
  */
 .drawer {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 19;
-
+  flex: 0 1 min(760px, 62vw);
+  min-width: 300px;
+  height: 100vh;
   display: flex;
   flex-direction: column;
-  width: min(760px, 62vw);
   background-color: white;
   border-left: 1px solid global.$color-e;
-  box-shadow: -8px 0 24px rgb(16 22 26 / 12%);
+  box-shadow: -8px 0 24px rgb(16 22 26 / 8%);
 }
 
 .header {

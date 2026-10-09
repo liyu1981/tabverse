@@ -1,0 +1,31 @@
+@use '../../global.scss';
+
+/*
+ * The manager page shell: the whole page is one flex row, and the server
+ * console panel is a column of it (see ServerConsoleDrawer). It is a sibling
+ * and not an overlay on purpose - opening the console pushes the tabverse
+ * left, the way expanding anything on this page should, instead of floating
+ * above it (the fixed-position version covered the very list the person was
+ * looking at).
+ *
+ * `min-width: 0` on the content column is the same rule the tab list itself
+ * carries: a flex item's default min-width is its content, and without it the
+ * column would refuse to shrink under the panel.
+ */
+.shell {
+  display: flex;
+  align-items: stretch;
+  height: 100vh;
+}
+
+.content {
+  flex: 1 1 0;
+  min-width: 0;
+  /*
+   * The tabverse's own layout asks about the width it *has*, not the window's
+   * (see TabSpaceView.module.scss): with the console panel open, the window can
+   * be wide while this column is not, and a viewport media query would keep a
+   * 300px tools panel that the column no longer has room for.
+   */
+  container-type: inline-size;
+}

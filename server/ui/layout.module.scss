@@ -226,6 +226,17 @@
     flex-direction: row;
     flex-wrap: wrap;
   }
+
+  // The row direction alone was not enough: `railItem` asks for `width: 100%`
+  // above, so every item took its own line and the rail stayed vertical (the
+  // four tabs stacked in the extension's side panel, which is always narrower
+  // than this breakpoint). Size the chips to their content instead, and let
+  // `flex-wrap` move a long label to the next row.
+  .railItem {
+    width: auto;
+    flex: 0 1 auto;
+    min-width: 0;
+  }
 }
 
 // ---- the sign-in form ------------------------------------------------------

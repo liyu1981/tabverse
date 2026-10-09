@@ -35,8 +35,14 @@
   height: 100vh;
 }
 
-/* not enough room for a useful panel: the tab list is the priority */
-@media (max-width: 900px) {
+/* not enough room for a useful panel: the tab list is the priority.
+ *
+ * This asks the content column, not the window (`container-type` on
+ * `.content`, ManagerView.module.scss): with the console panel open the window
+ * is wide but this column is not, and the tools panel has to give way rather
+ * than leave the tab list a sliver.
+ */
+@container (max-width: 900px) {
   .rightSideContainer {
     flex: 0 1 40%;
     min-width: 0;

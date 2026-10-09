@@ -11,6 +11,7 @@ import { Sidebar } from './Sidebar/Sidebar';
 import { SidebarContainer } from '../common/SidebarContainer';
 import { TabSpaceView } from './TabSpace/TabSpaceView';
 import { WebtoolView } from './Webtool/WebtoolView';
+import classes from './ManagerView.module.scss';
 
 interface IManagerContainerProps {
   queryParams?: IManagerQueryParams;
@@ -51,20 +52,23 @@ export const ManagerView = (props: IManagerContainerProps) => {
 
   return (
     <ErrorBoundary>
-      <div>
-        <SidebarContainer>
-          <Sidebar
-            route={currentRoute}
-            switchRoute={(value) => setRouteAndPushHistoryState(value)}
-            queryParams={props.queryParams}
-          />
-          {renderView(currentRoute)}
-        </SidebarContainer>
-        <ManagerViewContextSupport />
-        {/* The server console is not one of the tabverse views: it is a panel
-            on the right edge of whichever view is showing (adr/0025). */}
+      <div className={classes.shell}>
+        <div className={classes.content}>
+          <SidebarContainer>
+            <Sidebar
+              route={currentRoute}
+              switchRoute={(value) => setRouteAndPushHistoryState(value)}
+              queryParams={props.queryParams}
+            />
+            {renderView(currentRoute)}
+          </SidebarContainer>
+        </div>
+        {/* The server console is not one of the tabverse views: it is a column
+            of the page on the right edge, on every route, and opening it
+            pushes the view left rather than floating over it (adr/0025). */}
         <ServerConsoleDrawer />
       </div>
+      <ManagerViewContextSupport />
     </ErrorBoundary>
   );
 };
