@@ -45,7 +45,13 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+  /*
+   * The pane itself does not scroll: its header and the list label are fixed,
+   * and `paneBody` is the only scrolling part - so reading down the tabs never
+   * takes the header away, and the header needs no sticky overlay to stay put.
+ */
+  min-height: 0;
+  overflow: hidden;
   padding: 20px 20px 32px 26px;
 }
 
@@ -79,9 +85,21 @@
     flex-direction: column;
   }
 
+  /*
+   * Mobile: the pair splits the drawer's height in half - the tabverse (header
+   * and its tabs) on top, the notes and the other tools below - and each half
+   * scrolls on its own. `flex-basis: 0` on both is what makes the halves equal
+   * whatever their content, rather than the taller one winning.
+   */
+  .pane {
+    flex: 1 1 0;
+    min-height: 0;
+  }
+
   .tools {
-    flex: 1 1 auto;
+    flex: 1 1 0;
     min-width: 0;
+    min-height: 0;
     box-shadow: 0 -1px 0 0 #bbb inset;
   }
 }
@@ -95,6 +113,7 @@
  * module's own class is emitted after them.
  */
 .headerCard {
+  flex: 0 0 auto;
   padding: 18px 20px;
   margin-bottom: 20px;
 }
@@ -146,6 +165,7 @@
 // it have names on their tabs; this pane had a column of cards with nothing over
 // them.
 .listLabel {
+  flex: 0 0 auto;
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
@@ -166,7 +186,12 @@
 }
 
 .paneBody {
+  /* the one scrolling part of the left pane; the header and the label above it
+     are outside it on purpose (see .pane) */
+  flex: 1 1 auto;
   min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 // The extension's card has a 6px top margin and nothing around it; in a wider
