@@ -13,7 +13,13 @@ import {
   updateTab,
   updateTabSpace,
 } from './TabSpace';
-import { TAB_DB_TABLE_NAME, Tab, TabSavePayload, fromSavedTab } from './Tab';
+import {
+  TAB_DB_TABLE_NAME,
+  Tab,
+  TabSavePayload,
+  fromLiveTab,
+  fromSavedTab,
+} from './Tab';
 import { TabSpaceDBMsg, subscribePubSubMessage } from '../../message/message';
 import {
   debounce,
@@ -381,16 +387,16 @@ export async function moveTabsToTabSpace(
 }
 
 /**
- * Loads a saved tabverse into the window the manager page is in.
+ * Loads a saved tabverse into the window the manager page is in, as a merge.
  *
- * The window is emptied of everything that is not part of the tabverse - the
- * tabs the user had open here are the ones being replaced - but a tab of the
- * saved tabverse that is *already* open here is kept rather than closed and
- * opened again (see restorePlan.ts). Kept tabs keep their place in the window,
- * its history and its state; the tabverse then owns the order, so the strip is
- * put back into the saved order and every tab's live fields (chromeTabId above
- * all - the store's copy of it is what the list's buttons act on) are set from
- * what the browser actually has.
+ * Nothing is closed: the tabs the user has open here are theirs, and loading a
+ * tabverse adds to them. A tab of the saved tabverse that is *already* open
+ * here is reused rather than closed and opened again (see restorePlan.ts) -
+ * kept tabs keep their place, their history and their state. The missing ones
+ * are opened, the tabverse owns the order of its own tabs among the window's
+ * (so the strip matches the list), and every tab's live fields (chromeTabId
+ * above all - the store's copy of it is what the list's buttons act on) are set
+ * from what the browser actually has.
  */
 export async function loadTabSpaceByTabSpaceId(
   savedTabSpaceId: string,
@@ -403,13 +409,9 @@ export async function loadTabSpaceByTabSpaceId(
   const windowTabs = await chrome.tabs.query({ currentWindow: true });
   const plan = planRestore(tabSpace.tabs.toArray(), windowTabs, chromeTabId);
   logger.log(
-    `restoring "${tabSpace.name}": opening ${plan.createTabs.length}, ` +
-      `keeping ${plan.entries.length - plan.createTabs.length}, ` +
-      `closing ${plan.removeChromeTabIds.length}`,
-  );
-
-  await Promise.all(
-    plan.removeChromeTabIds.map((id) => chrome.tabs.remove(id)),
+    `loading "${tabSpace.name}" into this window: opening ` +
+      `${plan.createTabs.length}, keeping ` +
+      `${plan.entries.length - plan.createTabs.length} already open`,
   );
 
   // here we do not use map but use for loop to ensure that we restore tabs in
@@ -515,6 +517,37 @@ export async function loadTabSpaceByTabSpaceId(
     );
   }
   tabSpaceStoreApi.update(tabSpace);
+
+  // The window *is* the tabverse (adr/0006), so the tabs it already had that
+  // the tabverse did not are part of it now. Without this, a merge would leave
+  // the list describing a window that is missing its own tabs - and the
+  // bootstrap scan would adopt them anyway, one reload later. The rows are the
+  // ones `scanCurrentTabs` builds; the loop is written out here because
+  // importing that would close an import cycle (chromeTab.ts imports this
+  // module for `saveCurrentTabSpace`).
+  const adoptedChromeTabs = windowTabs.filter(
+    (chromeTab) =>
+      chromeTab.id !== undefined &&
+      chromeTab.id !== chromeTabId &&
+      !isTabSpaceManagerPage(chromeTab) &&
+      !plan.entries.some((entry) => entry.reuseChromeTabId === chromeTab.id),
+  );
+  if (adoptedChromeTabs.length > 0) {
+    logger.log(
+      `also adopting ${adoptedChromeTabs.length} tab(s) the window had open`,
+    );
+    tabSpaceStoreApi.addTabs(
+      adoptedChromeTabs.map((chromeTab) =>
+        copyChromeTabFields(
+          chromeTab,
+          fromLiveTab({
+            chromeTabId: chromeTab.id as number,
+            chromeWindowId,
+          }),
+        ),
+      ),
+    );
+  }
 
   await scanRestoredWindow(
     chromeWindowId,

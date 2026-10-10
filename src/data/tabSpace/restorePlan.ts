@@ -3,22 +3,27 @@ import { Tab } from './Tab';
 /**
  * What a restore into a window should do, before it touches the browser.
  *
- * Loading a saved tabverse used to be "close every tab in the window, then open
- * every tab of the tabverse". That is right about the *result* and wasteful
- * about the way there: a tab the user already has open in that window is closed
- * and opened again, which loses its place, its scroll position, its back
- * history, and (for anything with a session in it) its state. So the restore
- * looks at the window first and reuses what is already there.
+ * Loading a saved tabverse into a window **adds to it**: every tab the window
+ * already has stays where it was, a saved tab that is already open is reused
+ * rather than closed and opened again, and only the saved tabs with nothing
+ * open to stand for them are opened. Two reasons, and the second is the one
+ * that decided it:
+ *
+ * - Reopening a tab loses its place, its scroll position, its back history and
+ *   (for anything with a session in it) its state.
+ * - The window is the user's, not the tabverse's. Loading a tabverse is not a
+ *   reason to close the pages they were working on, which is why the plan
+ *   decides nothing about removal - there is nothing to remove.
  *
  * The decision is here, on its own, because it is the part worth testing: which
- * saved tabs find an open tab to stand for, which have to be opened, and which
- * of the window's tabs are in neither. The chrome calls live in `util.ts`.
+ * saved tabs find an open tab to stand for, and which have to be opened. The
+ * chrome calls live in `util.ts`.
  */
 
 /**
  * The parts of a window tab the plan needs. `id` is optional because that is
- * how @types/chrome declares it; a tab without one cannot be reused, closed or
- * moved, so the plan drops it.
+ * how @types/chrome declares it; a tab without one cannot be reused on, so the
+ * plan drops it.
  */
 export interface WindowTabForPlan {
   id?: number;
@@ -42,8 +47,6 @@ export interface RestorePlan {
   entries: RestorePlanEntry[];
   /** The saved tabs with nothing open to stand for them. */
   createTabs: Tab[];
-  /** The window's tabs that are neither the tabverse tab nor part of the plan. */
-  removeChromeTabIds: number[];
 }
 
 /**
@@ -83,12 +86,11 @@ export function isSameTabUrl(
 }
 
 /**
- * Plans a restore of `savedTabs` into the window holding `windowTabs`.
+ * Plans a merge of `savedTabs` into the window holding `windowTabs`.
  *
  * `tabverseChromeTabId` is the manager tab of the restore itself. It is never
- * reused (it is the page doing the restoring, not a tab of the tabverse) and
- * never closed - which is also why it is not in `windowTabs` to begin with on
- * any sane call.
+ * reused - it is the page doing the restoring, not a tab of the tabverse - and
+ * it is left exactly where it is, like every other tab in the window.
  */
 export function planRestore(
   savedTabs: readonly Tab[],
@@ -133,13 +135,5 @@ export function planRestore(
     createTabs: entries
       .filter((entry) => entry.reuseChromeTabId === undefined)
       .map((entry) => entry.savedTab),
-    removeChromeTabIds: windowTabs
-      .filter(
-        (tab) =>
-          tab.id !== undefined &&
-          tab.id !== tabverseChromeTabId &&
-          !claimedChromeTabIds.has(tab.id),
-      )
-      .map((tab) => tab.id as number),
   };
 }

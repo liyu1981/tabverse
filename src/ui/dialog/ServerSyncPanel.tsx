@@ -3,8 +3,6 @@ import {
   ButtonGroup,
   Callout,
   Checkbox,
-  Dialog,
-  DialogBody,
   FormGroup,
   Icon,
   InputGroup,
@@ -17,7 +15,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import { logger } from '../../global';
 import { formatDateTime, fromNow } from '../../time';
-import classes from './ServerSyncDialog.module.scss';
+import classes from './ServerSyncPanel.module.scss';
 import { useSyncActivity } from '../common/useSyncActivity';
 import {
   SyncRuntime,
@@ -84,12 +82,7 @@ const NOT_CONNECTED: IStatus = {
   text: 'Not connected: Tabverse runs fully local until you pair it with your own sync server.',
 };
 
-export const ServerSyncDialog = (props: {
-  isOpen: boolean;
-  onClose: () => void;
-}) => {
-  const { isOpen, onClose } = props;
-
+export const ServerSyncPanel = () => {
   const [config, setConfig] = useState<SyncConfig | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [baseUrl, setBaseUrl] = useState('');
@@ -137,9 +130,8 @@ export const ServerSyncDialog = (props: {
   }, []);
 
   useEffect(() => {
-    if (!isOpen) {
-      return undefined;
-    }
+    // mounted is open: the settings dialog renders this panel only while its
+    // Sync tab is the active one, so there is no `isOpen` to watch
     let cancelled = false;
     setLoaded(false);
     loadSyncConfig()
@@ -179,16 +171,13 @@ export const ServerSyncDialog = (props: {
     return () => {
       cancelled = true;
     };
-  }, [isOpen, refreshLastSync]);
+  }, [refreshLastSync]);
 
   // The worker is what takes the token from the wizard page (adr/0020): it is
   // the context that is always there, and it owns the config. This page is the
   // one watching, so it redraws as connected when that happens, and closes the
   // window it opened - the wizard has already said it can be closed.
   useEffect(() => {
-    if (!isOpen) {
-      return undefined;
-    }
     const token = subscribePubSubMessage(SyncMsg.ConfigChanged, () => {
       void loadSyncConfig()
         .then(async (cfg) => {
@@ -213,7 +202,7 @@ export const ServerSyncDialog = (props: {
         });
     });
     return () => unsubscribePubSubMessage(token);
-  }, [isOpen, refreshLastSync]);
+  }, [refreshLastSync]);
 
   const runAction = async (fn: () => Promise<void>) => {
     setBusy(true);
@@ -595,73 +584,65 @@ export const ServerSyncDialog = (props: {
   const setupLabel = setupLabelOf(config);
 
   return (
-    <Dialog
-      isOpen={isOpen}
-      onClose={onClose}
-      title="Server sync"
-      className={classes.dialog}
-      canOutsideClickClose={true}
-    >
-      <DialogBody className={classes.content}>
-        {!loaded ? (
-          <div className={classes.loadingRow}>
-            <Spinner size={20} />
-          </div>
-        ) : null}
-
-        {loaded ? (
-          <Tabs
-            id="sync-setup-tabs"
-            selectedTabId={tab}
-            onChange={(next) => setTab(next as SyncTab)}
-            animate={false}
-          >
-            <Tab id="status" title="Status" panel={statusPanel} />
-            <Tab
-              id="setup"
-              title="Setup"
-              panel={
-                <div>
-                  {config ? (
-                    <p className={classes.pairingHint}>
-                      Connected to <b>{config.baseUrl}</b> ({setupLabel}).
-                      Connecting again replaces this setup.
-                    </p>
-                  ) : null}
-                  <div className={classes.modeRow}>
-                    <ButtonGroup fill={true}>
-                      <Button
-                        active={setupMode === 'official'}
-                        text="Tabverse official server"
-                        title="Sign in on tabversed.liyu1981.xyz and allow this device"
-                        onClick={() => setSetupMode('official')}
-                      />
-                      <Button
-                        active={setupMode === 'custom'}
-                        text="Custom server"
-                        title="A tabversed server you run yourself, paired with a code"
-                        onClick={() => setSetupMode('custom')}
-                      />
-                    </ButtonGroup>
-                  </div>
-                  {setupMode === 'official'
-                    ? officialSetupPanel
-                    : customSetupPanel}
-                </div>
-              }
-            />
-          </Tabs>
-        ) : null}
-        <div className={classes.status}>
-          <Callout intent={status.intent}>{status.text}</Callout>
-          {uploadProgress ? (
-            <p className={classes.uploadProgress}>
-              Uploading {uploadProgress.done} of {uploadProgress.total}{' '}
-              record(s) ...
-            </p>
-          ) : null}
+    <div className={classes.content}>
+      {!loaded ? (
+        <div className={classes.loadingRow}>
+          <Spinner size={20} />
         </div>
-      </DialogBody>
-    </Dialog>
+      ) : null}
+
+      {loaded ? (
+        <Tabs
+          id="sync-setup-tabs"
+          selectedTabId={tab}
+          onChange={(next) => setTab(next as SyncTab)}
+          animate={false}
+        >
+          <Tab id="status" title="Status" panel={statusPanel} />
+          <Tab
+            id="setup"
+            title="Setup"
+            panel={
+              <div>
+                {config ? (
+                  <p className={classes.pairingHint}>
+                    Connected to <b>{config.baseUrl}</b> ({setupLabel}).
+                    Connecting again replaces this setup.
+                  </p>
+                ) : null}
+                <div className={classes.modeRow}>
+                  <ButtonGroup fill={true}>
+                    <Button
+                      active={setupMode === 'official'}
+                      text="Tabverse official server"
+                      title="Sign in on tabversed.liyu1981.xyz and allow this device"
+                      onClick={() => setSetupMode('official')}
+                    />
+                    <Button
+                      active={setupMode === 'custom'}
+                      text="Custom server"
+                      title="A tabversed server you run yourself, paired with a code"
+                      onClick={() => setSetupMode('custom')}
+                    />
+                  </ButtonGroup>
+                </div>
+                {setupMode === 'official'
+                  ? officialSetupPanel
+                  : customSetupPanel}
+              </div>
+            }
+          />
+        </Tabs>
+      ) : null}
+      <div className={classes.status}>
+        <Callout intent={status.intent}>{status.text}</Callout>
+        {uploadProgress ? (
+          <p className={classes.uploadProgress}>
+            Uploading {uploadProgress.done} of {uploadProgress.total} record(s)
+            ...
+          </p>
+        ) : null}
+      </div>
+    </div>
   );
 };

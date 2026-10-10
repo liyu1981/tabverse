@@ -22,8 +22,10 @@ export interface ISavedTabSpaceRowProps {
  * The name is the primary action and it depends on the state: a tabverse that
  * is already open somewhere is *gone to*, not copied - opening a second copy of
  * a tabverse you already have open is how a profile fills up with duplicates.
- * Everything else is an explicit button, because "open in this window" replaces
- * the tabs of a window the user is working in.
+ * One that is not open anywhere is **added to this window**: its tabs are
+ * opened beside the ones already here, and the ones it shares with the window
+ * are reused rather than reopened. "Open in a new window" stays a button of its
+ * own, because that is the other thing a person may mean by "open this".
  */
 export function SavedTabSpaceRow(props: ISavedTabSpaceRowProps) {
   const { tabSpace } = props;
@@ -35,11 +37,11 @@ export function SavedTabSpaceRow(props: ISavedTabSpaceRowProps) {
       <button
         type="button"
         className={classes.rowLabel}
-        title={isOpen ? 'Go to this tabverse' : 'Open in a new window'}
+        title={isOpen ? 'Go to this tabverse' : 'Add to this window'}
         onClick={() =>
           isOpen
             ? props.switchToOpen(tabSpace)
-            : props.openInNewWindow(tabSpace)
+            : props.openInThisWindow(tabSpace)
         }
       >
         <div className={classes.rowName}>{tabSpace.name}</div>
@@ -86,15 +88,6 @@ export function SavedTabSpaceRow(props: ISavedTabSpaceRowProps) {
           minimal={true}
           small={true}
           onClick={() => props.openInNewWindow(tabSpace)}
-        />
-        <Button
-          className="tv-icon-button"
-          icon="folder-open"
-          title="Open In This Window (replaces its tabs)"
-          minimal={true}
-          small={true}
-          disabled={props.isCurrentWindow}
-          onClick={() => props.openInThisWindow(tabSpace)}
         />
       </ButtonGroup>
     </div>

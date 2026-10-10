@@ -33,6 +33,7 @@ import {
   type DownloadMonitor,
   detectAiModelApi,
 } from './languageModel';
+import { appendPromptLog } from './promptLog';
 
 export interface AiSession {
   prompt(input: string): Promise<string>;
@@ -108,6 +109,51 @@ async function defaultFactory(systemPrompt: string): Promise<AiSession> {
 }
 
 /**
+ * Wrap a session so every exchange is written to the local prompt log
+ * (`promptLog.ts`). The log is what the AI-history view reads, and it is the
+ * only record of a session that exists: Chrome's Prompt API keeps the
+ * conversation in memory and offers no way to ask it what was said.
+ *
+ * The wrapper never changes the answer: the read of the output and the write
+ * of the log are separate, and the write cannot throw (it is fire-and-forget
+ * inside `appendPromptLog`), so a full or broken store costs a log entry and
+ * nothing else.
+ */
+function withPromptLogging(
+  session: AiSession,
+  systemPrompt: string,
+): AiSession {
+  return {
+    ...session,
+    prompt: async (input: string) => {
+      const started = Date.now();
+      try {
+        const output = await session.prompt(input);
+        void appendPromptLog({
+          at: started,
+          systemPrompt,
+          input,
+          output,
+          error: null,
+          durationMs: Date.now() - started,
+        });
+        return output;
+      } catch (err: unknown) {
+        void appendPromptLog({
+          at: started,
+          systemPrompt,
+          input,
+          output: null,
+          error: err instanceof Error ? err.message : String(err),
+          durationMs: Date.now() - started,
+        });
+        throw err;
+      }
+    },
+  };
+}
+
+/**
  * The session for this system prompt, created on first use.
  *
  * Failures reject the returned promise *and* clear the cache entry, so the
@@ -117,17 +163,20 @@ export function ensureAiSession(systemPrompt: string): Promise<AiSession> {
   let pending = sessions.get(systemPrompt);
   if (!pending) {
     const factory = injectedFactory ?? defaultFactory;
-    pending = factory(systemPrompt).catch((err: unknown) => {
-      sessions.delete(systemPrompt);
-      if (err instanceof AiUnavailableError) {
-        // `absent`, not `error`: no amount of retrying conjures an API
-        noteAiAbsent();
-      } else {
-        logger.log('built-in AI session creation failed', err);
-        noteAiError();
-      }
-      throw err;
-    });
+    pending = factory(systemPrompt).then(
+      (session) => withPromptLogging(session, systemPrompt),
+      (err: unknown) => {
+        sessions.delete(systemPrompt);
+        if (err instanceof AiUnavailableError) {
+          // `absent`, not `error`: no amount of retrying conjures an API
+          noteAiAbsent();
+        } else {
+          logger.log('built-in AI session creation failed', err);
+          noteAiError();
+        }
+        throw err;
+      },
+    );
     sessions.set(systemPrompt, pending);
     bindPageHide();
   }

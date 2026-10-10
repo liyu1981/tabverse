@@ -1,31 +1,24 @@
 /**
- * The expandable server console panel (static markup, ADR 0019 / AGENTS.md:
- * no browser).
+ * The server console view of the right panel (static markup).
  *
- * What this pins: the collapsed state is a handle and nothing else (no iframe
- * is created until the panel is opened and a server is paired), each panel
- * state speaks its one line, the ready state carries the exact `/console/` URL
- * and a title, and the way out that always works ("Open in a tab") is there
- * whenever the frame is.
+ * What this pins: the states are honest one-liners, an unpaired device renders
+ * **no iframe** (no request to a server the user never configured, adr/0010),
+ * the frame carries the exact `/console/` URL and a title, and the way out
+ * that always works ("Open in a tab") is there whenever the frame is.
  */
 import { describe, expect, test } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import React from 'react';
 
-import {
-  consoleUrlOf,
-  ServerConsoleDrawer,
-  ServerConsoleDrawerPanel,
-} from '../ServerConsoleDrawer';
+import { ServerConsolePanel, consoleUrlOf } from '../ServerConsolePanel';
 
-const renderPanel = (
-  props: Partial<React.ComponentProps<typeof ServerConsoleDrawerPanel>> = {},
+const render = (
+  props: Partial<React.ComponentProps<typeof ServerConsolePanel>> = {},
 ) =>
   renderToStaticMarkup(
-    <ServerConsoleDrawerPanel
+    <ServerConsolePanel
       state={{ kind: 'unpaired' }}
       onOpenInTab={() => undefined}
-      onCollapse={() => undefined}
       {...props}
     />,
   );
@@ -53,30 +46,22 @@ describe('consoleUrlOf', () => {
   });
 });
 
-describe('ServerConsoleDrawer (collapsed)', () => {
-  test('is a handle, and creates no frame', () => {
-    const markup = renderToStaticMarkup(<ServerConsoleDrawer />);
-    expect(markup).toContain('Open the sync server console');
-    expect(markup).not.toContain('<iframe');
-  });
-});
-
-describe('ServerConsoleDrawerPanel', () => {
+describe('ServerConsolePanel', () => {
   test('loading is one line and no frame', () => {
-    const markup = renderPanel({ state: { kind: 'loading' } });
+    const markup = render({ state: { kind: 'loading' } });
     expect(markup).toContain('Reading the sync setup');
     expect(markup).not.toContain('<iframe');
   });
 
   test('an unreadable config is not reported as unpaired', () => {
-    const markup = renderPanel({ state: { kind: 'error' } });
+    const markup = render({ state: { kind: 'error' } });
     expect(markup).toContain('Could not read the sync setup');
     expect(markup).not.toContain('Not paired');
     expect(markup).not.toContain('<iframe');
   });
 
   test('unpaired is one line, no frame, and says where to pair', () => {
-    const markup = renderPanel({ state: { kind: 'unpaired' } });
+    const markup = render({ state: { kind: 'unpaired' } });
     expect(markup).toContain('Not paired with a server yet');
     expect(markup).toContain('sync button');
     expect(markup).not.toContain('<iframe');
@@ -84,7 +69,7 @@ describe('ServerConsoleDrawerPanel', () => {
   });
 
   test('ready shows the frame and the way out, and says why', () => {
-    const markup = renderPanel({
+    const markup = render({
       state: { kind: 'ready', url: 'https://host:8223/console/' },
     });
     expect(markup).toContain('src="https://host:8223/console/"');
@@ -94,17 +79,5 @@ describe('ServerConsoleDrawerPanel', () => {
     expect(markup).toContain('https://host:8223/console/');
     // and the signed-out caveat is said in the panel, not only in a comment
     expect(markup).toContain('signed out');
-  });
-
-  test('every state can collapse the panel again', () => {
-    for (const state of [
-      { kind: 'loading' },
-      { kind: 'error' },
-      { kind: 'unpaired' },
-      { kind: 'ready', url: 'https://host/console/' },
-    ] as const) {
-      const markup = renderPanel({ state });
-      expect(markup).toContain('Collapse the server console');
-    }
   });
 });

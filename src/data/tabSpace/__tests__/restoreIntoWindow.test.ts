@@ -95,15 +95,19 @@ test('a tab of the tabverse that is already open here is not opened again', asyn
   expect(tabs.find((tab) => tab.url === 'https://example.com/docs').id).toBe(
     alreadyOpen.id,
   );
-  // the tab that was not part of the tabverse is gone
-  expect(tabs.map((tab) => tab.url)).not.toContain('https://elsewhere.test/');
+  // the tab that is not part of the tabverse stays: loading a tabverse merges
+  // into the window rather than replacing it
+  expect(tabs.map((tab) => tab.url)).toContain('https://elsewhere.test/');
 
   // and the store knows the live tab of each entry, so the list's buttons work
   const live = $tabSpace.getState();
   expect(live.name).toBe('work');
+  // the tabverse's own tabs, and then the window's tab that is not part of it:
+  // the window is the tabverse (adr/0006), so a merge adopts what it kept
   expect(live.tabs.map((tab) => tab.title).toArray()).toEqual([
     'Docs',
     'Search',
+    'Elsewhere',
   ]);
   const docs = live.tabs.find((tab) => tab.title === 'Docs');
   expect(docs.chromeTabId).toBe(alreadyOpen.id);
@@ -257,7 +261,7 @@ test('a tab the tabverse did not save is still opened', async () => {
   ]);
 });
 
-test('the tab strip ends up in the tabverse order, tabverse tab first', async () => {
+test('the tabverse order is put back, and the window keeps its own tabs', async () => {
   const tabSpace = await savedTabSpace('work', [
     { title: 'One', url: 'https://one.test/' },
     { title: 'Two', url: 'https://two.test/' },
@@ -268,8 +272,9 @@ test('the tab strip ends up in the tabverse order, tabverse tab first', async ()
     { title: 'Tabverse', url: MANAGER_URL, favIconUrl: '', pinned: true },
     w.id,
   );
-  // everything the user had open is in the wrong place, and "Three" is
-  // already open here while "One" is not
+  // everything the user had open is in the wrong place, "Three" is already
+  // open here while "One" is not, and "Extra" is not part of the tabverse at
+  // all - a merge opens what is missing and leaves what is there
   const three = mockChrome.insertTabFromData(
     {
       title: 'Three',
@@ -283,7 +288,7 @@ test('the tab strip ends up in the tabverse order, tabverse tab first', async ()
     { title: 'Two', url: 'https://two.test/', favIconUrl: '', pinned: false },
     w.id,
   );
-  mockChrome.insertTabFromData(
+  const extra = mockChrome.insertTabFromData(
     {
       title: 'Extra',
       url: 'https://extra.test/',
@@ -296,17 +301,23 @@ test('the tab strip ends up in the tabverse order, tabverse tab first', async ()
   await loadTabSpaceByTabSpaceId(tabSpace.id, manager.id, w.id);
 
   // "One" was opened at the end and "Three" was reused where it was, so the
-  // order the user sees only matches the tabverse if the restore puts it back
+  // order the user sees only matches the tabverse if the restore puts it back;
+  // the window's own tab follows the tabverse's tabs rather than disappearing
   expect(await windowUrls(mockChrome)).toEqual([
     MANAGER_URL,
     'https://one.test/',
     'https://two.test/',
     'https://three.test/',
+    'https://extra.test/',
   ]);
   const tabs = await chrome.tabs.query({ windowId: w.id });
-  // "Three" was reused, so it is the tab that was there
+  // "Three" was reused, so it is the tab that was there, and "Extra" is still
+  // the very same tab the window had
   expect(tabs.find((tab) => tab.url === 'https://three.test/').id).toBe(
     three.id,
+  );
+  expect(tabs.find((tab) => tab.url === 'https://extra.test/').id).toBe(
+    extra.id,
   );
   expect(tabs[0].id).toBe(manager.id);
 });

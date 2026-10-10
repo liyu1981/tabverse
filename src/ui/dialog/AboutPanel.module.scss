@@ -1,25 +1,16 @@
 @use '../../global.scss';
 
 /**
- * The brand panel is the whole surface.
+ * The brand panel: the whole About section is brand coloured, so even a
+ * rounding sliver blends in.
  *
- * The dialog used to carry a magic min-height, a couple of pixels taller than
- * its content (38px header + 250px logo + 210px text), and the sliver that
- * left at the bottom was the dialog's own light background - the white strip
- * under the logo. No min-height now, and the surface itself is brand coloured
- * so even a rounding sliver blends in.
- *
- * Deliberately no overflow: hidden: the logo's universe graphic is drawn
+ * Deliberately no overflow: hidden - the logo's universe graphic is drawn
  * outside its box (absolute, -64px top), and clipping would cut it off.
  */
-.container {
+.panel {
   background-color: global.$color-main-brand;
   border-radius: 18px;
-}
-
-.container :global(.bp6-dialog-header) {
-  background-color: #fff;
-  border-radius: 18px 18px 0 0;
+  overflow: visible;
 }
 
 .logoContainer {
@@ -29,12 +20,19 @@
   align-items: center;
   justify-content: center;
   min-height: 250px;
+  /*
+   * The panel's own radius cannot show through this block: the panel keeps
+   * `overflow: visible` (the logo's universe is drawn outside its box), so the
+   * child's brand background paints over the rounded corners. The first block
+   * therefore carries the top corners itself, and `.otherContainer` carries the
+   * bottom ones - which is what makes the coloured content round on all four.
+   */
+  border-radius: 18px 18px 0 0;
 }
 
 /*
- * The last block paints the surface, so it carries the bottom corners itself:
- * a square child over a rounded dialog is what made the bottom look cut off.
- * 18px is the dialog radius above, as everywhere else in the app.
+ * The last block paints the surface, so it carries the bottom corners itself.
+ * 18px is the panel radius above, as everywhere else in the app.
  */
 .otherContainer {
   background-color: global.$color-main-brand;

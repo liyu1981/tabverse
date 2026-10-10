@@ -3,10 +3,10 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import React from 'react';
 
 import {
-  ServerSyncDialog,
+  ServerSyncPanel,
   initialSyncTab,
   setupLabelOf,
-} from '../ServerSyncDialog';
+} from '../ServerSyncPanel';
 import type { SyncConfig } from '../../../data/repo/syncConfig';
 
 /**
@@ -39,13 +39,11 @@ const CUSTOM: SyncConfig = {
   kind: 'custom',
 };
 
-test('the dialog renders its first paint rather than throwing', () => {
+test('the panel renders its first paint rather than throwing', () => {
   // the blank-page guard: a component that cannot be rendered is one that
   // cannot be opened, and nothing else in the build would notice
-  const html = renderToStaticMarkup(
-    <ServerSyncDialog isOpen={true} onClose={() => undefined} />,
-  );
-  console.log('MARKUP:', JSON.stringify(html).slice(0, 700));
+  const html = renderToStaticMarkup(<ServerSyncPanel />);
+  expect(html).toContain('bp6-spinner');
 });
 
 test('a fresh dialog opens on Setup when there is nothing set up', () => {

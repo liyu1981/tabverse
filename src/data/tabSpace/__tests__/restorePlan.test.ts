@@ -57,8 +57,6 @@ test('a tab that is already open here is reused, not opened again', () => {
 
   expect(plan.createTabs).toEqual([]);
   expect(plan.entries[0].reuseChromeTabId).toBe(7);
-  // the reused tab is not a candidate for closing either
-  expect(plan.removeChromeTabIds).toEqual([]);
 });
 
 test('a tab that is not open here is opened', () => {
@@ -73,7 +71,11 @@ test('a tab that is not open here is opened', () => {
   expect(plan.createTabs.map((tab) => tab.url)).toEqual([
     'https://example.com/docs',
   ]);
-  expect(plan.removeChromeTabIds).toEqual([7]);
+  // the window's own tab is not in the plan at all: a merge decides what to
+  // open, never what to close
+  expect(plan.entries.map((entry) => entry.reuseChromeTabId)).toEqual([
+    undefined,
+  ]);
 });
 
 test('a window with nothing of the tabverse in it is opened whole', () => {
@@ -88,11 +90,9 @@ test('a window with nothing of the tabverse in it is opened whole', () => {
   );
 
   expect(plan.createTabs).toEqual(saved);
-  // the window's tabs go, in the order they are in
-  expect(plan.removeChromeTabIds).toEqual([2, 3]);
 });
 
-test('the tabverse tab is never reused and never closed', () => {
+test('the tabverse tab is never reused', () => {
   // a tabverse that somehow holds its own manager page must not adopt it: the
   // page doing the restoring is that tab
   const saved = [
@@ -110,7 +110,6 @@ test('the tabverse tab is never reused and never closed', () => {
   );
 
   expect(plan.createTabs).toEqual(saved);
-  expect(plan.removeChromeTabIds).toEqual([]);
 });
 
 test('the same url twice in the tabverse reuses two open tabs, not one', () => {
@@ -136,10 +135,9 @@ test('the same url twice in the tabverse reuses two open tabs, not one', () => {
     undefined,
   ]);
   expect(plan.createTabs.length).toBe(1);
-  expect(plan.removeChromeTabIds).toEqual([]);
 });
 
-test('the same url twice open, and once saved, closes the extra one', () => {
+test('the same url twice open, and once saved, reuses one of them', () => {
   const saved = [savedTab('New tab', 'chrome://newtab/')];
   const plan = planRestore(
     saved,
@@ -147,8 +145,9 @@ test('the same url twice open, and once saved, closes the extra one', () => {
     TABVERSE_TAB_ID,
   );
 
+  // one open tab stands for the saved one, and the other is the user's window:
+  // the plan leaves it alone rather than closing a tab it does not own
   expect(plan.entries[0].reuseChromeTabId).toBe(8);
-  expect(plan.removeChromeTabIds).toEqual([9]);
 });
 
 test('the saved pinned state travels with the plan', () => {
@@ -165,7 +164,7 @@ test('the saved pinned state travels with the plan', () => {
   expect(plan.entries.map((entry) => entry.pinned)).toEqual([true, false]);
 });
 
-test('a tab without an id cannot be reused, closed or moved', () => {
+test('a tab without an id cannot be reused or moved', () => {
   const saved = [savedTab('A', 'https://a.test/')];
   const plan = planRestore(
     saved,
@@ -174,5 +173,4 @@ test('a tab without an id cannot be reused, closed or moved', () => {
   );
 
   expect(plan.createTabs).toEqual(saved);
-  expect(plan.removeChromeTabIds).toEqual([]);
 });

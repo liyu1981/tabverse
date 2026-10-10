@@ -1,0 +1,59 @@
+@use '../../global.scss';
+
+/* the dialog surface, to match the app's rounded, borderless chrome */
+.dialog {
+  border-radius: 18px;
+  background-color: #fff;
+  width: min(960px, 94vw);
+}
+
+.dialog :global(.bp6-dialog-header) {
+  border-radius: 18px 18px 0 0;
+  background-color: #fff;
+  box-shadow: none;
+}
+
+.body {
+  padding: 18px;
+}
+
+/*
+ * The vertical tab layout: the rail is the left column, the panel takes the
+ * rest. Blueprint already lays the two out as a flex row (`.bp6-tabs.bp6-vertical`);
+ * what is added here is the separation between them and the scroll rule - the
+ * rail stays put while a long section moves.
+ */
+.body :global(.bp6-tabs.bp6-vertical) {
+  align-items: stretch;
+  min-height: 420px;
+}
+
+.body :global(.bp6-tabs.bp6-vertical) > :global(.bp6-tab-list) {
+  flex: 0 0 auto;
+  min-width: 168px;
+  padding-right: 12px;
+  border-right: 1px solid global.$color-light-shade;
+}
+
+.body :global(.bp6-tabs.bp6-vertical) > :global(.bp6-tab-list) :global(.bp6-tab) {
+  margin-bottom: 4px;
+  font-weight: 600;
+  color: global.$color-text;
+}
+
+.body
+  :global(.bp6-tabs.bp6-vertical)
+  > :global(.bp6-tab-list)
+  :global(.bp6-tab)[aria-selected='true'] {
+  background-color: global.$color-light-shade;
+  color: global.$color-main-brand;
+}
+
+/* the scrolling half: a long sync form must not take the rail off screen */
+.body :global(.bp6-tabs.bp6-vertical) > :global(.bp6-tab-panel) {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-height: 68vh;
+  overflow-y: auto;
+  padding-left: 20px;
+}

@@ -23,6 +23,8 @@ import {
   resetAiSessionsForTest,
   setAiSessionFactoryForTest,
 } from '../session';
+import { MemoryStorageArea } from '../../data/repo/outbox';
+import { loadPromptLog, setPromptLogStorageForTest } from '../promptLog';
 
 type GlobalWithAi = typeof globalThis & {
   window?: unknown;
@@ -44,6 +46,9 @@ const fakeSession = () => {
 beforeEach(() => {
   resetAiSessionsForTest();
   resetAiAvailabilityForTest();
+  // every exchange is recorded; keep that in memory so a test never touches
+  // (or needs) chrome.storage.local
+  setPromptLogStorageForTest(new MemoryStorageArea());
   delete g.window;
   delete g.LanguageModel;
   delete g.ai;
@@ -52,11 +57,55 @@ beforeEach(() => {
 afterEach(() => {
   resetAiSessionsForTest();
   resetAiAvailabilityForTest();
+  setPromptLogStorageForTest(null);
   delete g.window;
   delete g.LanguageModel;
   delete g.ai;
 });
 
+describe('prompt logging', () => {
+  test('a successful exchange is recorded, with its system prompt and timing', async () => {
+    setAiSessionFactoryForTest(async () => ({
+      prompt: async () => 'the answer',
+    }));
+    const session = await ensureAiSession('a system prompt');
+    const answer = await session.prompt('the question');
+    expect(answer).toBe('the answer');
+
+    // the write is fire-and-forget on purpose (a log entry must never delay or
+    // break the answer), so let it land before reading it back
+    await flush();
+    const log = await loadPromptLog();
+    expect(log).toHaveLength(1);
+    expect(log[0]).toMatchObject({
+      systemPrompt: 'a system prompt',
+      input: 'the question',
+      output: 'the answer',
+      error: null,
+    });
+    expect(log[0].durationMs).toBeGreaterThanOrEqual(0);
+  });
+
+  test('a failed exchange is recorded too, and the error still reaches the caller', async () => {
+    setAiSessionFactoryForTest(async () => ({
+      prompt: async () => {
+        throw new Error('model went away');
+      },
+    }));
+    const session = await ensureAiSession('a system prompt');
+    await expect(session.prompt('the question')).rejects.toThrow(
+      'model went away',
+    );
+
+    const log = await loadPromptLog();
+    expect(log).toHaveLength(1);
+    expect(log[0]).toMatchObject({
+      input: 'the question',
+      output: null,
+      error: 'model went away',
+    });
+  });
+});
 describe('ensureAiSession', () => {
   test('factory called once across two requests', async () => {
     const { session } = fakeSession();
@@ -66,8 +115,10 @@ describe('ensureAiSession', () => {
     const first = await ensureAiSession('system prompt');
     const second = await ensureAiSession('system prompt');
     expect(factory).toHaveBeenCalledTimes(1);
+    // the same cached session is handed back, and it answers through to the
+    // factory's own (the logger wraps it, so identity is not the contract)
     expect(first).toBe(second);
-    expect(first).toBe(session);
+    await expect(first.prompt('x')).resolves.toContain('A name');
   });
 
   test('different system prompts are different sessions', async () => {
@@ -102,7 +153,7 @@ describe('ensureAiSession', () => {
     // the cache entry went with the failure: fresh factory call
     const recovered = await ensureAiSession('p');
     expect(factory).toHaveBeenCalledTimes(2);
-    expect(recovered).toBe(session);
+    await expect(recovered.prompt('x')).resolves.toContain('A name');
   });
 
   test('AiUnavailableError is absent, not error - retry cannot conjure an API', async () => {
@@ -184,7 +235,8 @@ describe('destroyAiSessions', () => {
   test('no window (node tests): binding is skipped, nothing throws', async () => {
     const { session } = fakeSession();
     setAiSessionFactoryForTest(async () => session);
-    await expect(ensureAiSession('p')).resolves.toBe(session);
+    const resolved = await ensureAiSession('p');
+    await expect(resolved.prompt('x')).resolves.toContain('A name');
   });
 });
 

@@ -1,19 +1,21 @@
-import { Dialog } from '@blueprintjs/core';
+// biome-ignore lint/correctness/noUnusedImports: classic jsx transform needs React in scope (tsconfig "jsx": "react"), TS2686 otherwise
 import React from 'react';
+
 import { TABSPACE_VERSION } from '../../global';
 import { TabSpaceLogo } from '../common/TabSpaceLogo';
-import classes from './AboutDialog.module.scss';
+import classes from './AboutPanel.module.scss';
 
-export const AboutDialog = (props) => {
+/**
+ * The About panel: the brand surface, as a section of the settings dialog.
+ *
+ * It used to be its own `Dialog` (and before that, the panel *was* the whole
+ * dialog surface - a magic `min-height` a couple of pixels taller than its
+ * content, whose leftover sliver was the white strip under the logo). As a
+ * panel it keeps the same three blocks: the logo, the version, the links.
+ */
+export function AboutPanel() {
   return (
-    <Dialog
-      className={classes.container}
-      isOpen={props.isOpen}
-      onClose={props.onClose}
-      canOutsideClickClose={true}
-      icon="help"
-      title={'About Tabverse'}
-    >
+    <div className={classes.panel}>
       <div className={classes.logoContainer}>
         <TabSpaceLogo />
       </div>
@@ -40,6 +42,6 @@ export const AboutDialog = (props) => {
           </a>
         </p>
       </div>
-    </Dialog>
+    </div>
   );
-};
+}

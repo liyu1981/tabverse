@@ -1,0 +1,93 @@
+@use '../../../global.scss';
+
+/*
+ * The AI-history view's body. It is a record read after the fact, and it
+ * scrolls itself: the panel's body is a flex column with no scroll of its own
+ * (`RightSidePanel.module.scss`), because the console view instead needs its
+ * frame to fill the height.
+ */
+.container {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px 0 24px;
+}
+
+.intro {
+  margin: 12px 0;
+  font-size: 0.9em;
+  color: global.$color-light-accent;
+  overflow-wrap: anywhere;
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 10px;
+}
+
+.caption {
+  font-size: 0.8em;
+  color: global.$color-light-accent;
+}
+
+/*
+ * One exchange per card: what was asked, and what came back. The two bodies
+ * scroll rather than grow - a prompt carries a list of tab titles, and the
+ * panel should not become a page of them.
+ */
+.entry {
+  border: 1px solid global.$color-light-shade;
+  border-radius: global.$radius-card;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  background-color: white;
+}
+
+.entryHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: global.$color-light-accent;
+  font-size: 0.8em;
+}
+
+.when {
+  font-weight: 600;
+  color: global.$color-text;
+}
+
+.duration {
+  margin-left: auto;
+  font-family: monospace;
+}
+
+.label {
+  margin: 8px 0 2px;
+  font-size: 0.7em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: global.$color-light-accent;
+}
+
+.input,
+.output {
+  margin: 0;
+  padding: 6px 8px;
+  max-height: 160px;
+  overflow: auto;
+  border-radius: 6px;
+  background-color: global.$color-c;
+  font-size: 0.82em;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Blueprint's RED3, the palette's danger colour; the extension has no danger
+   text rule of its own to borrow */
+.errorText {
+  color: #cd4246;
+}

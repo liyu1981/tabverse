@@ -1,20 +1,10 @@
 @use '../../global.scss';
 
-/* the dialog surface itself, to match the app's rounded, borderless chrome */
-.dialog {
-  border-radius: 18px;
-  padding-bottom: 18px;
-  background-color: #fff;
-}
-
-.dialog :global(.bp6-dialog-header) {
-  border-radius: 18px 18px 0 0;
-  background-color: #fff;
-  box-shadow: none;
-}
-
+/*
+ * The sync section of the settings dialog: no surface of its own (the dialog
+ * carries it), just the column and the gaps between its blocks.
+ */
 .content {
-  padding: 18px;
   display: flex;
   flex-direction: column;
   gap: 12px;

@@ -5,8 +5,8 @@ import React, { useMemo, useState } from 'react';
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { ManagerViewContextSupport } from './ManagerViewContext';
 import { IManagerQueryParams, ManagerViewRoute } from './routes';
+import { RightSidePanel } from './RightSidePanel/RightSidePanel';
 import { SavedTabSpaceView } from './SavedTabSpace/SavedTabSpaceView';
-import { ServerConsoleDrawer } from './ServerConsole/ServerConsoleDrawer';
 import { Sidebar } from './Sidebar/Sidebar';
 import { SidebarContainer } from '../common/SidebarContainer';
 import { TabSpaceView } from './TabSpace/TabSpaceView';
@@ -63,10 +63,10 @@ export const ManagerView = (props: IManagerContainerProps) => {
             {renderView(currentRoute)}
           </SidebarContainer>
         </div>
-        {/* The server console is not one of the tabverse views: it is a column
-            of the page on the right edge, on every route, and opening it
-            pushes the view left rather than floating over it (adr/0025). */}
-        <ServerConsoleDrawer />
+        {/* The right panel hosts the server console and the AI history: the
+            things that are about the tooling around a tabverse rather than
+            about the tabverse. Opening it pushes the view left (adr/0025). */}
+        <RightSidePanel />
       </div>
       <ManagerViewContextSupport />
     </ErrorBoundary>

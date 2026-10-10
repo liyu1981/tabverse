@@ -8,62 +8,74 @@ import {
 } from '@blueprintjs/core';
 import React, { useState } from 'react';
 
-import { AboutDialog } from '../../dialog/AboutDialog';
-import { ServerSyncDialog } from '../../dialog/ServerSyncDialog';
-import { SettingDialog } from '../../dialog/SettingDialog';
+import { type SettingsTab, SettingsDialog } from '../../dialog/SettingsDialog';
 import { useSidebarCollapsed } from '../../common/SidebarContainer';
 import { useSyncActivity } from '../../common/useSyncActivity';
-import { TABSPACE_VERSION } from '../../../global';
 import classes from './BottomNav.module.scss';
 import clsx from 'clsx';
 
-export const BottomNav = (props) => {
-  const [settingOpened, setSettingOpened] = useState(false);
-  const [aboutOpened, setAboutOpened] = useState(false);
-  const [syncOpened, setSyncOpened] = useState(false);
+/**
+ * The settings dialog's first section, which is what the plain Settings button
+ * opens it on. Named because "first" is a fact about the dialog, not about this
+ * button: a General section in front of Sync would be reached from here, and
+ * not from the sync button.
+ */
+const FIRST_SETTINGS_TAB: SettingsTab = 'sync';
+
+export const BottomNav = () => {
+  // One settings dialog, opened by either button: the sync one (which also
+  // reports the sync) lands on Sync explicitly, the settings one on the
+  // dialog's first section. Which button opened it decides the section, so
+  // there is no second dialog and no second thing to close.
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsTab, setSettingsTab] =
+    useState<SettingsTab>(FIRST_SETTINGS_TAB);
+  const openSettings = (tab: SettingsTab) => {
+    setSettingsTab(tab);
+    setSettingsOpen(true);
+  };
   const collapsed = useSidebarCollapsed();
   // the syncs that matter usually run in the service worker, not in this page;
   // the notice arrives from there (see data/repo/syncActivity.ts)
   const syncing = useSyncActivity();
 
-  // Blueprint's Navbar has no vertical mode, so the collapsed rail renders the
-  // same two controls (same dark bar, same rounded buttons) as a plain column.
-  const aboutLabel = `Tabverse ${TABSPACE_VERSION}`;
-  const aboutButton = (
-    <Button
-      minimal={true}
-      icon="help"
-      title={collapsed ? undefined : aboutLabel}
-      aria-label={aboutLabel}
-      onClick={() => setAboutOpened(true)}
-    />
-  );
-  // the icon spins while a sync is going on, so the button reports it
-  const syncLabel = syncing ? 'Syncing…' : 'Server sync';
+  // The sync button is the sync indicator as well as the way into the sync
+  // section: its icon spins while a cycle runs, and its label says so.
+  const syncLabel = syncing ? 'Syncing…' : 'Sync';
   const syncButton = (
     <Button
       icon="refresh"
       className={clsx(syncing && 'tv-syncing')}
+      text={collapsed ? undefined : syncLabel}
       title={collapsed ? undefined : syncLabel}
       aria-label={syncLabel}
-      onClick={() => setSyncOpened(true)}
+      onClick={() => openSettings('sync')}
+    />
+  );
+  const settingsButton = (
+    <Button
+      icon="cog"
+      text={collapsed ? undefined : 'Settings'}
+      title={collapsed ? undefined : 'Settings'}
+      aria-label="Settings"
+      onClick={() => openSettings(FIRST_SETTINGS_TAB)}
     />
   );
   // in the rail the buttons are icons only, so the label moves into a Blueprint
   // tooltip instead of the browser's own title bubble
   const navButtons = collapsed ? (
     <>
-      <Tooltip content={aboutLabel} placement="right">
-        {aboutButton}
-      </Tooltip>
       <Tooltip content={syncLabel} placement="right">
         {syncButton}
+      </Tooltip>
+      <Tooltip content="Settings" placement="right">
+        {settingsButton}
       </Tooltip>
     </>
   ) : (
     <>
-      {aboutButton}
       {syncButton}
+      {settingsButton}
     </>
   );
 
@@ -75,25 +87,13 @@ export const BottomNav = (props) => {
         </div>
       ) : (
         <Navbar className={clsx(Classes.DARK, classes.navbar)}>
-          <NavbarGroup align={Alignment.LEFT}>
-            <Button minimal={true} onClick={() => setAboutOpened(true)}>
-              {TABSPACE_VERSION}
-            </Button>
-          </NavbarGroup>
-          <NavbarGroup align={Alignment.RIGHT}>
-            {/* <Button icon="cog" onClick={() => setSettingOpened(true)} /> */}
-            {navButtons}
-          </NavbarGroup>
+          <NavbarGroup align={Alignment.LEFT}>{navButtons}</NavbarGroup>
         </Navbar>
       )}
-      <SettingDialog
-        isOpen={settingOpened}
-        onClose={() => setSettingOpened(false)}
-      />
-      <AboutDialog isOpen={aboutOpened} onClose={() => setAboutOpened(false)} />
-      <ServerSyncDialog
-        isOpen={syncOpened}
-        onClose={() => setSyncOpened(false)}
+      <SettingsDialog
+        isOpen={settingsOpen}
+        initialTab={settingsTab}
+        onClose={() => setSettingsOpen(false)}
       />
     </div>
   );

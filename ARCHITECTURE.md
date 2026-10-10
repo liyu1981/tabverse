@@ -234,39 +234,42 @@ switch between the two ways in).
 The invite code is not a step the wizard drops; it is the reason a self-hosted
 server needs no account it did not create, no redirect, and no message channel.
 
-## Restoring a tabverse into a window (`src/data/tabSpace/restorePlan.ts`)
+## Loading a tabverse into a window (`src/data/tabSpace/restorePlan.ts`)
 
-Loading a saved tabverse into the window its manager page is in used to be
-"close every tab in the window, then open every tab of the tabverse". That is
-right about the result and wasteful about the way there: a tab the user already
-has open in that window was closed and opened again, losing its place in the
-strip, its history and whatever state the page was holding.
+Loading a saved tabverse into the window its manager page is in is a **merge**.
+It used to be "close every tab in the window, then open every tab of the
+tabverse", and then "reuse what is already open, close the window's other
+tabs": both replaced the window, and the window is the user's, not the
+ tabverse's. Loading a tabverse is not a reason to close the pages they were
+working on, so nothing is closed at all.
 
-So the restore asks the window first, and the answer is a plan
-(`planRestore`): a saved tab whose url is already open in the window reuses that
-tab, a saved tab with no open tab to stand for it is opened, and a window tab
-that is in neither is closed. The plan is a pure function of the saved tabs and
+So the plan (`planRestore`) decides two things and only two: a saved tab whose
+url is already open in the window reuses that tab, and a saved tab with no open
+tab to stand for it is opened. The plan is a pure function of the saved tabs and
 the window's tabs, which is where the testable part of this lives; the chrome
 calls are `util.ts`'s.
 
-Three things it has to get right, and did not before:
+Two things it has to get right:
 
 - **One open tab stands for one saved tab.** A tabverse holding `chrome://newtab/`
   twice reuses two open tabs, not one, and an extra open copy of a url the
-  tabverse has once is closed. Matching is on the url as a person reads it: the
-  fragment and a trailing slash are dropped and the origin is lowercased, but the
-  path is not (a query string or a capital in the path is a different page).
-- **The strip is put back into the saved order.** Reused tabs sit where they were
-  and opened ones land at the end, so without `orderWindowTabs` the tab strip and
+  tabverse has once is simply left alone. Matching is on the url as a person
+  reads it: the fragment and a trailing slash are dropped and the origin is
+  lowercased, but the path is not (a query string or a capital in the path is a
+  different page).
+- **The tabverse's own order is put back.** Reused tabs sit where they were and
+  opened ones land at the end, so without `orderWindowTabs` the tab strip and
   the tabverse list would disagree - which is the one thing the list is for. The
-  order asked for is the tabverse tab, then the saved pinned tabs, then the rest,
-  because Chrome's pinned section is at the front either way.
-- **Live fields are written back into the store.** A reused tab raises no
-  `tabs.onCreated`, so nothing would fill in the `chromeTabId` the list's close
-  and switch buttons act on. The restore sets them from what the browser has.
+  order asked for is the tabverse tab, then the saved pinned tabs, then the
+  rest; the window's other tabs follow them, in the order they were in.
 
-The tabverse's own manager tab is never a reuse candidate and never closed: it
-is the page doing the restoring.
+A third one is about what a merge does *not* decide: a reused tab raises no
+`tabs.onCreated`, so nothing would fill in the `chromeTabId` the list's close and
+switch buttons act on. The restore sets the live fields from what the browser
+has.
+
+The tabverse's own manager tab is never a reuse candidate and never moved out of
+the way: it is the page doing the restoring.
 
 ## Commands
 

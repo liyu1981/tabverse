@@ -1,0 +1,43 @@
+@use '../../../global.scss';
+
+/*
+ * The console view's body. The panel itself (`RightSidePanel`) owns the
+ * column, the header and the scroll decision; this view fills it: the frame
+ * takes the height that is left after the toolbar and the note, and it is the
+ * iframe that scrolls, not the panel.
+ */
+.hint {
+  margin: 12px 0;
+  font-size: 0.9em;
+  color: global.$color-light-accent;
+  overflow-wrap: anywhere;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.url {
+  font-size: 0.75em;
+  color: global.$color-light-accent;
+  overflow-wrap: anywhere;
+}
+
+.note {
+  margin: 0 0 8px;
+  font-size: 0.8em;
+  color: global.$color-light-accent;
+}
+
+.frame {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  border: 1px solid global.$color-e;
+  border-radius: global.$radius-card;
+  background-color: white;
+}
