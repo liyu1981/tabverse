@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 
-import { groupHits } from './SearchPanel';
+import { groupHits, searchTabs } from './SearchPanel';
 import type { AdminSearchHit } from '../data/types';
 
 const hit = (over: Partial<AdminSearchHit>): AdminSearchHit => ({
@@ -66,4 +66,32 @@ test('a hit without a tabverse still lands in a group', () => {
   expect(groups).toHaveLength(1);
   expect(groups[0].tabverses[0].id).toBe('');
   expect(groups[0].tabverses[0].title).toBe('');
+});
+
+test('the tab strip lists All first, then each kind with its count', () => {
+  const groups = groupHits([
+    hit({
+      entity: 'note',
+      id: 'n1',
+      tabspace_id: 'ts1',
+      tabspace_title: 'One',
+    }),
+    hit({
+      entity: 'note',
+      id: 'n2',
+      tabspace_id: 'ts1',
+      tabspace_title: 'One',
+    }),
+    hit({
+      entity: 'todo',
+      id: 'td1',
+      tabspace_id: 'ts1',
+      tabspace_title: 'One',
+    }),
+  ]);
+  expect(searchTabs(groups, 3)).toEqual([
+    { key: 'all', label: 'All', count: 3 },
+    { key: 'note', label: 'Notes', count: 2 },
+    { key: 'todo', label: 'Todos', count: 1 },
+  ]);
 });

@@ -1,5 +1,5 @@
 import { Button, InputGroup, Spinner, Switch } from '@blueprintjs/core';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useUnit } from 'effector-react';
 
 import {
@@ -8,13 +8,9 @@ import {
   toggleDataArchived,
 } from '../data/actions';
 import { $account, $dataArchived } from '../data/stores/accounts';
-import {
-  $search,
-  setSearchEntity,
-  setSearchQuery,
-} from '../data/stores/browse';
+import { $search, setSearchQuery } from '../data/stores/browse';
 import type { AdminSearchHit } from '../data/types';
-import { EntitySelect } from '../components/EntitySelect';
+import { Segmented } from '../components/Pager';
 import { useDebounced } from '../components/useDebounced';
 import layout from '../layout.module.scss';
 import classes from '../data.module.scss';
@@ -24,11 +20,12 @@ import classes from '../data.module.scss';
  * queries (adr/0008), every whitespace-separated term must match and the last
  * one is a prefix, so results narrow as the operator types.
  *
- * Results are grouped by entity - Tabverses, Tabs, History, Notes, Todos,
- * Bookmarks - and, within each, by the tabverse they belong to, so a search
- * shows where in the account a word lives instead of one flat list. Every hit
- * names its tabverse, exactly like the extension's search does, so one click
- * opens it.
+ * Results are shown in tabs by entity - All, Tabverses, Tabs, History, Notes,
+ * Todos, Bookmarks - each tab carrying its hit count, and within a tab grouped
+ * by the tabverse the hit belongs to. That is what makes one search answer
+ * "where in this account is this word", instead of a single flat list. Every
+ * hit names its tabverse, exactly like the extension's search does, so one
+ * click opens it.
  */
 const ENTITY_ORDER = [
   'tabspace',
@@ -61,6 +58,12 @@ interface EntityHits {
   label: string;
   count: number;
   tabverses: TabverseHits[];
+}
+
+interface SearchTab {
+  key: string;
+  label: string;
+  count: number;
 }
 
 /**
@@ -107,6 +110,18 @@ export function groupHits(hits: AdminSearchHit[]): EntityHits[] {
   return groups;
 }
 
+/** The tab strip: All first, then one tab per entity that has hits. */
+export function searchTabs(groups: EntityHits[], total: number): SearchTab[] {
+  return [
+    { key: 'all', label: 'All', count: total },
+    ...groups.map((group) => ({
+      key: group.entity,
+      label: group.label,
+      count: group.count,
+    })),
+  ];
+}
+
 export function SearchPanel() {
   const { account, search, archived } = useUnit({
     account: $account,
@@ -115,6 +130,7 @@ export function SearchPanel() {
   });
   const settled = useDebounced(search.q, 250);
   const firstSettle = useRef(true);
+  const [activeKey, setActiveKey] = useState('all');
 
   useEffect(() => {
     if (firstSettle.current) {
@@ -128,6 +144,14 @@ export function SearchPanel() {
   const who = account.user.name || account.user.id;
   const q = search.q.trim();
   const groups = groupHits(search.hits);
+  const tabs = searchTabs(groups, search.hits.length);
+  // A new search can drop the tab that was open; fall back to All rather than
+  // showing an empty panel for a kind that no longer matched.
+  const active = tabs.some((tab) => tab.key === activeKey) ? activeKey : 'all';
+  const visible =
+    active === 'all'
+      ? groups
+      : groups.filter((group) => group.entity === active);
 
   return (
     <section>
@@ -136,7 +160,8 @@ export function SearchPanel() {
           <h2>Search</h2>
           <p className="muted small">
             Full text over this account's tabs, history, notes, todos and
-            bookmarks. Results are grouped by kind, then by tabverse.
+            bookmarks. Results are tabbed by kind, and grouped by tabverse
+            within each.
           </p>
         </div>
         <div className={layout.panelHeadActions}>
@@ -157,14 +182,6 @@ export function SearchPanel() {
           placeholder="search this account (every term must match, the last one is a prefix)"
           value={search.q}
           onChange={(event) => setSearchQuery(event.currentTarget.value)}
-        />
-        <EntitySelect
-          omitAggregates={true}
-          value={search.entity}
-          onChange={(entity) => {
-            setSearchEntity(entity);
-            void runSearch();
-          }}
         />
         {search.loading ? <Spinner size={16} /> : null}
       </div>
@@ -189,7 +206,18 @@ export function SearchPanel() {
         <p className="empty-inline">nothing matched</p>
       ) : (
         <div>
-          {groups.map((group) => (
+          <div className="toolbar">
+            <Segmented
+              ariaLabel="Search result kinds"
+              value={active}
+              options={tabs.map((tab) => ({
+                value: tab.key,
+                label: `${tab.label} (${tab.count})`,
+              }))}
+              onChange={setActiveKey}
+            />
+          </div>
+          {visible.map((group) => (
             <section key={group.entity} className={classes.searchGroup}>
               <h3 className={classes.searchGroupHead}>
                 {group.label}
