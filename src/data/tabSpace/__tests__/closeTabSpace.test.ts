@@ -1,5 +1,5 @@
 import { $allTodo, todoStoreApi } from '../../todo/store';
-import { $tabSpace, tabSpaceStoreApi } from '../store';
+import { tabSpaceStoreApi } from '../store';
 import { ALLTODO_DB_TABLE_NAME } from '../../todo/AllTodo';
 import { ALLNOTE_DB_TABLE_NAME } from '../../note/AllNote';
 import { ALLBOOKMARK_DB_TABLE_NAME } from '../../bookmark/AllBookmark';

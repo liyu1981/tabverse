@@ -18,7 +18,6 @@
  * tabverse left (see ManagerView.module.scss).
  */
 import { Button, Icon } from '@blueprintjs/core';
-// biome-ignore lint/correctness/noUnusedImports: classic jsx transform needs React in scope (tsconfig "jsx": "react"), TS2686 otherwise
 import React from 'react';
 
 import { useSettingItem } from '../../../storage/localSetting';

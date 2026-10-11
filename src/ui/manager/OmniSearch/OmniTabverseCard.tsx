@@ -29,15 +29,18 @@ function labelOf(kind: string): string {
 }
 
 function Highlighted(props: { parts: TextPart[] }) {
+  let offset = 0;
   return (
     <>
-      {props.parts.map((part, index) =>
-        part.match ? (
-          <mark key={index}>{part.text}</mark>
+      {props.parts.map((part) => {
+        const key = `${offset}-${part.match ? 'm' : 't'}`;
+        offset += part.text.length;
+        return part.match ? (
+          <mark key={key}>{part.text}</mark>
         ) : (
-          <React.Fragment key={index}>{part.text}</React.Fragment>
-        ),
-      )}
+          <React.Fragment key={key}>{part.text}</React.Fragment>
+        );
+      })}
     </>
   );
 }

@@ -5,7 +5,6 @@ import {
   TabCore,
   convertAndGetTabSavePayload,
   findSplitPartnerByChromeId,
-  isEqualWithoutCreatedAtUpdatedAt,
   setTabSpaceId,
 } from './Tab';
 import {
@@ -92,7 +91,7 @@ export function newEmptyTabSpace(): TabSpace {
 }
 
 export function cloneTabSpace(targetTabSpace: TabSpace): TabSpace {
-  return produce(targetTabSpace, (draft) => {});
+  return produce(targetTabSpace, (_draft) => {});
 }
 
 export function updateTabSpace(

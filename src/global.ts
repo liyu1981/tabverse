@@ -100,7 +100,7 @@ export function assert(condition: unknown, message: string): asserts condition {
 }
 
 export const debounce = isJestTest()
-  ? <T extends (...args: any[]) => any>(f: T, t: any) => f
+  ? <T extends (...args: any[]) => any>(f: T, _t: any) => f
   : <T extends (...args: any[]) => any>(f: T, t: any) =>
       lodashDebounce(() => {
         f();
@@ -108,13 +108,13 @@ export const debounce = isJestTest()
 
 const _perf_timeStart: { [name: string]: number } = {};
 export const perfStart: (name: string) => void = isJestTest()
-  ? (name: string) => {}
+  ? (_name: string) => {}
   : (name: string) => {
       _perf_timeStart[name] = Date.now();
     };
 
 export const perfEnd: (name: string) => void = isJestTest()
-  ? (name: string) => {}
+  ? (_name: string) => {}
   : (name: string) => {
       const _perf_timeEnd = Date.now();
       console.log(

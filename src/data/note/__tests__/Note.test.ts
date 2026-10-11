@@ -29,7 +29,7 @@ test('init', () => {
 });
 
 test('updateNote', () => {
-  let { tabSpaceId, allNote, n1, n2 } = initAllNote();
+  let { allNote, n1, n2 } = initAllNote();
   const changedName = n2.name + 'changed';
   allNote = updateNote('888', { name: changedName }, allNote);
   expect(allNote.notes.toArray()).toEqual([n1, n2]);
@@ -57,7 +57,7 @@ test('updateTabSpaceId', () => {
 });
 
 test('note isEqualContent', () => {
-  const { tabSpaceId, allNote, n1, n2 } = initAllNote();
+  const { n1, n2 } = initAllNote();
   expect(isEqualContent(n1, n2)).toBeFalsy();
   expect(isEqualContent(n1, n2, true)).toBeFalsy();
   expect(isEqualContent(n1, undefined)).toBeFalsy();

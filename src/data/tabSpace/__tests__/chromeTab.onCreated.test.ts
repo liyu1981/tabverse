@@ -14,7 +14,7 @@ test('onCreated', async () => {
   expect(getTabSpaceChromeTabIds()).toEqual([t1.id, t2.id, t3.id, newt.id]);
 
   const oldSize = $tabSpace.getState().tabs.size;
-  const newt2 = mockChrome.insertTabFromData(tabData1, w2.id);
+  const _newt2 = mockChrome.insertTabFromData(tabData1, w2.id);
   await mockChrome.flushMessages();
   expect($tabSpace.getState().tabs.size).toEqual(oldSize);
 });

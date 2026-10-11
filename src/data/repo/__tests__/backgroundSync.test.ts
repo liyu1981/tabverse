@@ -169,7 +169,7 @@ test('uploadAllLocalRecords ships the local database', async () => {
   });
 
   const pushes: any[] = [];
-  const fetchFn: FetchLike = async (url, init) => {
+  const fetchFn: FetchLike = async (_url, init) => {
     if (init && init.method === 'POST') {
       const body = JSON.parse(init.body!);
       pushes.push(body);
@@ -240,7 +240,7 @@ test('uploadAllLocalRecords reports stale records and chunked progress', async (
     })),
   );
 
-  const fetchFn: FetchLike = async (url, init) => {
+  const fetchFn: FetchLike = async (_url, init) => {
     if (init && init.method === 'POST') {
       const body = JSON.parse(init.body!);
       return jsonResponse({

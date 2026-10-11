@@ -20,7 +20,7 @@ import { addPagingToQueryParams } from '../../storage/db';
 export const $tabSpaceQuery = createStore(newEmptyTabSpaceQuery());
 
 const tabSpaceQueryApi = createApi($tabSpaceQuery, {
-  update: (lastTabSpaceQuery, updatedTabSpaceQuery: TabSpaceQuery) =>
+  update: (_lastTabSpaceQuery, updatedTabSpaceQuery: TabSpaceQuery) =>
     updatedTabSpaceQuery,
   _setLoadStatus: (lastTabSpaceQuery, loadStatus: LoadStatus) =>
     setAttrForObject('loadStatus', loadStatus, lastTabSpaceQuery),

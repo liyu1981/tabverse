@@ -1,5 +1,5 @@
 import { Transaction } from 'dexie';
 
-export function dbUpgrade(tx: Transaction) {
+export function dbUpgrade(_tx: Transaction) {
   return;
 }

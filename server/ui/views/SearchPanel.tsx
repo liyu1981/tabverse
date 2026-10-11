@@ -91,7 +91,9 @@ export function collectTabverses(hits: AdminSearchHit[]): TabverseMatches[] {
     }
     tabverse.total += 1;
     tabverse.byKind[hit.entity] = (tabverse.byKind[hit.entity] || 0) + 1;
-    (tabverse.hitsByKind[hit.entity] ||= []).push(hit);
+    const bucket = tabverse.hitsByKind[hit.entity] ?? [];
+    bucket.push(hit);
+    tabverse.hitsByKind[hit.entity] = bucket;
     // Prefer the tabverse's own name: a tabspace hit's title, else the
     // tabspace_title the server filled in on any child hit.
     if (!tabverse.title) {
@@ -205,8 +207,11 @@ export function highlightTerms(text: string, terms: string[]): TextPart[] {
   const pattern = new RegExp(`(${escaped.join('|')})`, 'gi');
   const parts: TextPart[] = [];
   let last = 0;
-  let found: RegExpExecArray | null;
-  while ((found = pattern.exec(text)) !== null) {
+  for (
+    let found = pattern.exec(text);
+    found !== null;
+    found = pattern.exec(text)
+  ) {
     if (found.index > last) {
       parts.push({ text: text.slice(last, found.index), match: false });
     }
@@ -222,8 +227,11 @@ export function parseSnippet(snippet: string): TextPart[] {
   const parts: TextPart[] = [];
   const pattern = /\[([^\]]*)\]/g;
   let last = 0;
-  let found: RegExpExecArray | null;
-  while ((found = pattern.exec(snippet)) !== null) {
+  for (
+    let found = pattern.exec(snippet);
+    found !== null;
+    found = pattern.exec(snippet)
+  ) {
     if (found.index > last) {
       parts.push({ text: snippet.slice(last, found.index), match: false });
     }
@@ -237,15 +245,18 @@ export function parseSnippet(snippet: string): TextPart[] {
 }
 
 function Highlighted(props: { parts: TextPart[] }) {
+  let offset = 0;
   return (
     <>
-      {props.parts.map((part, index) =>
-        part.match ? (
-          <mark key={index}>{part.text}</mark>
+      {props.parts.map((part) => {
+        const key = `${offset}-${part.match ? 'm' : 't'}`;
+        offset += part.text.length;
+        return part.match ? (
+          <mark key={key}>{part.text}</mark>
         ) : (
-          <React.Fragment key={index}>{part.text}</React.Fragment>
-        ),
-      )}
+          <React.Fragment key={key}>{part.text}</React.Fragment>
+        );
+      })}
     </>
   );
 }

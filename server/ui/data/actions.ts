@@ -38,12 +38,7 @@ import {
   setSearchQuery,
 } from './stores/browse';
 import { closeTabspace, openTabspace } from './stores/drawer';
-import {
-  $isAssumed,
-  $isOperator,
-  $ownUserId,
-  sessionExpired,
-} from './stores/session';
+import { $isOperator, $ownUserId, sessionExpired } from './stores/session';
 import { reportFailure, reportSuccess } from './stores/toasts';
 import {
   archiveDeviceFx,

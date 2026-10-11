@@ -19,8 +19,11 @@ export function highlightTerms(text: string, terms: string[]): TextPart[] {
   const pattern = new RegExp(`(${escaped.join('|')})`, 'gi');
   const parts: TextPart[] = [];
   let last = 0;
-  let found: RegExpExecArray | null;
-  while ((found = pattern.exec(text)) !== null) {
+  for (
+    let found = pattern.exec(text);
+    found !== null;
+    found = pattern.exec(text)
+  ) {
     if (found.index > last) {
       parts.push({ text: text.slice(last, found.index), match: false });
     }
@@ -36,8 +39,11 @@ export function parseSnippet(snippet: string): TextPart[] {
   const parts: TextPart[] = [];
   const pattern = /\[([^\]]*)\]/g;
   let last = 0;
-  let found: RegExpExecArray | null;
-  while ((found = pattern.exec(snippet)) !== null) {
+  for (
+    let found = pattern.exec(snippet);
+    found !== null;
+    found = pattern.exec(snippet)
+  ) {
     if (found.index > last) {
       parts.push({ text: snippet.slice(last, found.index), match: false });
     }

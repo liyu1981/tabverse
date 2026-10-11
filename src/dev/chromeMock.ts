@@ -23,7 +23,7 @@ function getMockListenable(type: string): IMockListenable {
     addListener: (callback: any) => {
       tokens.set(
         callback,
-        PubSub.subscribe(msgType, (msgType, payload) => {
+        PubSub.subscribe(msgType, (_msgType, payload) => {
           callback(...payload);
         }),
       );
@@ -134,7 +134,7 @@ class MockTabs {
     let result: any[];
 
     if (params.active) {
-      result = this.tabs.filter((t, index) => index === this.activeTabIndex);
+      result = this.tabs.filter((_t, index) => index === this.activeTabIndex);
     } else {
       result = this.tabs;
     }
@@ -197,7 +197,7 @@ class MockTabsApi {
     return result;
   }
 
-  async captureVisibleTab(windowId?: number, params?: any): Promise<string> {
+  async captureVisibleTab(_windowId?: number, _params?: any): Promise<string> {
     const w = this.chrome._getCurrentWindow();
     return `data:${w.id}.${w.tabs.tabs[w.tabs.activeTabIndex].id}`;
   }
@@ -359,7 +359,7 @@ class MockWindowsApi {
    * code that opens a tabverse in one.
    */
   create(
-    createData: chrome.windows.CreateData,
+    _createData: chrome.windows.CreateData,
     callback?: (window: chrome.windows.Window) => void,
   ): Promise<chrome.windows.Window> {
     const created = this.chrome.addWindow();

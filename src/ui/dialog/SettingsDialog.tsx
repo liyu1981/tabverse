@@ -14,7 +14,6 @@
  * one task, so they stay the horizontal pair they always were.
  */
 import { Dialog, DialogBody, Icon, Tab, Tabs } from '@blueprintjs/core';
-// biome-ignore lint/correctness/noUnusedImports: classic jsx transform needs React in scope (tsconfig "jsx": "react"), TS2686 otherwise
 import React, { useEffect, useState } from 'react';
 
 import { AboutPanel } from './AboutPanel';

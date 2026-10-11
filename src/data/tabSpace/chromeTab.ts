@@ -159,7 +159,7 @@ function doCapturePreview(chromeTabId: number, chromeWindowId: number) {
             chromeTabId,
           );
         }
-      } catch (e) {
+      } catch (_e) {
         if (maxRetry > 0) {
           setTimeout(capturePreview, wait);
         }
@@ -438,8 +438,8 @@ function getOnChromeTabUpdated() {
 
 function getOnChromeTabMoved() {
   async function normalTabAction(
-    tabId: number,
-    moveInfo: chrome.tabs.OnMovedInfo,
+    _tabId: number,
+    _moveInfo: chrome.tabs.OnMovedInfo,
   ) {
     await maintainTabOrder();
     saveCurrentTabSpace();

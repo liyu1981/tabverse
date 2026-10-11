@@ -23,7 +23,6 @@
  *   by `naming.ts` before it became a candidate.
  */
 import { Button, Popover } from '@blueprintjs/core';
-// biome-ignore lint/correctness/noUnusedImports: classic jsx transform needs React in scope (tsconfig "jsx": "react"), TS2686 otherwise
 import React, {
   useCallback,
   useEffect,

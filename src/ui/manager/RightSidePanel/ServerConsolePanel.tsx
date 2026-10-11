@@ -24,7 +24,6 @@
  * so no request is ever made to a server the user has not configured.
  */
 import { Button } from '@blueprintjs/core';
-// biome-ignore lint/correctness/noUnusedImports: classic jsx transform needs React in scope (tsconfig "jsx": "react"), TS2686 otherwise
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { logger } from '../../../global';

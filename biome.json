@@ -28,6 +28,7 @@
     "lineEnding": "lf"
   },
   "javascript": {
+    "jsxRuntime": "reactClassic",
     "formatter": {
       "quoteStyle": "single",
       "semicolons": "always",
@@ -112,6 +113,17 @@
         "rules": {
           "correctness": {
             "useExhaustiveDependencies": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["**/__tests__/**", "**/*.test.ts", "**/*.test.tsx"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noUnusedVariables": "off",
+            "noUnusedFunctionParameters": "off"
           }
         }
       }

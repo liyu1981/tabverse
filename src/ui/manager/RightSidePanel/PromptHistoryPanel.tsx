@@ -14,7 +14,6 @@
  * and this one is about being able to see what was said.
  */
 import { Button, Icon, Spinner } from '@blueprintjs/core';
-// biome-ignore lint/correctness/noUnusedImports: classic jsx transform needs React in scope (tsconfig "jsx": "react"), TS2686 otherwise
 import React, { useCallback, useEffect, useState } from 'react';
 
 import {

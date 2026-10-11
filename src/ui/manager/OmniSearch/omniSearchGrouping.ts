@@ -64,7 +64,9 @@ export function collectTabverses(hits: SearchHit[]): TabverseMatches[] {
     }
     tabverse.total += 1;
     tabverse.byKind[hit.entity] = (tabverse.byKind[hit.entity] || 0) + 1;
-    (tabverse.hitsByKind[hit.entity] ||= []).push(hit);
+    const bucket = tabverse.hitsByKind[hit.entity] ?? [];
+    bucket.push(hit);
+    tabverse.hitsByKind[hit.entity] = bucket;
     if (!tabverse.title) {
       if (hit.entity === 'tabspace' && hit.title) tabverse.title = hit.title;
       else if (hit.tabspace_title) tabverse.title = hit.tabspace_title;

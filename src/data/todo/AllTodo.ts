@@ -5,7 +5,7 @@ import {
   inPlaceCopyFromOtherBase,
   newEmptyBase,
 } from '../Base';
-import { convertToSavedTodo, newEmptyTodo, setTabSpaceId } from './Todo';
+import { convertToSavedTodo, setTabSpaceId } from './Todo';
 
 import { List } from 'immutable';
 import { Todo } from './Todo';

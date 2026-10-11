@@ -34,7 +34,7 @@ test('init', () => {
 });
 
 test('updateBookmark', () => {
-  let { tabSpaceId, allBookmark, b1, b2 } = initAllBookmark();
+  let { allBookmark, b1, b2 } = initAllBookmark();
   const changedName = b2.name + 'changed';
   allBookmark = updateBookmark('888', { name: changedName }, allBookmark);
   expect(allBookmark.bookmarks.toArray()).toEqual([b1, b2]);

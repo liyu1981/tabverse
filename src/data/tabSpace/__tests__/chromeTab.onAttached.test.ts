@@ -2,7 +2,7 @@ import { $tabSpace } from '../store';
 import { setupMockChromeAndTabSpaceWithMonitoring } from './common.test';
 
 test('normalTabAction', async () => {
-  const { mockChrome, w1, w2, t1, t2, t3, t4, tst1 } =
+  const { mockChrome, w1, t1, t2, t3, t4 } =
     await setupMockChromeAndTabSpaceWithMonitoring();
 
   mockChrome.moveTabToWindow(t4.id, w1.id);

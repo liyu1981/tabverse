@@ -216,7 +216,7 @@ export async function applyServerRecords(
       row.id = record.id;
       await db.table(table).put(row);
       result.applied += 1;
-    } catch (err) {
+    } catch (_err) {
       result.errors += 1;
     }
   }

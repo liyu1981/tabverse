@@ -33,7 +33,7 @@ export async function initTabSpaceData() {
   return { mockChrome, w1, w2, t1, t2, t3, t4, tst1 };
 }
 
-export async function testWithDb(description: string, f: () => Promise<void>) {
+export async function testWithDb(_description: string, f: () => Promise<void>) {
   await f();
   await resetTestDb();
 }

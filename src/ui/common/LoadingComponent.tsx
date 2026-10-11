@@ -14,7 +14,7 @@ export function getLoadingComponent2<T extends React.FC<any>>(
 
     useAsyncEffect(async () => {
       setLoadStatus(LoadStatus.Loading);
-      const result = await loader();
+      const _result = await loader();
       setLoadStatus(LoadStatus.Done);
     }, []);
 

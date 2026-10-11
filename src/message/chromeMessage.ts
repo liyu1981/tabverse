@@ -18,7 +18,7 @@ handlers[TabSpaceMsg.Focus] = function (
     type: TabSpaceMsg.Focus;
     payload: ChromeTabId;
   },
-  sender: chrome.runtime.MessageSender,
+  _sender: chrome.runtime.MessageSender,
   sendResponse: (response?: any) => void,
 ) {
   function action() {
@@ -34,7 +34,7 @@ handlers[BackgroundMsg.AuditComplete] = function (
     type: BackgroundMsg.AuditComplete;
     payload: AuditLogs;
   },
-  sender: chrome.runtime.MessageSender,
+  _sender: chrome.runtime.MessageSender,
   sendResponse: (response?: any) => void,
 ) {
   logger.info(`${BackgroundMsg.AuditComplete}\n${message.payload.join('\n')}`);
@@ -46,7 +46,7 @@ handlers[BackgroundMsg.LocalTablesChanged] = function (
     type: BackgroundMsg.LocalTablesChanged;
     payload: ILocalTablesChangedPayload;
   },
-  sender: chrome.runtime.MessageSender,
+  _sender: chrome.runtime.MessageSender,
   sendResponse: (response?: any) => void,
 ) {
   // another context (usually the service worker) wrote to the database;
@@ -68,7 +68,7 @@ handlers[BackgroundMsg.SyncConfigChanged] = function (
     type: BackgroundMsg.SyncConfigChanged;
     payload: boolean;
   },
-  sender: chrome.runtime.MessageSender,
+  _sender: chrome.runtime.MessageSender,
   sendResponse: (response?: any) => void,
 ) {
   logger.log(
@@ -85,7 +85,7 @@ handlers[BackgroundMsg.SyncActivityChanged] = function (
     type: BackgroundMsg.SyncActivityChanged;
     payload: boolean;
   },
-  sender: chrome.runtime.MessageSender,
+  _sender: chrome.runtime.MessageSender,
   sendResponse: (response?: any) => void,
 ) {
   // another context (usually the service worker) started or finished a sync;

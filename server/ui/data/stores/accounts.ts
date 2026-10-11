@@ -9,19 +9,7 @@
 
 import { createEvent, createStore } from 'effector';
 
-import {
-  archiveDeviceFx,
-  archiveDeviceRecordsFx,
-  archiveTokenFx,
-  createInviteFx,
-  deleteUserFx,
-  loadAccountFx,
-  loadUsersFx,
-  renameUserFx,
-  revokeDeviceFx,
-  revokeTokenFx,
-  setRoleFx,
-} from '../effects';
+import { createInviteFx, loadAccountFx, loadUsersFx } from '../effects';
 import type { Invite, UserDetail, UserSummary } from '../types';
 
 export type AccountTab = 'pair' | 'credentials' | 'data' | 'search' | 'admin';

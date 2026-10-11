@@ -11,7 +11,6 @@
  * fires almost immediately.
  */
 import { Callout, NumericInput, Switch } from '@blueprintjs/core';
-// biome-ignore lint/correctness/noUnusedImports: classic jsx transform needs React in scope (tsconfig "jsx": "react"), TS2686 otherwise
 import React, { useCallback, useEffect } from 'react';
 import { useSyncExternalStore } from 'react';
 

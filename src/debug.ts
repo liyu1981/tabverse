@@ -55,5 +55,5 @@ function getDebugLogLevel() {
 
 export const loglevel = isJestTest()
   ? getDebugLogLevel()
-  : getSettingItem<TabSpaceLogLevel>('loglevel', (v) => parseInt(v)) ||
+  : getSettingItem<TabSpaceLogLevel>('loglevel', (v) => parseInt(v, 10)) ||
     TabSpaceLogLevel.INFO;

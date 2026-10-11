@@ -17,11 +17,7 @@ import React, {
   useState,
   useSyncExternalStore,
 } from 'react';
-import {
-  findTabById,
-  getTabIds,
-  TabGroupHint,
-} from '../../../data/tabSpace/TabSpace';
+import { findTabById } from '../../../data/tabSpace/TabSpace';
 import { groupOfTab } from '../../../data/tabSpace/tabGroup';
 import {
   newEmptyBookmark,

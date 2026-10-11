@@ -7,7 +7,7 @@ interface IFavIconProps {
   className?: string;
 }
 
-function createStyles(): { [k: string]: React.CSSProperties } {
+function _createStyles(): { [k: string]: React.CSSProperties } {
   return {
     container: {
       marginTop: '-10px',

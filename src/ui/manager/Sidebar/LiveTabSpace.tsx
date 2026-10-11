@@ -15,7 +15,7 @@ export type LiveTabSpaceProps = SidebarComponentProps;
  * can be called anything and the sidebar's width is not negotiable; the full
  * name is in the title attribute, and in the collapsed rail's tooltip.
  */
-export function LiveTabSpace(props: LiveTabSpaceProps) {
+export function LiveTabSpace(_props: LiveTabSpaceProps) {
   const tabSpace = useStore($tabSpace);
   // a tabverse is named `Window-<id>` from its first second (tabSpaceBootstrap),
   // so this only matters before that write lands: an id beats an empty row

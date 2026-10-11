@@ -10,9 +10,7 @@ import {
 } from './AllTodo';
 import { TODO_DB_TABLE_NAME, Todo } from './Todo';
 import { addPagingToQueryParams, db } from '../../storage/db';
-import { debounce, logger } from '../../global';
-
-import { $tabSpace } from '../tabSpace/store';
+import { debounce } from '../../global';
 import { DEFAULT_SAVE_DEBOUNCE } from '../../storage/StorageOverview';
 import { updateFromSaved } from '../Base';
 

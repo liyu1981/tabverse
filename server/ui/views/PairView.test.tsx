@@ -5,7 +5,6 @@ import React from 'react';
 import { PairView } from './PairView';
 import { setApi, createConsoleApi } from '../data/api';
 import { loadMeFx } from '../data/effects';
-import { $me } from '../data/stores/session';
 import type { DeviceCredentials } from '../data/types';
 
 /**

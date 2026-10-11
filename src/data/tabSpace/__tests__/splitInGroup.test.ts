@@ -13,7 +13,6 @@ import { setupMockChromeAndTabSpaceWithMonitoring } from './common.test';
 import { tabverseEntries } from '../tabEntries';
 import { findTabById, findTabByChromeTabId } from '../TabSpace';
 import { Tab } from '../Tab';
-import { getNewId } from '../../common';
 
 const splitId = 7;
 const groupId = 42;

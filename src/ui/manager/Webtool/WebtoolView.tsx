@@ -1,7 +1,7 @@
 import React from 'react';
 import classes from './WebtoolView.module.scss';
 
-export function WebtoolView(props) {
+export function WebtoolView(_props) {
   // const [currentQuery, setCurrentQuery] = useState<Query>(EmptyQuery);
 
   // To fix: this is the current simple and  stupid solution, just point to

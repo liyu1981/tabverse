@@ -1,4 +1,3 @@
-// biome-ignore lint/correctness/noUnusedImports: classic jsx transform needs React in scope (tsconfig "jsx": "react"), TS2686 otherwise
 import React from 'react';
 
 import { TABSPACE_VERSION } from '../../global';

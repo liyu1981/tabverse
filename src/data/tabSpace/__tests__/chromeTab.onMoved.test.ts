@@ -4,7 +4,7 @@ import {
 } from './common.test';
 
 test('onCreated', async () => {
-  const { mockChrome, w1, w2, t1, t2, t3, t4, tst1 } =
+  const { mockChrome, t1, t2, t3 } =
     await setupMockChromeAndTabSpaceWithMonitoring();
 
   mockChrome.moveTab(t2.id, 3);

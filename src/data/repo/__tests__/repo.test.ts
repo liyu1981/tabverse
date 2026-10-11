@@ -250,7 +250,7 @@ test('network failure reports an error outcome and keeps local data', async () =
 test('overlapping sync calls are skipped', async () => {
   const { engine } = setup();
   // make the first call hang on pull
-  const gate = { release: () => undefined as void };
+  const gate: { release: () => void } = { release: () => undefined };
   const blocked = new Promise<void>((resolve) => {
     gate.release = resolve;
   });
