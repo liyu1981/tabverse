@@ -50,6 +50,39 @@ const getFeatureList = (baseUrl) => [
     ),
   },
   {
+    title: 'Your tabverses, on every browser you use',
+    img: `${baseUrl}img/feature-placeholder.svg`,
+    description: (
+      <>
+        Pair Tabverse with a sync server and your tabverses, notes, todos and
+        bookmarks follow you between browsers. Run your own server, or use the
+        official one - it is your choice.
+      </>
+    ),
+  },
+  {
+    title: 'Notes, todos, bookmarks and history, right beside your tabs',
+    img: `${baseUrl}img/feature-placeholder.svg`,
+    description: (
+      <>
+        Every tabverse keeps its own notes, todos, bookmarks and history of
+        closed tabs, in the same place as the tabs they belong to. No second
+        app to open, no copy to paste.
+      </>
+    ),
+  },
+  {
+    title: 'On-device AI that never leaves your browser',
+    img: `${baseUrl}img/feature-placeholder.svg`,
+    description: (
+      <>
+        Where Chrome already ships its built-in model, Tabverse can summarize a
+        tab into a note or suggest a name for a tab collection. It runs entirely
+        on your own machine - nothing is sent anywhere.
+      </>
+    ),
+  },
+  {
     title: 'Free and open source!',
     img: `${baseUrl}img/tabverse-feature-4.png`,
     description: (
