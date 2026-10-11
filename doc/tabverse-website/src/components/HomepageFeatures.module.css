@@ -16,8 +16,16 @@
   min-width: 500px;
 }
 
+/* On desktop the cards alternate: the odd ones put the picture on the left.
+   The DOM always keeps the text first, so a stacked (mobile) layout always
+   shows the picture below the text. */
+.featureReversed {
+  flex-direction: row-reverse;
+}
+
 @media screen and (max-width: 996px) {
-  .featureContainer {
+  .featureContainer,
+  .featureReversed {
     flex-direction: column;
     margin-top: 28px;
     margin-bottom: 28px;

@@ -109,18 +109,15 @@ function Feature({ idx, img, svg, title, description }) {
   );
 
   return (
-    <div className={clsx('col col--12', styles.featureContainer)}>
-      {idx % 2 === 0 ? (
-        <>
-          {text}
-          {picture}
-        </>
-      ) : (
-        <>
-          {picture}
-          {text}
-        </>
+    <div
+      className={clsx(
+        'col col--12',
+        styles.featureContainer,
+        idx % 2 === 1 && styles.featureReversed,
       )}
+    >
+      {text}
+      {picture}
     </div>
   );
 }
