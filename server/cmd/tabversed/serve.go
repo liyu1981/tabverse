@@ -13,6 +13,7 @@ import (
 
 	"github.com/liyu1981/tabverse/server/internal/api"
 	"github.com/liyu1981/tabverse/server/internal/config"
+	"github.com/liyu1981/tabverse/server/internal/counters"
 	"github.com/liyu1981/tabverse/server/internal/hub"
 	"github.com/liyu1981/tabverse/server/internal/retention"
 	"github.com/liyu1981/tabverse/server/internal/store"
@@ -52,7 +53,10 @@ func serve(args []string) error {
 		}
 	}
 
-	st, err := store.Open(cfg.DBPath)
+	st, err := store.Open(cfg.DBPath, store.Options{
+		UsersDir:       cfg.UsersDir,
+		MaxOpenUserDBs: cfg.MaxOpenUserDBs,
+	})
 	if err != nil {
 		return err
 	}
@@ -93,6 +97,10 @@ func serve(args []string) error {
 
 	// Server side retention (chrome session snapshots).
 	go retention.Run(ctx, st, h, cfg.RetentionDays, logger)
+
+	// The cross-user counter cache (ADR 0026): content writes mark an account
+	// dirty, this recomputes it off the request path.
+	go counters.Run(ctx, st, time.Minute, 15, logger)
 
 	httpServer := &http.Server{
 		Addr:              cfg.Addr,

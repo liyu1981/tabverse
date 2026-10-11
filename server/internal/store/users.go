@@ -124,16 +124,17 @@ func (s *Store) ConsumeInvite(ctx context.Context, codeHash string) (string, err
 	return userID, nil
 }
 
-// nextRev must be called inside a transaction: it bumps and returns the
-// per user revision sequence.
+// nextRev must be called inside a user-database transaction: it bumps and
+// returns the per user revision sequence, which lives beside the records it
+// numbers (ADR 0027).
 func nextRev(ctx context.Context, tx *sql.Tx, userID string) (int64, error) {
 	if _, err := tx.ExecContext(ctx,
-		`UPDATE users SET rev_seq = rev_seq + 1 WHERE id = ?`, userID); err != nil {
+		`UPDATE user_meta SET rev_seq = rev_seq + 1 WHERE user_id = ?`, userID); err != nil {
 		return 0, err
 	}
 	var rev int64
 	if err := tx.QueryRowContext(ctx,
-		`SELECT rev_seq FROM users WHERE id = ?`, userID).Scan(&rev); err != nil {
+		`SELECT rev_seq FROM user_meta WHERE user_id = ?`, userID).Scan(&rev); err != nil {
 		return 0, err
 	}
 	return rev, nil
@@ -158,10 +159,16 @@ func (s *Store) AllUserIDs(ctx context.Context) ([]string, error) {
 	return out, rows.Err()
 }
 
-// ServerRev returns the current revision sequence for a user.
+// ServerRev returns the current revision sequence for a user, read from the
+// account's content file where it is authoritative.
 func (s *Store) ServerRev(ctx context.Context, userID string) (int64, error) {
+	u, release, err := s.contentDB(ctx, userID)
+	if err != nil {
+		return 0, err
+	}
+	defer release()
 	var rev int64
-	err := s.db.QueryRowContext(ctx, `SELECT rev_seq FROM users WHERE id = ?`, userID).Scan(&rev)
+	err = u.db.QueryRowContext(ctx, `SELECT rev_seq FROM user_meta WHERE user_id = ?`, userID).Scan(&rev)
 	if errors.Is(err, sql.ErrNoRows) {
 		return 0, ErrNotFound
 	}

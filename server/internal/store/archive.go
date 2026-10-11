@@ -260,7 +260,12 @@ func (s *Store) ArchiveDeviceRecords(ctx context.Context, userID, deviceID strin
 	if _, err := s.checkRevoked(ctx, userID, deviceID); err != nil {
 		return out, err
 	}
-	res, err := s.db.ExecContext(ctx, `
+	u, release, err := s.contentDB(ctx, userID)
+	if err != nil {
+		return out, err
+	}
+	defer release()
+	res, err := u.db.ExecContext(ctx, `
 		UPDATE records SET archived_at = ?
 		WHERE user_id = ? AND device_id = ? AND deleted = 0 AND archived_at IS NULL`,
 		nowMS(), userID, deviceID)
@@ -272,6 +277,9 @@ func (s *Store) ArchiveDeviceRecords(ctx context.Context, userID, deviceID strin
 		return out, err
 	}
 	out.Archived = int(n)
+	if n > 0 {
+		_ = s.markDirty(ctx, userID)
+	}
 	return out, nil
 }
 
@@ -291,7 +299,12 @@ func (s *Store) UnarchiveDeviceRecords(ctx context.Context, userID, deviceID str
 	if exists == 0 {
 		return out, ErrNotFound
 	}
-	res, err := s.db.ExecContext(ctx, `
+	u, release, err := s.contentDB(ctx, userID)
+	if err != nil {
+		return out, err
+	}
+	defer release()
+	res, err := u.db.ExecContext(ctx, `
 		UPDATE records SET archived_at = NULL
 		WHERE user_id = ? AND device_id = ? AND archived_at IS NOT NULL`,
 		userID, deviceID)
@@ -303,13 +316,21 @@ func (s *Store) UnarchiveDeviceRecords(ctx context.Context, userID, deviceID str
 		return out, err
 	}
 	out.Unarchived = int(n)
+	if n > 0 {
+		_ = s.markDirty(ctx, userID)
+	}
 	return out, nil
 }
 
 // ArchivedRecordCount is how many records a device's last write left archived.
 func (s *Store) ArchivedRecordCount(ctx context.Context, userID, deviceID string) (int, error) {
+	u, release, err := s.contentDB(ctx, userID)
+	if err != nil {
+		return 0, err
+	}
+	defer release()
 	var n int
-	err := s.db.QueryRowContext(ctx, `
+	err = u.db.QueryRowContext(ctx, `
 		SELECT COUNT(*) FROM records
 		WHERE user_id = ? AND device_id = ? AND deleted = 0 AND archived_at IS NOT NULL`,
 		userID, deviceID).Scan(&n)

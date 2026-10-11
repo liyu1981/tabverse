@@ -1,9 +1,12 @@
-# Per-user databases: design review and Turso research
+# Per-user databases: design review
 
-Status: **research (2026-10-11), not decided.** This records the review of a
-proposed storage split (one SQLite file per user instead of one shared file)
-and the Turso research that was done to sanity check it. No code or schema has
-changed. A decision, if we take one, belongs in an ADR, not here.
+Status: **research (2026-10-11), superseded by ADR 0027.** This records the
+review of a proposed storage split (one SQLite file per user instead of one
+shared file), re-examined against libSQL as the available engine (see §4). The
+split was subsequently adopted and built as
+[ADR 0027](../adr/0027-user-content-lives-in-a-per-user-database.md): user
+content lives in a per-user database, accounts and auth stay central. The
+recommendation in §6 is historical.
 
 Follows ADR 0001 (server-authoritative sync), ADR 0002 (privacy posture),
 ADR 0009 (multi-tenant and the console) and ADR 0012/0013 (accounts).
@@ -11,7 +14,7 @@ ADR 0009 (multi-tenant and the console) and ADR 0012/0013 (accounts).
 - §1 what we run today
 - §2 the proposal
 - §3 pros and cons of the split
-- §4 Turso research
+- §4 libSQL
 - §5 what it means for Tabverse
 - §6 recommendation
 - §7 open questions and when to revisit
@@ -33,7 +36,7 @@ the realtime hub and the retention loop.
 | Tenant-scoped tables | `store.go` migration | `records`, `records_fts`, `devices`, `tokens`, `invites` all carry `user_id` |
 | Account tables | same file | `users`, `identities`, `email_tokens`, `verif_tokens`, `retired_subjects`, `audit_log`, `server_secrets` |
 | Cascades | `users(id) ON DELETE CASCADE` | `DeleteUser` also deletes `records_fts` rows by hand (FTS5 is a virtual table and is not covered by FK cascades) |
-| Cross-user queries | `internal/store/admin.go`, `internal/retention/` | `ListUsers`, `Totals`, `SearchFor`, `AllUserIDs` sweep |
+| Cross-user queries | `internal/store/admin.go`, `internal/retention/` | `ListUsers`, `Totals`, `AllUserIDs` sweep. `SearchFor` is **not** cross-user: it takes an explicit `userID` (`admin.go:1016`), like every other console read |
 
 So the footprint is **multi-tenant and logically isolated by `user_id`, but
 physically one database** (ADR 0009). Isolation was proven at the row level;
@@ -41,15 +44,46 @@ it was never made physical.
 
 ## 2. The proposal
 
-Split storage into:
+Split storage by *content*, not by "which table carries a `user_id`":
 
-- **A central DB** for account data: `users`, `identities`, `email_tokens`,
-  `verif_tokens`, `retired_subjects`, `server_secrets`, `audit_log`.
-- **A per-user DB** for user data: `records`, `records_fts`, and probably
-  `devices`, `tokens`, `invites` (they foreign-key to `users`).
+| Region | Contents |
+| --- | --- |
+| **Central DB** | `users`, `devices`, `tokens`, `invites`, `identities`, `email_tokens`, `verif_tokens`, `retired_subjects`, `server_secrets`, `audit_log` |
+| **Per-user DB** | `records`, `records_fts`, and `rev_seq` |
 
-The motivation is the usual fleet argument: hard tenant boundaries, smaller
-files, per-tenant encryption/backup/delete, and sharding across machines.
+This is deliberately narrower than an earlier draft, which also moved
+`devices`/`tokens`/`invites` per-user because they foreign-key to `users`.
+That trades a cheap central lookup for a fleet problem:
+
+- They are on the **authentication** path. `LookupToken`
+  (`internal/store/users.go:73`) resolves a presented hash on every request;
+  keeping the table central keeps that one indexed query, makes a fresh
+  pairing work immediately, and makes a revoke bite immediately. Per-user,
+  every request would need a central hash -> user index anyway, so the split
+  would buy nothing and cost fans-out.
+- They keep `REFERENCES users(id) ON DELETE CASCADE`, so the cross-file
+  foreign-key problem in §3.3 is confined to `records`.
+- The console counts read from them (`device_count`, `token_count`,
+  `Totals.Devices`, `Totals.ActiveTokens`) stay exact and cheap.
+
+`rev_seq` moves the other way, *into* the user DB, even though it sits in
+`users` today. It is not content, but it is the ordering key of the record
+stream, written in the same transaction as the record (`nextRev`,
+`internal/store/records.go:84`):
+
+- Splitting it turns every push into a two-database write. Worse, per-user
+  revisions must be assigned in the same order records become visible
+  (clients pull `rev > since ORDER BY rev ASC`, `PullRecords`); two stores can
+  commit out of order, letting a client advance past a revision that commits
+  later and never deliver that record. Keeping them together avoids a
+  per-user lock spanning both writes.
+- A copy may stay in the central `users` row as a display cache for
+  `ListUsers`, refreshed by the same queue as the counters (§3.1); the
+  authoritative value is the one in the user DB.
+
+The motivation is still the fleet argument — hard boundaries for the bulk
+data, smaller files, per-user encryption/backup/delete, and sharding — but the
+auth-critical, exact tables stay where they are.
 
 ## 3. Pros and cons of the split
 
@@ -72,22 +106,88 @@ files, per-tenant encryption/backup/delete, and sharding across machines.
 
 ### Cons
 
-1. **Cross-user operations fan out.** `ListUsers`, `Totals`, `SearchFor` and
-   the retention sweep stop being one SQL query and become an aggregate over N
-   open databases.
-2. **Connection / file-descriptor pressure.** One `*sql.DB` per user means
-   thousands of live SQLite handles unless there is an LRU open/close pool.
-   `SetMaxOpenConns(1)` no longer bounds the server; the open-handle count must
-   be bounded explicitly.
-3. **Referential integrity across the boundary is lost.** `records.user_id
-   REFERENCES users(id)` cannot be enforced when `users` is in another file
-   (cross-file FKs do not exist). Devices/tokens/ invites have to move per-user
-   too, and what FK cascades used to guarantee becomes application code.
-4. **Cross-file atomicity disappears.** Deleting an account today is one
-   transaction (central row + cascaded records + FTS). Split, it becomes
-   "delete central row, then delete/retire the user file" with nothing
-   spanning them. A crash mid-way leaves an orphan file or an orphan account,
-   so a reconciliation/GC pass is needed.
+1. **Cross-user operations fan out — but only over `records`.** With the §2
+   boundary the auth-critical tables stay central, so the fan-out is confined
+   to record-derived numbers and the sweep:
+
+   - `ListUsers` (`admin.go:42`) and `Totals` (`admin.go:958`) currently read
+     the device/token counts and the record tallies in one query.
+     `device_count`/`token_count`/`revoked_count` and the device/token totals
+     stay exact and central; only `record_count`/`last_activity`/`LiveRecords`
+     /`Tombstones`/`ByEntity` need a user DB. Those may be **eventually
+     consistent**, so the console request path still opens at most one user DB
+     (the account being viewed). `SearchFor` is already scoped to one
+     `userID` (`admin.go:1016`) and also opens one.
+   - The retention sweep (`internal/retention/retention.go:44`) still iterates
+     every user, but it is a bounded background job, not a request.
+
+   Eventual consistency for the counts: because the tallies are cheap, a
+   background task can **recompute** rather than apply deltas. The write
+   transaction sets a dirty marker beside the record; a relay recomputes
+   `COUNT(*)`/`MAX(updated_at)` from that one user DB and upserts the central
+   cache (idempotent by construction), and a low-frequency full sweep heals a
+   lost marker. The queue exists so the console read path never opens a user
+   DB for a tally; the lag is acceptable because the numbers are display only.
+   Authority for `rev_seq` is *not* queued — it lives in the user DB (§2). The
+   concrete design for that worker is
+   [ADR 0026](../adr/0026-cross-user-counters-are-eventually-consistent.md)
+   (proposed).
+2. **Connection / file-descriptor pressure, and the backpressure it needs.**
+   The FD budget is finite and shared: a WAL SQLite file costs **three** OS
+   descriptors while open (the database, `-wal` and `-shm`), and every active
+   HTTP/WebSocket connection costs one more. The wall is the per-process
+   `RLIMIT_NOFILE` (systemd and Docker often default to 1024), not
+   `/proc/sys/fs/file-max`. A burst of *concurrently syncing* users is roughly
+   `3 x open user DBs + sockets`; 1,000 at once is ~4,000 FDs. `SetMaxOpenConns(1)`
+   no longer bounds the server, so the open-handle count needs an explicit
+   **LRU open/close pool**, and that cap *is* the FD budget
+   (`maxOpenUserDBs ~ LimitNOFILE/3`, minus a socket reserve). Use one
+   connection per user DB and set `SetMaxIdleConns(0)` / a short
+   `SetConnMaxIdleTime`, so an idle connection releases its three FDs instead
+   of being kept alive by `database/sql`; raise `LimitNOFILE` as a backstop,
+   not as the design.
+
+   **Backpressure when the cap is pinned.** Reaching the cap normally evicts
+   the least-recently-used *idle* handle and reuses the slot; it is only a
+   refusal when every slot is held by an in-flight request. Then:
+
+   - Wait a **bounded** interval (e.g. 100-250 ms, never past the request's
+     context budget) for a slot to free, since the hold time is a few
+     statements on a small file.
+   - If none frees, return `503 Service Unavailable` with `Retry-After` and a
+     dedicated `store.ErrBusy` (not a generic 500). Map a real `EMFILE` to the
+     same response, so a burst never surfaces as an opaque 500.
+   - **Never wait until done.** Unbounded waiting does not remove the limit,
+     it moves exhaustion to sockets and goroutines, and it can outlive the
+     client's own request timeout.
+   - Keep the open short (acquire around the SQL only, not across JSON
+     encode/decode or `hub.Publish`) and share one handle per user across
+     concurrent requests, so slots recycle in milliseconds.
+
+   The client already absorbs this: a device's `syncOnce` is single-flight
+   (`src/data/repo/repo.ts`), a failed push leaves the outbox intact and the
+   pull cursor unmoved, `ApplyRecords` is idempotent, and only a 401 triggers
+   re-pair (`src/data/repo/serverApi.ts`). Any 5xx is simply retried on the
+   next interval or debounced realtime trigger, so shedding loses no data.
+   Handlers need a small change: today `handlePull` returns 500 on any store
+   error and `writeStoreErr` only maps `ErrNotFound` -> 404
+   (`server/internal/api/sync_handlers.go`, `server/internal/api/server.go:279`);
+   the busy case becomes `503 + Retry-After`.
+3. **Referential integrity across the boundary is lost — for `records`
+   only.** `records.user_id REFERENCES users(id)` cannot be enforced when
+   `users` is in another file (cross-file FKs do not exist). With the §2
+   boundary the loss is confined to `records`: `devices`/`tokens`/`invites`
+   stay central and keep their cascades. The application must not write
+   records for a missing account, and account deletion needs the orphan-file
+   GC in #4 — but it no longer re-implements the device/token/invite
+   cascades.
+4. **Cross-file atomicity disappears for the record file.** Deleting an
+   account today is one transaction (central row + cascaded records + FTS).
+   Split, the central delete still cascades devices/tokens/invites atomically,
+   but the record file is deleted separately: "delete central row, then delete
+   the user file" with nothing spanning them. A crash mid-way leaves an orphan
+   file, so a reconciliation/GC pass is still needed — reduced in scope, not
+   removed.
 5. **Migrations multiply.** `migrate()` is one idempotent pass on one file at
    startup. Per-user means a schema version per file, lazily or background
    migrated, with partial-failure states across many files.
@@ -100,112 +200,59 @@ files, per-tenant encryption/backup/delete, and sharding across machines.
    users only; one user's push stream is still serialized, now with routing
    overhead on every request.
 
-## 4. Turso research
+## 4. libSQL
 
-Sources fetched **2026-10-11** from `turso.tech` and `docs.turso.tech` (see
-§8). Pricing was not re-checked here; `doc/tabversed-hosting-decision.md` §2
-covers it.
+An earlier version of this section researched Turso — the `tursodb` SQLite
+rewrite and the Turso Cloud platform that would have operated a database per
+tenant. That is not a foundation to build on: the company is being absorbed
+("Turso is joining Supabase"), the hosted products are preview and uncertain,
+and the whole move bets on a vendor staying. What survives as a usable engine
+is **libSQL**, the SQLite fork Turso shipped for years. It is open source and
+self-hostable, so it does not inherit the company's hosted future.
 
-### 4.1 The two products, not one
+What matters for the split:
 
-1. **Turso Database** (`tursodb`, the Rust rewrite formerly called Limbo) — a
-   ground-up SQLite rewrite. Headline features: **MVCC concurrent writes**
-   (`PRAGMA journal_mode='mvcc'` plus `BEGIN CONCURRENT`; conflicting writers
-   get a retryable error), async I/O, native vector search, **Tantivy-powered
-   FTS** (not FTS5), page-level encryption, and sync. SQLite-compatible, but
-   with real differences. On Cloud it is **early preview**.
-2. **libSQL** — the battle-tested SQLite fork, FTS5 intact, used on Cloud for
-   years.
-3. **Turso Cloud** — the managed platform: a **Platform API/SDK to create
-   databases programmatically** (`turso.databases.create({ name, group,
-   schema })`), groups for placement, per-database **BYOK encryption**,
-   copy-on-write branching, PITR, "recover deleted databases for five days",
-   scoped tokens, analytics.
+- **SQLite-compatible, FTS5 intact.** `records_fts USING fts5(...)` and its
+  `MATCH` queries carry over unchanged. The rewrite's Tantivy FTS, which would
+  have forced a search rewrite, leaves the picture with `tursodb`.
+- **Embedded replicas.** A local libSQL file that syncs to a remote primary is
+  the one feature here that `modernc.org/sqlite` does not give us. It matters
+  only if a per-user file is meant to have a remote/central primary; for a
+  purely local file, the engine already in use is sufficient.
+- **Go drivers.** Relevant because the server deliberately uses a CGO-free
+  driver (`modernc.org/sqlite`, "no cgo -> easy cross compile"):
 
-### 4.2 The thesis is literally the proposal
+  | Package | What it is | CGO |
+  | --- | --- | --- |
+  | `github.com/tursodatabase/go-libsql` | libSQL embedded replicas | **yes** |
+  | `github.com/tursodatabase/libsql-client-go` | libSQL over HTTP | **no** |
 
-The homepage frames the exact trade: *"Centralized Model: one shared
-database… vs. Fleet: a database per tenant."* Claimed properties: per-entity
-isolation, "lightweight as a file, scalable as a cloud", per-database
-economics, **per-database encryption with customer-held keys**, and one
-local→global runtime. The tagline is *"Spin a database for every user, agent,
-and tenant."* This is the strongest available third-party validation that the
-proposed direction is legitimate at scale.
-
-### 4.3 The machinery that makes a fleet operable
-
-This is the work that is easy to underestimate, and it is what Turso sells:
-
-- **Provisioning as an API**, not a filesystem convention — the DB is created
-  and tracked by the control plane, so the app does not hand-roll
-  `userID + ".db"` paths.
-- **Per-DB BYOK / page-level encryption** — each 4 KiB page encrypted with a
-  unique nonce under AEAD (AEGIS-256, AES-GCM, ChaCha20Poly1305), keys never
-  stored server-side. This answers the "one shared file cannot be per-user
-  encrypted" con directly.
-- **Groups** as the placement/replication unit, and **branching** (COW) for
-  cheap isolated copies.
-- **Scoped tokens** (database, table, action, expiry) so a connection is
-  confined to one tenant.
-- **Sync as a product** — local-first `push()`/`pull()` with logical
-  change-data-capture, checkpointing, and a "last push wins" conflict policy.
-
-### 4.4 What Turso itself walked back
-
-The instructive part:
-
-- **Multi-DB Schemas and ATTACH were deprecated for new users** (roadmap, Jan
-  2025). That was their "one parent schema, child DBs auto-migrated" story —
-  exactly the migration-multiplication problem in §3.5. They shelved it rather
-  than keep maintaining it, and said they would reinvent it.
-- **Edge replicas were dropped for new users**, pivoting to syncing the SQLite
-  file itself (Turso Sync) over logical CDC instead of page replication.
-- **Pragmas differ on Cloud**: `user_version`/`application_id` are read-only,
-  and `busy_timeout` and `journal_mode` are **not supported**. Our
-  `store.Open` DSN sets two of those; on Cloud they become no-ops. (The
-  migration itself uses `CREATE TABLE IF NOT EXISTS`, not `user_version`, so
-  that part is portable.)
-- **FTS5 vs Tantivy.** `tursodb`'s FTS syntax is not FTS5, so
-  `records_fts USING fts5(...)` and its `MATCH` queries would need a rewrite on
-  `tursodb`. libSQL is the engine that keeps FTS5.
-- **Ownership uncertainty.** The homepage now carries *"Turso is joining
-  Supabase to give every agent its own database"* — worth pricing in before
-  betting on the managed platform.
-- **A central catalog still exists.** Even the fleet model has an
-  org/group/DB catalog. Per-user data files never remove the central account
-  DB; they only split it — which is exactly the proposal.
-- **None of the cons in §3 are removed by the engine.** They are the control
-  plane. Turso Cloud is where that work lives; self-hosting `tursodb` leaves
-  all of it to us.
-
-### 4.5 Go integration
-
-Relevant because the server deliberately uses a CGO-free driver
-(`modernc.org/sqlite`, "no cgo -> easy cross compile"):
-
-| Package | What it is | CGO |
-| --- | --- | --- |
-| `turso.tech/database/tursogo` | local/embedded + sync, implements `database/sql`, prebuilt libs via `purego` | **no** |
-| `turso.tech/database/tursogo-serverless` | remote Turso DB over HTTP, pure Go | **no** |
-| `github.com/tursodatabase/go-libsql` | libSQL embedded replicas | **yes** |
-| `github.com/tursodatabase/libsql-client-go` | libSQL over HTTP | **no** |
-
-`tursogo` is a `database/sql` drop-in and CGO-free, so it fits the existing
-cross-compile constraint and could sit behind `store.Open` on a throwaway
-branch.
+  The CGO-free option is the remote/HTTP client, which reaches a file through a
+  libSQL server (`sqld`) rather than opening a local path. That is a real
+  architectural difference from the current local-file store, not a drop-in.
+- **Remote pragmas differ; local files do not.** The noted gaps
+  (`user_version`/`application_id` read-only, `busy_timeout` and
+  `journal_mode` unsupported) belong to a *remote* libSQL endpoint, not a local
+  file. A local per-user libSQL file behaves like SQLite, so the `store.Open`
+  DSN is only at risk on the remote path.
+- **The control plane is still ours.** No engine removes the fan-out, pooling,
+  migration or orphan-GC work in §3. `sqld` can host a single libSQL server; a
+  fleet of per-user databases is still something we operate.
 
 ## 5. What it means for Tabverse
 
 | Path | What we would get | What it costs |
 | --- | --- | --- |
-| **Adopt Turso Cloud**, one DB per user, central DB for accounts | Provisioning API, per-DB BYOK, branching/PITR, sync — the §3 cons handled for us | Turns the self-hosted single binary into a dependency on a managed (preview, now Supabase-bound) service. Contradicts ADR 0002. FTS5, journals and per-DB schema management all change. |
-| **Self-host `tursodb`**, one file per user | MVCC concurrent writes, per-file encryption, no CGO | We rebuild the whole control plane: pool/FD budget, orphan GC, per-DB migrations, cross-DB atomicity, FTS rewrite. Every §3 con remains. |
-| **Keep vanilla SQLite**, use Turso as a design reference | Keeps single-binary simplicity | Nothing new; the single-writer serialization stays. |
+| **Self-host libSQL / `sqld`**, one file per user | SQLite-compatible fork with FTS5 and embedded replicas; a remote primary per file if wanted | CGO for embedded replicas, or a `sqld` endpoint; per-DB migrations, pool/FD budget and orphan GC are still ours. Every §3 con remains. |
+| **Remote libSQL via `libsql-client-go`** | CGO-free, fits the cross-compile constraint | A network hop and a libSQL server to run; the local-file simplicity of ADR 0002 is gone. |
+| **Keep vanilla SQLite** (`modernc.org/sqlite`) | Single-binary simplicity; the engine is already SQLite-compatible | Nothing new; the single-writer serialization stays. |
 
 Two things this analysis does **not** change:
 
 - The operator console (`internal/store/admin.go`) and retention genuinely do
-  cross-user work, so the fan-out cost in §3.1 is real and specific to us.
+  cross-user work, so the fan-out cost in §3.1 is real and specific to us —
+  but under the §2 boundary it is confined to record-derived counters (served
+  from a central cache) and to the background sweep.
 - The current isolation is already logical and tested (ADR 0009). A physical
   split buys operational properties, not new isolation guarantees.
 
@@ -213,8 +260,8 @@ Two things this analysis does **not** change:
 
 At the current scale and positioning, per-user databases are premature. The
 decisive question is not the data model but the product: **are we building a
-hosted multi-tenant service?** If yes, per-user files (and either Turso Cloud
-or a self-built control plane modeled on it) are justified. If we stay a
+hosted multi-tenant service?** If yes, per-user files (on libSQL/`sqld`, or
+plain SQLite files with a control plane we build) are justified. If we stay a
 mostly self-hosted, few-user server, the costs in §3 land on us and the
 benefits do not materialize.
 
@@ -224,9 +271,9 @@ low-risk, reversible steps are:
 1. Introduce a routing seam — `StoreFor(userID)` — so a later split is a swap
    rather than a rewrite of every call site. Today `*store.Store` is concrete
    and passed everywhere.
-2. If a hosted shape is plausible, prototype `tursogo` behind `store.Open` on
-   a branch and measure MVCC concurrent writes against the current
-   `SetMaxOpenConns(1)`. No fleet required.
+2. If a hosted shape is plausible, prototype `libsql-client-go` (CGO-free)
+   behind `store.Open` against a local `sqld` on a branch, and measure the
+   query patterns against the current `SetMaxOpenConns(1)`. No fleet required.
 3. If the real driver is privacy/compliance rather than scale, prefer
    per-user encryption or per-user export over the existing single DB; that
    buys much of the benefit without the fan-out.
@@ -242,30 +289,15 @@ Either way, a change this structural should get an ADR before
 - Are we willing to own a file lifecycle (creation races, orphan GC,
   cross-file account deletion) and a per-file migration story?
 - Revisit if any of: a hosted multi-tenant offering is committed; a real
-  compliance/residency requirement appears; single-writer contention is
-  measured as the bottleneck; or Turso Database leaves preview and its Go
-  driver is proven.
+  compliance/residency requirement appears; or single-writer contention is
+  measured as the bottleneck.
 
 ## 8. Sources
 
-All fetched 2026-10-11:
-
-- <https://turso.tech/> — homepage, "Millions of Databases. One Architecture.",
-  Supabase announcement banner.
-- <https://docs.turso.tech/introduction> — what Turso is, feature list.
-- <https://docs.turso.tech/llms.txt> — documentation index.
-- <https://docs.turso.tech/turso-cloud.md> — Cloud, Turso vs libSQL, preview
-  status.
-- <https://docs.turso.tech/tursodb/concurrent-writes.md> — MVCC,
-  `BEGIN CONCURRENT`, conflict/retry.
-- <https://docs.turso.tech/features/multi-db-schemas.md> — deprecated
-  multi-DB schemas.
-- <https://docs.turso.tech/cloud/limitations.md> — pragma differences.
-- <https://docs.turso.tech/cloud/encryption.md> — per-DB BYOK, AEAD, page-level.
-- <https://docs.turso.tech/features/embedded-replicas/introduction.md> —
-  embedded replicas, encryption at rest.
-- <https://docs.turso.tech/sync/usage.md> — push/pull, "last push wins".
-- <https://docs.turso.tech/sdk/go/quickstart.md> and
-  `sdk/go/reference.md` — `tursogo`, `tursogo-serverless`, CGO table.
-- <https://turso.tech/blog/upcoming-changes-to-the-turso-platform-and-roadmap>
-  — Jan 2025 deprecations (multi-DB schemas, ATTACH, edge replicas).
+- libSQL, the SQLite fork (open source, self-hostable):
+  <https://github.com/tursodatabase/libsql>
+- Go drivers: <https://github.com/tursodatabase/go-libsql> (embedded replicas,
+  CGO) and <https://github.com/tursodatabase/libsql-client-go> (HTTP,
+  CGO-free).
+- Turso-to-Supabase announcement, which is why the hosted platform is out of
+  scope: the <https://turso.tech/> homepage banner, seen 2026-10-11.

@@ -226,9 +226,10 @@ against the Go server, using `api/openapi.yaml` as the contract.
 1. **Does the server stay single-owner?** `bootstrap` currently makes the first
    pairer the owner, which is right for self-hosting and wrong for a public
    endpoint. B5.
-2. **Where is the multi-tenant data boundary?** One file per user (isolation,
-   easy backup, no cross-tenant queries) versus one file with a `user_id`
-   column (simpler ops, needs B1 + row-level care in every query). B2.
+2. **Where is the multi-tenant data boundary?** **Resolved (ADR 0027):** one
+   content file per account (`records`, `records_fts`, `rev_seq`), with
+   accounts, devices and tokens central. The LRU pool (B2) bounds the open
+   handles.
 3. **Search**: keep server-side FTS5 (with B1), or accept the ~760 LOC of
    client-side indexing back? Server-side is better for the user; it only needs
    B1 to scale.

@@ -977,7 +977,8 @@ func TestArchiveTokenAndUnarchive(t *testing.T) {
 }
 
 func TestTotalsCountArchived(t *testing.T) {
-	_, op := newAdminServer(t)
+	ts, s := newAccountServer(t)
+	op := operatorSession(t, ts, s)
 	userID, deviceID, _, _ := archiveFlow(t, op)
 	adminDo(t, op, http.MethodPut,
 		"/console/api/v1/admin/users/"+userID+"/devices/"+deviceID+"/archive", nil).
@@ -985,6 +986,12 @@ func TestTotalsCountArchived(t *testing.T) {
 	adminDo(t, op, http.MethodPut,
 		"/console/api/v1/admin/users/"+userID+"/devices/"+deviceID+"/records/archive",
 		nil).mustStatus(t, http.StatusOK)
+
+	// Totals reads the ADR 0026 cache, which the background relay fills. Run
+	// one sweep as the relay would, then read it.
+	if _, err := s.store.RecomputeAllCounters(context.Background()); err != nil {
+		t.Fatalf("recompute counters: %v", err)
+	}
 
 	r := adminDo(t, op, http.MethodGet, "/console/api/v1/admin/totals", nil)
 	r.mustStatus(t, http.StatusOK)

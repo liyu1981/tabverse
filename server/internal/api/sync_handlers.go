@@ -31,7 +31,7 @@ func (s *Server) handlePull(w http.ResponseWriter, r *http.Request) {
 
 	records, hasMore, err := s.store.PullRecords(r.Context(), userID, since, limit)
 	if err != nil {
-		writeErr(w, http.StatusInternalServerError, "internal", err.Error())
+		writeStoreErr(w, err)
 		return
 	}
 	nextRev := since
@@ -40,7 +40,7 @@ func (s *Server) handlePull(w http.ResponseWriter, r *http.Request) {
 	}
 	serverRev, err := s.store.ServerRev(r.Context(), userID)
 	if err != nil {
-		writeErr(w, http.StatusInternalServerError, "internal", err.Error())
+		writeStoreErr(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{

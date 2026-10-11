@@ -128,6 +128,11 @@ func TestUserStatsAndTotals(t *testing.T) {
 		t.Fatalf("rev seq = %d, want 4", stats.RevSeq)
 	}
 
+	// Totals reads the ADR 0026 cache, which the background relay fills. Run
+	// one sweep as the relay would, then read it.
+	if _, err := st.RecomputeAllCounters(ctx); err != nil {
+		t.Fatalf("recompute counters: %v", err)
+	}
 	totals, err := st.Totals(ctx)
 	if err != nil {
 		t.Fatalf("totals: %v", err)
@@ -304,12 +309,19 @@ func TestDeleteTabspaceReachesArchivedRows(t *testing.T) {
 		t.Fatalf("seed: %v", err)
 	}
 	// Archived by the device-level archive route, which is the only way a
-	// record gets one; the point here is just that the row is archived.
-	if _, err := st.DB().ExecContext(ctx,
+	// record gets one; the point here is just that the row is archived. It now
+	// lives in the account's content file, not the central one.
+	udb, release, err := st.users.Acquire(ctx, alice)
+	if err != nil {
+		t.Fatalf("acquire content db: %v", err)
+	}
+	if _, err := udb.db.ExecContext(ctx,
 		`UPDATE records SET archived_at = ? WHERE user_id = ? AND entity = 'note' AND id = 'n1'`,
 		now+10, alice); err != nil {
+		release()
 		t.Fatalf("archive row: %v", err)
 	}
+	release()
 
 	res, err := st.DeleteTabspace(ctx, alice, "ts1", "", now+100, 1<<20)
 	if err != nil {

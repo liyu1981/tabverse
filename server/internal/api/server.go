@@ -281,6 +281,12 @@ func writeStoreErr(w http.ResponseWriter, err error) {
 		writeErr(w, http.StatusNotFound, "not_found", err.Error())
 		return
 	}
+	if store.IsBusy(err) {
+		// Backpressure, not a failure: the client's next sync cycle retries.
+		w.Header().Set("Retry-After", "1")
+		writeErr(w, http.StatusServiceUnavailable, "busy", "the server is at capacity, retry shortly")
+		return
+	}
 	writeErr(w, http.StatusBadRequest, "bad_request", err.Error())
 }
 

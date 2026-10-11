@@ -115,8 +115,10 @@ upgrade and nothing has to be re-installed (`--bin` points it elsewhere) - with
 its working directory at **`~/.tabversed`**, which is where the server reads
 `.env` from (the binary reads it itself, so the file format has one parser
 rather than two) and where the database lands by default -
-`~/.tabversed/data/tabversed.db`, unless `TABVERSED_DB` says otherwise
-(`--dir` moves both). A server meant to run for months should not depend on the
+`~/.tabversed/data/tabversed.db`, unless `TABVERSED_DB` says otherwise, with the
+per-account content files under `~/.tabversed/data/users/` unless
+`TABVERSED_USERS_DIR` says otherwise (`--dir` moves both). A server meant to run
+for months should not depend on the
 directory somebody was standing in when they installed it. `install` refuses to
 point `ExecStart` at a path with no binary on it, because systemd's own answer to
 that is a bare "No such file or directory". For a server that should survive a
@@ -183,7 +185,9 @@ git-ignored, because it holds the auth secret and the provider secret - and
 | Variable                     | Default             | Meaning                                                     |
 | ---------------------------- | ------------------- | ----------------------------------------------------------- |
 | `TABVERSED_ADDR`             | `0.0.0.0:8223`      | listen address (use `127.0.0.1:8223` to stay local)         |
-| `TABVERSED_DB`               | `data/tabversed.db` | SQLite file path                                            |
+| `TABVERSED_DB`               | `data/tabversed.db` | central SQLite file path (accounts, devices, tokens)         |
+| `TABVERSED_USERS_DIR`        | `users/` beside `TABVERSED_DB` | where per-account content databases live (ADR 0027) |
+| `TABVERSED_MAX_OPEN_USER_DBS` | `64`              | cap on simultaneously open content files; the file-descriptor budget (three descriptors per open WAL file) |
 | `TABVERSED_RETENTION_DAYS`   | `14`                | prune `session` records older than this (0 = keep forever)  |
 | `TABVERSED_MAX_RECORD_BYTES` | `1048576`           | max payload size per record                                 |
 | `TABVERSED_SYNC_BATCH_LIMIT` | `500`               | max records per sync request                                |

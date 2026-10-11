@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -14,19 +15,47 @@ import (
 // ErrNotFound is returned when a row does not exist.
 var ErrNotFound = errors.New("not found")
 
-// Store wraps the SQLite database.
+// Store wraps the central SQLite database: accounts, devices, tokens,
+// invites, the account tables and the counter cache. User *content* lives in a
+// separate file per account, reached through the users pool (ADR 0027).
 //
 // Schema notes:
-//   - records is the sync source of truth: one row per (user, entity, id),
-//     with a per-user monotonically increasing rev assigned on every write.
-//   - records_fts is a standalone FTS5 table mirroring record text content;
-//     it is maintained inside the same transaction as records.
+//   - The central database holds no records; `records` and `records_fts` are
+//     per-user (see UserDB).
+//   - A user's revision sequence lives beside its records, in that file's
+//     `user_meta` table, so a push writes both in one transaction.
 type Store struct {
-	db *sql.DB
+	db    *sql.DB
+	users *UserDBs
 }
 
-// Open opens (creating if needed) the database at path and runs migrations.
-func Open(path string) (*Store, error) {
+// Defaults for the per-user content pool. The cap is the file-descriptor
+// budget - three descriptors per open WAL file (ADR 0027) - so it stays well
+// below RLIMIT_NOFILE minus the socket reserve.
+const (
+	defaultMaxOpenUserDBs    = 64
+	defaultUserDBAcquireWait = 250 * time.Millisecond
+)
+
+// Options tune Open. The zero value uses the defaults: a `users/` directory
+// beside the central file and a 64-handle pool.
+type Options struct {
+	// UsersDir is where per-user content databases live.
+	UsersDir string
+	// MaxOpenUserDBs caps the number of open content files.
+	MaxOpenUserDBs int
+	// AcquireWait is how long an acquire waits for a slot before ErrBusy.
+	AcquireWait time.Duration
+}
+
+// Open opens (creating if needed) the central database at path and runs
+// migrations. Per-user content files live under a `users/` directory beside it
+// unless Options.UsersDir overrides where.
+func Open(path string, opts ...Options) (*Store, error) {
+	var opt Options
+	if len(opts) > 0 {
+		opt = opts[0]
+	}
 	dsn := fmt.Sprintf("file:%s?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)&_pragma=foreign_keys(1)", path)
 	db, err := sql.Open("sqlite", dsn)
 	if err != nil {
@@ -47,10 +76,39 @@ func Open(path string) (*Store, error) {
 		db.Close()
 		return nil, err
 	}
+	usersDir := opt.UsersDir
+	if usersDir == "" {
+		usersDir = filepath.Join(filepath.Dir(path), "users")
+	}
+	users, err := NewUserDBs(usersDir, opt.MaxOpenUserDBs, opt.AcquireWait)
+	if err != nil {
+		db.Close()
+		return nil, err
+	}
+	s.users = users
 	return s, nil
 }
 
-func (s *Store) Close() error { return s.db.Close() }
+// contentDB acquires the per-user content database for one account. Callers
+// must invoke the returned release func (defer). Handlers translate ErrBusy
+// into 503 + Retry-After.
+func (s *Store) contentDB(ctx context.Context, userID string) (*UserDB, func(), error) {
+	return s.users.Acquire(ctx, userID)
+}
+
+// Close closes the central database and every open content file.
+func (s *Store) Close() error {
+	var firstErr error
+	if s.users != nil {
+		if err := s.users.Close(); err != nil {
+			firstErr = err
+		}
+	}
+	if err := s.db.Close(); err != nil && firstErr == nil {
+		firstErr = err
+	}
+	return firstErr
+}
 
 // DB exposes the raw handle for tests.
 func (s *Store) DB() *sql.DB { return s.db }
@@ -85,19 +143,8 @@ func (s *Store) migrate(ctx context.Context) error {
 			expires_at INTEGER NOT NULL,
 			used_at    INTEGER
 		)`,
-		`CREATE TABLE IF NOT EXISTS records (
-			user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-			entity     TEXT NOT NULL,
-			id         TEXT NOT NULL,
-			device_id  TEXT NOT NULL DEFAULT '',
-			rev        INTEGER NOT NULL,
-			deleted    INTEGER NOT NULL DEFAULT 0,
-			updated_at INTEGER NOT NULL,
-			payload    TEXT NOT NULL DEFAULT '',
-			server_at  INTEGER NOT NULL,
-			PRIMARY KEY (user_id, entity, id)
-		)`,
-		`CREATE INDEX IF NOT EXISTS records_user_rev ON records(user_id, rev)`,
+		// `records` and `records_fts` are not defined here: user content lives in
+		// the per-user files (ADR 0027).
 		// --- accounts (adr/0012) ---
 		// One row per external login (github, google, a self hosted OIDC
 		// server) attached to a sync account. A person may have several.
@@ -161,12 +208,28 @@ func (s *Store) migrate(ctx context.Context) error {
 			value      TEXT NOT NULL,
 			created_at INTEGER NOT NULL
 		)`,
-		`CREATE VIRTUAL TABLE IF NOT EXISTS records_fts USING fts5(
-			entity UNINDEXED,
-			user_id UNINDEXED,
-			record_id UNINDEXED,
-			body,
-			tokenize = 'unicode61 remove_diacritics 2'
+		// The counter cache (ADR 0026). Exact values stay in the central tables;
+		// the record-derived tallies are recomputed from the content files in the
+		// background, so the console read path never fans out over user files.
+		`CREATE TABLE IF NOT EXISTS user_counters (
+			user_id          TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+			rev_seq          INTEGER NOT NULL DEFAULT 0,
+			record_count     INTEGER NOT NULL DEFAULT 0,
+			last_activity    INTEGER NOT NULL DEFAULT 0,
+			live_records     INTEGER NOT NULL DEFAULT 0,
+			tombstones       INTEGER NOT NULL DEFAULT 0,
+			archived_records INTEGER NOT NULL DEFAULT 0,
+			updated_at       INTEGER NOT NULL
+		)`,
+		`CREATE TABLE IF NOT EXISTS counter_dirty (
+			user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+			at      INTEGER NOT NULL
+		)`,
+		`CREATE TABLE IF NOT EXISTS user_entity_counts (
+			user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+			entity  TEXT NOT NULL,
+			n       INTEGER NOT NULL DEFAULT 0,
+			PRIMARY KEY (user_id, entity)
 		)`,
 	}
 
@@ -195,7 +258,6 @@ func (s *Store) migrate(ctx context.Context) error {
 		// back. Only the console hides them.
 		{table: "tokens", column: "archived_at", decl: "INTEGER"},
 		{table: "devices", column: "archived_at", decl: "INTEGER"},
-		{table: "records", column: "archived_at", decl: "INTEGER"},
 		// --- accounts (adr/0012) ---
 		// The web console's login, as opposed to the extension's device token.
 		{table: "users", column: "email", decl: "TEXT"},
@@ -216,8 +278,6 @@ func (s *Store) migrate(ctx context.Context) error {
 		}
 	}
 	for _, stmt := range []string{
-		// The console lists a user's records "archived last" by default.
-		`CREATE INDEX IF NOT EXISTS records_archived ON records(user_id, archived_at)`,
 		// A login is by email; the sync path never looks accounts up.
 		`CREATE UNIQUE INDEX IF NOT EXISTS users_email ON users(email) WHERE email IS NOT NULL`,
 	} {

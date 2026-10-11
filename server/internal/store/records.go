@@ -29,7 +29,13 @@ func (s *Store) ApplyRecords(
 ) ([]RecordResult, int64, error) {
 	results := make([]RecordResult, 0, len(inputs))
 
-	tx, err := s.db.BeginTx(ctx, nil)
+	u, release, err := s.contentDB(ctx, userID)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer release()
+
+	tx, err := u.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -117,12 +123,15 @@ func (s *Store) ApplyRecords(
 
 	var serverRev int64
 	if err := tx.QueryRowContext(ctx,
-		`SELECT rev_seq FROM users WHERE id = ?`, userID).Scan(&serverRev); err != nil {
+		`SELECT rev_seq FROM user_meta WHERE user_id = ?`, userID).Scan(&serverRev); err != nil {
 		return nil, 0, err
 	}
 	if err := tx.Commit(); err != nil {
 		return nil, 0, err
 	}
+	// Best-effort: the background relay recomputes this account's counters
+	// (ADR 0026). A lost marker is healed by the full sweep.
+	_ = s.markDirty(ctx, userID)
 	return results, serverRev, nil
 }
 
@@ -132,7 +141,12 @@ func (s *Store) PullRecords(ctx context.Context, userID string, since int64, lim
 	if limit <= 0 {
 		limit = 100
 	}
-	rows, err := s.db.QueryContext(ctx, `
+	u, release, err := s.contentDB(ctx, userID)
+	if err != nil {
+		return nil, false, err
+	}
+	defer release()
+	rows, err := u.db.QueryContext(ctx, `
 		SELECT entity, id, device_id, rev, deleted, updated_at, payload, server_at
 		FROM records WHERE user_id = ? AND rev > ? ORDER BY rev ASC LIMIT ?`,
 		userID, since, limit+1)
@@ -161,7 +175,12 @@ func (s *Store) PullRecords(ctx context.Context, userID string, since int64, lim
 
 // GetRecord fetches one record (tombstones included, the client needs them).
 func (s *Store) GetRecord(ctx context.Context, userID, entity, id string) (Record, error) {
-	rec, err := getRecordTx(ctx, s.db, userID, entity, id)
+	u, release, err := s.contentDB(ctx, userID)
+	if err != nil {
+		return Record{}, err
+	}
+	defer release()
+	rec, err := getRecordTx(ctx, u.db, userID, entity, id)
 	if err != nil {
 		return Record{}, err
 	}
@@ -175,7 +194,12 @@ func (s *Store) PruneOlderThan(ctx context.Context, userID, entity string, cutof
 	if !PrunableEntities[entity] {
 		return 0, fmt.Errorf("entity %q is not prunable", entity)
 	}
-	tx, err := s.db.BeginTx(ctx, nil)
+	u, release, err := s.contentDB(ctx, userID)
+	if err != nil {
+		return 0, err
+	}
+	defer release()
+	tx, err := u.db.BeginTx(ctx, nil)
 	if err != nil {
 		return 0, err
 	}
@@ -225,6 +249,9 @@ func (s *Store) PruneOlderThan(ctx context.Context, userID, entity string, cutof
 	}
 	if err := tx.Commit(); err != nil {
 		return 0, err
+	}
+	if len(victims) > 0 {
+		_ = s.markDirty(ctx, userID)
 	}
 	return len(victims), nil
 }

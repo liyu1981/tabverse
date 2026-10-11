@@ -340,6 +340,12 @@ The server's data model was tenant scoped from the start (`user_id` on
 the only way to create the *first* account was an open `bootstrap` endpoint, so
 a deployment could hold exactly one.
 
+That content is now physically per-account (`adr/0027`): accounts, devices and
+tokens stay in the central `TABVERSED_DB` file, while each account's `records`
+and search index live in their own file under `TABVERSED_USERS_DIR`. The
+console's cross-user counters are kept eventually consistent rather than opening
+every content file per request (`adr/0026`).
+
 `TABVERSED_ADMIN_TOKEN` is what makes it multi tenant, and it gates one
 operator surface:
 

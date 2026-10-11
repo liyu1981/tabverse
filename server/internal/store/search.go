@@ -38,6 +38,11 @@ func (s *Store) search(ctx context.Context, userID, query, entity string, limit 
 	if limit <= 0 || limit > 200 {
 		limit = 50
 	}
+	u, release, err := s.contentDB(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer release()
 
 	// records_fts is referenced by its table name, not an alias: the FTS5
 	// auxiliary functions (bm25/snippet) and MATCH do not accept an alias here
@@ -64,7 +69,7 @@ func (s *Store) search(ctx context.Context, userID, query, entity string, limit 
 	sqlQuery += ` ORDER BY rank ASC LIMIT ?`
 	args = append(args, limit)
 
-	rows, err := s.db.QueryContext(ctx, sqlQuery, args...)
+	rows, err := u.db.QueryContext(ctx, sqlQuery, args...)
 	if err != nil {
 		return nil, fmt.Errorf("search: %w", err)
 	}

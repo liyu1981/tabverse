@@ -18,6 +18,12 @@ type Config struct {
 	Addr string
 	// DBPath is the path to the SQLite database file.
 	DBPath string
+	// UsersDir is where the per-user content databases live (ADR 0027). Empty
+	// means a `users/` directory beside DBPath.
+	UsersDir string
+	// MaxOpenUserDBs caps how many per-user content files are open at once. It
+	// is the file-descriptor budget: three descriptors per open WAL file.
+	MaxOpenUserDBs int
 	// RetentionDays controls how long chrome session snapshots are kept.
 	// 0 disables server side retention.
 	RetentionDays int
@@ -199,6 +205,8 @@ func Load(version string) (Config, error) {
 	cfg := Config{
 		Addr:           Getenv("TABVERSED_ADDR", DefaultAddr),
 		DBPath:         Getenv("TABVERSED_DB", "data/tabversed.db"),
+		UsersDir:       Getenv("TABVERSED_USERS_DIR", ""),
+		MaxOpenUserDBs: 64,
 		Version:        version,
 		MaxRecordBytes: 1 << 20, // 1 MiB
 		SyncBatchLimit: 500,
@@ -207,6 +215,9 @@ func Load(version string) (Config, error) {
 
 	var err error
 	if cfg.RetentionDays, err = GetenvInt("TABVERSED_RETENTION_DAYS", 14); err != nil {
+		return Config{}, err
+	}
+	if cfg.MaxOpenUserDBs, err = GetenvInt("TABVERSED_MAX_OPEN_USER_DBS", cfg.MaxOpenUserDBs); err != nil {
 		return Config{}, err
 	}
 	if v, err := GetenvInt("TABVERSED_MAX_RECORD_BYTES", int(cfg.MaxRecordBytes)); err != nil {

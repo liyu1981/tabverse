@@ -37,8 +37,9 @@ type UserSummary struct {
 }
 
 // ListUsers returns every account, oldest first, with its counters - the
-// operator's directory. A query filters on the name or the address, which is
-// what makes a list of accounts usable rather than a wall.
+// operator's directory. Device and token counts are exact, from the central
+// tables; the record-derived counters come from the ADR 0026 cache, so this is
+// one central query that never opens a content file.
 func (s *Store) ListUsers(ctx context.Context, query string) ([]UserSummary, error) {
 	where := "1 = 1"
 	args := []any{}
@@ -47,14 +48,13 @@ func (s *Store) ListUsers(ctx context.Context, query string) ([]UserSummary, err
 		args = append(args, q, q)
 	}
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT u.id, u.name, COALESCE(u.email, ''), COALESCE(u.role, 'user'), u.created_at, u.rev_seq,
+		SELECT u.id, u.name, COALESCE(u.email, ''), COALESCE(u.role, 'user'), u.created_at,
 		       (SELECT COUNT(*) FROM devices d WHERE d.user_id = u.id),
 		       (SELECT COUNT(*) FROM tokens t WHERE t.user_id = u.id AND t.revoked = 0),
 		       (SELECT COUNT(*) FROM tokens t WHERE t.user_id = u.id AND t.revoked = 1),
-		       (SELECT COUNT(*) FROM records r WHERE r.user_id = u.id AND r.deleted = 0),
-		       COALESCE((SELECT MAX(r.updated_at) FROM records r
-		                 WHERE r.user_id = u.id AND r.deleted = 0), 0)
-		FROM users u WHERE `+where+` ORDER BY u.created_at ASC, u.id ASC`, args...)
+		       COALESCE(c.rev_seq, 0), COALESCE(c.record_count, 0), COALESCE(c.last_activity, 0)
+		FROM users u LEFT JOIN user_counters c ON c.user_id = u.id
+		WHERE `+where+` ORDER BY u.created_at ASC, u.id ASC`, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -64,9 +64,9 @@ func (s *Store) ListUsers(ctx context.Context, query string) ([]UserSummary, err
 	for rows.Next() {
 		var u UserSummary
 		var createdAt int64
-		if err := rows.Scan(&u.ID, &u.Name, &u.Email, &u.Role, &createdAt, &u.RevSeq,
+		if err := rows.Scan(&u.ID, &u.Name, &u.Email, &u.Role, &createdAt,
 			&u.DeviceCount, &u.TokenCount, &u.RevokedCount,
-			&u.RecordCount, &u.LastActivity); err != nil {
+			&u.RevSeq, &u.RecordCount, &u.LastActivity); err != nil {
 			return nil, err
 		}
 		u.CreatedAt = unixMS(createdAt)
@@ -92,7 +92,12 @@ func (s *Store) UserStats(ctx context.Context, userID string) (UserStats, error)
 	if err := s.RequireUser(ctx, userID); err != nil {
 		return out, err
 	}
-	rows, err := s.db.QueryContext(ctx, `
+	u, release, err := s.contentDB(ctx, userID)
+	if err != nil {
+		return out, err
+	}
+	defer release()
+	rows, err := u.db.QueryContext(ctx, `
 		SELECT entity, deleted, COUNT(*) FROM records
 		WHERE user_id = ? GROUP BY entity, deleted`, userID)
 	if err != nil {
@@ -148,29 +153,19 @@ func (s *Store) RenameUser(ctx context.Context, id, name string) error {
 	return nil
 }
 
-// DeleteUser removes an account together with everything that belongs to it.
-// The records, devices, tokens and invites tables all declare
-// ON DELETE CASCADE and foreign keys are enabled on the connection, so that is
-// a single statement. The FTS index is not covered by those foreign keys (FTS5
-// is a virtual table), so its rows go explicitly.
+// DeleteUser removes an account and its content. The central delete cascades
+// devices, tokens and invites and is atomic; the content file is removed
+// separately, so a crash between the two leaves an orphan file that the
+// ADR 0026 worker reaps (ADR 0027).
 func (s *Store) DeleteUser(ctx context.Context, id string) error {
-	tx, err := s.db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	if _, err := tx.ExecContext(ctx, `DELETE FROM records_fts WHERE user_id = ?`, id); err != nil {
-		return err
-	}
-	res, err := tx.ExecContext(ctx, `DELETE FROM users WHERE id = ?`, id)
+	res, err := s.db.ExecContext(ctx, `DELETE FROM users WHERE id = ?`, id)
 	if err != nil {
 		return err
 	}
 	if n, _ := res.RowsAffected(); n == 0 {
 		return ErrNotFound
 	}
-	return tx.Commit()
+	return s.users.Delete(id)
 }
 
 // TokenInfo describes one issued device token. The hash is the full stored
@@ -312,10 +307,7 @@ func (s *Store) ListDevices(ctx context.Context, userID string) ([]DeviceInfo, e
 		SELECT d.id, d.name, d.created_at,
 		       (SELECT COUNT(*) FROM tokens t WHERE t.device_id = d.id AND t.revoked = 0),
 		       COALESCE((SELECT MAX(t.last_used) FROM tokens t WHERE t.device_id = d.id), 0),
-		       COALESCE(d.archived_at, 0),
-		       (SELECT COUNT(*) FROM records r
-		         WHERE r.user_id = d.user_id AND r.device_id = d.id
-		           AND r.deleted = 0 AND r.archived_at IS NOT NULL)
+		       COALESCE(d.archived_at, 0)
 		FROM devices d WHERE d.user_id = ?
 		ORDER BY d.created_at ASC, d.id ASC`, userID)
 	if err != nil {
@@ -328,14 +320,53 @@ func (s *Store) ListDevices(ctx context.Context, userID string) ([]DeviceInfo, e
 		var d DeviceInfo
 		var createdAt int64
 		if err := rows.Scan(&d.ID, &d.Name, &createdAt, &d.ActiveTokens,
-			&d.LastUsed, &d.ArchivedAt, &d.ArchivedRecords); err != nil {
+			&d.LastUsed, &d.ArchivedAt); err != nil {
 			return nil, err
 		}
 		d.CreatedAt = unixMS(createdAt)
 		d.Archived = d.ArchivedAt != 0
 		out = append(out, d)
 	}
-	return out, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	s.fillArchivedRecords(ctx, userID, out)
+	return out, nil
+}
+
+// fillArchivedRecords counts, per device, the live records it last wrote that
+// are archived. The records live in the content file and the devices in the
+// central one, so this is a second query rather than a join. A busy pool
+// leaves the counts at zero rather than failing the device list.
+func (s *Store) fillArchivedRecords(ctx context.Context, userID string, devices []DeviceInfo) {
+	if len(devices) == 0 {
+		return
+	}
+	udb, release, err := s.contentDB(ctx, userID)
+	if err != nil {
+		return
+	}
+	defer release()
+	rows, err := udb.db.QueryContext(ctx, `
+		SELECT device_id, COUNT(*) FROM records
+		WHERE user_id = ? AND deleted = 0 AND archived_at IS NOT NULL
+		GROUP BY device_id`, userID)
+	if err != nil {
+		return
+	}
+	defer rows.Close()
+	counts := map[string]int{}
+	for rows.Next() {
+		var id string
+		var n int
+		if err := rows.Scan(&id, &n); err != nil {
+			return
+		}
+		counts[id] = n
+	}
+	for i := range devices {
+		devices[i].ArchivedRecords = counts[devices[i].ID]
+	}
 }
 
 // RecordFilter narrows a console record listing. Zero values mean "no
@@ -416,8 +447,14 @@ func (s *Store) ListRecords(ctx context.Context, userID string, f RecordFilter) 
 	}
 	clause := " WHERE " + strings.Join(where, " AND ")
 
+	u, release, err := s.contentDB(ctx, userID)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer release()
+
 	var total int
-	if err := s.db.QueryRowContext(ctx,
+	if err := u.db.QueryRowContext(ctx,
 		`SELECT COUNT(*) FROM records`+clause, args...).Scan(&total); err != nil {
 		return nil, 0, err
 	}
@@ -431,7 +468,7 @@ func (s *Store) ListRecords(ctx context.Context, userID string, f RecordFilter) 
 		offset = 0
 	}
 	pageArgs := append(append([]any{}, args...), limit, offset)
-	rows, err := s.db.QueryContext(ctx, `
+	rows, err := u.db.QueryContext(ctx, `
 		SELECT entity, id, device_id, rev, deleted, updated_at, payload, server_at
 		FROM records`+clause+` ORDER BY updated_at DESC, entity ASC, id ASC LIMIT ? OFFSET ?`,
 		pageArgs...)
@@ -486,8 +523,14 @@ func (s *Store) ListTabspaces(ctx context.Context, userID, query string, include
 	}
 	clause := " WHERE " + strings.Join(where, " AND ")
 
+	u, release, err := s.contentDB(ctx, userID)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer release()
+
 	var total int
-	if err := s.db.QueryRowContext(ctx,
+	if err := u.db.QueryRowContext(ctx,
 		`SELECT COUNT(*) FROM records r`+clause, args...).Scan(&total); err != nil {
 		return nil, 0, err
 	}
@@ -511,7 +554,7 @@ func (s *Store) ListTabspaces(ctx context.Context, userID, query string, include
 		           AND ` + tabSpaceIDOf("n") + ` = r.id)`
 	}
 	pageArgs := append(append([]any{}, args...), limit, offset)
-	rows, err := s.db.QueryContext(ctx, `
+	rows, err := u.db.QueryContext(ctx, `
 		SELECT r.entity, r.id, r.device_id, r.rev, r.deleted, r.updated_at, r.payload, r.server_at,
 		       `+childCount("note")+`, `+childCount("todo")+`, `+childCount("bookmark")+`,
 		       `+childCount("closedtab")+`
@@ -855,7 +898,12 @@ func (s *Store) recordsOfTabspace(ctx context.Context, userID, tabspaceID string
 	if !includeArchived {
 		visible = "archived_at IS NULL"
 	}
-	rows, err := s.db.QueryContext(ctx, `
+	u, release, err := s.contentDB(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer release()
+	rows, err := u.db.QueryContext(ctx, `
 		SELECT entity, id, device_id, rev, deleted, updated_at, payload, server_at
 		FROM records
 		WHERE user_id = ? AND deleted = 0 AND `+visible+`
@@ -954,7 +1002,9 @@ type Totals struct {
 	ArchivedRecords int `json:"archived_records"`
 }
 
-// Totals returns the deployment wide counters.
+// Totals returns the deployment wide counters. The user, device and token
+// counters are exact and central; the record counters are summed over the
+// per-user content files, which ADR 0026 replaces with a central cache.
 func (s *Store) Totals(ctx context.Context) (Totals, error) {
 	out := Totals{ByEntity: map[string]int{}}
 	scalar := func(query string, dst *int) error {
@@ -969,23 +1019,23 @@ func (s *Store) Totals(ctx context.Context) (Totals, error) {
 	if err := scalar(`SELECT COUNT(*) FROM tokens WHERE revoked = 0`, &out.ActiveTokens); err != nil {
 		return out, err
 	}
-	if err := scalar(`SELECT COUNT(*) FROM records WHERE deleted = 0`, &out.LiveRecords); err != nil {
-		return out, err
-	}
-	if err := scalar(`SELECT COUNT(*) FROM records WHERE deleted = 1`, &out.Tombstones); err != nil {
-		return out, err
-	}
 	if err := scalar(`SELECT COUNT(*) FROM devices WHERE archived_at IS NOT NULL`, &out.ArchivedDevices); err != nil {
 		return out, err
 	}
 	if err := scalar(`SELECT COUNT(*) FROM tokens WHERE archived_at IS NOT NULL`, &out.ArchivedTokens); err != nil {
 		return out, err
 	}
-	if err := scalar(`SELECT COUNT(*) FROM records WHERE archived_at IS NOT NULL AND deleted = 0`, &out.ArchivedRecords); err != nil {
+	// Record-derived counters come from the ADR 0026 cache, summed in one
+	// central query.
+	if err := s.db.QueryRowContext(ctx, `
+		SELECT COALESCE(SUM(live_records), 0),
+		       COALESCE(SUM(tombstones), 0),
+		       COALESCE(SUM(archived_records), 0)
+		FROM user_counters`).Scan(&out.LiveRecords, &out.Tombstones, &out.ArchivedRecords); err != nil {
 		return out, err
 	}
 	rows, err := s.db.QueryContext(ctx,
-		`SELECT entity, COUNT(*) FROM records WHERE deleted = 0 GROUP BY entity`)
+		`SELECT entity, SUM(n) FROM user_entity_counts GROUP BY entity`)
 	if err != nil {
 		return out, err
 	}
