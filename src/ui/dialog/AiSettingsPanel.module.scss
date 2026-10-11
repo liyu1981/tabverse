@@ -1,0 +1,61 @@
+@use '../../global.scss';
+
+/*
+ * The AI section of the settings dialog. Quiet rows rather than a form: two of
+ * the three facts are the browser's answer and change on their own, so they are
+ * shown as a label and a value, and only the switch is something to operate.
+ */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.hint {
+  margin: 0;
+  font-size: 0.85em;
+  line-height: 1.5;
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid global.$color-light-shade;
+  border-radius: global.$radius-card;
+  overflow: hidden;
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 12px;
+}
+
+.row + .row {
+  border-top: 1px solid global.$color-light-shade;
+}
+
+.label {
+  font-size: 0.85em;
+  color: global.$color-light-accent;
+}
+
+.value {
+  font-size: 0.9em;
+  font-weight: 600;
+  color: global.$color-text;
+  text-align: end;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.progress {
+  font-size: 0.85em;
+  color: global.$color-light-accent;
+}

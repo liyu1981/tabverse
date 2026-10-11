@@ -17,6 +17,7 @@ import {
   resetAiAvailabilityForTest,
   setAiAvailabilityForTest,
 } from '../../../../ai/availability';
+import { setAiEnabledForTest } from '../../../../ai/aiSettings';
 import {
   SuggestNameButton,
   SuggestNamePopoverContent,
@@ -41,15 +42,27 @@ const renderContent = (
 
 beforeEach(() => {
   resetAiAvailabilityForTest();
+  // the button needs both answers: the browser's, and the person's switch
+  setAiEnabledForTest(true);
 });
 
 afterEach(() => {
   resetAiAvailabilityForTest();
+  setAiEnabledForTest(null);
 });
 
 describe('SuggestNameButton', () => {
   test('absent renders nothing - no dead button in the row', () => {
     setAiAvailabilityForTest({ state: 'absent', progress: null });
+    const markup = renderToStaticMarkup(
+      <SuggestNameButton tabs={[]} onApply={() => undefined} />,
+    );
+    expect(markup).toBe('');
+  });
+
+  test('switched off in the settings renders nothing, whatever the browser has', () => {
+    setAiAvailabilityForTest({ state: 'ready', progress: null });
+    setAiEnabledForTest(false);
     const markup = renderToStaticMarkup(
       <SuggestNameButton tabs={[]} onApply={() => undefined} />,
     );

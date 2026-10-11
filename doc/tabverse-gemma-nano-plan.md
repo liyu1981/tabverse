@@ -234,6 +234,16 @@ than restructure (the code feature-tests everything, per D1):
    `downloadprogress`; if the real surface has no monitor, availability
    polling (D4's alternative) is the fallback and the popover's download line
    simply shows without a percentage (already handled: `progress` is null).
+6. **The reply is asked for as JSON, with a plain-text fallback** (revised
+   after the fact): the user message now opens with the question (it used to be
+   a bare list, which is data with no request attached), and every `prompt()`
+   call carries a JSON Schema as `responseConstraint`
+   (`NAME_RESPONSE_SCHEMA`: `{"names": [<3 strings>]}`). Chrome's built-in AI
+   has **no tool/function calling**, so constrained JSON is the mechanism; the
+   spike should confirm that this Chrome accepts `responseConstraint` and that
+   the model honours it. Nothing depends on that answer: the constraint is only
+   ever an improvement, and `parseCandidates` reads a fenced JSON block, a bare
+   array, `{"names": [...]}`, or one-name-per-line prose.
 
 What is verified so far: 57 new unit tests (`pnpm test`, 658 total),
 `typecheck` + `typecheck:ts6`, `format:check`, `lint:check`, `build`, and the

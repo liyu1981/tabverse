@@ -19,9 +19,25 @@
  * degrades to `null` / a failed probe when it is not there.
  */
 
+/** What `prompt()` may be given besides the input itself. */
+export interface AiPromptOptions {
+  /**
+   * A JSON Schema the reply must satisfy - the Prompt API's structured output
+   * (`responseConstraint`), and the closest thing the built-in model has to
+   * tool calling: there is no function- or tool-calling mode, so a schema is
+   * how a caller says "and give it back in a shape I can read" rather than in
+   * whatever prose the model felt like.
+   *
+   * A build that does not know the option ignores it (WebIDL dictionaries drop
+   * unknown members), so the caller must still be able to read a plain reply -
+   * every user of this has a fallback parser.
+   */
+  responseConstraint?: object;
+}
+
 /** What the model session looks like, normalized to what we call. */
 export interface AiRawSession {
-  prompt(input: string): Promise<string>;
+  prompt(input: string, options?: AiPromptOptions): Promise<string>;
   /** Some builds never expose it; destroying is best effort. */
   destroy?(): void;
   /** Input token quota of the session, when the API reports one. */

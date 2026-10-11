@@ -39,6 +39,11 @@ import {
   subscribeAiAvailability,
 } from '../../../ai/availability';
 import {
+  getAiEnabled,
+  loadAiEnabled,
+  subscribeAiEnabled,
+} from '../../../ai/aiSettings';
+import {
   NAMING_SYSTEM_PROMPT,
   type NameTab,
   suggestNames,
@@ -169,6 +174,13 @@ export function SuggestNameButton(props: SuggestNameButtonProps) {
     getAiAvailability,
     getAiAvailability,
   );
+  // The person's switch (src/ai/aiSettings.ts), separate from the browser's
+  // answer: `null` is "not read yet", which is not "off".
+  const enabled = useSyncExternalStore(
+    subscribeAiEnabled,
+    getAiEnabled,
+    getAiEnabled,
+  );
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [candidates, setCandidates] = useState<string[] | null>(null);
@@ -177,6 +189,7 @@ export function SuggestNameButton(props: SuggestNameButtonProps) {
 
   // probe once on mount: the button's whole existence depends on the answer
   useEffect(() => {
+    void loadAiEnabled();
     void probeAiAvailability();
   }, []);
 
@@ -247,9 +260,14 @@ export function SuggestNameButton(props: SuggestNameButtonProps) {
     [open, run],
   );
 
-  if (availability.state === 'checking' || availability.state === 'absent') {
-    // checking is a millisecond probe; absent is permanent. Either way the
-    // row has no dead button in it.
+  if (
+    enabled !== true ||
+    availability.state === 'checking' ||
+    availability.state === 'absent'
+  ) {
+    // checking is a millisecond probe; absent is permanent; and "off" is the
+    // person's answer in the settings dialog - in all three the row has no
+    // dead button in it.
     return null;
   }
 

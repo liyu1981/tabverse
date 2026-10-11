@@ -63,6 +63,18 @@ afterEach(() => {
   delete g.ai;
 });
 
+describe('prompt options', () => {
+  test('the response constraint reaches the underlying session', async () => {
+    // the logger wraps the session, so the schema has to survive the wrapper
+    const prompt = vi.fn(async () => '{"names": ["a"]}');
+    setAiSessionFactoryForTest(async () => ({ prompt }));
+    const session = await ensureAiSession('p');
+    const options = { responseConstraint: { type: 'object' } };
+    await session.prompt('the question', options);
+    expect(prompt).toHaveBeenCalledWith('the question', options);
+  });
+});
+
 describe('prompt logging', () => {
   test('a successful exchange is recorded, with its system prompt and timing', async () => {
     setAiSessionFactoryForTest(async () => ({

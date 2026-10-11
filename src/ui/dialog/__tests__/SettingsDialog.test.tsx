@@ -16,7 +16,7 @@ import React from 'react';
 
 import { SettingsBody, SettingsDialog } from '../SettingsDialog';
 
-const body = (tab: 'sync' | 'about') =>
+const body = (tab: 'sync' | 'ai' | 'about') =>
   renderToStaticMarkup(
     <SettingsBody tab={tab} onSelectTab={() => undefined} />,
   );
@@ -26,7 +26,16 @@ describe('SettingsBody', () => {
     const markup = body('sync');
     expect(markup).toContain('bp6-tabs bp6-vertical');
     expect(markup).toContain('Sync');
+    expect(markup).toContain('AI');
     expect(markup).toContain('About');
+  });
+
+  test('the AI section is the Prompt API page', () => {
+    const markup = body('ai');
+    // its three rows, before the availability probe has answered
+    expect(markup).toContain('Device support');
+    expect(markup).toContain('Local model');
+    expect(markup).toContain('Offered');
   });
 
   test('Sync is the section showing when it is selected', () => {

@@ -3,8 +3,9 @@
  *
  * It hosts sections as *tabs whose triggers are the left column* - the vertical
  * `Tabs` Blueprint draws - because the sections are peers a person moves
- * between, not steps in a wizard: the sync setup is long and the about panel is
- * a surface, and neither wants to be a nested dialog of the other.
+ * between, not steps in a wizard: the sync setup is long, the on-device AI
+ * section is a status page, and the about panel is a surface; none of them
+ * wants to be a nested dialog of another.
  *
  * The right hand panel scrolls, the rail does not: a long section (the sync
  * form with its status) must not take the section list off screen.
@@ -17,11 +18,12 @@ import { Dialog, DialogBody, Icon, Tab, Tabs } from '@blueprintjs/core';
 import React, { useEffect, useState } from 'react';
 
 import { AboutPanel } from './AboutPanel';
+import { AiSettingsPanel } from './AiSettingsPanel';
 import { ServerSyncPanel } from './ServerSyncPanel';
 import { SuspendSettingsPanel } from './SuspendSettingsPanel';
 import classes from './SettingsDialog.module.scss';
 
-export type SettingsTab = 'sync' | 'suspend' | 'about';
+export type SettingsTab = 'sync' | 'suspend' | 'ai' | 'about';
 
 export interface SettingsBodyProps {
   tab: SettingsTab;
@@ -64,6 +66,15 @@ export function SettingsBody(props: SettingsBodyProps) {
             </span>
           }
           panel={<SuspendSettingsPanel />}
+        />
+        <Tab
+          id="ai"
+          title={
+            <span>
+              <Icon icon="lightbulb" /> AI
+            </span>
+          }
+          panel={<AiSettingsPanel />}
         />
         <Tab
           id="about"

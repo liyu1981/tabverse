@@ -29,6 +29,7 @@ import {
 } from './availability';
 import {
   type AiCreateOptions,
+  type AiPromptOptions,
   type AiRawSession,
   type DownloadMonitor,
   detectAiModelApi,
@@ -36,7 +37,7 @@ import {
 import { appendPromptLog } from './promptLog';
 
 export interface AiSession {
-  prompt(input: string): Promise<string>;
+  prompt(input: string, options?: AiPromptOptions): Promise<string>;
   /** Best effort: some API shapes never expose it. */
   destroy?(): void;
   inputQuota?: number;
@@ -102,7 +103,7 @@ async function defaultFactory(systemPrompt: string): Promise<AiSession> {
   const raw: AiRawSession = await api.create(options);
   noteAiReady();
   return {
-    prompt: (input) => raw.prompt(input),
+    prompt: (input, options) => raw.prompt(input, options),
     destroy: () => raw.destroy?.(),
     inputQuota: raw.inputQuota,
   };
@@ -125,10 +126,10 @@ function withPromptLogging(
 ): AiSession {
   return {
     ...session,
-    prompt: async (input: string) => {
+    prompt: async (input: string, options?: AiPromptOptions) => {
       const started = Date.now();
       try {
-        const output = await session.prompt(input);
+        const output = await session.prompt(input, options);
         void appendPromptLog({
           at: started,
           systemPrompt,
@@ -181,6 +182,21 @@ export function ensureAiSession(systemPrompt: string): Promise<AiSession> {
     bindPageHide();
   }
   return pending;
+}
+
+/**
+ * Loads the model without asking it anything: what the settings section's
+ * "download" button means, as opposed to a side effect of the first suggestion
+ * (plan D4).
+ *
+ * `create()` is the only call the Prompt API offers that downloads, and it
+ * hands back a session; this keeps that session under the prompt it was created
+ * for, which is the one the name suggestions use - so nothing is downloaded
+ * twice and nothing is thrown away. Progress reaches the availability state
+ * through the same download monitor either way.
+ */
+export async function prepareAiModel(systemPrompt: string): Promise<void> {
+  await ensureAiSession(systemPrompt);
 }
 
 /**
