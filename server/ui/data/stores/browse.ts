@@ -1,6 +1,6 @@
 /**
- * The stored-data panel's three views over one account: the tabverse list, the
- * raw record browser and the full text search.
+ * The data views over one account: the tabverse list, the raw record browser
+ * and the unified full text search.
  *
  * Filters, paging and results are separate stores on purpose. A filter is what
  * the operator typed, a page is where they are in the results, and the results

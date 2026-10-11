@@ -114,6 +114,36 @@
   overflow: auto;
 }
 
+// ---- unified search --------------------------------------------------------
+
+.searchGroup {
+  margin-bottom: 18px;
+}
+
+.searchGroupHead {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.searchTabverse {
+  margin: 0 0 10px;
+  padding-left: 10px;
+  border-left: 2px solid var(--border);
+}
+
+.searchTabverseHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
 // ---- the stored-data panel's own header ------------------------------------
 
 .subtitle {

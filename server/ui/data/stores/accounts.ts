@@ -24,8 +24,8 @@ import {
 } from '../effects';
 import type { Invite, UserDetail, UserSummary } from '../types';
 
-export type AccountTab = 'pair' | 'credentials' | 'data' | 'admin';
-export type StoredDataView = 'tabverses' | 'search' | 'records';
+export type AccountTab = 'pair' | 'credentials' | 'data' | 'search' | 'admin';
+export type StoredDataView = 'tabverses' | 'records';
 
 export const openAccount = createEvent<string>();
 export const setTab = createEvent<AccountTab>();

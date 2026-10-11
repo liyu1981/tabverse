@@ -1058,6 +1058,10 @@ type AdminSearchHit struct {
 	SearchHit
 	Title string `json:"title"`
 	URL   string `json:"url"`
+	// TabspaceTitle is the display name of the tabverse the hit belongs to, so
+	// the console can group hits by tabverse and label the group. Empty for a
+	// tabverse hit (the hit is its own title) or when the tabverse is gone.
+	TabspaceTitle string `json:"tabspace_title,omitempty"`
 }
 
 // SearchFor is Search for the console: same FTS query, scoped to one account,
@@ -1075,6 +1079,7 @@ func (s *Store) SearchFor(ctx context.Context, userID, query, entity string, lim
 		return nil, err
 	}
 	out := make([]AdminSearchHit, 0, len(hits))
+	tabspaceNames := map[string]string{}
 	for _, h := range hits {
 		hit := AdminSearchHit{SearchHit: h}
 		rec, err := s.GetRecord(ctx, userID, h.Entity, h.ID)
@@ -1085,9 +1090,32 @@ func (s *Store) SearchFor(ctx context.Context, userID, query, entity string, lim
 			continue
 		}
 		hit.Title, hit.URL = displayTitle(h.Entity, h.ID, rec.Payload)
+		if h.Entity != "tabspace" && h.TabspaceID != "" {
+			hit.TabspaceTitle = s.tabspaceName(ctx, userID, h.TabspaceID, tabspaceNames)
+		}
 		out = append(out, hit)
 	}
 	return out, nil
+}
+
+// tabspaceName resolves a tabverse's display name for the search grouping,
+// caching it so several hits in one tabverse cost one lookup. A missing or
+// tombstoned tabverse yields "" and the UI falls back to the id.
+func (s *Store) tabspaceName(ctx context.Context, userID, tabspaceID string, cache map[string]string) string {
+	if name, ok := cache[tabspaceID]; ok {
+		return name
+	}
+	name := ""
+	if rec, err := s.GetRecord(ctx, userID, "tabspace", tabspaceID); err == nil {
+		var doc struct {
+			Name string `json:"name"`
+		}
+		if decodePayload(rec.Payload, &doc) == nil {
+			name = doc.Name
+		}
+	}
+	cache[tabspaceID] = name
+	return name
 }
 
 // displayTitle picks the human label of a record, mirroring the field each

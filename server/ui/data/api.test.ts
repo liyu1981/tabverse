@@ -192,3 +192,16 @@ test('the directory filter and the user list come back as a list', async () => {
   await expect(api.listUsers('ali')).resolves.toEqual([{ id: 'usr_1' }]);
   await expect(api.listUsers()).resolves.toEqual([{ id: 'usr_1' }]);
 });
+
+test('the self search uses the session-scoped endpoint', async () => {
+  const { calls, api } = stub({
+    '/console/api/v1/console/search': { body: { query: 'x', hits: [] } },
+  });
+  await expect(
+    api.searchSelf({ q: 'x', entity: 'note', archived: true }),
+  ).resolves.toEqual({ query: 'x', hits: [] });
+  expect(calls[0]).toMatchObject({
+    method: 'GET',
+    url: '/console/api/v1/console/search?q=x&entity=note&archived=1',
+  });
+});

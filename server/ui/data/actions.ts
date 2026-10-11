@@ -35,6 +35,7 @@ import {
   pageRecords,
   pageTabspaces,
   resetBrowse,
+  setSearchQuery,
 } from './stores/browse';
 import { closeTabspace, openTabspace } from './stores/drawer';
 import {
@@ -135,6 +136,12 @@ export async function boot(): Promise<void> {
   await openAccount(target);
   const tab = params.get('tab');
   if (tab) setTab(tab as AccountTab);
+  // A bookmarked or pasted search URL lands on its query, not on an empty box.
+  const q = params.get('q');
+  if (q) {
+    setSearchQuery(q);
+    await runSearch();
+  }
   const tabspace = params.get('tabspace');
   if (tabspace) await openTabspaceById(tabspace);
 }
@@ -175,13 +182,12 @@ export async function changeTab(tab: AccountTab): Promise<void> {
     closeTabspace();
     await loadDirectory();
   }
-  if (tab === 'data' && $search.getState().q) await runSearch();
+  if (tab === 'search' && $search.getState().q) await runSearch();
 }
 
 export async function changeDataView(view: StoredDataView): Promise<void> {
   setDataView(view);
   route({ view });
-  if (view === 'search') await runSearch();
 }
 
 /** The refresh button in the top bar: whatever this account view is showing. */
@@ -358,7 +364,10 @@ export async function runSearch(): Promise<void> {
   const params: { q: string; entity?: string; archived?: boolean } = { q };
   if (state.entity) params.entity = state.entity;
   if ($dataArchived.getState()) params.archived = true;
-  await attempt('Searching', () => searchFx({ userId, params }));
+  // A person searching their own account uses the session-scoped endpoint; an
+  // operator looking through another account uses the account-named one.
+  const self = userId === $ownUserId.getState();
+  await attempt('Searching', () => searchFx({ userId, self, params }));
 }
 
 export async function changeDirectoryQuery(query: string): Promise<void> {

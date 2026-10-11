@@ -246,6 +246,7 @@ export interface AdminSearchHit {
   entity: string;
   id: string;
   tabspace_id?: string;
+  tabspace_title?: string;
   score: number;
   snippet?: string;
   title?: string;

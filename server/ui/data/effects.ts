@@ -135,10 +135,13 @@ export const loadRecordsFx = createEffect<
 export const searchFx = createEffect<
   {
     userId: string;
+    self: boolean;
     params: { q: string; entity?: string; archived?: boolean };
   },
   AdminSearchResult
->(({ userId, params }) => api.search(userId, params));
+>(({ userId, self, params }) =>
+  self ? api.searchSelf(params) : api.search(userId, params),
+);
 
 // ---- the tabverse drawer ---------------------------------------------------
 

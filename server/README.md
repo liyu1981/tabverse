@@ -459,6 +459,8 @@ curl -s -b $J -X POST "$B/console/api/v1/admin/users/$U/invites?ttl_seconds=300"
 curl -s -b $J "$B/console/api/v1/admin/users/$U/tabspaces"
 curl -s -b $J "$B/console/api/v1/admin/users/$U/tabspaces/ts_..."
 curl -s -b $J "$B/console/api/v1/admin/users/$U/search?q=hello"
+# the signed-in person's own unified search (the account is the session's, not a path)
+curl -s -b $J "$B/console/api/v1/console/search?q=hello"
 curl -s -b $J -X DELETE "$B/console/api/v1/admin/users/$U/devices/dev_..."
 
 # the operator's directory (and the filter it needs)

@@ -11,24 +11,22 @@ import {
 } from '../data/stores/accounts';
 import { Segmented } from '../components/Pager';
 import { RecordBrowser } from './RecordBrowser';
-import { SearchPanel } from './SearchPanel';
 import { TabverseList } from './TabverseList';
 import classes from '../layout.module.scss';
 
 const VIEWS: { value: StoredDataView; label: string }[] = [
   { value: 'tabverses', label: 'Tabverses' },
-  { value: 'search', label: 'Search' },
   { value: 'records', label: 'Records' },
 ];
 
 /**
- * The stored data panel: what this account has, in three ways.
+ * The stored data panel: what this account has, in two ways. The unified search
+ * is its own tab.
  *
  * The counters belong to the panel they describe, and the "show archived"
- * toggle belongs to all three views at once - archived rows are hidden from the
- * tabverse list, the record browser and the search alike, so the toggle cannot
- * live in any one of their toolbars without two of the three disagreeing about
- * what is visible (adr/0011).
+ * toggle belongs to every view that reads these rows - the tabverse list, the
+ * record browser and the Search tab - so it cannot live in any one of their
+ * toolbars without the others disagreeing about what is visible (adr/0011).
  */
 export function StoredDataPanel() {
   const { account, view, archived } = useUnit({
@@ -107,7 +105,6 @@ export function StoredDataPanel() {
 
       {view === 'tabverses' ? <TabverseList /> : null}
       {view === 'records' ? <RecordBrowser /> : null}
-      {view === 'search' ? <SearchPanel /> : null}
     </section>
   );
 }

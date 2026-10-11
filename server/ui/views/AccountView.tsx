@@ -24,6 +24,7 @@ import { PromptDialog, TypedConfirmDialog } from '../components/Dialogs';
 import { AdminPanel } from './AdminPanel';
 import { CredentialsPanel } from './CredentialsPanel';
 import { PairCodePanel } from './PairCodePanel';
+import { SearchPanel } from './SearchPanel';
 import { StoredDataPanel } from './StoredDataPanel';
 import classes from '../layout.module.scss';
 
@@ -31,6 +32,7 @@ const TABS: { id: AccountTab; label: string }[] = [
   { id: 'pair', label: 'Pair Code' },
   { id: 'credentials', label: 'Devices & Tokens' },
   { id: 'data', label: 'Stored data' },
+  { id: 'search', label: 'Search' },
   { id: 'admin', label: 'Admin' },
 ];
 
@@ -80,6 +82,7 @@ export function AccountView() {
           : '',
     credentials: account?.devices ? credentialsNote(account, showArchived) : '',
     data: account?.stats ? `${account.stats.live} records` : '',
+    search: 'full text',
     admin: users.length ? `${users.length} accounts` : 'no accounts yet',
   };
 
@@ -159,6 +162,7 @@ export function AccountView() {
           {account && tab === 'pair' ? <PairCodePanel /> : null}
           {account && tab === 'credentials' ? <CredentialsPanel /> : null}
           {account && tab === 'data' ? <StoredDataPanel /> : null}
+          {account && tab === 'search' ? <SearchPanel /> : null}
           {tab === 'admin' ? <AdminPanel /> : null}
         </div>
       </div>

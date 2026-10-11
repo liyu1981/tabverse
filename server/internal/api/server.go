@@ -146,6 +146,10 @@ func (s *Server) Handler() http.Handler {
 		mux.HandleFunc("POST /console/api/v1/console/revoke-sessions", s.admin(s.handleConsoleRevokeSessions))
 		mux.HandleFunc("PUT /console/api/v1/admin/users/{user_id}/revoke-sessions",
 			s.adminOnly(s.handleAdminRevokeSessions))
+		// Full text search over the signed-in person's own account, resolved from
+		// the session; the account-wide admin route below is the operator view of
+		// somebody else.
+		mux.HandleFunc("GET /console/api/v1/console/search", s.admin(s.handleConsoleSearch))
 		// Pairing a browser extension from the console's own page (the official
 		// server wizard, adr/0020). It takes the console credential - a session
 		// for one's own account - and nothing else: no invite, no operator. The

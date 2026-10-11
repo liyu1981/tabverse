@@ -727,14 +727,32 @@ func (s *Server) handleAdminListRecords(w http.ResponseWriter, r *http.Request) 
 	})
 }
 
-// handleAdminSearch is the console's account wide search. Same FTS index the
-// extension queries, scoped to one account, with the display title filled in
-// so the hits can be listed.
+// handleAdminSearch is the console's account wide search, scoped to the account
+// named in the path: an operator looking through somebody else, or anyone
+// looking at their own.
 func (s *Server) handleAdminSearch(w http.ResponseWriter, r *http.Request) {
 	userID, ok := s.resolveScope(w, r, r.PathValue("user_id"))
 	if !ok {
 		return
 	}
+	s.writeSearch(w, r, userID)
+}
+
+// handleConsoleSearch is the same search for the signed-in person's own
+// account, resolved from the session rather than from a path - the endpoint a
+// user's own console calls without naming an account.
+func (s *Server) handleConsoleSearch(w http.ResponseWriter, r *http.Request) {
+	userID, ok := s.resolveScope(w, r, "")
+	if !ok {
+		return
+	}
+	s.writeSearch(w, r, userID)
+}
+
+// writeSearch runs one account's full text search and writes the hit list. The
+// entity filter is optional; archived rows are hidden unless asked for, the
+// same visibility rule the console's listings use (adr/0011).
+func (s *Server) writeSearch(w http.ResponseWriter, r *http.Request, userID string) {
 	q := r.URL.Query().Get("q")
 	if strings.TrimSpace(q) == "" {
 		writeJSON(w, http.StatusOK, map[string]any{"query": q, "hits": []store.AdminSearchHit{}})

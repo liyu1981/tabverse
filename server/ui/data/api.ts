@@ -139,6 +139,12 @@ export interface ConsoleApi {
     userId: string,
     params: { q: string; entity?: string; archived?: boolean },
   ): Promise<AdminSearchResult>;
+  /** The signed-in account's own search, resolved from the session. */
+  searchSelf(params: {
+    q: string;
+    entity?: string;
+    archived?: boolean;
+  }): Promise<AdminSearchResult>;
 }
 
 export function createConsoleApi(fetchFn: FetchLike = fetch): ConsoleApi {
@@ -377,6 +383,12 @@ export function createConsoleApi(fetchFn: FetchLike = fetch): ConsoleApi {
       call<AdminSearchResult>(
         'GET',
         userPath(userId, '/search') + query(params),
+      ),
+
+    searchSelf: (params: { q: string; entity?: string; archived?: boolean }) =>
+      call<AdminSearchResult>(
+        'GET',
+        '/console/api/v1/console/search' + query(params),
       ),
   };
 }
