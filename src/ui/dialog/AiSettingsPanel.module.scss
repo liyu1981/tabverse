@@ -59,3 +59,68 @@
   font-size: 0.85em;
   color: global.$color-light-accent;
 }
+
+/*
+ * Where to find it: the two features this section switches on, each with the
+ * icon the person will actually look for and one line of where it lives.
+ */
+.features {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.featuresTitle {
+  margin: 0;
+  font-size: 0.8em;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: global.$color-light-accent;
+}
+
+.featureList {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid global.$color-light-shade;
+  border-radius: global.$radius-card;
+  overflow: hidden;
+}
+
+.feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+}
+
+.feature + .feature {
+  border-top: 1px solid global.$color-light-shade;
+}
+
+.featureIcon {
+  margin-top: 2px;
+  color: global.$color-main-brand;
+}
+
+.featureText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.featureName {
+  font-size: 0.9em;
+  font-weight: 600;
+  color: global.$color-text;
+}
+
+.featureWhere {
+  font-size: 0.85em;
+  line-height: 1.5;
+  color: global.$color-light-accent;
+}

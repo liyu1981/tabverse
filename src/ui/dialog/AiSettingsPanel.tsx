@@ -15,7 +15,7 @@
  * the settings dialog is where a person looks to find out *why* the wand is not
  * there, so a missing API is exactly what this page should say.
  */
-import { Button, Callout, Intent, Switch } from '@blueprintjs/core';
+import { Button, Callout, Icon, Intent, Switch } from '@blueprintjs/core';
 // biome-ignore lint/correctness/noUnusedImports: classic jsx transform needs React in scope (tsconfig "jsx": "react"), TS2686 otherwise
 import React, { useCallback, useEffect, useState } from 'react';
 import { useSyncExternalStore } from 'react';
@@ -101,12 +101,38 @@ export function AiSettingsView(props: AiSettingsViewProps) {
     <div className={classes.section}>
       <Callout intent={intent} title="Chrome's built-in AI">
         <p className={classes.hint}>
-          Name suggestions run on the model Chrome ships with itself (Gemma
-          Nano), on this device. Tab titles are handed to it inside the browser
-          and are never sent anywhere; no server, no account, nothing to
-          configure.
+          The features below run on the model Chrome ships with itself (Gemma
+          Nano), on this device. What you point them at is handed to the model
+          inside the browser and is never sent anywhere; no server, no account,
+          nothing to configure.
         </p>
       </Callout>
+
+      <div className={classes.features}>
+        <h4 className={classes.featuresTitle}>Where to find it</h4>
+        <ul className={classes.featureList}>
+          <li className={classes.feature}>
+            <Icon icon="lightbulb" className={classes.featureIcon} />
+            <span className={classes.featureText}>
+              <span className={classes.featureName}>Name a tabverse</span>
+              <span className={classes.featureWhere}>
+                Open a tabverse; the lightbulb is next to its name at the top,
+                and it suggests three names to pick from.
+              </span>
+            </span>
+          </li>
+          <li className={classes.feature}>
+            <Icon icon="lightbulb" className={classes.featureIcon} />
+            <span className={classes.featureText}>
+              <span className={classes.featureName}>Summarize a tab</span>
+              <span className={classes.featureWhere}>
+                In an open tabverse, the lightbulb is on the right of every live
+                tab row, and it turns that page into a new note.
+              </span>
+            </span>
+          </li>
+        </ul>
+      </div>
 
       <Switch
         checked={enabled === true}
@@ -130,7 +156,7 @@ export function AiSettingsView(props: AiSettingsViewProps) {
             {enabled === null
               ? 'Reading…'
               : enabled
-                ? 'Name suggestions are offered'
+                ? 'AI features are offered'
                 : 'Off'}
           </span>
         </div>

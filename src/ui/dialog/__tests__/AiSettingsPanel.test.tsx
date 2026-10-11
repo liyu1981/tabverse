@@ -47,7 +47,7 @@ describe('the model is ready', () => {
 
   test('the switch is on, and offered', () => {
     const markup = render({ state: 'ready', enabled: true });
-    expect(text(markup)).toContain('Name suggestions are offered');
+    expect(text(markup)).toContain('AI features are offered');
     expect(markup).toContain('Use the on-device model');
     // a checked Blueprint switch carries the input's checked attribute
     expect(markup).toContain('checked');
@@ -114,6 +114,32 @@ describe('the switch state', () => {
   test('off says off', () => {
     const markup = render({ enabled: false });
     expect(markup).toContain('>Off<');
+  });
+});
+
+describe('where to find the features', () => {
+  test('lists both features with where to find them', () => {
+    const markup = render();
+    const shown = text(markup);
+    expect(shown).toContain('Where to find it');
+    expect(shown).toContain('Name a tabverse');
+    expect(shown).toContain('Summarize a tab');
+    expect(shown).toContain('next to its name');
+    expect(shown).toContain('every live tab row');
+    // the icon the person looks for, one per feature
+    expect(markup.match(/lightbulb/g)?.length).toBeGreaterThanOrEqual(2);
+  });
+
+  test('the list is shown whatever the device state', () => {
+    for (const state of [
+      'ready',
+      'downloadable',
+      'downloading',
+      'absent',
+      'error',
+    ] as const) {
+      expect(text(render({ state }))).toContain('Summarize a tab');
+    }
   });
 });
 
