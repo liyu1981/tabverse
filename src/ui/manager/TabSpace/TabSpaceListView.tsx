@@ -40,6 +40,7 @@ import { SaveIndicator } from './SaveIndicator';
 import { GroupTabs, SplitBlock, TabGroupBlock } from './TabGroupBlock';
 import { Tab } from '../../../data/tabSpace/Tab';
 import { TabCard } from './TabCard';
+import { SummarizeTabButton } from './SummarizeTabButton';
 import classes from './TabSpaceListView.module.scss';
 import { getPreview } from '../../../data/tabSpace/TabPreviewCache';
 import { logger } from '../../../global';
@@ -242,6 +243,7 @@ export function TabSpaceListView() {
           onToggleWhitelist={(tab: Tab) => {
             void toggleWhitelisted(tabSpace.id, tab.id);
           }}
+          actions={<SummarizeTabButton tab={tab} tabSpaceId={tabSpace.id} />}
           onBookmark={(tab: Tab) => {
             bookmarkStoreApi.addBookmark(
               setFavIconUrl(

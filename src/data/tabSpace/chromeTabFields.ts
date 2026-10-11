@@ -35,9 +35,12 @@ export function copyChromeTabFields(
     if (chromeTab.pinned) {
       draft.pinned = chromeTab.pinned;
     }
-    if (chromeTab.discarded) {
-      draft.suspended = chromeTab.discarded;
-    }
+    // `discarded` is a boolean Chrome always answers, and it goes both ways:
+    // a tab that was suspended and has since been reloaded must read as loaded
+    // again (the summarize action is disabled while it is suspended), so this
+    // is copied even when false - unlike title/url/favicon above, whose silence
+    // while a tab is unloaded must not blank out a kept tab's saved fields.
+    draft.suspended = chromeTab.discarded === true;
     if (chromeTab.splitViewId !== undefined) {
       draft.splitViewId = chromeTab.splitViewId;
     }

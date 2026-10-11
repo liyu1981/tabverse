@@ -106,6 +106,8 @@ interface ITabCardProps {
   isWhitelisted?: boolean;
   /** Present only for live tabs; toggles the never-suspend list. */
   onToggleWhitelist?: (tab: Tab) => void;
+  /** Extra controls for a live tab's action row (e.g. summarize). */
+  actions?: React.ReactNode;
   onSelect?: (tabId: string, selected: boolean) => void;
   /**
    * What clicking the card does. Defaults to switching to the live tab; the
@@ -191,6 +193,7 @@ export function TabCard(props: ITabCardProps) {
       <div className={classes.rightSide}>
         {props.tab.chromeTabId > 0 ? (
           <ButtonGroup>
+            {props.actions}
             {props.onToggleWhitelist ? (
               <Button
                 className="tv-icon-button"

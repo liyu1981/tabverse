@@ -25,6 +25,7 @@
   "permissions": [
     "tabs",
     "tabGroups",
+    "scripting",
     "storage",
     "unlimitedStorage",
     "activeTab",

@@ -7,9 +7,15 @@
  * a split view". Storing it as `undefined` - which is what this used to do -
  * made that the same thing as a tab nobody has looked at, and then a closed
  * split could never retire the pairing it had written (ADR 0022).
+ *
+ * `discarded` is the other field Chrome always answers, and it goes both ways:
+ * a tab that was suspended and has since been reloaded must read as loaded
+ * again (the summarize action is disabled while it is suspended), so it is
+ * copied even when false - unlike title/url, whose silence while a tab is
+ * unloaded must not blank a kept tab's saved fields.
  */
 import { copyChromeTabFields } from '../chromeTabFields';
-import { SPLIT_VIEW_ID_NONE, newEmptyTab } from '../Tab';
+import { SPLIT_VIEW_ID_NONE, newEmptyTab, type Tab } from '../Tab';
 
 const chromeTab = (over: Partial<chrome.tabs.Tab> = {}) =>
   ({
@@ -55,4 +61,32 @@ test('chrome clearing the split says so, on a tab that was split', () => {
     wasSplit,
   );
   expect(tab.splitViewId).toBe(SPLIT_VIEW_ID_NONE);
+});
+
+test('a discarded tab reads as suspended', () => {
+  const tab = copyChromeTabFields(
+    chromeTab({ discarded: true }),
+    newEmptyTab(),
+  );
+  expect(tab.suspended).toBe(true);
+});
+
+test('a reloaded tab reads as not suspended again', () => {
+  const suspended: Tab = { ...newEmptyTab(), suspended: true };
+  const tab = copyChromeTabFields(chromeTab({ discarded: false }), suspended);
+  expect(tab.suspended).toBe(false);
+});
+
+test('title and url are not blanked by an unloaded tab', () => {
+  const existing: Tab = {
+    ...newEmptyTab(),
+    title: 'Kept',
+    url: 'https://kept.example/',
+  };
+  const tab = copyChromeTabFields(
+    chromeTab({ discarded: true, title: '', url: '' }),
+    existing,
+  );
+  expect(tab.title).toBe('Kept');
+  expect(tab.url).toBe('https://kept.example/');
 });

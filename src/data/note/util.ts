@@ -8,7 +8,13 @@ import {
   newEmptyAllNote,
   updateTabSpaceId,
 } from './AllNote';
-import { NOTE_DB_TABLE_NAME, Note } from './Note';
+import {
+  NOTE_DB_TABLE_NAME,
+  Note,
+  newEmptyNote,
+  setData,
+  setName,
+} from './Note';
 import { addPagingToQueryParams, db } from '../../storage/db';
 import { debounce } from '../../global';
 
@@ -58,6 +64,32 @@ export const saveCurrentNotes = () => {
   // there is no "not saved yet" state to fall back to
   saveCurrentAllNote();
 };
+
+/** A new note from a summary: the given name and HTML body. */
+export function newSummaryNote(name: string, html: string): Note {
+  return setData(html, setName(name, newEmptyNote()));
+}
+
+/**
+ * Adds a note to a tabverse and saves at once (not debounced).
+ *
+ * If the in-memory notes belong to another tabverse - the Note panel has not
+ * been opened, or was last opened on a different one - they are loaded first,
+ * so the note is appended to the right list rather than a stale one. When the
+ * panel is open the list is already this tabverse's, and this save also flushes
+ * whatever edits are still pending.
+ */
+export async function addNoteToTabSpace(
+  tabSpaceId: string,
+  note: Note,
+): Promise<void> {
+  if ($allNote.getState().tabSpaceId !== tabSpaceId) {
+    await loadAllNoteByTabSpaceId(tabSpaceId);
+  }
+  noteStoreApi.addNote(note);
+  const savedAt = await saveAllNote();
+  noteStoreApi.updateLastSavedTime(savedAt);
+}
 
 export async function queryAllNote(
   tabSpaceId: string,
