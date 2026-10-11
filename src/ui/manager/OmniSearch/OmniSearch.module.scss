@@ -1,0 +1,149 @@
+@use '../../../global.scss';
+
+.container {
+  height: 100vh;
+  overflow-y: auto;
+  padding: 20px 24px 80px;
+  box-sizing: border-box;
+}
+
+.searchBar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 900px;
+  margin: 0 auto 8px;
+}
+
+.input {
+  flex: 1;
+}
+
+.status {
+  max-width: 900px;
+  margin: 0 auto 12px;
+  color: global.$color-dark-accent;
+  font-size: 0.9em;
+}
+
+.empty,
+.problem {
+  max-width: 900px;
+  margin: 40px auto;
+  text-align: center;
+  color: global.$color-dark-accent;
+}
+
+.problem {
+  color: #c23030;
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-width: 900px;
+  margin: 0 auto 14px;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border: 1px solid global.$color-e;
+  border-radius: 999px;
+  background: global.$color-light-shade;
+  color: global.$color-text;
+  font: inherit;
+  font-size: 0.9em;
+  cursor: pointer;
+}
+
+.tabActive {
+  background: global.$color-main-brand;
+  border-color: global.$color-main-brand;
+  color: white;
+}
+
+.tabCount {
+  opacity: 0.7;
+  font-variant-numeric: tabular-nums;
+}
+
+.results {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.tabverse {
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border: 1px solid global.$color-e;
+  border-radius: global.$radius-card;
+  background: white;
+}
+
+.tabverseHead {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.tabverseName {
+  font-weight: 600;
+  color: global.$color-main-brand;
+  overflow-wrap: anywhere;
+}
+
+.tabverseCount {
+  color: global.$color-dark-accent;
+  font-size: 0.85em;
+  margin-right: auto;
+}
+
+.hit {
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  border-radius: global.$radius-card;
+  background: global.$color-light-shade;
+}
+
+.hitHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.hitEntity {
+  font-family: monospace;
+  font-size: 0.75em;
+  color: global.$color-main-brand;
+}
+
+.hitScore {
+  font-size: 0.75em;
+  color: global.$color-dark-accent;
+}
+
+.hitTitle {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.hitUrl {
+  display: block;
+  font-size: 0.85em;
+  color: global.$color-dark-accent;
+  overflow-wrap: anywhere;
+}
+
+.hitSnippet {
+  margin: 4px 0 0;
+  font-size: 0.85em;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: global.$color-dark-accent;
+}

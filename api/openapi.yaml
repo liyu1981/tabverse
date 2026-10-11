@@ -244,6 +244,38 @@ paths:
             application/json:
               schema: { type: object }
 
+  /console/api/v1/console/search:
+    get:
+      tags: [search]
+      summary: Full text search over the signed-in person's own account
+      description: |
+        The same index as the account-wide search, scoped by the session rather
+        than by a user id, so a person's own console can call it without naming
+        an account. An operator looking through somebody else uses
+        `/console/api/v1/admin/users/{user_id}/search`.
+      parameters:
+        - { name: q, in: query, schema: { type: string } }
+        - { name: entity, in: query, schema: { $ref: '#/components/schemas/Entity' } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 200 } }
+        - { name: archived, in: query, schema: { type: string, enum: ['0', '1'] } }
+      responses:
+        '200':
+          description: ranked hits
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  query: { type: string }
+                  hits:
+                    type: array
+                    items: { $ref: '#/components/schemas/AdminSearchHit' }
+        '401':
+          description: no session, or the session does not resolve to an account
+          content:
+            application/json:
+              schema: { type: object }
+
   /console/api/v1/sync:
     get:
       tags: [sync]
@@ -340,6 +372,10 @@ paths:
         The client drops the tabverses it has not downloaded, so a hit for a
         tabverse this device has never synced is expected and harmless.
 
+        The hit also carries the display `title` and `url` of the record and
+        the `tabspace_title` of its tabverse, so the extension's search panel
+        can group and label results without a second round trip.
+
         `allnote` / `alltodo` / `allbookmark` are never indexed (they are id
         lists) and `session` only exists for pre-ADR-0006 clients.
       parameters:
@@ -372,7 +408,7 @@ paths:
                   query: { type: string }
                   hits:
                     type: array
-                    items: { $ref: '#/components/schemas/SearchHit' }
+                    items: { $ref: '#/components/schemas/AdminSearchHit' }
         '401': { $ref: '#/components/responses/Unauthorized' }
 
   /console/api/v1/sync/stream:
@@ -1062,6 +1098,12 @@ components:
           properties:
             title: { type: string, description: the record's display title, for listing }
             url: { type: string }
+            tabspace_title:
+              type: string
+              description: >-
+                display name of the tabverse the hit belongs to, for grouping.
+                Empty for a `tabspace` hit (the hit is its own title) or when
+                the tabverse is gone.
 
     Totals:
       type: object

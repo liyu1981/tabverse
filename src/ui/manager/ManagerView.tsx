@@ -5,6 +5,7 @@ import React, { useMemo, useState } from 'react';
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { ManagerViewContextSupport } from './ManagerViewContext';
 import { IManagerQueryParams, ManagerViewRoute } from './routes';
+import { OmniSearch } from './OmniSearch/OmniSearch';
 import { RightSidePanel } from './RightSidePanel/RightSidePanel';
 import { SavedTabSpaceView } from './SavedTabSpace/SavedTabSpaceView';
 import { Sidebar } from './Sidebar/Sidebar';
@@ -43,8 +44,8 @@ export const ManagerView = (props: IManagerContainerProps) => {
         return <SavedTabSpaceView />;
       case ManagerViewRoute.Webtool:
         return <WebtoolView></WebtoolView>;
-      // case ManagerViewRoute.Search:
-      //   return <OmniSearch />;
+      case ManagerViewRoute.Search:
+        return <OmniSearch />;
       default:
         return null;
     }

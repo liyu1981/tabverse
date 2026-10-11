@@ -1,6 +1,12 @@
 import { expect, test } from 'vitest';
 
-import { groupHits, searchTabs } from './SearchPanel';
+import {
+  collectTabverses,
+  hitsForTabverse,
+  matchCount,
+  rankTabverses,
+  searchTabs,
+} from './SearchPanel';
 import type { AdminSearchHit } from '../data/types';
 
 const hit = (over: Partial<AdminSearchHit>): AdminSearchHit => ({
@@ -10,67 +16,10 @@ const hit = (over: Partial<AdminSearchHit>): AdminSearchHit => ({
   ...over,
 });
 
-test('groups hits by entity, then by tabverse, in a stable order', () => {
-  const groups = groupHits([
-    hit({
-      entity: 'todo',
-      id: 'td1',
-      tabspace_id: 'ts1',
-      tabspace_title: 'One',
-    }),
-    hit({
-      entity: 'note',
-      id: 'n1',
-      tabspace_id: 'ts1',
-      tabspace_title: 'One',
-    }),
-    hit({
-      entity: 'note',
-      id: 'n2',
-      tabspace_id: 'ts2',
-      tabspace_title: 'Two',
-    }),
+test('folds hits into tabverses and ranks each tab by its kind', () => {
+  const tabverses = collectTabverses([
     hit({ entity: 'tabspace', id: 'ts1', title: 'One' }),
     hit({
-      entity: 'closedtab',
-      id: 'c1',
-      tabspace_id: 'ts1',
-      tabspace_title: 'One',
-    }),
-  ]);
-
-  // A fixed order: Tabverses, Tabs, History, Notes, Todos, Bookmarks.
-  expect(groups.map((group) => group.entity)).toEqual([
-    'tabspace',
-    'closedtab',
-    'note',
-    'todo',
-  ]);
-
-  const notes = groups.find((group) => group.entity === 'note');
-  expect(notes?.count).toBe(2);
-  expect(notes?.tabverses.map((tabverse) => tabverse.title)).toEqual([
-    'One',
-    'Two',
-  ]);
-  expect(notes?.tabverses[0].hits.map((entry) => entry.id)).toEqual(['n1']);
-
-  // A tabverse hit is its own group and takes its title from the hit.
-  const tabspaces = groups.find((group) => group.entity === 'tabspace');
-  expect(tabspaces?.count).toBe(1);
-  expect(tabspaces?.tabverses[0].title).toBe('One');
-});
-
-test('a hit without a tabverse still lands in a group', () => {
-  const groups = groupHits([hit({ id: 'solo' })]);
-  expect(groups).toHaveLength(1);
-  expect(groups[0].tabverses[0].id).toBe('');
-  expect(groups[0].tabverses[0].title).toBe('');
-});
-
-test('the tab strip lists All first, then each kind with its count', () => {
-  const groups = groupHits([
-    hit({
       entity: 'note',
       id: 'n1',
       tabspace_id: 'ts1',
@@ -82,16 +31,49 @@ test('the tab strip lists All first, then each kind with its count', () => {
       tabspace_id: 'ts1',
       tabspace_title: 'One',
     }),
-    hit({
-      entity: 'todo',
-      id: 'td1',
-      tabspace_id: 'ts1',
-      tabspace_title: 'One',
-    }),
+    hit({ entity: 'tab', id: 't1', tabspace_id: 'ts1', tabspace_title: 'One' }),
+    hit({ entity: 'tab', id: 't2', tabspace_id: 'ts2', tabspace_title: 'Two' }),
+    hit({ entity: 'tab', id: 't3', tabspace_id: 'ts2', tabspace_title: 'Two' }),
   ]);
-  expect(searchTabs(groups, 3)).toEqual([
-    { key: 'all', label: 'All', count: 3 },
-    { key: 'note', label: 'Notes', count: 2 },
-    { key: 'todo', label: 'Todos', count: 1 },
+  const byId = new Map(tabverses.map((tabverse) => [tabverse.id, tabverse]));
+
+  expect(byId.get('ts1')?.total).toBe(4);
+  expect(byId.get('ts1')?.byKind).toMatchObject({
+    tabspace: 1,
+    note: 2,
+    tab: 1,
+  });
+  expect(byId.get('ts1')?.title).toBe('One');
+
+  const tabs = searchTabs(tabverses);
+  expect(tabs[0]).toEqual({ key: 'overview', label: 'Overview', count: 6 });
+  expect(tabs.find((tab) => tab.key === 'note')).toMatchObject({ count: 2 });
+  expect(tabs.find((tab) => tab.key === 'tab')).toMatchObject({ count: 3 });
+
+  // Tabs tab: ts2 matched two tabs, ts1 one.
+  expect(
+    rankTabverses(tabverses, 'tab').map((tabverse) => tabverse.id),
+  ).toEqual(['ts2', 'ts1']);
+  // Overview: ts1 matched four records, ts2 two.
+  expect(
+    rankTabverses(tabverses, 'overview').map((tabverse) => tabverse.id),
+  ).toEqual(['ts1', 'ts2']);
+
+  expect(matchCount(byId.get('ts1')!, 'overview')).toBe(4);
+  expect(matchCount(byId.get('ts1')!, 'note')).toBe(2);
+
+  expect(
+    hitsForTabverse(byId.get('ts1')!, 'note').map((entry) => entry.id),
+  ).toEqual(['n1', 'n2']);
+  expect(hitsForTabverse(byId.get('ts1')!, 'overview')).toHaveLength(4);
+});
+
+test('a tabverse that only matches by name ranks in overview, not in a kind tab', () => {
+  const tabverses = collectTabverses([
+    hit({ entity: 'tabspace', id: 'ts9', title: 'Nine' }),
   ]);
+  expect(rankTabverses(tabverses, 'tab')).toHaveLength(0);
+  expect(
+    rankTabverses(tabverses, 'overview').map((tabverse) => tabverse.id),
+  ).toEqual(['ts9']);
 });

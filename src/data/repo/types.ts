@@ -91,6 +91,12 @@ export interface SearchHit {
    * device has, so the server resolves this instead of leaving it to us.
    */
   tabspace_id?: string;
+  /** Display label of the matching record (a tab title, a note name, ...). */
+  title?: string;
+  /** The record's url, when it has one (tabs, bookmarks, closed tabs). */
+  url?: string;
+  /** Display name of the tabverse the hit belongs to, for grouping. */
+  tabspace_title?: string;
 }
 
 export interface DeviceCredentials {

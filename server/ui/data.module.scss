@@ -116,32 +116,31 @@
 
 // ---- unified search --------------------------------------------------------
 
-.searchGroup {
-  margin-bottom: 18px;
-}
-
-.searchGroupHead {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  margin: 0 0 8px;
-  font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-muted);
-}
-
 .searchTabverse {
-  margin: 0 0 10px;
-  padding-left: 10px;
-  border-left: 2px solid var(--border);
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
 }
 
 .searchTabverseHead {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 8px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
+}
+
+.searchTabverseName {
+  font-weight: 600;
+  color: var(--brand);
+  overflow-wrap: anywhere;
+}
+
+.searchTabverseCount {
+  color: var(--text-muted);
+  font-size: 12px;
+  margin-right: auto;
 }
 
 // ---- the stored-data panel's own header ------------------------------------

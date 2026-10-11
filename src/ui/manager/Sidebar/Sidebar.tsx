@@ -8,6 +8,7 @@ import React from 'react';
 import { OtherTabSpaces } from './OtherTabSpaces';
 import { SavedTabSpace } from './SavedTabSpace';
 import { TabSpaceLogo } from '../../common/TabSpaceLogo';
+import { useServerSyncConfigured } from './useServerSyncConfigured';
 import { useSidebarCollapsed } from '../../common/SidebarContainer';
 import { $tabSpace } from '../../../data/tabSpace/store';
 import { useStore } from 'effector-react';
@@ -151,6 +152,7 @@ const RAIL_ICON_SIZE = 26;
 
 export const Sidebar = (props: ISidebarProps) => {
   const tabSpace = useStore($tabSpace);
+  const serverSync = useServerSyncConfigured();
   // the rail has no room for a name, so the current tabverse's own name is the
   // tooltip; before the bootstrap write lands there is no name yet
   const currentLabel =
@@ -198,6 +200,22 @@ export const Sidebar = (props: ISidebarProps) => {
         >
           <SavedTabSpace active={props.route === ManagerViewRoute.Opened} />
         </SidebarComponent>
+        {/* Full text search over the whole synced account. Only with a server:
+            without one there is nothing to search beyond this device. */}
+        {serverSync ? (
+          <SidebarComponent
+            active={props.route === ManagerViewRoute.Search}
+            route={ManagerViewRoute.Search}
+            onSwitch={props.switchRoute}
+            railIcon="search"
+            railLabel="Omni Search"
+            header={
+              <div className={classes.sidebarHeaderContainer}>
+                <Icon icon="search" size={ICON_SIZE} /> Omni Search
+              </div>
+            }
+          />
+        ) : null}
         {isDebug() ? (
           <SidebarComponent
             active={props.route === ManagerViewRoute.Webtool}

@@ -185,19 +185,27 @@ func (s *Server) handleDeleteEntity(w http.ResponseWriter, r *http.Request) {
 // ---- search ---------------------------------------------------------------
 
 // handleSearch answers GET /console/api/v1/search?q=<free text>&entity=&limit=.
+//
+// It is the extension's server-side search, and it returns the same rich hits
+// the console lists - a display title, a url and the tabverse the record
+// belongs to - so the extension's own search panel can group and label the
+// results without a second round trip. It sees everything the account holds:
+// archiving is an operator's filing decision and must not hide a record from
+// the user's own search (adr/0011).
 func (s *Server) handleSearch(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query().Get("q")
 	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
 	if err != nil || limit <= 0 {
 		limit = s.cfg.SearchLimit
 	}
-	hits, err := s.store.Search(r.Context(), userIDFrom(r.Context()), q, r.URL.Query().Get("entity"), limit)
+	hits, err := s.store.SearchFor(r.Context(), userIDFrom(r.Context()), q,
+		r.URL.Query().Get("entity"), limit, true)
 	if err != nil {
 		writeStoreErr(w, err)
 		return
 	}
 	if hits == nil {
-		hits = []store.SearchHit{}
+		hits = []store.AdminSearchHit{}
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"query": q, "hits": hits})
 }

@@ -20,14 +20,17 @@ import classes from '../data.module.scss';
  * queries (adr/0008), every whitespace-separated term must match and the last
  * one is a prefix, so results narrow as the operator types.
  *
- * Results are shown in tabs by entity - All, Tabverses, Tabs, History, Notes,
- * Todos, Bookmarks - each tab carrying its hit count, and within a tab grouped
- * by the tabverse the hit belongs to. That is what makes one search answer
- * "where in this account is this word", instead of a single flat list. Every
- * hit names its tabverse, exactly like the extension's search does, so one
- * click opens it.
+ * The results are **tabverse centric**. Every hit belongs to a tabverse, and
+ * each tab is a ranking of tabverses rather than a flat list of records:
+ *
+ *   - **Overview** ranks by how many records of any kind matched in the tabverse;
+ *   - **Tabs**, **History**, **Notes**, ... rank by how many of *that* kind
+ *     matched.
+ *
+ * Inside a tabverse the matched records themselves are listed, so a search
+ * answers both "which tabverse" and "what in it".
  */
-const ENTITY_ORDER = [
+export const SEARCH_KIND_ORDER = [
   'tabspace',
   'tab',
   'closedtab',
@@ -37,7 +40,7 @@ const ENTITY_ORDER = [
   'session',
 ];
 
-const ENTITY_LABEL: Record<string, string> = {
+export const SEARCH_KIND_LABEL: Record<string, string> = {
   tabspace: 'Tabverses',
   tab: 'Tabs',
   closedtab: 'History',
@@ -47,79 +50,121 @@ const ENTITY_LABEL: Record<string, string> = {
   session: 'Sessions',
 };
 
-interface TabverseHits {
+export interface TabverseMatches {
   id: string;
   title: string;
-  hits: AdminSearchHit[];
+  /** Every hit in this tabverse, across kinds. */
+  total: number;
+  byKind: Record<string, number>;
+  hitsByKind: Record<string, AdminSearchHit[]>;
 }
 
-interface EntityHits {
-  entity: string;
-  label: string;
-  count: number;
-  tabverses: TabverseHits[];
-}
-
-interface SearchTab {
+export interface SearchTab {
   key: string;
   label: string;
   count: number;
 }
 
-/**
- * Buckets hits by entity, then by tabverse. Kept pure and exported so the
- * grouping can be tested without a browser.
- */
-export function groupHits(hits: AdminSearchHit[]): EntityHits[] {
-  const byEntity = new Map<string, AdminSearchHit[]>();
-  for (const hit of hits) {
-    const list = byEntity.get(hit.entity);
-    if (list) list.push(hit);
-    else byEntity.set(hit.entity, [hit]);
-  }
-  const known = ENTITY_ORDER.filter((entity) => byEntity.has(entity));
-  const unknown = [...byEntity.keys()].filter(
-    (entity) => !ENTITY_ORDER.includes(entity),
-  );
-  const groups: EntityHits[] = [];
-  for (const entity of [...known, ...unknown]) {
-    const list = byEntity.get(entity) ?? [];
-    const byTabverse = new Map<string, AdminSearchHit[]>();
-    for (const hit of list) {
-      // A tabverse hit is its own group; everything else groups under the
-      // tabverse it belongs to (or under "" when the payload carried none).
-      const key = entity === 'tabspace' ? hit.id : hit.tabspace_id || '';
-      const bucket = byTabverse.get(key);
-      if (bucket) bucket.push(hit);
-      else byTabverse.set(key, [hit]);
-    }
-    groups.push({
-      entity,
-      label: ENTITY_LABEL[entity] || entity,
-      count: list.length,
-      tabverses: [...byTabverse.entries()].map(([id, grouped]) => ({
-        id,
-        title:
-          grouped[0].tabspace_title ||
-          (entity === 'tabspace' ? grouped[0].title : '') ||
-          id,
-        hits: grouped,
-      })),
-    });
-  }
-  return groups;
+function tabverseIdOf(hit: AdminSearchHit): string {
+  return hit.entity === 'tabspace' ? hit.id : hit.tabspace_id || '';
 }
 
-/** The tab strip: All first, then one tab per entity that has hits. */
-export function searchTabs(groups: EntityHits[], total: number): SearchTab[] {
-  return [
-    { key: 'all', label: 'All', count: total },
-    ...groups.map((group) => ({
-      key: group.entity,
-      label: group.label,
-      count: group.count,
-    })),
+/**
+ * Folds a flat hit list into one bucket per tabverse, counting and keeping the
+ * hits per kind. Pure and exported so the ranking can be tested without a
+ * browser.
+ */
+export function collectTabverses(hits: AdminSearchHit[]): TabverseMatches[] {
+  const byTabverse = new Map<string, TabverseMatches>();
+  for (const hit of hits) {
+    const id = tabverseIdOf(hit);
+    let tabverse = byTabverse.get(id);
+    if (!tabverse) {
+      tabverse = { id, title: '', total: 0, byKind: {}, hitsByKind: {} };
+      byTabverse.set(id, tabverse);
+    }
+    tabverse.total += 1;
+    tabverse.byKind[hit.entity] = (tabverse.byKind[hit.entity] || 0) + 1;
+    (tabverse.hitsByKind[hit.entity] ||= []).push(hit);
+    // Prefer the tabverse's own name: a tabspace hit's title, else the
+    // tabspace_title the server filled in on any child hit.
+    if (!tabverse.title) {
+      if (hit.entity === 'tabspace' && hit.title) tabverse.title = hit.title;
+      else if (hit.tabspace_title) tabverse.title = hit.tabspace_title;
+    }
+  }
+  for (const tabverse of byTabverse.values()) {
+    for (const kind of Object.keys(tabverse.hitsByKind)) {
+      tabverse.hitsByKind[kind].sort((a, b) => b.score - a.score);
+    }
+    if (!tabverse.title) tabverse.title = tabverse.id;
+  }
+  return [...byTabverse.values()];
+}
+
+/** The tab strip: Overview first, then one tab per kind that matched. */
+export function searchTabs(tabverses: TabverseMatches[]): SearchTab[] {
+  const sum = (kind: string) =>
+    tabverses.reduce((n, tabverse) => n + (tabverse.byKind[kind] || 0), 0);
+  const total = tabverses.reduce((n, tabverse) => n + tabverse.total, 0);
+  const tabs: SearchTab[] = [
+    { key: 'overview', label: 'Overview', count: total },
   ];
+  const kinds = [...SEARCH_KIND_ORDER];
+  for (const tabverse of tabverses) {
+    for (const kind of Object.keys(tabverse.byKind)) {
+      if (!kinds.includes(kind)) kinds.push(kind);
+    }
+  }
+  for (const kind of kinds) {
+    const count = sum(kind);
+    if (count > 0) {
+      tabs.push({ key: kind, label: SEARCH_KIND_LABEL[kind] || kind, count });
+    }
+  }
+  return tabs;
+}
+
+/** How many records this tabverse matched for a tab (`overview` = all). */
+export function matchCount(tabverse: TabverseMatches, kind: string): number {
+  return kind === 'overview' ? tabverse.total : tabverse.byKind[kind] || 0;
+}
+
+/**
+ * The tabverses a tab shows, best match first: by the kind's match count, then
+ * by total matches, then by name so the order is stable.
+ */
+export function rankTabverses(
+  tabverses: TabverseMatches[],
+  kind: string,
+): TabverseMatches[] {
+  return tabverses
+    .filter((tabverse) => matchCount(tabverse, kind) > 0)
+    .sort((a, b) => {
+      const byKind = matchCount(b, kind) - matchCount(a, kind);
+      if (byKind !== 0) return byKind;
+      if (b.total !== a.total) return b.total - a.total;
+      return a.title.localeCompare(b.title);
+    });
+}
+
+/** The records a tab shows inside one tabverse. */
+export function hitsForTabverse(
+  tabverse: TabverseMatches,
+  kind: string,
+): AdminSearchHit[] {
+  if (kind !== 'overview') {
+    return tabverse.hitsByKind[kind] || [];
+  }
+  const out: AdminSearchHit[] = [];
+  const kinds = [...SEARCH_KIND_ORDER];
+  for (const present of Object.keys(tabverse.hitsByKind)) {
+    if (!kinds.includes(present)) kinds.push(present);
+  }
+  for (const present of kinds) {
+    out.push(...(tabverse.hitsByKind[present] || []));
+  }
+  return out;
 }
 
 export function SearchPanel() {
@@ -130,7 +175,7 @@ export function SearchPanel() {
   });
   const settled = useDebounced(search.q, 250);
   const firstSettle = useRef(true);
-  const [activeKey, setActiveKey] = useState('all');
+  const [activeKind, setActiveKind] = useState('overview');
 
   useEffect(() => {
     if (firstSettle.current) {
@@ -143,15 +188,13 @@ export function SearchPanel() {
   if (!account?.user) return null;
   const who = account.user.name || account.user.id;
   const q = search.q.trim();
-  const groups = groupHits(search.hits);
-  const tabs = searchTabs(groups, search.hits.length);
-  // A new search can drop the tab that was open; fall back to All rather than
-  // showing an empty panel for a kind that no longer matched.
-  const active = tabs.some((tab) => tab.key === activeKey) ? activeKey : 'all';
-  const visible =
-    active === 'all'
-      ? groups
-      : groups.filter((group) => group.entity === active);
+  const tabverses = collectTabverses(search.hits);
+  const tabs = searchTabs(tabverses);
+  // A new search can drop the tab that was open; fall back to Overview.
+  const active = tabs.some((tab) => tab.key === activeKind)
+    ? activeKind
+    : 'overview';
+  const ranked = rankTabverses(tabverses, active);
 
   return (
     <section>
@@ -160,8 +203,8 @@ export function SearchPanel() {
           <h2>Search</h2>
           <p className="muted small">
             Full text over this account's tabs, history, notes, todos and
-            bookmarks. Results are tabbed by kind, and grouped by tabverse
-            within each.
+            bookmarks. Results are catalogued by tabverse, ranked by how much of
+            each kind matched.
           </p>
         </div>
         <div className={layout.panelHeadActions}>
@@ -191,6 +234,8 @@ export function SearchPanel() {
           ? search.searched
             ? `${who} · ${search.hits.length} hit${
                 search.hits.length === 1 ? '' : 's'
+              } in ${tabverses.length} tabverse${
+                tabverses.length === 1 ? '' : 's'
               } for "${q}"`
             : `${who} · searching for "${q}"`
           : `${who} · type to search`}
@@ -214,42 +259,35 @@ export function SearchPanel() {
                 value: tab.key,
                 label: `${tab.label} (${tab.count})`,
               }))}
-              onChange={setActiveKey}
+              onChange={setActiveKind}
             />
           </div>
-          {visible.map((group) => (
-            <section key={group.entity} className={classes.searchGroup}>
-              <h3 className={classes.searchGroupHead}>
-                {group.label}
-                <span className="muted small">{group.count}</span>
-              </h3>
-              {group.tabverses.map((tabverse) => (
-                <div
-                  key={`${group.entity}/${tabverse.id}`}
-                  className={classes.searchTabverse}
-                >
-                  <div className={classes.searchTabverseHead}>
-                    <span className={classes.rowName}>
-                      {tabverse.title || '(no tabverse)'}
-                    </span>
-                    {tabverse.id ? (
-                      <Button
-                        small={true}
-                        minimal={true}
-                        icon="arrow-right"
-                        onClick={() => void openTabspaceById(tabverse.id)}
-                      >
-                        open tabverse
-                      </Button>
-                    ) : null}
-                  </div>
-                  <div className={classes.recordList}>
-                    {tabverse.hits.map((hit) => (
-                      <HitCard key={`${hit.entity}/${hit.id}`} hit={hit} />
-                    ))}
-                  </div>
-                </div>
-              ))}
+          {ranked.map((tabverse) => (
+            <section key={tabverse.id} className={classes.searchTabverse}>
+              <div className={classes.searchTabverseHead}>
+                <span className={classes.searchTabverseName}>
+                  {tabverse.title || '(no tabverse)'}
+                </span>
+                <span className={classes.searchTabverseCount}>
+                  {matchCount(tabverse, active)} match
+                  {matchCount(tabverse, active) === 1 ? '' : 'es'}
+                </span>
+                {tabverse.id ? (
+                  <Button
+                    small={true}
+                    minimal={true}
+                    icon="arrow-right"
+                    onClick={() => void openTabspaceById(tabverse.id)}
+                  >
+                    open tabverse
+                  </Button>
+                ) : null}
+              </div>
+              <div className={classes.recordList}>
+                {hitsForTabverse(tabverse, active).map((hit) => (
+                  <HitCard key={`${hit.entity}/${hit.id}`} hit={hit} />
+                ))}
+              </div>
             </section>
           ))}
         </div>
