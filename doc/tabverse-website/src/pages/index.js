@@ -20,7 +20,7 @@ function HomepageHeader() {
         </div>
       </div>
       <div className="container" style={{ zIndex: 2 }}>
-        <div style={{ zoom: '2' }}>
+        <div className={styles.tabverseLogo}>
           <TabSpaceLogo />
         </div>
         <div>

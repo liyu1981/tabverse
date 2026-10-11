@@ -16,6 +16,37 @@
   min-width: 500px;
 }
 
+@media screen and (max-width: 996px) {
+  .featureContainer {
+    flex-direction: column;
+    margin-top: 28px;
+    margin-bottom: 28px;
+  }
+
+  .featureImg {
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+    height: auto;
+    margin-top: 12px;
+  }
+
+  .featureSvg {
+    width: 140px;
+    height: 140px;
+  }
+
+  .featureText {
+    font-size: 20px;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  .featureText h3 {
+    font-size: 24px;
+  }
+}
+
 .featureText {
   font-family: 'Open Sans Condensed', sans-serif;
   font-size: 28px;

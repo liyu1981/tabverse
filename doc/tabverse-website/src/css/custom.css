@@ -27,6 +27,14 @@ html[data-theme='dark'] .docusaurus-highlight-code-line {
   background-color: rgba(0, 0, 0, 0.3);
 }
 
+/* Screenshots in the manual should shrink to their column on a phone. */
+.markdown img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* The homepage feature screenshots and the hero already carry their own
+   mobile rules (HomepageFeatures.module.css, index.module.css). */
 .tabverse-github-header {
   position: relative;
 }
