@@ -174,6 +174,7 @@ func TestServiceInstallWritesAUnitThatRunsServe(t *testing.T) {
 		"ExecStart=" + m.binPath + " serve",
 		"WorkingDirectory=" + m.workDir,
 		"Restart=always",
+		"LimitNOFILE=65535",
 		"WantedBy=default.target",
 	} {
 		if !strings.Contains(text, want) {

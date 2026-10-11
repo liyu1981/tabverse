@@ -16,6 +16,7 @@ import (
 	"github.com/liyu1981/tabverse/server/internal/counters"
 	"github.com/liyu1981/tabverse/server/internal/hub"
 	"github.com/liyu1981/tabverse/server/internal/retention"
+	"github.com/liyu1981/tabverse/server/internal/rlimit"
 	"github.com/liyu1981/tabverse/server/internal/store"
 	"github.com/liyu1981/tabverse/server/internal/version"
 )
@@ -50,6 +51,22 @@ func serve(args []string) error {
 	if dir := parentDir(cfg.DBPath); dir != "" && dir != "." {
 		if err := os.MkdirAll(dir, 0o755); err != nil {
 			return err
+		}
+	}
+
+	// Derive the user-DB pool from the file-descriptor limit rather than
+	// asking the operator to pair the two by hand (ADR 0027). fdReserve is what
+	// is left for sockets, the central file and logs.
+	const fdReserve = 256
+	desired := uint64(3*cfg.MaxOpenUserDBs + fdReserve)
+	if soft, hard, ok := rlimit.Limit(); ok {
+		if soft < desired {
+			soft, _ = rlimit.RaiseSoft(min(hard, desired))
+		}
+		if fit := rlimit.Fit(cfg.MaxOpenUserDBs, soft, fdReserve); fit != cfg.MaxOpenUserDBs {
+			logger.Warn("clamping the user DB pool to the file-descriptor limit",
+				"from", cfg.MaxOpenUserDBs, "to", fit, "soft_limit", soft)
+			cfg.MaxOpenUserDBs = fit
 		}
 	}
 

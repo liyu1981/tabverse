@@ -227,6 +227,9 @@ StandardOutput=journal
 StandardError=journal
 NoNewPrivileges=true
 PrivateTmp=true
+# Room for the per-user content databases; the server also clamps its pool to
+# this at startup (ADR 0027).
+LimitNOFILE=65535
 
 [Install]
 WantedBy=default.target

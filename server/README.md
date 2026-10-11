@@ -4,7 +4,7 @@ Single-binary Go server that replaces the extension's client side coordination
 (leader election, broadcast-channel, dexie-observable, Dropbox dumps) with a
 server authoritative sync protocol.
 
-- **Storage:** SQLite (pure Go driver, no cgo → cross-compiles everywhere)
+- **Storage:** SQLite (pure Go driver, no cgo → cross-compiles to linux/amd64 and linux/arm64)
 - **Sync:** per-user monotonic revisions, delta pull + batch push, LWW conflicts
 - **Realtime:** one WebSocket per device, `records_changed` fan-out
 - **Search:** FTS5 (replaces ~760 LOC of client side indexing)
@@ -148,7 +148,7 @@ short; set `TABVERSED_ADDR=127.0.0.1:8223` to keep it local.
 Cross compile (no cgo):
 
 ```sh
-pnpm run server:cross    # linux/amd64, linux/arm64, darwin/amd64, darwin/arm64, windows/amd64
+pnpm run server:cross    # linux/amd64, linux/arm64
 ```
 
 Tests and checks:
@@ -187,7 +187,7 @@ git-ignored, because it holds the auth secret and the provider secret - and
 | `TABVERSED_ADDR`             | `0.0.0.0:8223`      | listen address (use `127.0.0.1:8223` to stay local)         |
 | `TABVERSED_DB`               | `data/tabversed.db` | central SQLite file path (accounts, devices, tokens)         |
 | `TABVERSED_USERS_DIR`        | `users/` beside `TABVERSED_DB` | where per-account content databases live (ADR 0027) |
-| `TABVERSED_MAX_OPEN_USER_DBS` | `64`              | cap on simultaneously open content files; the file-descriptor budget (three descriptors per open WAL file) |
+| `TABVERSED_MAX_OPEN_USER_DBS` | `64`              | cap on simultaneously open content files; the file-descriptor budget (three descriptors per open WAL file). At startup the server raises the soft `RLIMIT_NOFILE` toward what this needs and clamps it to fit. |
 | `TABVERSED_RETENTION_DAYS`   | `14`                | prune `session` records older than this (0 = keep forever)  |
 | `TABVERSED_MAX_RECORD_BYTES` | `1048576`           | max payload size per record                                 |
 | `TABVERSED_SYNC_BATCH_LIMIT` | `500`               | max records per sync request                                |

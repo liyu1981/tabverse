@@ -125,5 +125,11 @@ Proposed, pending the mode answer:
   file" becomes "one directory".
 - **Config:** `TABVERSED_USERS_DIR` (default `users/` beside `TABVERSED_DB`) and
   `TABVERSED_MAX_OPEN_USER_DBS` (default 64, the FD budget).
-- Still open: whether `user_meta` carries a schema version for future
-  non-additive per-file migrations.
+- **The descriptor budget is derived.** At startup the server raises its soft
+  `RLIMIT_NOFILE` toward what the pool needs (never above the hard limit) and
+  clamps `TABVERSED_MAX_OPEN_USER_DBS` to fit, warning when it does; the
+  generated systemd unit sets `LimitNOFILE=65535`.
+- **Content files are versioned** with SQLite's `PRAGMA user_version`.
+  `UserDB.migrate` applies the pending steps in `userMigrations`, one
+  transaction each, so a future non-additive per-file change is possible and an
+  interrupted migration resumes at the last completed step.

@@ -41,9 +41,9 @@ account's file, and run there. There is no cross-file transaction: account and
 auth data is central and exact, content is per account and isolated.
 
 The driver is `modernc.org/sqlite`, the **pure Go** SQLite (no cgo), chosen so
-the server cross-compiles to a static binary for every target
-(`server/internal/store/store.go`). FTS5 is compiled into it, which is what
-makes `records_fts` possible with no extension to ship.
+the server cross-compiles to a static binary for its two targets, linux/amd64
+and linux/arm64 (`server:cross` in `package.json`). FTS5 is compiled into it,
+which is what makes `records_fts` possible with no extension to ship.
 
 ## 2. The engine and the connections
 
@@ -319,8 +319,11 @@ Two migrations, both idempotent and additive:
   `CREATE TABLE IF NOT EXISTS`, additive columns via `ALTER TABLE ADD COLUMN`
   (`addColumn`), and `CREATE INDEX IF NOT EXISTS`.
 - **Per account** (`UserDB.migrate`) runs lazily when a content file is first
-  opened. There is no version table and no `user_version`; a fresh file gets the
-  full schema and an existing one keeps its rows.
+  opened and is **versioned** by SQLite's own `PRAGMA user_version`. A fresh
+  file is version 0 and runs every step in `userMigrations`; an existing one
+  runs only the steps it has not seen, each in its own transaction, stamping the
+  new version on commit. That makes a future *non-additive* per-file migration
+  possible and lets an interrupted migration resume at the last completed step.
 
 Everything ever added is an additive column (`tokens.last_used`,
 `tokens.archived_at`, `devices.archived_at`, `records.archived_at`,
@@ -353,10 +356,14 @@ the relay would.
 - **Backup:** copy the central file **and** the `users/` directory (with their
   `-wal`/`-shm` alongside, or after a clean shutdown). It is a directory, not a
   file, now.
-- **Descriptors:** budget for roughly `3 × TABVERSED_MAX_OPEN_USER_DBS` plus one
-  per connection, and keep `RLIMIT_NOFILE` above that with headroom.
-- **Build:** `CGO_ENABLED=0` static binary; the driver needs no cgo, so there is
-  nothing to install on the host.
+- **Descriptors:** at startup the server raises its soft `RLIMIT_NOFILE`
+  toward `3 × TABVERSED_MAX_OPEN_USER_DBS + reserve` (never above the hard
+  limit) and clamps the pool to fit if it cannot, logging when it does. The
+  generated systemd unit sets `LimitNOFILE=65535`. For a non-systemd deployment,
+  keep the OS limit above roughly `3 × pool` plus one per connection.
+- **Build:** `CGO_ENABLED=0` static binary for linux/amd64 and linux/arm64
+  (`pnpm run server:cross`); the driver needs no cgo, so there is nothing to
+  install on the host.
 - **Scaling shape:** one process, a small central file and a directory of content
   files. The counter relay keeps console reads O(1); the way to more capacity is
   a bigger box, a higher pool cap, or sharding the content files across hosts -
