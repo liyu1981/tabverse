@@ -1,13 +1,12 @@
 @use '../../global.scss';
 
 /*
- * A filter box that sits at the top of a right-panel list. The count and the
- * clear button live inside the field on the right, which needs the absolute
- * positioning below because Blueprint's input group is `display: block` - a
- * right element in flow would land under the input instead of in it.
+ * A filter box that sits at the top of a right-panel list. No vertical margin
+ * of its own: the box is placed by its caller, so a row that centres it beside
+ * a button (the Note panel) is not thrown off by a stray margin.
  */
 .container {
-  margin-bottom: 8px;
+  width: 100%;
 }
 
 .right {

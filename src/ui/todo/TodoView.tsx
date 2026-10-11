@@ -177,14 +177,6 @@ export function TodoView(_props: TodoViewProps) {
           setCurrentInputValue(event.target.value);
         }}
       />
-      <ListFilter
-        value={filterText}
-        onChange={setFilterText}
-        placeholder="filter these todos…"
-        count={matchingTodos.length}
-        total={allTodo.todos.size}
-        ariaLabel="Filter these todos"
-      />
     </header>
   );
 
@@ -233,10 +225,24 @@ export function TodoView(_props: TodoViewProps) {
   );
 
   return (
-    <div className={classes.todoapp}>
-      {header}
-      {main}
-      {footer}
+    <div className={classes.todoRoot}>
+      {/* the filter is not part of the todo card: it sits above it, on the
+          panel background, so it does not inherit the card's 20px type */}
+      <div className={classes.filterWrapper}>
+        <ListFilter
+          value={filterText}
+          onChange={setFilterText}
+          placeholder="filter these todos…"
+          count={matchingTodos.length}
+          total={allTodo.todos.size}
+          ariaLabel="Filter these todos"
+        />
+      </div>
+      <div className={classes.todoapp}>
+        {header}
+        {main}
+        {footer}
+      </div>
     </div>
   );
 }

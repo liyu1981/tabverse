@@ -30,6 +30,11 @@
   border-radius: global.$radius-card;
 }
 
+/* the filter sits above the card, so it needs its own spacing below */
+.filterWrapper {
+  margin-bottom: 8px;
+}
+
 /*
  * The standard `::placeholder`, where this file used to say
  * `::input-placeholder`. That pseudo-element has never existed in any browser -
