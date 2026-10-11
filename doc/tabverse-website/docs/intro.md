@@ -17,14 +17,30 @@ reserved.
 
 ## Installation
 
-Tabverse can be installed free from [Chrome Web Store](/), or [manually
-installation](https://www.cnet.com/tech/services-and-software/how-to-install-chrome-extensions-manually/)
-after downloading the `.crx` file from Tabverse website.
+The Chrome Web Store listing is still under review, so that button is disabled
+on this site for now. In the meantime you can install Tabverse manually:
+download the latest `.crx` from the
+[GitHub releases](https://github.com/liyu1981/tabverse/releases), then follow the
+[manual installation guide](https://www.cnet.com/tech/services-and-software/how-to-install-chrome-extensions-manually/)
+to load it into Chrome.
+
+## What Tabverse does
+
+- **Tabverses.** One Chrome window is one workspace; save it and restore it
+  later, with all its tabs. See [Restore a saved Tabverse](./restore.md).
+- **Notes, todos and bookmarks** attached to a tabverse.
+- **History** of the tabs closed from that tabverse.
+- **On-device AI** that can summarize a tab into a note, or suggest a name for a
+  tab collection ([details](./ai.md)).
+- **One search** across tabs, history, notes, todos and bookmarks
+  ([details](./search.md)).
+- **Optional server sync**, so the same workspace is on every browser you use
+  ([details](./server-sync.md)).
 
 ## Get Started after Installation
 
-After install from Chrome Web Store, or manually installed by `.crx` file,
-Tabverse can be started by clicking the `T` icon in chrome extension's menu.
+After installing, Tabverse can be started by clicking the `T` icon in chrome
+extension's menu.
 
 ![Start Tabverse](../static/img/tabverse-manual-1.png)
 

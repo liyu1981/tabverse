@@ -53,6 +53,12 @@
   margin-left: 8px;
 }
 
+.tabverseButtonDisabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  filter: grayscale(1);
+}
+
 @media screen and (max-width: 966px) {
   .heroBanner {
     padding: 2rem;

@@ -28,15 +28,17 @@ function HomepageHeader() {
             {siteConfig.tagline}
           </p>
           <div className={styles.buttons}>
-            <Link
+            <span
               className={clsx(
                 'button button--secondary button--lg',
                 styles.tabverseButton,
+                styles.tabverseButtonDisabled,
               )}
-              to="https://chrome.google.com/webstore/detail/tabverse/eingdgbkonkpnnjgmpgoemeoocjoalcm?hl=en"
+              aria-disabled="true"
+              title="The Chrome Web Store listing is still under review"
             >
-              Install from Chrome Web Store
-            </Link>
+              Chrome Web Store · Coming soon
+            </span>
             <Link
               className={clsx(
                 'button button--secondary button--lg',

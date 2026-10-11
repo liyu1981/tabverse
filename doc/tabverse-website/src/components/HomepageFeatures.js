@@ -44,7 +44,8 @@ const getFeatureList = (baseUrl) => [
     description: (
       <>
         Tabverse saves all your data inside your local Chrome storage. You do
-        not need an account to enjoy it!
+        not need an account to enjoy it, and pairing with your own sync server
+        is optional.
       </>
     ),
   },
@@ -53,9 +54,8 @@ const getFeatureList = (baseUrl) => [
     img: `${baseUrl}img/tabverse-feature-4.png`,
     description: (
       <>
-        You can use it free by installing from Chrome web store. We also open
-        the source code through our github repo. Not satisfy on something?
-        Contribute it or, fork it!
+        You can use it free. We also open the source code through our github
+        repo. Not satisfied with something? Contribute it, or fork it!
       </>
     ),
   },
