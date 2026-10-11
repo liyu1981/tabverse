@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -64,7 +65,20 @@ func (s *Server) handlePush(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Records []store.RecordInput `json:"records"`
 	}
-	if err := decodeJSON(w, r, &req); err != nil {
+	// A push may carry SyncBatchLimit records of MaxRecordBytes each, which the
+	// generic 1 MiB body cap would reject as a decode failure. Give it the room
+	// its own contract implies, bounded so one request cannot exhaust memory.
+	const maxPushBody = int64(32 << 20)
+	bodyLimit := int64(s.cfg.SyncBatchLimit) * s.cfg.MaxRecordBytes
+	if bodyLimit <= 0 || bodyLimit > maxPushBody {
+		bodyLimit = maxPushBody
+	}
+	if err := decodeJSONLimit(w, r, &req, bodyLimit); err != nil {
+		if errors.Is(err, errBodyTooLarge) {
+			writeErr(w, http.StatusRequestEntityTooLarge, "payload_too_large",
+				"the batch is larger than the server accepts; send fewer records per request")
+			return
+		}
 		writeErr(w, http.StatusBadRequest, "bad_request", err.Error())
 		return
 	}

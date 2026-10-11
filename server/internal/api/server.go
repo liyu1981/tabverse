@@ -291,8 +291,26 @@ func writeStoreErr(w http.ResponseWriter, err error) {
 }
 
 func decodeJSON(w http.ResponseWriter, r *http.Request, dst any) error {
-	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+	return decodeJSONLimit(w, r, dst, maxRequestBody)
+}
+
+// maxRequestBody is the ceiling for the small JSON endpoints - auth, pairing,
+// console writes. The sync push is the exception and passes its own, larger
+// limit (see handlePush).
+const maxRequestBody = 1 << 20
+
+// errBodyTooLarge is returned when a request body exceeds its limit, so a
+// handler can answer 413 rather than the generic "invalid JSON body" a decode
+// failure would produce.
+var errBodyTooLarge = errors.New("request body too large")
+
+func decodeJSONLimit(w http.ResponseWriter, r *http.Request, dst any, limit int64) error {
+	r.Body = http.MaxBytesReader(w, r.Body, limit)
 	if err := json.NewDecoder(r.Body).Decode(dst); err != nil {
+		var maxErr *http.MaxBytesError
+		if errors.As(err, &maxErr) {
+			return errBodyTooLarge
+		}
 		return errors.New("invalid JSON body")
 	}
 	return nil
