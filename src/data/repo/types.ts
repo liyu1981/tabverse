@@ -97,6 +97,12 @@ export interface SearchHit {
   url?: string;
   /** Display name of the tabverse the hit belongs to, for grouping. */
   tabspace_title?: string;
+  /** The tabverse's createdAt, unix ms (0/absent when unknown). */
+  tabspace_created_at?: number;
+  /** The tabverse record's updated_at, unix ms (0/absent when unknown). */
+  tabspace_updated_at?: number;
+  /** How many tabs the tabverse holds. */
+  tabspace_tabs?: number;
 }
 
 export interface DeviceCredentials {

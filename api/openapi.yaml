@@ -1104,6 +1104,15 @@ components:
                 display name of the tabverse the hit belongs to, for grouping.
                 Empty for a `tabspace` hit (the hit is its own title) or when
                 the tabverse is gone.
+            tabspace_created_at:
+              type: integer
+              description: the tabverse's `createdAt`, unix ms; 0 when unknown.
+            tabspace_updated_at:
+              type: integer
+              description: the tabverse record's `updated_at`, unix ms; 0 when unknown.
+            tabspace_tabs:
+              type: integer
+              description: how many tabs the tabverse holds.
 
     Totals:
       type: object

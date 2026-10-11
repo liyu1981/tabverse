@@ -24,6 +24,9 @@ test('folds hits into tabverses and ranks each tab by its kind', () => {
       id: 'n1',
       tabspace_id: 'ts1',
       tabspace_title: 'One',
+      tabspace_tabs: 5,
+      tabspace_created_at: 1000,
+      tabspace_updated_at: 2000,
     }),
     hit({
       entity: 'note',
@@ -44,6 +47,9 @@ test('folds hits into tabverses and ranks each tab by its kind', () => {
     tab: 1,
   });
   expect(byId.get('ts1')?.title).toBe('One');
+  expect(byId.get('ts1')?.tabs).toBe(5);
+  expect(byId.get('ts1')?.createdAt).toBe(1000);
+  expect(byId.get('ts1')?.updatedAt).toBe(2000);
 
   const tabs = omniTabs(tabverses);
   expect(tabs[0]).toEqual({ key: 'overview', label: 'Overview', count: 6 });

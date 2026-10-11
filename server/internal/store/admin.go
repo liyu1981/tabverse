@@ -1058,10 +1058,23 @@ type AdminSearchHit struct {
 	SearchHit
 	Title string `json:"title"`
 	URL   string `json:"url"`
-	// TabspaceTitle is the display name of the tabverse the hit belongs to, so
-	// the console can group hits by tabverse and label the group. Empty for a
-	// tabverse hit (the hit is its own title) or when the tabverse is gone.
-	TabspaceTitle string `json:"tabspace_title,omitempty"`
+	// Tabverse metadata for the tabverse the hit belongs to, so the console and
+	// the extension can label and date the group. Zero/empty when the tabverse
+	// is gone. TabspaceTitle is the display name, CreatedAt comes from the
+	// tabverse payload, UpdatedAt is the tabverse record's own updated time, and
+	// Tabs is the size of its tabIds list.
+	TabspaceTitle     string `json:"tabspace_title,omitempty"`
+	TabspaceCreatedAt int64  `json:"tabspace_created_at,omitempty"`
+	TabspaceUpdatedAt int64  `json:"tabspace_updated_at,omitempty"`
+	TabspaceTabs      int    `json:"tabspace_tabs,omitempty"`
+}
+
+// tabspaceMeta is the per-tabverse data a search result is labelled with.
+type tabspaceMeta struct {
+	Name      string
+	CreatedAt int64
+	UpdatedAt int64
+	Tabs      int
 }
 
 // SearchFor is Search for the console: same FTS query, scoped to one account,
@@ -1079,7 +1092,7 @@ func (s *Store) SearchFor(ctx context.Context, userID, query, entity string, lim
 		return nil, err
 	}
 	out := make([]AdminSearchHit, 0, len(hits))
-	tabspaceNames := map[string]string{}
+	tabspaces := map[string]tabspaceMeta{}
 	for _, h := range hits {
 		hit := AdminSearchHit{SearchHit: h}
 		rec, err := s.GetRecord(ctx, userID, h.Entity, h.ID)
@@ -1090,32 +1103,41 @@ func (s *Store) SearchFor(ctx context.Context, userID, query, entity string, lim
 			continue
 		}
 		hit.Title, hit.URL = displayTitle(h.Entity, h.ID, rec.Payload)
-		if h.Entity != "tabspace" && h.TabspaceID != "" {
-			hit.TabspaceTitle = s.tabspaceName(ctx, userID, h.TabspaceID, tabspaceNames)
+		if h.TabspaceID != "" {
+			meta := s.tabspaceMetaOf(ctx, userID, h.TabspaceID, tabspaces)
+			hit.TabspaceTitle = meta.Name
+			hit.TabspaceCreatedAt = meta.CreatedAt
+			hit.TabspaceUpdatedAt = meta.UpdatedAt
+			hit.TabspaceTabs = meta.Tabs
 		}
 		out = append(out, hit)
 	}
 	return out, nil
 }
 
-// tabspaceName resolves a tabverse's display name for the search grouping,
-// caching it so several hits in one tabverse cost one lookup. A missing or
-// tombstoned tabverse yields "" and the UI falls back to the id.
-func (s *Store) tabspaceName(ctx context.Context, userID, tabspaceID string, cache map[string]string) string {
-	if name, ok := cache[tabspaceID]; ok {
-		return name
+// tabspaceMetaOf resolves a tabverse's display name and dates for the search
+// grouping, caching it so several hits in one tabverse cost one lookup. A
+// missing or tombstoned tabverse yields the zero value.
+func (s *Store) tabspaceMetaOf(ctx context.Context, userID, tabspaceID string, cache map[string]tabspaceMeta) tabspaceMeta {
+	if meta, ok := cache[tabspaceID]; ok {
+		return meta
 	}
-	name := ""
+	meta := tabspaceMeta{}
 	if rec, err := s.GetRecord(ctx, userID, "tabspace", tabspaceID); err == nil {
 		var doc struct {
-			Name string `json:"name"`
+			Name      string   `json:"name"`
+			CreatedAt int64    `json:"createdAt"`
+			TabIDs    []string `json:"tabIds"`
 		}
 		if decodePayload(rec.Payload, &doc) == nil {
-			name = doc.Name
+			meta.Name = doc.Name
+			meta.CreatedAt = doc.CreatedAt
+			meta.Tabs = len(doc.TabIDs)
 		}
+		meta.UpdatedAt = rec.UpdatedAt
 	}
-	cache[tabspaceID] = name
-	return name
+	cache[tabspaceID] = meta
+	return meta
 }
 
 // displayTitle picks the human label of a record, mirroring the field each

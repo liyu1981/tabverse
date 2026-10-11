@@ -1,5 +1,6 @@
 import { Button, InputGroup, Spinner, Switch } from '@blueprintjs/core';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import clsx from 'clsx';
 import { useUnit } from 'effector-react';
 
 import {
@@ -9,8 +10,8 @@ import {
 } from '../data/actions';
 import { $account, $dataArchived } from '../data/stores/accounts';
 import { $search, setSearchQuery } from '../data/stores/browse';
+import { ago } from '../data/format';
 import type { AdminSearchHit } from '../data/types';
-import { Segmented } from '../components/Pager';
 import { useDebounced } from '../components/useDebounced';
 import layout from '../layout.module.scss';
 import classes from '../data.module.scss';
@@ -27,8 +28,9 @@ import classes from '../data.module.scss';
  *   - **Tabs**, **History**, **Notes**, ... rank by how many of *that* kind
  *     matched.
  *
- * Inside a tabverse the matched records themselves are listed, so a search
- * answers both "which tabverse" and "what in it".
+ * The tabs are a vertical rail on the left; on the right each tabverse shows
+ * its name, dates and size, then the matched records with the query terms
+ * highlighted.
  */
 export const SEARCH_KIND_ORDER = [
   'tabspace',
@@ -57,6 +59,10 @@ export interface TabverseMatches {
   total: number;
   byKind: Record<string, number>;
   hitsByKind: Record<string, AdminSearchHit[]>;
+  /** Tabverse metadata, when the server sent it. */
+  tabs?: number;
+  createdAt?: number;
+  updatedAt?: number;
 }
 
 export interface SearchTab {
@@ -92,6 +98,9 @@ export function collectTabverses(hits: AdminSearchHit[]): TabverseMatches[] {
       if (hit.entity === 'tabspace' && hit.title) tabverse.title = hit.title;
       else if (hit.tabspace_title) tabverse.title = hit.tabspace_title;
     }
+    tabverse.tabs ||= hit.tabspace_tabs;
+    tabverse.createdAt ||= hit.tabspace_created_at;
+    tabverse.updatedAt ||= hit.tabspace_updated_at;
   }
   for (const tabverse of byTabverse.values()) {
     for (const kind of Object.keys(tabverse.hitsByKind)) {
@@ -128,6 +137,15 @@ export function searchTabs(tabverses: TabverseMatches[]): SearchTab[] {
 /** How many records this tabverse matched for a tab (`overview` = all). */
 export function matchCount(tabverse: TabverseMatches, kind: string): number {
   return kind === 'overview' ? tabverse.total : tabverse.byKind[kind] || 0;
+}
+
+/** The kinds present in a tabverse, in the canonical kind order. */
+export function kindsInTabverse(tabverse: TabverseMatches): string[] {
+  const kinds = [...SEARCH_KIND_ORDER];
+  for (const present of Object.keys(tabverse.byKind)) {
+    if (!kinds.includes(present)) kinds.push(present);
+  }
+  return kinds.filter((kind) => (tabverse.byKind[kind] || 0) > 0);
 }
 
 /**
@@ -167,6 +185,82 @@ export function hitsForTabverse(
   return out;
 }
 
+export interface TextPart {
+  text: string;
+  match: boolean;
+}
+
+/** Splits `text` on the query terms (case-insensitive) for `<mark>`ing. */
+export function highlightTerms(text: string, terms: string[]): TextPart[] {
+  const wanted = terms
+    .map((term) => term.trim())
+    .filter(Boolean)
+    .sort((a, b) => b.length - a.length);
+  if (!text || wanted.length === 0) {
+    return [{ text, match: false }];
+  }
+  const escaped = wanted.map((term) =>
+    term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+  );
+  const pattern = new RegExp(`(${escaped.join('|')})`, 'gi');
+  const parts: TextPart[] = [];
+  let last = 0;
+  let found: RegExpExecArray | null;
+  while ((found = pattern.exec(text)) !== null) {
+    if (found.index > last) {
+      parts.push({ text: text.slice(last, found.index), match: false });
+    }
+    parts.push({ text: found[0], match: true });
+    last = found.index + found[0].length;
+  }
+  if (last < text.length) parts.push({ text: text.slice(last), match: false });
+  return parts;
+}
+
+/** The FTS snippet marks matches with `[ ]`; turn those into `<mark>`s. */
+export function parseSnippet(snippet: string): TextPart[] {
+  const parts: TextPart[] = [];
+  const pattern = /\[([^\]]*)\]/g;
+  let last = 0;
+  let found: RegExpExecArray | null;
+  while ((found = pattern.exec(snippet)) !== null) {
+    if (found.index > last) {
+      parts.push({ text: snippet.slice(last, found.index), match: false });
+    }
+    parts.push({ text: found[1], match: true });
+    last = found.index + found[0].length;
+  }
+  if (last < snippet.length) {
+    parts.push({ text: snippet.slice(last), match: false });
+  }
+  return parts;
+}
+
+function Highlighted(props: { parts: TextPart[] }) {
+  return (
+    <>
+      {props.parts.map((part, index) =>
+        part.match ? (
+          <mark key={index}>{part.text}</mark>
+        ) : (
+          <React.Fragment key={index}>{part.text}</React.Fragment>
+        ),
+      )}
+    </>
+  );
+}
+
+/** "12 tabs · created 3d ago · updated 2h ago", only the parts we have. */
+export function tabverseMetaLine(tabverse: TabverseMatches): string {
+  const bits: string[] = [];
+  if (tabverse.tabs) {
+    bits.push(`${tabverse.tabs} tab${tabverse.tabs === 1 ? '' : 's'}`);
+  }
+  if (tabverse.createdAt) bits.push(`created ${ago(tabverse.createdAt)}`);
+  if (tabverse.updatedAt) bits.push(`updated ${ago(tabverse.updatedAt)}`);
+  return bits.join(' · ');
+}
+
 export function SearchPanel() {
   const { account, search, archived } = useUnit({
     account: $account,
@@ -185,16 +279,18 @@ export function SearchPanel() {
     void runSearch();
   }, [settled]);
 
-  if (!account?.user) return null;
-  const who = account.user.name || account.user.id;
   const q = search.q.trim();
-  const tabverses = collectTabverses(search.hits);
-  const tabs = searchTabs(tabverses);
+  const terms = useMemo(() => q.split(/\s+/).filter(Boolean), [q]);
+  const tabverses = useMemo(() => collectTabverses(search.hits), [search.hits]);
+  const tabs = useMemo(() => searchTabs(tabverses), [tabverses]);
   // A new search can drop the tab that was open; fall back to Overview.
   const active = tabs.some((tab) => tab.key === activeKind)
     ? activeKind
     : 'overview';
   const ranked = rankTabverses(tabverses, active);
+
+  if (!account?.user) return null;
+  const who = account.user.name || account.user.id;
 
   return (
     <section>
@@ -220,8 +316,9 @@ export function SearchPanel() {
 
       <div className="toolbar">
         <InputGroup
-          className="grow"
+          className={clsx('grow', classes.searchInput)}
           type="search"
+          large={true}
           placeholder="search this account (every term must match, the last one is a prefix)"
           value={search.q}
           onChange={(event) => setSearchQuery(event.currentTarget.value)}
@@ -250,75 +347,141 @@ export function SearchPanel() {
       ) : !search.hits.length ? (
         <p className="empty-inline">nothing matched</p>
       ) : (
-        <div>
-          <div className="toolbar">
-            <Segmented
-              ariaLabel="Search result kinds"
-              value={active}
-              options={tabs.map((tab) => ({
-                value: tab.key,
-                label: `${tab.label} (${tab.count})`,
-              }))}
-              onChange={setActiveKind}
-            />
+        <div className={classes.searchLayout}>
+          <nav className={classes.kindTabs} aria-label="Search result kinds">
+            {tabs.map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                className={clsx(
+                  classes.kindTab,
+                  tab.key === active && classes.kindTabActive,
+                )}
+                onClick={() => setActiveKind(tab.key)}
+              >
+                <span>{tab.label}</span>
+                <span className={classes.kindTabCount}>{tab.count}</span>
+              </button>
+            ))}
+          </nav>
+          <div className={classes.searchResults}>
+            {ranked.map((tabverse) => (
+              <TabverseCard
+                key={`${tabverse.id}/${active}`}
+                tabverse={tabverse}
+                outerKind={active}
+                terms={terms}
+              />
+            ))}
           </div>
-          {ranked.map((tabverse) => (
-            <section key={tabverse.id} className={classes.searchTabverse}>
-              <div className={classes.searchTabverseHead}>
-                <span className={classes.searchTabverseName}>
-                  {tabverse.title || '(no tabverse)'}
-                </span>
-                <span className={classes.searchTabverseCount}>
-                  {matchCount(tabverse, active)} match
-                  {matchCount(tabverse, active) === 1 ? '' : 'es'}
-                </span>
-                {tabverse.id ? (
-                  <Button
-                    small={true}
-                    minimal={true}
-                    icon="arrow-right"
-                    onClick={() => void openTabspaceById(tabverse.id)}
-                  >
-                    open tabverse
-                  </Button>
-                ) : null}
-              </div>
-              <div className={classes.recordList}>
-                {hitsForTabverse(tabverse, active).map((hit) => (
-                  <HitCard key={`${hit.entity}/${hit.id}`} hit={hit} />
-                ))}
-              </div>
-            </section>
-          ))}
         </div>
       )}
     </section>
   );
 }
 
-function HitCard(props: { hit: AdminSearchHit }) {
+/**
+ * One matched tabverse. Inside an Overview tab the matched records are grouped
+ * into their own tabs by kind; in a kind tab there is only one kind, so the
+ * inner strip is hidden. The `key` the parent gives it includes the outer kind,
+ * so switching the outer tab resets the inner selection.
+ */
+function TabverseCard(props: {
+  tabverse: TabverseMatches;
+  outerKind: string;
+  terms: string[];
+}) {
+  const { tabverse, outerKind, terms } = props;
+  const subKinds =
+    outerKind === 'overview' ? kindsInTabverse(tabverse) : [outerKind];
+  const [inner, setInner] = useState(subKinds[0] ?? 'overview');
+  const hits =
+    outerKind === 'overview'
+      ? tabverse.hitsByKind[inner] || []
+      : hitsForTabverse(tabverse, outerKind);
+  const matches = matchCount(tabverse, outerKind);
+
+  return (
+    <section className={classes.searchTabverse}>
+      <div className={classes.searchTabverseHead}>
+        <div className={classes.searchTabverseTitle}>
+          <span className={classes.searchTabverseName}>
+            {tabverse.title || '(no tabverse)'}
+          </span>
+          <span className={classes.searchTabverseMeta}>
+            {tabverseMetaLine(tabverse) || tabverse.id}
+          </span>
+        </div>
+        <span className={classes.searchTabverseCount}>
+          {matches} match{matches === 1 ? '' : 'es'}
+        </span>
+        {tabverse.id ? (
+          <Button
+            small={true}
+            minimal={true}
+            icon="arrow-right"
+            onClick={() => void openTabspaceById(tabverse.id)}
+          >
+            open tabverse
+          </Button>
+        ) : null}
+      </div>
+      {subKinds.length > 1 ? (
+        <div className={classes.itemTabs}>
+          {subKinds.map((kind) => (
+            <button
+              key={kind}
+              type="button"
+              className={clsx(
+                classes.itemTab,
+                kind === inner && classes.itemTabActive,
+              )}
+              onClick={() => setInner(kind)}
+            >
+              {SEARCH_KIND_LABEL[kind] || kind}
+              <span className={classes.itemTabCount}>
+                {tabverse.byKind[kind] || 0}
+              </span>
+            </button>
+          ))}
+        </div>
+      ) : null}
+      <div className={classes.recordList}>
+        {hits.map((hit) => (
+          <HitCard key={`${hit.entity}/${hit.id}`} hit={hit} terms={terms} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function HitCard(props: { hit: AdminSearchHit; terms: string[] }) {
   const hit = props.hit;
+  const title = hit.title || hit.id;
   return (
     <div className={classes.record}>
       <div className={classes.recordHead}>
         <span className={classes.entity}>{hit.entity}</span>
         <span className="muted small">score {hit.score.toFixed(2)}</span>
       </div>
-      <div className={hit.url ? classes.rowText : undefined}>
-        <div className={classes.rowText}>{hit.title || hit.id}</div>
-        {hit.url ? (
-          <a
-            className={classes.payload}
-            href={hit.url}
-            target="_blank"
-            rel="noreferrer noopener"
-          >
-            {hit.url}
-          </a>
-        ) : null}
+      <div className={classes.searchHitTitle} title={title}>
+        <Highlighted parts={highlightTerms(title, props.terms)} />
       </div>
+      {hit.url ? (
+        <a
+          className={classes.searchHitUrl}
+          href={hit.url}
+          target="_blank"
+          rel="noreferrer noopener"
+          title={hit.url}
+        >
+          <Highlighted parts={highlightTerms(hit.url, props.terms)} />
+        </a>
+      ) : null}
       {hit.snippet ? (
-        <pre className={classes.payload}>{hit.snippet}</pre>
+        <pre className={classes.searchHitSnippet}>
+          <Highlighted parts={parseSnippet(hit.snippet)} />
+        </pre>
       ) : null}
     </div>
   );

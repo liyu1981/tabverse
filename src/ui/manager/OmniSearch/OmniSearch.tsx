@@ -1,4 +1,4 @@
-import { Button, InputGroup, Spinner } from '@blueprintjs/core';
+import { InputGroup, Spinner } from '@blueprintjs/core';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import clsx from 'clsx';
 
@@ -6,11 +6,10 @@ import { logger } from '../../../global';
 import { ServerApiClient, ServerApiError } from '../../../data/repo/serverApi';
 import { SyncConfig, loadSyncConfig } from '../../../data/repo/syncConfig';
 import { SearchHit } from '../../../data/repo/types';
-import { restoreSavedTabSpaceUtil } from '../../../data/tabSpace/chromeUtil';
+import { OmniTabverseCard } from './OmniTabverseCard';
+import { loadSearchCache, saveSearchCache } from './omniSearchCache';
 import {
   collectTabverses,
-  hitsForTabverse,
-  matchCount,
   omniTabs,
   rankTabverses,
 } from './omniSearchGrouping';
@@ -27,18 +26,21 @@ const DEBOUNCE_MS = 300;
  *
  * Results are catalogued by tabverse: Overview ranks by how much matched in
  * each, and each kind tab (Tabs, History, Notes, ...) by how much of that kind
- * matched. Inside a tabverse the matched records are listed. The one action
- * opens the tabverse in a new window, the same restore path the saved-tabverse
- * list uses, so a hit for a tabverse this device has never downloaded works.
+ * matched. The tabs are a vertical rail on the left; each tabverse is a card
+ * like the saved-tabverse list's, whose matched records are grouped into their
+ * own tabs inside it.
  */
 export function OmniSearch() {
   const [config, setConfig] = useState<SyncConfig | null>(null);
   const [ready, setReady] = useState(false);
-  const [query, setQuery] = useState('');
-  const [hits, setHits] = useState<SearchHit[]>([]);
+  // The last search is restored from localStorage, then refreshed below, so
+  // switching back to this view shows results immediately.
+  const [cached] = useState(() => loadSearchCache());
+  const [query, setQuery] = useState(cached?.query ?? '');
+  const [hits, setHits] = useState<SearchHit[]>(cached?.hits ?? []);
   const [loading, setLoading] = useState(false);
   const [problem, setProblem] = useState('');
-  const [settled, setSettled] = useState('');
+  const [settled, setSettled] = useState(cached?.query ?? '');
   const [activeKind, setActiveKind] = useState('overview');
 
   useEffect(() => {
@@ -71,6 +73,7 @@ export function OmniSearch() {
       setHits(result.hits || []);
       setProblem('');
       setSettled(q);
+      saveSearchCache(q, result.hits || []);
     } catch (err) {
       logger.log('omni search failed:', err);
       setHits([]);
@@ -101,12 +104,6 @@ export function OmniSearch() {
     : 'overview';
   const ranked = rankTabverses(tabverses, active);
 
-  const openTabverse = (id: string) => {
-    restoreSavedTabSpaceUtil(id).catch((err) =>
-      logger.error('could not open the tabverse', err),
-    );
-  };
-
   if (!ready) {
     return (
       <div className={classes.container}>
@@ -126,12 +123,14 @@ export function OmniSearch() {
   }
 
   const q = query.trim();
+  const terms = q.split(/\s+/).filter(Boolean);
   return (
     <div className={classes.container}>
       <div className={classes.searchBar}>
         <InputGroup
           className={classes.input}
           type="search"
+          large={true}
           leftIcon="search"
           placeholder="search tabs, history, notes, todos, bookmarks"
           value={query}
@@ -159,75 +158,34 @@ export function OmniSearch() {
       ) : settled === q && hits.length === 0 ? (
         <div className={classes.empty}>Nothing matched.</div>
       ) : (
-        <>
-          <div className={classes.tabs}>
+        <div className={classes.layout}>
+          <nav className={classes.kinds} aria-label="Search result kinds">
             {tabs.map((tab) => (
               <button
                 key={tab.key}
                 type="button"
                 className={clsx(
-                  classes.tab,
-                  tab.key === active && classes.tabActive,
+                  classes.kind,
+                  tab.key === active && classes.kindActive,
                 )}
                 onClick={() => setActiveKind(tab.key)}
               >
-                {tab.label}
-                <span className={classes.tabCount}>{tab.count}</span>
+                <span>{tab.label}</span>
+                <span className={classes.kindCount}>{tab.count}</span>
               </button>
             ))}
-          </div>
+          </nav>
           <div className={classes.results}>
             {ranked.map((tabverse) => (
-              <section key={tabverse.id} className={classes.tabverse}>
-                <div className={classes.tabverseHead}>
-                  <span className={classes.tabverseName}>
-                    {tabverse.title || '(no tabverse)'}
-                  </span>
-                  <span className={classes.tabverseCount}>
-                    {matchCount(tabverse, active)} match
-                    {matchCount(tabverse, active) === 1 ? '' : 'es'}
-                  </span>
-                  {tabverse.id ? (
-                    <Button
-                      small={true}
-                      minimal={true}
-                      icon="arrow-right"
-                      onClick={() => openTabverse(tabverse.id)}
-                    >
-                      Open in new window
-                    </Button>
-                  ) : null}
-                </div>
-                {hitsForTabverse(tabverse, active).map((hit) => (
-                  <div key={`${hit.entity}/${hit.id}`} className={classes.hit}>
-                    <div className={classes.hitHead}>
-                      <span className={classes.hitEntity}>{hit.entity}</span>
-                      <span className={classes.hitScore}>
-                        {hit.score.toFixed(2)}
-                      </span>
-                    </div>
-                    <div className={classes.hitTitle}>
-                      {hit.title || hit.id}
-                    </div>
-                    {hit.url ? (
-                      <a
-                        className={classes.hitUrl}
-                        href={hit.url}
-                        target="_blank"
-                        rel="noreferrer noopener"
-                      >
-                        {hit.url}
-                      </a>
-                    ) : null}
-                    {hit.snippet ? (
-                      <pre className={classes.hitSnippet}>{hit.snippet}</pre>
-                    ) : null}
-                  </div>
-                ))}
-              </section>
+              <OmniTabverseCard
+                key={`${tabverse.id}/${active}`}
+                tabverse={tabverse}
+                outerKind={active}
+                terms={terms}
+              />
             ))}
           </div>
-        </>
+        </div>
       )}
     </div>
   );

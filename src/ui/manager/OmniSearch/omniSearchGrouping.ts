@@ -37,6 +37,10 @@ export interface TabverseMatches {
   total: number;
   byKind: Record<string, number>;
   hitsByKind: Record<string, SearchHit[]>;
+  /** Tabverse metadata, when the server sent it. */
+  tabs?: number;
+  createdAt?: number;
+  updatedAt?: number;
 }
 
 export interface OmniTab {
@@ -65,6 +69,9 @@ export function collectTabverses(hits: SearchHit[]): TabverseMatches[] {
       if (hit.entity === 'tabspace' && hit.title) tabverse.title = hit.title;
       else if (hit.tabspace_title) tabverse.title = hit.tabspace_title;
     }
+    tabverse.tabs ||= hit.tabspace_tabs;
+    tabverse.createdAt ||= hit.tabspace_created_at;
+    tabverse.updatedAt ||= hit.tabspace_updated_at;
   }
   for (const tabverse of byTabverse.values()) {
     for (const kind of Object.keys(tabverse.hitsByKind)) {
@@ -101,6 +108,15 @@ export function omniTabs(tabverses: TabverseMatches[]): OmniTab[] {
 /** How many records this tabverse matched for a tab (`overview` = all). */
 export function matchCount(tabverse: TabverseMatches, kind: string): number {
   return kind === 'overview' ? tabverse.total : tabverse.byKind[kind] || 0;
+}
+
+/** The kinds present in a tabverse, in the canonical kind order. */
+export function kindsInTabverse(tabverse: TabverseMatches): string[] {
+  const kinds = [...OMNI_ENTITY_ORDER];
+  for (const present of Object.keys(tabverse.byKind)) {
+    if (!kinds.includes(present)) kinds.push(present);
+  }
+  return kinds.filter((kind) => (tabverse.byKind[kind] || 0) > 0);
 }
 
 export function rankTabverses(
