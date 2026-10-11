@@ -16,6 +16,10 @@ import { BackgroundMsg, sendChromeMessage } from './message/message';
 import { forgetPreview } from './data/tabSpace/tabPreviewStore';
 import { describeReap, reapPreviews } from './data/tabSpace/previewReaper';
 import {
+  describeSuspension,
+  suspendInactiveTabs,
+} from './data/tabSpace/suspender';
+import {
   currentPreviewSessionId,
   isPreviewSessionSwept,
   markPreviewSessionSwept,
@@ -170,4 +174,41 @@ async function sweepPreviewsOncePerSession(): Promise<void> {
   if (line) {
     logger.info(line);
   }
+}
+
+// Inactive tabs (src/data/tabSpace/suspender). Off by default, and a no-op
+// before it queries anything when it is off; on, it unloads the quiet tabs of
+// an open tabverse after the configured window. Its own alarm, independent of
+// the preview reap above, so neither can be skipped by the other failing.
+logger.info('start tab suspender...');
+startTabSuspender();
+
+const SUSPEND_SWEEP_ALARM = 'tabverse_suspend_sweep';
+
+function startTabSuspender(): void {
+  void chrome.alarms
+    .get(SUSPEND_SWEEP_ALARM)
+    .then(async (existing) => {
+      if (!existing) {
+        await chrome.alarms.create(SUSPEND_SWEEP_ALARM, {
+          periodInMinutes: 1,
+        });
+        logger.info('tab suspend alarm created (every minute)');
+      }
+    })
+    .catch((err) => logger.error('could not start the tab suspend alarm', err));
+
+  chrome.alarms.onAlarm.addListener((alarm) => {
+    if (alarm.name !== SUSPEND_SWEEP_ALARM) {
+      return;
+    }
+    void suspendInactiveTabs()
+      .then((report) => {
+        const line = describeSuspension(report);
+        if (line) {
+          logger.info(line);
+        }
+      })
+      .catch((err) => logger.error('the tab suspend sweep failed', err));
+  });
 }

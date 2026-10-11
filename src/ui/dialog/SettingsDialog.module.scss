@@ -55,5 +55,9 @@
   min-width: 0;
   max-height: 68vh;
   overflow-y: auto;
+  /* `overflow-y: auto` alone makes the x axis compute to `auto` too, so a
+     single too-wide control would give the dialog a horizontal scrollbar;
+     the sections are expected to fit the panel width. */
+  overflow-x: hidden;
   padding-left: 20px;
 }

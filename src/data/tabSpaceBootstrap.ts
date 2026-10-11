@@ -1,5 +1,6 @@
 import { scanCurrentTabs, startMonitorTabChanges } from './tabSpace/chromeTab';
 import { startSplitViewRescan } from './tabSpace/splitView';
+import { startMonitorSuspendWhitelist } from './tabSpace/suspendWhitelistMonitor';
 
 import { loadPreviews } from './tabSpace/tabPreviewStore';
 import { monitorDbChanges, saveCurrentTabSpace } from './tabSpace/util';
@@ -32,6 +33,11 @@ export async function tabSpaceBootstrap(
   await scanCurrentTabs();
   await restoreTabPreviews();
   startMonitorTabChanges();
+  // Keep the worker's suspension whitelist in step with this window: the
+  // durable list is our tab ids, but the worker acts on chrome tab ids, and
+  // this page is the only context that knows both at once
+  // (data/tabSpace/suspendWhitelist).
+  startMonitorSuspendWhitelist();
   // A split view can be closed without anything else about the tab changing, so
   // the event path is not enough on its own: ask Chrome again every minute what
   // is true, rather than waiting for an event that may never arrive

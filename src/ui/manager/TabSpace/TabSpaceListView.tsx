@@ -15,6 +15,7 @@ import React, {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
 } from 'react';
 import {
   findTabById,
@@ -50,6 +51,12 @@ import {
 } from '../../../data/tabSpace/tabEntries';
 import { filterActiveTabs } from '../../../data/tabSpace/activeTabFilter';
 import { focusLiveTabUtil } from '../../../data/tabSpace/chromeUtil';
+import {
+  getWhitelistedTabIds,
+  loadWhitelist,
+  subscribeWhitelist,
+  toggleWhitelisted,
+} from '../../../data/tabSpace/suspendWhitelist';
 import { updateTabSpaceName } from '../../../data/tabSpace/chromeTab';
 import { type NameTab } from '../../../ai/naming';
 import { useStore } from 'effector-react';
@@ -97,6 +104,18 @@ export function TabSpaceListView() {
   const tabSpace = useStore($tabSpace);
   const tabPreviewCache = useStore($tabSpacePreviewCache);
   const allBookmark = useStore($allBookmark);
+
+  // The tabverse's never-suspend list, device-local (data/tabSpace/
+  // suspendWhitelist). The store returns a stable set until the whitelist
+  // changes, so this re-renders exactly when it should.
+  useEffect(() => {
+    void loadWhitelist();
+  }, []);
+  const whitelistedTabIds = useSyncExternalStore(
+    subscribeWhitelist,
+    () => getWhitelistedTabIds(tabSpace.id),
+    () => getWhitelistedTabIds(tabSpace.id),
+  );
 
   const isBookmarked = (url: string): boolean => {
     return (
@@ -219,6 +238,10 @@ export function TabSpaceListView() {
           needSelector={true}
           tabPreview={getPreview(tab.chromeTabId, tabPreviewCache)}
           isBookmarked={isBookmarked(tab.url)}
+          isWhitelisted={whitelistedTabIds.has(tab.id)}
+          onToggleWhitelist={(tab: Tab) => {
+            void toggleWhitelisted(tabSpace.id, tab.id);
+          }}
           onBookmark={(tab: Tab) => {
             bookmarkStoreApi.addBookmark(
               setFavIconUrl(

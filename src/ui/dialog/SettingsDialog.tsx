@@ -18,9 +18,10 @@ import React, { useEffect, useState } from 'react';
 
 import { AboutPanel } from './AboutPanel';
 import { ServerSyncPanel } from './ServerSyncPanel';
+import { SuspendSettingsPanel } from './SuspendSettingsPanel';
 import classes from './SettingsDialog.module.scss';
 
-export type SettingsTab = 'sync' | 'about';
+export type SettingsTab = 'sync' | 'suspend' | 'about';
 
 export interface SettingsBodyProps {
   tab: SettingsTab;
@@ -54,6 +55,15 @@ export function SettingsBody(props: SettingsBodyProps) {
             </span>
           }
           panel={<ServerSyncPanel />}
+        />
+        <Tab
+          id="suspend"
+          title={
+            <span>
+              <Icon icon="pause" /> Tabs
+            </span>
+          }
+          panel={<SuspendSettingsPanel />}
         />
         <Tab
           id="about"

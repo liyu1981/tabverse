@@ -102,6 +102,10 @@ interface ITabCardProps {
   tabPreview?: string;
   isBookmarked?: boolean;
   onBookmark?: (tab: Tab) => void;
+  /** Whether this tab is on the tabverse's never-suspend list. */
+  isWhitelisted?: boolean;
+  /** Present only for live tabs; toggles the never-suspend list. */
+  onToggleWhitelist?: (tab: Tab) => void;
   onSelect?: (tabId: string, selected: boolean) => void;
   /**
    * What clicking the card does. Defaults to switching to the live tab; the
@@ -187,6 +191,30 @@ export function TabCard(props: ITabCardProps) {
       <div className={classes.rightSide}>
         {props.tab.chromeTabId > 0 ? (
           <ButtonGroup>
+            {props.onToggleWhitelist ? (
+              <Button
+                className="tv-icon-button"
+                icon="lock"
+                minimal={true}
+                active={props.isWhitelisted === true}
+                intent={
+                  props.isWhitelisted === true ? Intent.PRIMARY : Intent.NONE
+                }
+                title={
+                  props.isWhitelisted === true
+                    ? 'This tab is never suspended; click to allow it'
+                    : 'Never suspend this tab'
+                }
+                aria-label={
+                  props.isWhitelisted === true
+                    ? 'Allow this tab to be suspended'
+                    : 'Never suspend this tab'
+                }
+                onClick={() => {
+                  props.onToggleWhitelist?.(props.tab);
+                }}
+              />
+            ) : null}
             {props.isBookmarked === undefined ? (
               ''
             ) : (
