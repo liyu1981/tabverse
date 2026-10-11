@@ -1,0 +1,50 @@
+@use '../../global.scss';
+
+/*
+ * A filter box that sits at the top of a right-panel list. The count and the
+ * clear button live inside the field on the right, which needs the absolute
+ * positioning below because Blueprint's input group is `display: block` - a
+ * right element in flow would land under the input instead of in it.
+ */
+.container {
+  margin-bottom: 8px;
+}
+
+.right {
+  position: absolute;
+  top: -2px;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-right: 6px;
+  z-index: 1;
+}
+
+.count {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 10px;
+  background-color: global.$color-light-shade;
+  color: global.$color-d;
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* Room for the count pill and the clear button, taken out of the flow above. */
+.input :global(.bp6-input) {
+  padding-right: 96px;
+}
+
+/*
+ * The clear button keeps its place whether or not there is anything to clear,
+ * so the count does not jump sideways the moment the box has text in it.
+ * `visibility` rather than `display`: a hidden button that took no space would
+ * defeat the point, and this one is out of the tab order while hidden.
+ */
+.clearHidden {
+  visibility: hidden;
+}

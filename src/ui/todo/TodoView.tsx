@@ -7,6 +7,8 @@ import { newEmptyTodo, setContent } from '../../data/todo/Todo';
 import classes from './TodoView.module.scss';
 import clsx from 'clsx';
 import { useStore } from 'effector-react';
+import { ListFilter } from '../common/ListFilter';
+import { filterByText } from '../../data/search/inMemorySearch';
 
 const RETURN_KEY = 13;
 const FILTER_ACTIVE = 'active';
@@ -95,6 +97,7 @@ export function TodoView(_props: TodoViewProps) {
   const allTodo = useStore($allTodo);
 
   const [filter, setFilter] = useState<string | null>(null);
+  const [filterText, setFilterText] = useState('');
   const [currentInputValue, setCurrentInputValue] = useState<string | null>(
     null,
   );
@@ -109,18 +112,22 @@ export function TodoView(_props: TodoViewProps) {
     saveCurrentTodos();
   };
 
-  const filteredTodos = allTodo.todos
-    .filter((todo) => {
-      switch (filter) {
-        case FILTER_ACTIVE:
-          return !todo.completed;
-        case FILTER_COMPLETED:
-          return todo.completed;
-        default:
-          return true;
-      }
-    })
-    .toList();
+  const matchingTodos = filterByText(
+    allTodo.todos.toArray(),
+    (todo) => todo.content,
+    filterText,
+  );
+
+  const filteredTodos = matchingTodos.filter((todo) => {
+    switch (filter) {
+      case FILTER_ACTIVE:
+        return !todo.completed;
+      case FILTER_COMPLETED:
+        return todo.completed;
+      default:
+        return true;
+    }
+  });
 
   const todoItems = filteredTodos
     .sort((ta: Todo, tb: Todo) => {
@@ -130,7 +137,6 @@ export function TodoView(_props: TodoViewProps) {
           ? 0
           : -1;
     })
-    .toArray()
     .map((todo) => (
       <TodoItemView
         key={todo.id}
@@ -170,6 +176,14 @@ export function TodoView(_props: TodoViewProps) {
         onChange={(event) => {
           setCurrentInputValue(event.target.value);
         }}
+      />
+      <ListFilter
+        value={filterText}
+        onChange={setFilterText}
+        placeholder="filter these todos…"
+        count={matchingTodos.length}
+        total={allTodo.todos.size}
+        ariaLabel="Filter these todos"
       />
     </header>
   );

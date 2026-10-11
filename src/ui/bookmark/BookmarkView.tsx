@@ -5,7 +5,9 @@ import { saveCurrentBookmarks } from '../../data/bookmark/util';
 
 import { Bookmark } from '../../data/bookmark/Bookmark';
 import { ErrorBoundary } from '../common/ErrorBoundary';
+import { ListFilter } from '../common/ListFilter';
 import classes from './BookmarkView.module.scss';
+import { filterByText } from '../../data/search/inMemorySearch';
 import { usePageControl } from '../common/usePageControl';
 import { useStore } from 'effector-react';
 
@@ -83,9 +85,18 @@ const BOOKMARK_PAGE_LIMIT = 10;
 
 export function BookmarkView() {
   const allBookmark = useStore($allBookmark);
+  const [filterText, setFilterText] = useState('');
+
+  const allBookmarks = allBookmark.bookmarks.reverse().toArray();
+  // in memory, before paging: the page control then pages the matches
+  const filteredBookmarks = filterByText(
+    allBookmarks,
+    (bookmark) => `${bookmark.name} ${bookmark.url}`,
+    filterText,
+  );
 
   const [getCurrentPageItems, renderPageControl] = usePageControl<Bookmark>(
-    allBookmark.bookmarks.reverse().toArray(),
+    filteredBookmarks,
     BOOKMARK_PAGE_LIMIT,
   );
 
@@ -101,18 +112,34 @@ export function BookmarkView() {
 
   return (
     <ErrorBoundary>
-      {getCurrentPageItems().length <= 0 ? (
+      {allBookmarks.length <= 0 ? (
         <div className={classes.noticeContainer}>
           No bookmark saved. You can save bookmark from left side tab entries.
         </div>
       ) : (
         <div className={classes.container}>
-          <div>
-            {renderCurrentBookmarkItems()}
-            <div className={classes.pageControlContainer}>
-              {renderPageControl()}
-            </div>
+          <div className={classes.filterWrapper}>
+            <ListFilter
+              value={filterText}
+              onChange={setFilterText}
+              placeholder="filter these bookmarks…"
+              count={filteredBookmarks.length}
+              total={allBookmarks.length}
+              ariaLabel="Filter these bookmarks"
+            />
           </div>
+          {filteredBookmarks.length <= 0 ? (
+            <div className={classes.noticeContainer}>
+              No bookmark matches the filter.
+            </div>
+          ) : (
+            <div>
+              {renderCurrentBookmarkItems()}
+              <div className={classes.pageControlContainer}>
+                {renderPageControl()}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </ErrorBoundary>
