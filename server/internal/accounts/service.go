@@ -414,7 +414,7 @@ func (s *Service) updater(u token.User) token.User {
 		return u
 	}
 	if !known {
-		newID, _, err := s.store.UpsertIdentity(ctx, s.providerOf(claimID), claimID, u.Email, u.Name, s.cfg.LinkByEmail, s.registrationPolicy(u.Email, ""))
+		newID, _, err := s.store.UpsertIdentity(ctx, s.providerOf(claimID), claimID, u.Email, u.Name, s.cfg.LinkByEmail, s.registrationPolicy(u.Email, "", true))
 		if err != nil {
 			// A login we cannot place is a login we do not attribute to anybody.
 			u.ID = ""
@@ -813,7 +813,7 @@ func (s *Service) EnsureAccount(ctx context.Context, email, name, codeHash strin
 	// row unmatchable and quietly create a second account on first sign-in.
 	subject := token.HashID(sha1.New(), email)
 	userID, _, err := s.store.UpsertIdentity(ctx, ProviderEmail, subject, email, name, s.cfg.LinkByEmail,
-		s.registrationPolicy(email, codeHash))
+		s.registrationPolicy(email, codeHash, false))
 	return userID, err
 }
 
@@ -823,11 +823,17 @@ func (s *Service) EnsureAccount(ctx context.Context, email, name, codeHash strin
 // The admin address is exempt: it is the operator bootstrap, and it registers
 // before anybody exists to invite it. Without this an invite-only server could
 // never gain its first operator.
-func (s *Service) registrationPolicy(email, codeHash string) store.RegistrationPolicy {
+//
+// `createPending` is true on the social path: a provider proves the address, so
+// an uninvited login becomes a *pending* account - the person signs in and is
+// told to wait, and an operator sees the request - instead of being refused.
+func (s *Service) registrationPolicy(email, codeHash string, createPending bool) store.RegistrationPolicy {
 	if !s.cfg.RegistrationRequiresInvite || s.IsAdminEmail(email) {
 		return store.RegistrationPolicy{}
 	}
-	return store.RegistrationPolicy{RequireInvite: true, CodeHash: codeHash}
+	return store.RegistrationPolicy{
+		RequireInvite: true, CodeHash: codeHash, CreatePending: createPending,
+	}
 }
 
 // IsAdminEmail reports whether an address is the one the operator is expected

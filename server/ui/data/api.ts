@@ -157,6 +157,10 @@ export interface ConsoleApi {
   listRegistrationInvites(): Promise<RegistrationInvite[]>;
   sendRegistrationInvite(email: string): Promise<RegistrationInviteResult>;
   revokeRegistrationInvite(email: string): Promise<void>;
+  // ---- registration requests (a login with no invitation yet) ----
+  listRegistrationRequests(): Promise<UserSummary[]>;
+  inviteRegistrationRequest(userId: string): Promise<RegistrationInviteResult>;
+  deleteRegistrationRequest(userId: string): Promise<void>;
 }
 
 export function createConsoleApi(fetchFn: FetchLike = fetch): ConsoleApi {
@@ -431,6 +435,26 @@ export function createConsoleApi(fetchFn: FetchLike = fetch): ConsoleApi {
       call(
         'DELETE',
         `/console/api/v1/admin/registration-invites/${encodeURIComponent(email)}`,
+      ),
+
+    async listRegistrationRequests() {
+      const data = await call<{ requests: UserSummary[] }>(
+        'GET',
+        '/console/api/v1/admin/registration-requests',
+      );
+      return data.requests || [];
+    },
+
+    inviteRegistrationRequest: (userId: string) =>
+      call<RegistrationInviteResult>(
+        'POST',
+        `/console/api/v1/admin/registration-requests/${encodeURIComponent(userId)}/invite`,
+      ),
+
+    deleteRegistrationRequest: (userId: string) =>
+      call(
+        'DELETE',
+        `/console/api/v1/admin/registration-requests/${encodeURIComponent(userId)}`,
       ),
   };
 }

@@ -16,6 +16,7 @@ import { $me } from '../data/stores/session';
 import type {
   RegistrationInvite,
   RegistrationInviteResult,
+  UserSummary,
 } from '../data/types';
 import classes from '../layout.module.scss';
 import dataClasses from '../data.module.scss';
@@ -36,6 +37,8 @@ export function RegistrationInvitesPanel() {
   // email" can mean anything.
   const canEmail = me?.smtp === true;
   const [invites, setInvites] = useState<RegistrationInvite[]>([]);
+  // People who logged in without an invitation: the requests to approve.
+  const [requests, setRequests] = useState<UserSummary[]>([]);
   const [email, setEmail] = useState('');
   const [withCode, setWithCode] = useState(false);
   const [sendEmail, setSendEmail] = useState(false);
@@ -56,7 +59,12 @@ export function RegistrationInvitesPanel() {
 
   const reload = useCallback(async () => {
     try {
-      setInvites(await api.listRegistrationInvites());
+      const [nextInvites, nextRequests] = await Promise.all([
+        api.listRegistrationInvites(),
+        api.listRegistrationRequests(),
+      ]);
+      setInvites(nextInvites);
+      setRequests(nextRequests);
     } catch (error) {
       reportFailure('Loading the invitations', error);
     }
@@ -105,6 +113,31 @@ export function RegistrationInvitesPanel() {
     }
   };
 
+  // Approving a request mints an invitation (with a code, emailed) and
+  // activates the account, so both ways in work: the social login that asked,
+  // and the code.
+  const approveRequest = async (request: UserSummary) => {
+    const who = request.email || request.id;
+    try {
+      setTemplate(await api.inviteRegistrationRequest(request.id));
+      pushToast({ message: `Invited ${who}`, kind: 'good' });
+      await reload();
+    } catch (error) {
+      reportFailure('Inviting', error);
+    }
+  };
+
+  const rejectRequest = async (request: UserSummary) => {
+    const who = request.email || request.id;
+    try {
+      await api.deleteRegistrationRequest(request.id);
+      pushToast({ message: `Removed the request from ${who}`, kind: 'good' });
+      await reload();
+    } catch (error) {
+      reportFailure('Removing the request', error);
+    }
+  };
+
   const statusOf = (inv: RegistrationInvite): string => {
     if (inv.used_at) return 'used';
     if (inv.expires_at && inv.expires_at < Date.now()) return 'expired';
@@ -131,12 +164,64 @@ export function RegistrationInvitesPanel() {
           <h2>Registration invites</h2>
           <p className="muted small">
             When the server is invite-only, an account is created only for an
-            address invited here. Invite one, copy or send the message, and
-            revoke it if you change your mind.
+            address invited here. People who log in without an invitation appear
+            below as requests, to approve or remove.
           </p>
         </div>
       </div>
 
+      <h3>Requests</h3>
+      {requests.length === 0 ? (
+        <div className={dataClasses.emptyCard}>
+          No pending requests. A social login with no invitation shows up here.
+        </div>
+      ) : (
+        <HTMLTable className={dataClasses.tableCard} striped={false}>
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Name</th>
+              <th>Requested</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody>
+            {requests.map((request) => (
+              <tr key={request.id}>
+                <td>{request.email || '—'}</td>
+                <td className="muted">{request.name || '—'}</td>
+                <td className="muted">
+                  {request.pending_at
+                    ? new Date(request.pending_at).toLocaleString()
+                    : '—'}
+                </td>
+                <td>
+                  <div className="actions">
+                    <Button
+                      small={true}
+                      minimal={true}
+                      intent="primary"
+                      onClick={() => approveRequest(request)}
+                    >
+                      Invite
+                    </Button>
+                    <Button
+                      small={true}
+                      minimal={true}
+                      intent="danger"
+                      onClick={() => rejectRequest(request)}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </HTMLTable>
+      )}
+
+      <h3>Invite an address</h3>
       <div className="toolbar">
         <InputGroup
           className="grow"

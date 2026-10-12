@@ -195,7 +195,7 @@ git-ignored, because it holds the auth secret and the provider secret - and
 | `TABVERSED_SEARCH_LIMIT`     | `50`                | max search hits                                             |
 | `TABVERSED_WS_ORIGINS`       | _(any)_             | comma separated Origin allow list for the WebSocket upgrade |
 | `TABVERSED_ADMIN_EMAIL`      | _(unset)_           | whose first registration becomes the operator (ADR 0013) |
-| `TABVERSED_REGISTRATION_REQUIRES_INVITE` | `false` | new accounts are created only for an address an operator invited; the admin address is always exempt, so the operator can register first |
+| `TABVERSED_REGISTRATION_REQUIRES_INVITE` | `false` | new accounts are created only for an address an operator invited. A social login with no invitation becomes a *pending request* (the person is told to wait; an operator approves or rejects it in the console). The admin address is always exempt, so the operator can register first |
 | `TABVERSED_EMAIL_REGISTRATION` | `true` (official build: `false`) | the passwordless email sign-in and registration path; off means social logins only |
 | `TABVERSED_SESSION_TTL`      | `24h`                | how long one console sign-in lasts; `0` = no bound (ADR 0021) |
 | `TABVERSED_SESSION_COOKIE_TTL` | _(same as the session)_ | how long the browser keeps the cookie; defaults to `TABVERSED_SESSION_TTL` so the credential never outlives the session |

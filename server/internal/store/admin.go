@@ -34,6 +34,10 @@ type UserSummary struct {
 	// LastActivity is the newest updated_at among the user's live records, 0
 	// when the account has never synced.
 	LastActivity int64 `json:"last_activity"`
+	// PendingAt is unix ms when the account is waiting for an invitation (a
+	// login with no invite on an invite-only server), 0 when it is a working
+	// account.
+	PendingAt int64 `json:"pending_at"`
 }
 
 // ListUsers returns every account, oldest first, with its counters - the
@@ -41,10 +45,24 @@ type UserSummary struct {
 // tables; the record-derived counters come from the ADR 0026 cache, so this is
 // one central query that never opens a content file.
 func (s *Store) ListUsers(ctx context.Context, query string) ([]UserSummary, error) {
+	return s.listUsers(ctx, query, false)
+}
+
+// ListPendingRegistrations is the operator's queue of people who asked to
+// register on an invite-only server: accounts created from a login with no
+// invitation yet (`pending_at > 0`).
+func (s *Store) ListPendingRegistrations(ctx context.Context) ([]UserSummary, error) {
+	return s.listUsers(ctx, "", true)
+}
+
+func (s *Store) listUsers(ctx context.Context, query string, pendingOnly bool) ([]UserSummary, error) {
 	where := "1 = 1"
+	if pendingOnly {
+		where = "COALESCE(u.pending_at, 0) > 0"
+	}
 	args := []any{}
 	if q := strings.ToLower(strings.TrimSpace(query)); q != "" {
-		where = "(instr(lower(u.name), lower(?)) > 0 OR instr(lower(COALESCE(u.email, '')), lower(?)) > 0)"
+		where += " AND (instr(lower(u.name), lower(?)) > 0 OR instr(lower(COALESCE(u.email, '')), lower(?)) > 0)"
 		args = append(args, q, q)
 	}
 	rows, err := s.db.QueryContext(ctx, `
@@ -52,7 +70,8 @@ func (s *Store) ListUsers(ctx context.Context, query string) ([]UserSummary, err
 		       (SELECT COUNT(*) FROM devices d WHERE d.user_id = u.id),
 		       (SELECT COUNT(*) FROM tokens t WHERE t.user_id = u.id AND t.revoked = 0),
 		       (SELECT COUNT(*) FROM tokens t WHERE t.user_id = u.id AND t.revoked = 1),
-		       COALESCE(c.rev_seq, 0), COALESCE(c.record_count, 0), COALESCE(c.last_activity, 0)
+		       COALESCE(c.rev_seq, 0), COALESCE(c.record_count, 0), COALESCE(c.last_activity, 0),
+		       COALESCE(u.pending_at, 0)
 		FROM users u LEFT JOIN user_counters c ON c.user_id = u.id
 		WHERE `+where+` ORDER BY u.created_at ASC, u.id ASC`, args...)
 	if err != nil {
@@ -66,7 +85,7 @@ func (s *Store) ListUsers(ctx context.Context, query string) ([]UserSummary, err
 		var createdAt int64
 		if err := rows.Scan(&u.ID, &u.Name, &u.Email, &u.Role, &createdAt,
 			&u.DeviceCount, &u.TokenCount, &u.RevokedCount,
-			&u.RevSeq, &u.RecordCount, &u.LastActivity); err != nil {
+			&u.RevSeq, &u.RecordCount, &u.LastActivity, &u.PendingAt); err != nil {
 			return nil, err
 		}
 		u.CreatedAt = unixMS(createdAt)

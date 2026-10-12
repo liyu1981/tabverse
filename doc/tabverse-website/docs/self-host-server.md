@@ -102,12 +102,14 @@ the [server README](https://github.com/liyu1981/tabverse/blob/main/server/README
 By default anybody who can reach the server can create an account by signing in.
 Two settings change that:
 
-- **`TABVERSED_REGISTRATION_REQUIRES_INVITE=1`** makes it invite-only: a new
-  account is created only for an address an operator has invited, from the
-  console's **Admin ▸ Registration invites** section. There you invite an
-  address (optionally with a code, and optionally mailed), copy the message when
-  the server has no SMTP, re-send it, or revoke it. The admin address is exempt,
-  so the operator can always register first.
+- **`TABVERSED_REGISTRATION_REQUIRES_INVITE=1`** makes it invite-only. A social
+  login with no invitation is not refused: it becomes a **pending request**, and
+  the person sees a "registration request received" notice instead of their
+  account. In the console's **Admin ▸ Registration invites** section an operator
+  sees the requests and can **Invite** (which activates the account and emails an
+  invitation) or **Delete** one, and can also invite an address by hand
+  (optionally with a code, optionally mailed). The admin address is exempt, so
+  the operator can always register first.
 - **`TABVERSED_EMAIL_REGISTRATION=0`** turns the passwordless email path off and
   leaves social logins only. The official build defaults to this.
 

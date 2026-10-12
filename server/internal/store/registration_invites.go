@@ -147,6 +147,11 @@ type RegistrationPolicy struct {
 	RequireInvite bool
 	// CodeHash is the sha256 of a code the registrant supplied, "" when none.
 	CodeHash string
+	// CreatePending says what to do when the invite is required and missing:
+	// true records a *pending* account (a social login, which proves the
+	// address) so the person can sign in and be told to wait; false refuses
+	// with ErrInviteRequired (the email path).
+	CreatePending bool
 }
 
 // consumeRegistrationInviteTx checks a live invite in tx and, when it is valid,

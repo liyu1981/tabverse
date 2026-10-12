@@ -78,6 +78,12 @@ export interface Me {
   operator_exists?: boolean;
   /** Signed in, but nobody has claimed the operator role on this deployment. */
   awaiting_operator?: boolean;
+  /**
+   * Signed in, but the account came from a login with no invitation yet on an
+   * invite-only server: the console shows the "request received" notice
+   * instead of the account.
+   */
+  pending_registration?: boolean;
 }
 
 /** `GET /console/api/v1/console/impersonation`: the read-only window, if any. */
@@ -104,6 +110,8 @@ export interface UserSummary {
   revoked_token_count?: number;
   record_count: number;
   last_activity: Millis;
+  /** Unix ms when the account is waiting for an invitation; 0 when active. */
+  pending_at?: Millis;
 }
 
 export interface UserList {

@@ -123,3 +123,44 @@ func TestListRegistrationInvites(t *testing.T) {
 		t.Fatalf("len = %d, want 2", len(invs))
 	}
 }
+
+// A login with no invitation on an invite-only server records a request: the
+// account exists (so the session resolves and the person can be told to wait)
+// but is pending until an operator invites it.
+func TestRegistrationRequestIsAPendingAccount(t *testing.T) {
+	st := newTestStore(t)
+	ctx := context.Background()
+
+	uid, created, err := st.UpsertIdentity(ctx, "google", "subj-1", "asker@example.com", "Asker", true,
+		RegistrationPolicy{RequireInvite: true, CreatePending: true})
+	if err != nil || !created {
+		t.Fatalf("request: created=%v err=%v", created, err)
+	}
+	acc, err := st.AccountByID(ctx, uid)
+	if err != nil {
+		t.Fatalf("account: %v", err)
+	}
+	if !acc.Pending() {
+		t.Fatalf("the account should be pending")
+	}
+
+	requests, err := st.ListPendingRegistrations(ctx)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if len(requests) != 1 || requests[0].ID != uid {
+		t.Fatalf("requests = %+v", requests)
+	}
+
+	// Approving clears the mark, and the queue empties.
+	if err := st.SetUserPending(ctx, uid, 0); err != nil {
+		t.Fatalf("activate: %v", err)
+	}
+	requests, err = st.ListPendingRegistrations(ctx)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if len(requests) != 0 {
+		t.Fatalf("the request should be gone, got %+v", requests)
+	}
+}

@@ -282,6 +282,10 @@ func (s *Store) migrate(ctx context.Context) error {
 		// which reads as 'user'.
 		{table: "users", column: "role", decl: "TEXT"},
 		{table: "users", column: "disabled_at", decl: "INTEGER"},
+		// Set when an account was created from a login with no invitation yet
+		// (an invite-only server). It can sign in, but the console shows the
+		// "request received" notice until an operator invites it.
+		{table: "users", column: "pending_at", decl: "INTEGER NOT NULL DEFAULT 0"},
 		// Revocation cut-off for stateless session tokens: any session issued
 		// before this instant is rejected, which is what makes "sign out
 		// everywhere" and "revoke on password change" possible without keeping

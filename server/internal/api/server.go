@@ -135,6 +135,12 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /console/api/v1/admin/registration-invites/{email}/send", s.adminOnly(s.handleAdminSendRegistrationInvite))
 	mux.HandleFunc("DELETE /console/api/v1/admin/registration-invites/{email}", s.adminOnly(s.handleAdminRevokeRegistrationInvite))
 
+	// Registration requests: accounts created from a login with no invitation yet
+	// on an invite-only server. An operator approves or rejects them here.
+	mux.HandleFunc("GET /console/api/v1/admin/registration-requests", s.adminOnly(s.handleAdminListRegistrationRequests))
+	mux.HandleFunc("POST /console/api/v1/admin/registration-requests/{user_id}/invite", s.adminOnly(s.handleAdminInviteRegistrationRequest))
+	mux.HandleFunc("DELETE /console/api/v1/admin/registration-requests/{user_id}", s.adminOnly(s.handleAdminDeleteRegistrationRequest))
+
 	// The library's login routes, mounted where the console expects them.
 	{
 		mux.Handle("/auth/", http.StripPrefix("/auth", s.accounts.Handlers()))

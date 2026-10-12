@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -108,5 +109,60 @@ func TestRegistrationInviteIsEmailed(t *testing.T) {
 	}
 	if !strings.Contains(sentText, "/console") {
 		t.Fatalf("the message should name the console: %q", sentText)
+	}
+}
+
+// A login with no invitation shows up as a request the operator can approve or
+// reject.
+func TestRegistrationRequestsAdminAPI(t *testing.T) {
+	ts, srv := newInviteOnlyServer(t)
+	op := operatorSession(t, ts, srv)
+
+	uid, _, err := srv.store.UpsertIdentity(context.Background(), "google", "g-1",
+		"asker@example.com", "Asker", true,
+		store.RegistrationPolicy{RequireInvite: true, CreatePending: true})
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+
+	// The operator sees it.
+	r := adminDo(t, op, http.MethodGet, "/console/api/v1/admin/registration-requests", nil)
+	r.mustStatus(t, http.StatusOK)
+
+	// Approving invites it and activates the account.
+	r = adminDo(t, op, http.MethodPost,
+		"/console/api/v1/admin/registration-requests/"+uid+"/invite", nil)
+	r.mustStatus(t, http.StatusOK)
+	acc, err := srv.store.AccountByID(context.Background(), uid)
+	if err != nil {
+		t.Fatalf("account: %v", err)
+	}
+	if acc.Pending() {
+		t.Fatalf("the account should be active after the invite")
+	}
+
+	// A second approval is a conflict, not a silent no-op.
+	r = adminDo(t, op, http.MethodPost,
+		"/console/api/v1/admin/registration-requests/"+uid+"/invite", nil)
+	r.mustStatus(t, http.StatusConflict)
+}
+
+// Rejecting a request removes the pending account.
+func TestRegistrationRequestCanBeRejected(t *testing.T) {
+	ts, srv := newInviteOnlyServer(t)
+	op := operatorSession(t, ts, srv)
+
+	uid, _, err := srv.store.UpsertIdentity(context.Background(), "google", "g-2",
+		"reject@example.com", "Reject", true,
+		store.RegistrationPolicy{RequireInvite: true, CreatePending: true})
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+
+	r := adminDo(t, op, http.MethodDelete,
+		"/console/api/v1/admin/registration-requests/"+uid, nil)
+	r.mustStatus(t, http.StatusNoContent)
+	if _, err := srv.store.AccountByID(context.Background(), uid); err == nil {
+		t.Fatalf("the account should be gone")
 	}
 }

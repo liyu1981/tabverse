@@ -66,6 +66,10 @@ export function App() {
   // sentence and a way back rather than a page they cannot use.
   const onAdmin = view === 'admin';
   const isOperator = me?.role === 'admin';
+  // A pending registration can sign in, but has no account to look at yet: the
+  // one thing to show is the notice.
+  const pending = me?.pending_registration === true;
+  const signedIn = status === 'signed-in' && !pending;
 
   return (
     <>
@@ -73,22 +77,39 @@ export function App() {
       <OperatorHint />
       <AssumeBar />
       {showPair ? <PairView request={pairRequest} /> : null}
-      {!showPair && status === 'signed-in' && onAdmin && isOperator ? (
-        <AdminView />
+      {!showPair && status === 'signed-in' && pending ? (
+        <PendingRegistrationView />
       ) : null}
-      {!showPair && status === 'signed-in' && onAdmin && !isOperator ? (
+      {!showPair && signedIn && onAdmin && isOperator ? <AdminView /> : null}
+      {!showPair && signedIn && onAdmin && !isOperator ? (
         <OperatorOnlyView />
       ) : null}
-      {!showPair && status === 'signed-in' && !onAdmin ? <AccountView /> : null}
+      {!showPair && signedIn && !onAdmin ? <AccountView /> : null}
       {!showPair && status === 'signed-out' ? <SignInView /> : null}
       {status === 'loading' ? <LoadingView /> : null}
       {/* The drawer is outside the account view on purpose: it belongs to the
           console, not to a tab, and it survives the tab it was opened from. */}
-      {!showPair && status === 'signed-in' && !onAdmin ? (
-        <TabverseDrawer />
-      ) : null}
+      {!showPair && signedIn && !onAdmin ? <TabverseDrawer /> : null}
       <Toasts />
     </>
+  );
+}
+
+/** A person whose registration is waiting for an operator's invitation. */
+function PendingRegistrationView() {
+  return (
+    <main className={classes.content}>
+      <div className={classes.viewHead}>
+        <div>
+          <h1>Registration request received</h1>
+          <p className="muted small">
+            Your request is with this server's operators. When it is approved
+            you will get an invitation email, and then this account works - sign
+            in again to use it. Nothing else is needed from you.
+          </p>
+        </div>
+      </div>
+    </main>
   );
 }
 

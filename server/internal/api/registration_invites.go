@@ -166,3 +166,97 @@ func (s *Server) handleAdminRevokeRegistrationInvite(w http.ResponseWriter, r *h
 	})
 	w.WriteHeader(http.StatusNoContent)
 }
+
+// ---- registration requests ------------------------------------------------
+
+// A registration request is an account created from a login with no invitation
+// yet (`users.pending_at`): a social login proves the address, so instead of
+// refusing it the server lets the person in far enough to be told to wait, and
+// an operator sees the request here.
+
+// handleAdminListRegistrationRequests lists the accounts waiting for an
+// invitation.
+func (s *Server) handleAdminListRegistrationRequests(w http.ResponseWriter, r *http.Request) {
+	requests, err := s.store.ListPendingRegistrations(r.Context())
+	if err != nil {
+		writeStoreErr(w, err)
+		return
+	}
+	if requests == nil {
+		requests = []store.UserSummary{}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"requests": requests})
+}
+
+// handleAdminInviteRegistrationRequest approves one: it mints an invitation (so
+// the manual list shows it and the email path can use the code), emails it, and
+// activates the account so the social login that asked works too.
+func (s *Server) handleAdminInviteRegistrationRequest(w http.ResponseWriter, r *http.Request) {
+	userID := r.PathValue("user_id")
+	ctx := r.Context()
+	acc, err := s.store.AccountByID(ctx, userID)
+	if err != nil {
+		writeStoreErr(w, err)
+		return
+	}
+	if !acc.Pending() {
+		writeErr(w, http.StatusConflict, "not_pending",
+			"that account is not waiting for an invitation")
+		return
+	}
+	if strings.TrimSpace(acc.Email) == "" {
+		writeErr(w, http.StatusBadRequest, "no_email",
+			"that account has no address to invite")
+		return
+	}
+	display, normalized := auth.NewInviteCode()
+	inv, err := s.store.CreateRegistrationInvite(ctx, acc.Email, auth.HashToken(normalized),
+		s.actorOf(r), defaultInviteTTLSeconds*1000)
+	if err != nil {
+		writeStoreErr(w, err)
+		return
+	}
+	if err := s.store.SetUserPending(ctx, userID, 0); err != nil {
+		writeStoreErr(w, err)
+		return
+	}
+	subject, body, err := s.accounts.SendRegistrationInvite(acc.Email, display, inv.ExpiresAt)
+	if err != nil {
+		s.logger.Warn("could not send the registration invitation", "to", acc.Email, "err", err)
+	}
+	_ = s.store.AppendAudit(ctx, store.AuditEntry{
+		Actor: s.actorOf(r), Target: userID, Action: store.AuditRegistrationRequestInvited,
+		IP: clientIP(r), Detail: acc.Email,
+	})
+	writeJSON(w, http.StatusOK, registrationInviteResponse{
+		Invite: inv, Code: display,
+		Email: registrationInviteEmail{Subject: subject, Body: body},
+	})
+}
+
+// handleAdminDeleteRegistrationRequest rejects one: the pending account and its
+// identity go away, which is the same delete an operator already has, scoped to
+// the accounts that are only requests.
+func (s *Server) handleAdminDeleteRegistrationRequest(w http.ResponseWriter, r *http.Request) {
+	userID := r.PathValue("user_id")
+	ctx := r.Context()
+	acc, err := s.store.AccountByID(ctx, userID)
+	if err != nil {
+		writeStoreErr(w, err)
+		return
+	}
+	if !acc.Pending() {
+		writeErr(w, http.StatusConflict, "not_pending",
+			"that account is not waiting for an invitation")
+		return
+	}
+	if err := s.store.DeleteUser(ctx, userID); err != nil {
+		writeStoreErr(w, err)
+		return
+	}
+	_ = s.store.AppendAudit(ctx, store.AuditEntry{
+		Actor: s.actorOf(r), Target: userID, Action: store.AuditRegistrationRequestRejected,
+		IP: clientIP(r), Detail: acc.Email,
+	})
+	w.WriteHeader(http.StatusNoContent)
+}

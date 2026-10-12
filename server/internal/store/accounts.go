@@ -67,6 +67,10 @@ const (
 	AuditRegistrationInviteAdded   = "registration_invite_added"
 	AuditRegistrationInviteSent    = "registration_invite_sent"
 	AuditRegistrationInviteRevoked = "registration_invite_revoked"
+	// A pending registration request (a login with no invitation yet) that an
+	// operator approved or rejected.
+	AuditRegistrationRequestInvited  = "registration_request_invited"
+	AuditRegistrationRequestRejected = "registration_request_rejected"
 )
 
 // Email token purposes.
@@ -89,10 +93,17 @@ type Account struct {
 	Role         string
 	DisabledAt   *time.Time
 	CreatedAt    time.Time
+	// PendingAt is set when the account came from a login with no invitation
+	// yet: it exists (so the session resolves and the person can be told to
+	// wait), but it is not a working account until an operator invites it.
+	PendingAt *time.Time
 }
 
 // IsAdmin reports whether the account may reach the operator surfaces.
 func (a Account) IsAdmin() bool { return a.Role == RoleAdmin }
+
+// Pending reports whether the account is still waiting for an invitation.
+func (a Account) Pending() bool { return a.PendingAt != nil }
 
 // CanLogin reports whether the account is allowed to authenticate at all.
 func (a Account) CanLogin() bool { return a.DisabledAt == nil }
@@ -135,13 +146,13 @@ func (s *Store) AccountByEmail(ctx context.Context, email string) (Account, erro
 		return Account{}, ErrNotFound
 	}
 	var a Account
-	var verified, disabled sql.NullInt64
+	var verified, disabled, pending sql.NullInt64
 	var hash, role sql.NullString
 	var createdAt int64
 	err := s.db.QueryRowContext(ctx, `
-		SELECT id, name, email, email_verified_at, password_hash, role, disabled_at, created_at
+		SELECT id, name, email, email_verified_at, password_hash, role, disabled_at, created_at, pending_at
 		FROM users WHERE lower(email) = ?`, email).
-		Scan(&a.ID, &a.Name, &a.Email, &verified, &hash, &role, &disabled, &createdAt)
+		Scan(&a.ID, &a.Name, &a.Email, &verified, &hash, &role, &disabled, &createdAt, &pending)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Account{}, ErrNotFound
 	}
@@ -150,6 +161,7 @@ func (s *Store) AccountByEmail(ctx context.Context, email string) (Account, erro
 	}
 	a.EmailVerifiedAt = nullTime(verified)
 	a.DisabledAt = nullTime(disabled)
+	a.PendingAt = nullTimeSet(pending)
 	a.PasswordHash, a.Role, a.CreatedAt = hash.String, role.String, unixMS(createdAt)
 	return a, nil
 }
@@ -158,12 +170,12 @@ func (s *Store) AccountByEmail(ctx context.Context, email string) (Account, erro
 func (s *Store) AccountByID(ctx context.Context, id string) (Account, error) {
 	var a Account
 	var email, hash, role sql.NullString
-	var verified, disabled sql.NullInt64
+	var verified, disabled, pending sql.NullInt64
 	var createdAt int64
 	err := s.db.QueryRowContext(ctx, `
-		SELECT id, name, email, email_verified_at, password_hash, role, disabled_at, created_at
+		SELECT id, name, email, email_verified_at, password_hash, role, disabled_at, created_at, pending_at
 		FROM users WHERE id = ?`, id).
-		Scan(&a.ID, &a.Name, &email, &verified, &hash, &role, &disabled, &createdAt)
+		Scan(&a.ID, &a.Name, &email, &verified, &hash, &role, &disabled, &createdAt, &pending)
 	if errors.Is(err, sql.ErrNoRows) {
 		return Account{}, ErrNotFound
 	}
@@ -173,11 +185,22 @@ func (s *Store) AccountByID(ctx context.Context, id string) (Account, error) {
 	a.Email, a.PasswordHash, a.Role = email.String, hash.String, role.String
 	a.EmailVerifiedAt, a.CreatedAt = nullTime(verified), unixMS(createdAt)
 	a.DisabledAt = nullTime(disabled)
+	a.PendingAt = nullTimeSet(pending)
 	return a, nil
 }
 
 func nullTime(v sql.NullInt64) *time.Time {
 	if !v.Valid {
+		return nil
+	}
+	t := unixMS(v.Int64)
+	return &t
+}
+
+// nullTimeSet is nullTime for a column where 0 means "unset" (pending_at,
+// tokens_valid_after), so a zero does not read as a real instant.
+func nullTimeSet(v sql.NullInt64) *time.Time {
+	if !v.Valid || v.Int64 == 0 {
 		return nil
 	}
 	t := unixMS(v.Int64)
@@ -437,15 +460,24 @@ func (s *Store) UpsertIdentity(ctx context.Context, provider, subject, email, na
 		} else {
 			// Invite-only servers gate exactly this branch - the *new* account.
 			// Every branch above returns early or adopts an existing row, so an
-			// existing account (a sign-in) is never refused. The check and the
-			// mark-used share this transaction, so two registrations racing on
-			// one invitation cannot both pass.
+			// existing account (a sign-in) is never refused.
+			pending := false
 			if reg.RequireInvite {
 				ok, err := consumeRegistrationInviteTx(ctx, tx, email, reg.CodeHash)
 				if err != nil {
 					return "", false, err
 				}
-				if !ok {
+				switch {
+				case ok:
+					// Invited: an ordinary new account.
+				case reg.CreatePending:
+					// Not invited, but a social login proves the address, so the
+					// account is created *pending*: the person signs in and is told
+					// to wait, and an operator sees the request. The email path
+					// (which proves nothing until the link is followed) does not
+					// take this branch - it is refused instead.
+					pending = true
+				default:
 					return "", false, ErrInviteRequired
 				}
 			}
@@ -453,7 +485,7 @@ func (s *Store) UpsertIdentity(ctx context.Context, provider, subject, email, na
 			// who registers has no tabverses yet, and the sync protocol needs
 			// somewhere to put them.
 			created = true
-			if linked, err = s.createUserTx(ctx, tx, newAccountID(), name, email); err != nil {
+			if linked, err = s.createUserTx(ctx, tx, newAccountID(), name, email, pending); err != nil {
 				return "", false, err
 			}
 		}
@@ -682,7 +714,7 @@ func (s *Store) UnclaimedUserCount(ctx context.Context) (int, error) {
 
 // createUserTx inserts a user inside a caller's transaction. The caller has
 // already linked any row it means to adopt, so a new row here is genuinely new.
-func (s *Store) createUserTx(ctx context.Context, tx *sql.Tx, id, name, email string) (string, error) {
+func (s *Store) createUserTx(ctx context.Context, tx *sql.Tx, id, name, email string, pending bool) (string, error) {
 	if name == "" {
 		name = email
 	}
@@ -693,12 +725,31 @@ func (s *Store) createUserTx(ctx context.Context, tx *sql.Tx, id, name, email st
 	if email != "" {
 		emailArg = email
 	}
+	pendingAt := int64(0)
+	if pending {
+		pendingAt = nowMS()
+	}
 	if _, err := tx.ExecContext(ctx,
-		`INSERT INTO users (id, name, email, role, created_at, rev_seq) VALUES (?, ?, ?, ?, ?, 0)`,
-		id, name, emailArg, RoleUser, nowMS()); err != nil {
+		`INSERT INTO users (id, name, email, role, created_at, rev_seq, pending_at) VALUES (?, ?, ?, ?, ?, 0, ?)`,
+		id, name, emailArg, RoleUser, nowMS(), pendingAt); err != nil {
 		return "", err
 	}
 	return id, nil
+}
+
+// SetUserPending marks an account as waiting for an invitation (pendingAt > 0)
+// or clears the mark (pendingAt == 0), which is what "invite" does to a
+// pending registration request.
+func (s *Store) SetUserPending(ctx context.Context, userID string, pendingAt int64) error {
+	res, err := s.db.ExecContext(ctx,
+		`UPDATE users SET pending_at = ? WHERE id = ?`, pendingAt, userID)
+	if err != nil {
+		return err
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return ErrNotFound
+	}
+	return nil
 }
 
 // CountAccounts is how many people have registered. It is what closes the

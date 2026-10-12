@@ -34,6 +34,8 @@ func (s *Server) handleConsoleMe(w http.ResponseWriter, r *http.Request) {
 			// official flavour): the sign-in view hides the address form when it
 			// is false and shows only the social buttons.
 			"email_registration": !s.cfg.DisableEmailRegistration,
+			// Signed out: there is no account, so nothing is pending.
+			"pending_registration": false,
 			// Whether a link can actually be posted. The sign-in view says where
 			// the link went, and it used to say "no mail server is configured" to
 			// everybody, which is false on every deployment that has one.
@@ -81,7 +83,10 @@ func (s *Server) handleConsoleMe(w http.ResponseWriter, r *http.Request) {
 		"admin_email":        s.cfg.AdminEmail,
 		"operator_exists":    operator,
 		"email_registration": !s.cfg.DisableEmailRegistration,
-		"smtp":               s.cfg.MailConfigured(),
+		// Set when this account came from a login with no invitation yet: the
+		// console shows the "request received" notice instead of the account.
+		"pending_registration": acc.Pending(),
+		"smtp":                 s.cfg.MailConfigured(),
 		// Whether there is a site to go back to at "/", for the same button as
 		// above: the flag does not depend on who is asking.
 		"docs": webui.HasDocs(),
