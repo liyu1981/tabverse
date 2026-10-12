@@ -21,6 +21,8 @@ import type {
   Invite,
   Me,
   RecordPage,
+  RegistrationInvite,
+  RegistrationInviteResult,
   ServerConfig,
   TabspaceBundle,
   TabspacePage,
@@ -81,7 +83,7 @@ export interface ConsoleApi {
   setCsrf(header: string, token: string): void;
   getConfig(): Promise<ServerConfig>;
   whoAmI(): Promise<Me | null>;
-  requestSigninLink(email: string): Promise<void>;
+  requestSigninLink(email: string, code?: string): Promise<void>;
   signOut(): Promise<void>;
   /**
    * End every console session this account has, including this browser's
@@ -145,6 +147,16 @@ export interface ConsoleApi {
     entity?: string;
     archived?: boolean;
   }): Promise<AdminSearchResult>;
+  // ---- registration invites (invite-only servers) ----
+  inviteRegistration(input: {
+    email: string;
+    ttl_seconds?: number;
+    with_code?: boolean;
+    send_email?: boolean;
+  }): Promise<RegistrationInviteResult>;
+  listRegistrationInvites(): Promise<RegistrationInvite[]>;
+  sendRegistrationInvite(email: string): Promise<RegistrationInviteResult>;
+  revokeRegistrationInvite(email: string): Promise<void>;
 }
 
 export function createConsoleApi(fetchFn: FetchLike = fetch): ConsoleApi {
@@ -246,12 +258,15 @@ export function createConsoleApi(fetchFn: FetchLike = fetch): ConsoleApi {
      * endpoint rather than the library's: it creates the account before the link
      * goes out, which is the order the session check needs.
      */
-    async requestSigninLink(email: string) {
+    async requestSigninLink(email: string, code?: string) {
       const search = new URLSearchParams({
         user: email,
         address: email,
         site: window.location.origin,
       });
+      // Only when the operator's invitation carried one. An invite-only server
+      // without a code does not need this.
+      if (code) search.set('code', code);
       await call(
         'POST',
         `/console/api/v1/console/signin-link?${search.toString()}`,
@@ -389,6 +404,33 @@ export function createConsoleApi(fetchFn: FetchLike = fetch): ConsoleApi {
       call<AdminSearchResult>(
         'GET',
         '/console/api/v1/console/search' + query(params),
+      ),
+
+    inviteRegistration: (input) =>
+      call<RegistrationInviteResult>(
+        'POST',
+        '/console/api/v1/admin/registration-invites',
+        input,
+      ),
+
+    async listRegistrationInvites() {
+      const data = await call<{ invites: RegistrationInvite[] }>(
+        'GET',
+        '/console/api/v1/admin/registration-invites',
+      );
+      return data.invites || [];
+    },
+
+    sendRegistrationInvite: (email: string) =>
+      call<RegistrationInviteResult>(
+        'POST',
+        `/console/api/v1/admin/registration-invites/${encodeURIComponent(email)}/send`,
+      ),
+
+    revokeRegistrationInvite: (email: string) =>
+      call(
+        'DELETE',
+        `/console/api/v1/admin/registration-invites/${encodeURIComponent(email)}`,
       ),
   };
 }

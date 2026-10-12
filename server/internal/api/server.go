@@ -127,6 +127,14 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /console/api/v1/admin/users/{user_id}/records", admin(s.handleAdminListRecords))
 	mux.HandleFunc("GET /console/api/v1/admin/users/{user_id}/search", admin(s.handleAdminSearch))
 
+	// Registration invitations: who may create an account on an invite-only
+	// server (TABVERSED_REGISTRATION_REQUIRES_INVITE). Server-level, not
+	// per-account, because the invited person has no account yet.
+	mux.HandleFunc("POST /console/api/v1/admin/registration-invites", s.adminOnly(s.handleAdminCreateRegistrationInvite))
+	mux.HandleFunc("GET /console/api/v1/admin/registration-invites", s.adminOnly(s.handleAdminListRegistrationInvites))
+	mux.HandleFunc("POST /console/api/v1/admin/registration-invites/{email}/send", s.adminOnly(s.handleAdminSendRegistrationInvite))
+	mux.HandleFunc("DELETE /console/api/v1/admin/registration-invites/{email}", s.adminOnly(s.handleAdminRevokeRegistrationInvite))
+
 	// The library's login routes, mounted where the console expects them.
 	{
 		mux.Handle("/auth/", http.StripPrefix("/auth", s.accounts.Handlers()))

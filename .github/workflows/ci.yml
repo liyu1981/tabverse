@@ -164,6 +164,13 @@ jobs:
       - name: the documentation really is there
         run: test -f server/internal/webui/docs/index.html
 
+      # The `officialserver` build tag flips the email-registration default to
+      # off (config/official_defaults.go). It has to compile, and nothing else
+      # in CI builds it.
+      - name: build with the official tag
+        run: go build -tags officialserver ./...
+        working-directory: server
+
       - name: go vet
         run: go vet ./...
         working-directory: server

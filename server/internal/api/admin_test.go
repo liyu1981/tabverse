@@ -39,7 +39,7 @@ func createAccount(t *testing.T, op *sessionClient, name string) string {
 	ctx := context.Background()
 	email := name + "@example.com"
 	id, _, err := op.srv.store.UpsertIdentity(ctx, accounts.ProviderEmail,
-		"subject-"+name, email, name, true)
+		"subject-"+name, email, name, true, store.RegistrationPolicy{})
 	if err != nil {
 		t.Fatalf("register: %v", err)
 	}

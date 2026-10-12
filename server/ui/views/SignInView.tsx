@@ -41,6 +41,7 @@ function orderedProviders(providers: string[]): string[] {
 export function SignInView() {
   const me = useUnit($me);
   const [email, setEmail] = useState('');
+  const [code, setCode] = useState('');
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -51,6 +52,9 @@ export function SignInView() {
   // deployment that has one - and the person who most needs to know is the one
   // who has just asked for a link and is waiting.
   const canEmail = me?.smtp === true;
+  // Whether the passwordless email path is offered at all. Off on the official
+  // flavour, where the console shows only the social buttons.
+  const emailRegistration = me?.email_registration !== false;
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -60,7 +64,7 @@ export function SignInView() {
     // Lowercased before it is sent, so the address the server hashes for the
     // session's identity and the one it stores are the same string however the
     // person typed it.
-    const ok = await requestSigninLink(email);
+    const ok = await requestSigninLink(email, code);
     setBusy(false);
     if (ok) {
       setSent(true);
@@ -94,33 +98,55 @@ export function SignInView() {
                 </a>
               ))}
             </div>
-            <div className={classes.orRule}>
-              <span>or</span>
-            </div>
+            {emailRegistration ? (
+              <div className={classes.orRule}>
+                <span>or</span>
+              </div>
+            ) : null}
           </>
         ) : null}
 
-        <form onSubmit={submit}>
+        {emailRegistration ? (
+          <form onSubmit={submit}>
+            <p className="muted small">
+              Enter your address and we will send you a link that works once.
+              There is no password to choose, forget or leak.
+            </p>
+            <FormGroup label="Email" labelFor="signin-email">
+              <input
+                id="signin-email"
+                type="email"
+                required={true}
+                autoComplete="email"
+                spellCheck={false}
+                placeholder="you@example.com"
+                value={email}
+                onChange={(event) => setEmail(event.currentTarget.value)}
+              />
+            </FormGroup>
+            <FormGroup
+              label="Invitation code (only if you were given one)"
+              labelFor="signin-code"
+            >
+              <input
+                id="signin-code"
+                type="text"
+                autoComplete="off"
+                spellCheck={false}
+                placeholder="XXXX-XXXX-XXXX-XXXX"
+                value={code}
+                onChange={(event) => setCode(event.currentTarget.value)}
+              />
+            </FormGroup>
+            <Button type="submit" intent="primary" fill={true} loading={busy}>
+              Send sign-in link
+            </Button>
+          </form>
+        ) : (
           <p className="muted small">
-            Enter your address and we will send you a link that works once.
-            There is no password to choose, forget or leak.
+            This server signs in with a social provider only.
           </p>
-          <FormGroup label="Email" labelFor="signin-email">
-            <input
-              id="signin-email"
-              type="email"
-              required={true}
-              autoComplete="email"
-              spellCheck={false}
-              placeholder="you@example.com"
-              value={email}
-              onChange={(event) => setEmail(event.currentTarget.value)}
-            />
-          </FormGroup>
-          <Button type="submit" intent="primary" fill={true} loading={busy}>
-            Send sign-in link
-          </Button>
-        </form>
+        )}
 
         {sent ? (
           <p className="muted small">

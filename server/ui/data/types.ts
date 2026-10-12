@@ -63,6 +63,11 @@ export interface Me {
    */
   smtp?: boolean;
   /**
+   * Whether the passwordless email path is offered at all. Off on the official
+   * flavour, where the console shows only the social buttons.
+   */
+  email_registration?: boolean;
+  /**
    * Whether there is a site at `/` worth going back to: this build carries the
    * documentation rather than only the redirect page (adr/0024). The top bar
    * offers the link on this answer alone, because in a build without the docs
@@ -147,6 +152,33 @@ export interface UserDetail {
 export interface Invite {
   code: string;
   expires_at: IsoTime;
+}
+
+/** One operator-created invitation to register an address. */
+export interface RegistrationInvite {
+  email: string;
+  invited_by: string;
+  created_at: Millis;
+  /** Unix ms; 0 means no expiry. */
+  expires_at: Millis;
+  /** Unix ms; 0 means not used yet. */
+  used_at: Millis;
+  /** Whether a code is also required to register. */
+  has_code: boolean;
+}
+
+/** The rendered invitation email, so the console can show it to copy. */
+export interface RegistrationInviteEmail {
+  subject: string;
+  body: string;
+}
+
+/** What creating or re-sending an invitation returns. */
+export interface RegistrationInviteResult {
+  invite: RegistrationInvite;
+  /** Present only when this call issued a code. */
+  code?: string;
+  email: RegistrationInviteEmail;
 }
 
 /**

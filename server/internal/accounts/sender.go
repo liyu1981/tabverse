@@ -37,11 +37,26 @@ type mailSender struct {
 // ContextSender variant, which this does not implement on purpose - see the note
 // on the timeout below.
 func (m *mailSender) Send(dest, msg string) error {
+	body := msg + "\n\n" +
+		"If you did not ask to sign in, ignore this: nothing has changed.\n"
+	return m.sendMessage(dest, "Your Tabverse sign-in link", body)
+}
+
+// SendInvite delivers an operator's registration invitation. It is our own
+// message rather than the library's, so it carries its own subject and body.
+func (m *mailSender) SendInvite(dest, subject, body string) error {
+	return m.sendMessage(dest, subject, body)
+}
+
+// sendMessage is the one delivery path: SMTP when configured, a loud log line
+// otherwise. The no-SMTP case is not a stub - a LAN deployment has nowhere to
+// send mail, and a message nobody can receive has to be visible somewhere.
+func (m *mailSender) sendMessage(dest, subject, body string) error {
 	if !m.cfg.SMTPConfigured() {
-		// Log it, and make it impossible to miss.
-		m.log.Warn("no TABVERSED_SMTP_HOST configured: printing the sign-in link instead of "+
+		m.log.Warn("no TABVERSED_SMTP_HOST configured: printing the message instead of "+
 			"emailing it. Set the SMTP_* variables to send it properly.", "to", dest)
-		for _, line := range strings.Split(msg, "\n") {
+		m.log.Info("  Subject: " + subject)
+		for _, line := range strings.Split(body, "\n") {
 			if line = strings.TrimSpace(line); line != "" {
 				m.log.Info("  " + line)
 			}
@@ -53,9 +68,6 @@ func (m *mailSender) Send(dest, msg string) error {
 	if from == "" {
 		from = "tabversed@" + hostOnly(m.cfg.SMTPHost)
 	}
-	subject := "Your Tabverse sign-in link"
-	body := msg + "\n\n" +
-		"If you did not ask to sign in, ignore this: nothing has changed.\n"
 
 	var auth smtp.Auth
 	if m.cfg.SMTPUser != "" {

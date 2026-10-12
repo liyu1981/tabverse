@@ -503,9 +503,12 @@ export async function revokeUserSessions(userId: string): Promise<void> {
   await loadDirectory();
 }
 
-export async function requestSigninLink(email: string): Promise<boolean> {
+export async function requestSigninLink(
+  email: string,
+  code?: string,
+): Promise<boolean> {
   try {
-    await api.requestSigninLink(email.trim().toLowerCase());
+    await api.requestSigninLink(email.trim().toLowerCase(), code?.trim());
     return true;
   } catch (e) {
     reportFailure('Sending the link', e);

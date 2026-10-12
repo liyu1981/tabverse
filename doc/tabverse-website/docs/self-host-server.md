@@ -81,6 +81,8 @@ worth setting on a real deployment:
 | `TABVERSED_ADDR` | `0.0.0.0:8223` | listen address; use `127.0.0.1:8223` to stay local |
 | `TABVERSED_PUBLIC_URL` | _(unset)_ | the origin the deployment is reached at; used for sign-in links and social callbacks |
 | `TABVERSED_ADMIN_EMAIL` | _(unset)_ | whose **first registration becomes the operator** |
+| `TABVERSED_REGISTRATION_REQUIRES_INVITE` | `false` | make registration invite-only: invite addresses from the console's **Admin** tab. The admin address is always exempt |
+| `TABVERSED_EMAIL_REGISTRATION` | `true` (official build: `false`) | the passwordless email path; `0` means social logins only |
 | `TABVERSED_SMTP_HOST` / `_FROM` | _(none)_ | where sign-in links are sent |
 | `TABVERSED_SECURE_COOKIES` | `true` | turn off only for plain http on a trusted LAN |
 | `TABVERSED_DB` | `data/tabversed.db` | central SQLite file (accounts, devices, tokens) |
@@ -93,6 +95,20 @@ The full table - plus `TABVERSED_MAX_RECORD_BYTES`,
 `TABVERSED_SYNC_BATCH_LIMIT`, `TABVERSED_SEARCH_LIMIT`,
 `TABVERSED_WS_ORIGINS`, the session TTLs and the social provider keys - is in
 the [server README](https://github.com/liyu1981/tabverse/blob/main/server/README.md).
+
+## Who may register
+
+By default anybody who can reach the server can create an account by signing in.
+Two settings change that:
+
+- **`TABVERSED_REGISTRATION_REQUIRES_INVITE=1`** makes it invite-only: a new
+  account is created only for an address an operator has invited, from the
+  console's **Admin ▸ Registration invites** section. There you invite an
+  address (optionally with a code, and optionally mailed), copy the message when
+  the server has no SMTP, re-send it, or revoke it. The admin address is exempt,
+  so the operator can always register first.
+- **`TABVERSED_EMAIL_REGISTRATION=0`** turns the passwordless email path off and
+  leaves social logins only. The official build defaults to this.
 
 ## TLS
 

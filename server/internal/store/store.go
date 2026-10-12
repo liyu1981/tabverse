@@ -143,6 +143,21 @@ func (s *Store) migrate(ctx context.Context) error {
 			expires_at INTEGER NOT NULL,
 			used_at    INTEGER
 		)`,
+		// Operator-created invitations to register an address. Keyed by the
+		// address, because the account does not exist yet - unlike `invites`
+		// above, which is a pairing code for one that does. Empty `code_hash`
+		// means the invited address is the whole gate; a non-empty one is a code
+		// the registrant must also supply. `used_at`/`expires_at` of 0 mean
+		// unused/no expiry.
+		`CREATE TABLE IF NOT EXISTS registration_invites (
+			email      TEXT PRIMARY KEY,
+			code_hash  TEXT NOT NULL DEFAULT '',
+			invited_by TEXT NOT NULL,
+			created_at INTEGER NOT NULL,
+			expires_at INTEGER NOT NULL DEFAULT 0,
+			used_at    INTEGER NOT NULL DEFAULT 0
+		)`,
+		`CREATE INDEX IF NOT EXISTS registration_invites_live ON registration_invites(used_at, expires_at)`,
 		// `records` and `records_fts` are not defined here: user content lives in
 		// the per-user files (ADR 0027).
 		// --- accounts (adr/0012) ---

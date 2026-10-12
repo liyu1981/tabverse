@@ -2,10 +2,12 @@ package api
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strings"
 
 	"github.com/liyu1981/tabverse/server/internal/accounts"
+	"github.com/liyu1981/tabverse/server/internal/auth"
 	"github.com/liyu1981/tabverse/server/internal/store"
 	"github.com/liyu1981/tabverse/server/internal/webui"
 )
@@ -28,6 +30,10 @@ func (s *Server) handleConsoleMe(w http.ResponseWriter, r *http.Request) {
 			"admin_email":     s.cfg.AdminEmail,
 			"operator_exists": s.operatorExists(r),
 			"csrf_header":     accountsCSRFHeader,
+			// Whether the passwordless email path is offered at all (off on the
+			// official flavour): the sign-in view hides the address form when it
+			// is false and shows only the social buttons.
+			"email_registration": !s.cfg.DisableEmailRegistration,
 			// Whether a link can actually be posted. The sign-in view says where
 			// the link went, and it used to say "no mail server is configured" to
 			// everybody, which is false on every deployment that has one.
@@ -74,6 +80,7 @@ func (s *Server) handleConsoleMe(w http.ResponseWriter, r *http.Request) {
 		"providers":       s.cfg.SocialProviders(),
 		"admin_email":     s.cfg.AdminEmail,
 		"operator_exists": operator,
+		"email_registration": !s.cfg.DisableEmailRegistration,
 		"smtp":            s.cfg.SMTPConfigured(),
 		// Whether there is a site to go back to at "/", for the same button as
 		// above: the flag does not depend on who is asking.
@@ -219,6 +226,11 @@ func (s *Server) BootstrapOperator(ctx context.Context) error {
 // dispatches on and hands over, so token issuance, the message and the redirect
 // all stay where they are.
 func (s *Server) handleConsoleSigninLink(w http.ResponseWriter, r *http.Request) {
+	if s.cfg.DisableEmailRegistration {
+		writeErr(w, http.StatusForbidden, "email_registration_disabled",
+			"this server signs in with a social provider only")
+		return
+	}
 	email := strings.TrimSpace(r.URL.Query().Get("address"))
 	if email == "" {
 		writeErr(w, http.StatusBadRequest, "bad_request", "address is required")
@@ -236,11 +248,22 @@ func (s *Server) handleConsoleSigninLink(w http.ResponseWriter, r *http.Request)
 		s.refuseSigninLink(w, r, ip)
 		return
 	}
+	// The optional invitation code, hashed the way the operator's invite stored
+	// it. Empty when the invite is address-only.
+	codeHash := ""
+	if code := auth.NormalizeInviteCode(r.URL.Query().Get("code")); code != "" {
+		codeHash = auth.HashToken(code)
+	}
 	// The account and the identity the session will resolve to, both created
 	// before the link goes out: a session is checked against our accounts before
 	// the claim is mapped to one, so an account that did not exist yet would have
 	// its first request refused.
-	if _, err := s.accounts.EnsureAccount(r.Context(), email, r.URL.Query().Get("user")); err != nil {
+	if _, err := s.accounts.EnsureAccount(r.Context(), email, r.URL.Query().Get("user"), codeHash); err != nil {
+		if errors.Is(err, store.ErrInviteRequired) {
+			writeErr(w, http.StatusForbidden, "invite_required",
+				"this server is invite-only; ask the operator to invite your address")
+			return
+		}
 		writeStoreErr(w, err)
 		return
 	}

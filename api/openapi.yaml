@@ -855,6 +855,86 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
 
+  /console/api/v1/admin/registration-invites:
+    get:
+      tags: [admin]
+      summary: List the invitations to register on this server
+      description: |
+        Operator only. On a server built or configured with
+        `TABVERSED_REGISTRATION_REQUIRES_INVITE`, an account is created only
+        for an address invited here. The admin address is always exempt, so the
+        operator can register before anybody exists to invite it.
+      responses:
+        '200':
+          description: every invite, newest first
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invites:
+                    type: array
+                    items: { $ref: '#/components/schemas/RegistrationInvite' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { description: operator only }
+    post:
+      tags: [admin]
+      summary: Invite one address to register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string }
+                ttl_seconds: { type: integer, minimum: 60, maximum: 7776000 }
+                with_code: { type: boolean }
+                send_email: { type: boolean }
+      responses:
+        '200':
+          description: the invite, the code (shown once), and the rendered email
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RegistrationInviteResult' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { description: operator only }
+
+  /console/api/v1/admin/registration-invites/{email}/send:
+    parameters:
+      - { name: email, in: path, required: true, schema: { type: string } }
+    post:
+      tags: [admin]
+      summary: Re-send an invitation email
+      description: |
+        A coded invite cannot be re-sent with its old code - only the hash is
+        stored - so this mints a fresh one and the previous code stops working.
+        The expiry is left alone.
+      responses:
+        '200':
+          description: the invite, the new code (if any), and the rendered email
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RegistrationInviteResult' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { description: operator only }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /console/api/v1/admin/registration-invites/{email}:
+    parameters:
+      - { name: email, in: path, required: true, schema: { type: string } }
+    delete:
+      tags: [admin]
+      summary: Revoke an invitation
+      responses:
+        '204': { description: revoked }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { description: operator only }
+        '404': { $ref: '#/components/responses/NotFound' }
+
 components:
   securitySchemes:
     bearerToken:
@@ -878,6 +958,33 @@ components:
       description: the account the admin acts on
 
   schemas:
+    RegistrationInvite:
+      type: object
+      description: |
+        One operator-created invitation to register an address. Keyed by the
+        address, because the account does not exist yet.
+      properties:
+        email: { type: string }
+        invited_by: { type: string }
+        created_at: { type: integer, description: unix ms }
+        expires_at: { type: integer, description: unix ms; 0 means no expiry }
+        used_at: { type: integer, description: unix ms; 0 means not used yet }
+        has_code: { type: boolean }
+
+    RegistrationInviteResult:
+      type: object
+      properties:
+        invite: { $ref: '#/components/schemas/RegistrationInvite' }
+        code:
+          type: string
+          description: present only when this call issued a code
+        email:
+          type: object
+          description: the rendered invitation, so the console can show it to copy
+          properties:
+            subject: { type: string }
+            body: { type: string }
+
     Entity:
       type: string
       description: >-

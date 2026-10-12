@@ -63,6 +63,10 @@ const (
 	// separately because it is the only entry in this log that removed
 	// somebody's content.
 	AuditTabspaceDeleted = "tabspace_deleted"
+	// Registration invitations, on an invite-only server.
+	AuditRegistrationInviteAdded   = "registration_invite_added"
+	AuditRegistrationInviteSent    = "registration_invite_sent"
+	AuditRegistrationInviteRevoked = "registration_invite_revoked"
 )
 
 // Email token purposes.
@@ -372,7 +376,7 @@ type Identity struct {
 // account, because one address is one account: a duplicate would be a way to
 // end up with two accounts holding the same person's data, one of which nobody
 // is looking at.
-func (s *Store) UpsertIdentity(ctx context.Context, provider, subject, email, name string, linkByEmail bool) (userID string, created bool, err error) {
+func (s *Store) UpsertIdentity(ctx context.Context, provider, subject, email, name string, linkByEmail bool, reg RegistrationPolicy) (userID string, created bool, err error) {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return "", false, err
@@ -431,6 +435,20 @@ func (s *Store) UpsertIdentity(ctx context.Context, provider, subject, email, na
 			}
 			linked = adoptable
 		} else {
+			// Invite-only servers gate exactly this branch - the *new* account.
+			// Every branch above returns early or adopts an existing row, so an
+			// existing account (a sign-in) is never refused. The check and the
+			// mark-used share this transaction, so two registrations racing on
+			// one invitation cannot both pass.
+			if reg.RequireInvite {
+				ok, err := consumeRegistrationInviteTx(ctx, tx, email, reg.CodeHash)
+				if err != nil {
+					return "", false, err
+				}
+				if !ok {
+					return "", false, ErrInviteRequired
+				}
+			}
 			// A brand new account, and a brand new sync account with it: a person
 			// who registers has no tabverses yet, and the sync protocol needs
 			// somewhere to put them.

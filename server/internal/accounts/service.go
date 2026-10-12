@@ -106,6 +106,10 @@ type Service struct {
 	// sendOverride replaces the mail sender in tests, so the whole sign-in
 	// journey - form, link, session - can be walked without an SMTP server.
 	sendOverride func(address, text string) error
+	// mail is the sender for our own messages (the registration invitation).
+	// The sign-in link goes through the library's provider, which wraps the
+	// same sender; this is the one we call directly.
+	mail *mailSender
 	// secureCookies is the resolved value: false when the public URL is plain
 	// http, because a browser drops a Secure cookie there.
 	secureCookies bool
@@ -240,6 +244,7 @@ func New(cfg config.Config, st *store.Store, logger *slog.Logger) (*Service, err
 	// is ours to write - and the 30 minute expiry is the library's, so it
 	// belongs in the message.
 	mail := newSender(cfg, logger, publicURL)
+	s.mail = mail
 	svc.AddVerifProvider(ProviderEmail, signInEmailTemplate(publicURL),
 		provider.SenderFunc(func(address, text string) error {
 			if s.sendOverride != nil {
@@ -409,7 +414,7 @@ func (s *Service) updater(u token.User) token.User {
 		return u
 	}
 	if !known {
-		newID, _, err := s.store.UpsertIdentity(ctx, s.providerOf(claimID), claimID, u.Email, u.Name, s.cfg.LinkByEmail)
+		newID, _, err := s.store.UpsertIdentity(ctx, s.providerOf(claimID), claimID, u.Email, u.Name, s.cfg.LinkByEmail, s.registrationPolicy(u.Email, ""))
 		if err != nil {
 			// A login we cannot place is a login we do not attribute to anybody.
 			u.ID = ""
@@ -793,7 +798,7 @@ func (s *Service) SignOut(w http.ResponseWriter) {
 // is applied here; the journey test in internal/api walks the whole flow, so a
 // change in the library's derivation fails there rather than silently at
 // someone's first sign-in.
-func (s *Service) EnsureAccount(ctx context.Context, email, name string) (string, error) {
+func (s *Service) EnsureAccount(ctx context.Context, email, name, codeHash string) (string, error) {
 	// Hash exactly the string that was given: the library hashes whatever
 	// arrives in the `address` parameter, so normalising it here and not there
 	// would derive a different subject, and the first sign-in would create a
@@ -807,8 +812,22 @@ func (s *Service) EnsureAccount(ctx context.Context, email, name string) (string
 	// splits on the first underscore, so storing the prefix here would make the
 	// row unmatchable and quietly create a second account on first sign-in.
 	subject := token.HashID(sha1.New(), email)
-	userID, _, err := s.store.UpsertIdentity(ctx, ProviderEmail, subject, email, name, s.cfg.LinkByEmail)
+	userID, _, err := s.store.UpsertIdentity(ctx, ProviderEmail, subject, email, name, s.cfg.LinkByEmail,
+		s.registrationPolicy(email, codeHash))
 	return userID, err
+}
+
+// registrationPolicy is the invite policy UpsertIdentity enforces when it would
+// create a *new* account. A sign-in to an existing account never consults it.
+//
+// The admin address is exempt: it is the operator bootstrap, and it registers
+// before anybody exists to invite it. Without this an invite-only server could
+// never gain its first operator.
+func (s *Service) registrationPolicy(email, codeHash string) store.RegistrationPolicy {
+	if !s.cfg.RegistrationRequiresInvite || s.IsAdminEmail(email) {
+		return store.RegistrationPolicy{}
+	}
+	return store.RegistrationPolicy{RequireInvite: true, CodeHash: codeHash}
 }
 
 // IsAdminEmail reports whether an address is the one the operator is expected

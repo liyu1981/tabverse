@@ -116,3 +116,21 @@ test('the mark slot is the same size with or without a mark', async () => {
   const html = renderToStaticMarkup(<SignInView />);
   expect((html.match(/socialMark/g) ?? []).length).toBe(2);
 });
+
+test('email registration off: social only, no address form', async () => {
+  // The official flavour: the passwordless path is not offered at all, so the
+  // form is gone and the buttons are the whole screen.
+  await signedOut({ providers: ['google'], email_registration: false });
+  const html = renderToStaticMarkup(<SignInView />);
+  expect(say(html)).toContain('Continue with Google');
+  expect(html).not.toContain('Send sign-in link');
+  expect(html).not.toContain('orRule');
+  expect(say(html)).toContain('social provider only');
+});
+
+test('email registration on: the address form, with the optional invite code', async () => {
+  await signedOut({ providers: [], email_registration: true });
+  const html = renderToStaticMarkup(<SignInView />);
+  expect(html).toContain('Send sign-in link');
+  expect(say(html)).toContain('Invitation code');
+});

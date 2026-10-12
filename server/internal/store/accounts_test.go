@@ -17,7 +17,7 @@ func TestUpsertIdentityClaimsAndLinks(t *testing.T) {
 	ctx := context.Background()
 
 	// First sight of a GitHub login creates the account behind it.
-	userID, created, err := st.UpsertIdentity(ctx, "github", "1001", "Yuli@Example.com", "Yuli", true)
+	userID, created, err := st.UpsertIdentity(ctx, "github", "1001", "Yuli@Example.com", "Yuli", true, RegistrationPolicy{})
 	if err != nil || !created {
 		t.Fatalf("first login = %q created=%v err=%v", userID, created, err)
 	}
@@ -31,7 +31,7 @@ func TestUpsertIdentityClaimsAndLinks(t *testing.T) {
 	}
 
 	// Second sight of the same login is the same account, and creates nothing.
-	again, created, err := st.UpsertIdentity(ctx, "github", "1001", "yuli@example.com", "Yuli", true)
+	again, created, err := st.UpsertIdentity(ctx, "github", "1001", "yuli@example.com", "Yuli", true, RegistrationPolicy{})
 	if err != nil || created || again != userID {
 		t.Fatalf("second login = %q created=%v err=%v", again, created, err)
 	}
@@ -39,7 +39,7 @@ func TestUpsertIdentityClaimsAndLinks(t *testing.T) {
 	// A second provider with the same verified address links to the same
 	// account, which is what makes "sign in with Google" land on the account
 	// you registered with.
-	google, created, err := st.UpsertIdentity(ctx, "google", "2002", "yuli@example.com", "Yuli", true)
+	google, created, err := st.UpsertIdentity(ctx, "google", "2002", "yuli@example.com", "Yuli", true, RegistrationPolicy{})
 	if err != nil || created || google != userID {
 		t.Fatalf("linked login = %q created=%v err=%v", google, created, err)
 	}
@@ -52,7 +52,7 @@ func TestUpsertIdentityClaimsAndLinks(t *testing.T) {
 	// is refused rather than merged: one address is one account, and a provider
 	// that cannot vouch for its emails must not be able to walk into someone
 	// else's data.
-	if _, _, err := st.UpsertIdentity(ctx, "google", "2003", "yuli@example.com", "Yuli", false); !errors.Is(err, ErrEmailTaken) {
+	if _, _, err := st.UpsertIdentity(ctx, "google", "2003", "yuli@example.com", "Yuli", false, RegistrationPolicy{}); !errors.Is(err, ErrEmailTaken) {
 		t.Fatalf("unlinked login = %v, want ErrEmailTaken", err)
 	}
 	// ...and the original account is untouched.
@@ -61,7 +61,7 @@ func TestUpsertIdentityClaimsAndLinks(t *testing.T) {
 	}
 	// A brand new address still works with linking off, which is how a LAN-only
 	// deployment signs people up.
-	fresh, created, err := st.UpsertIdentity(ctx, "google", "2004", "new@example.com", "New", false)
+	fresh, created, err := st.UpsertIdentity(ctx, "google", "2004", "new@example.com", "New", false, RegistrationPolicy{})
 	if err != nil || !created || fresh == userID {
 		t.Fatalf("new address with linking off = %q created=%v err=%v", fresh, created, err)
 	}
@@ -101,14 +101,14 @@ func TestEmailTokensAreSingleUseAndExpire(t *testing.T) {
 func TestTheLastAdminCannotBeLockedOut(t *testing.T) {
 	st := newTestStore(t)
 	ctx := context.Background()
-	admin, _, err := st.UpsertIdentity(ctx, "github", "1", "root@example.com", "Root", true)
+	admin, _, err := st.UpsertIdentity(ctx, "github", "1", "root@example.com", "Root", true, RegistrationPolicy{})
 	if err != nil {
 		t.Fatalf("create admin: %v", err)
 	}
 	if err := st.SetRole(ctx, admin, RoleAdmin); err != nil {
 		t.Fatalf("promote: %v", err)
 	}
-	other, _, err := st.UpsertIdentity(ctx, "github", "2", "yuli@example.com", "Yuli", true)
+	other, _, err := st.UpsertIdentity(ctx, "github", "2", "yuli@example.com", "Yuli", true, RegistrationPolicy{})
 	if err != nil {
 		t.Fatalf("create second: %v", err)
 	}

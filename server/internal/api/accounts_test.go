@@ -353,7 +353,7 @@ func TestAPersonReachesTheirOwnAccountAndNobodyElses(t *testing.T) {
 	ts, s := newAccountServer(t)
 	alice := signInAs(t, ts, s, "alice@example.com")
 	bobID, _, err := s.store.UpsertIdentity(context.Background(), accounts.ProviderEmail,
-		"subject-bob", "bob@example.com", "Bob", true)
+		"subject-bob", "bob@example.com", "Bob", true, store.RegistrationPolicy{})
 	if err != nil {
 		t.Fatalf("bob: %v", err)
 	}
@@ -635,7 +635,7 @@ func TestAPersonCannotImpersonateAtAll(t *testing.T) {
 	ts, s := newAccountServer(t)
 	alice := signInAs(t, ts, s, "alice@example.com")
 	bobID, _, err := s.store.UpsertIdentity(context.Background(), accounts.ProviderEmail,
-		"sub-bob", "bob@example.com", "Bob", true)
+		"sub-bob", "bob@example.com", "Bob", true, store.RegistrationPolicy{})
 	if err != nil {
 		t.Fatalf("bob: %v", err)
 	}

@@ -70,6 +70,16 @@ type Config struct {
 	// has not been proven. The passwordless flow proves it on every login, so
 	// this only matters for an account created by an operator.
 	RequireEmailVerification bool
+	// RegistrationRequiresInvite makes account creation invite-only: a new
+	// account is only created for an address an operator has invited. An
+	// existing account signs in as before (see doc/tabversed-registration-plan.md).
+	RegistrationRequiresInvite bool
+	// DisableEmailRegistration turns the passwordless email sign-in and
+	// registration path off, leaving social logins only - the official
+	// flavour's default (see official_defaults.go). The zero value means the
+	// path is on, so a Config built by hand (tests, callers) behaves like a
+	// normal deployment.
+	DisableEmailRegistration bool
 	// SMTPHost/Port/User/Pass/From send the verification and reset links. With
 	// no SMTP host the links are logged instead, which is what a self hoster
 	// running on a LAN usually wants.
@@ -263,6 +273,16 @@ func Load(version string) (Config, error) {
 	}
 	if cfg.RequireEmailVerification, err = GetenvBool("TABVERSED_REQUIRE_EMAIL_VERIFICATION", true); err != nil {
 		return Config{}, err
+	}
+	if cfg.RegistrationRequiresInvite, err = GetenvBool("TABVERSED_REGISTRATION_REQUIRES_INVITE", false); err != nil {
+		return Config{}, err
+	}
+	// The variable is positive ("email registration on") while the field is
+	// negative, so that the struct's zero value is the common case.
+	if emailRegistration, err := GetenvBool("TABVERSED_EMAIL_REGISTRATION", defaultEmailRegistration); err != nil {
+		return Config{}, err
+	} else {
+		cfg.DisableEmailRegistration = !emailRegistration
 	}
 	cfg.SMTPHost = Getenv("TABVERSED_SMTP_HOST", "")
 	if cfg.SMTPPort, err = GetenvInt("TABVERSED_SMTP_PORT", 25); err != nil {

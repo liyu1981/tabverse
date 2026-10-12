@@ -465,7 +465,7 @@ func register(t *testing.T, rig testRig, email string) string {
 	t.Helper()
 	ctx := context.Background()
 	id, _, err := rig.store.UpsertIdentity(ctx, ProviderEmail,
-		token.HashID(sha1.New(), email), email, email, true)
+		token.HashID(sha1.New(), email), email, email, true, store.RegistrationPolicy{})
 	if err != nil {
 		t.Fatalf("register: %v", err)
 	}
