@@ -24,22 +24,22 @@ export function isJestTest(): boolean {
   );
 }
 
-export function exposeDebugData(name: string, value: any) {
+declare global {
+  interface Window {
+    /** Debug data exposed for manual inspection (see exposeDebugData). */
+    tabverse?: Record<string, Record<string, unknown>>;
+  }
+}
+
+export function exposeDebugData(
+  name: string,
+  value: Record<string, unknown>,
+): void {
   if (!getSettingItem<boolean>('debug', (v) => v !== undefined)) {
     return;
   }
-
-  // @ts-ignore
-  if (!window.tabverse) {
-    // @ts-ignore
-    window.tabverse = {};
-  }
-  // @ts-ignore
-  if (!window.tabverse[name]) {
-    // @ts-ignore
-    window.tabverse[name] = {};
-  }
-  // @ts-ignore
+  window.tabverse ??= {};
+  window.tabverse[name] ??= {};
   merge(window.tabverse[name], value);
 }
 

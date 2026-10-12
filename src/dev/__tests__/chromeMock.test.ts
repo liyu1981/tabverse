@@ -22,7 +22,6 @@ function initMockChrome() {
 test('basic', () => {
   const { mockChrome, w1, w2, t1, t2, t3, t4, t5, t6 } = initMockChrome();
 
-  // console.log(JSON.stringify(mockChrome.toJSON()));
   expect(mockChrome.toJSON()).toEqual({
     currentWindowId: 1001,
     nextTabId: 106,
@@ -106,7 +105,6 @@ test('moveTab', () => {
   const { mockChrome, w1, w2, t1, t2, t3, t4, t5, t6 } = initMockChrome();
 
   mockChrome.moveTab(t4.id, 1);
-  // console.log(JSON.stringify(mockChrome.toJSON()));
   expect(mockChrome.toJSON()).toEqual({
     currentWindowId: 1001,
     nextTabId: 106,
@@ -186,7 +184,6 @@ test('moveTab', () => {
   });
 
   mockChrome.moveTab(t4.id, 0);
-  // console.log(JSON.stringify(mockChrome.toJSON()));
   expect(mockChrome.toJSON()).toEqual({
     currentWindowId: 1001,
     nextTabId: 106,
@@ -269,7 +266,6 @@ test('moveTab', () => {
 test('removeTab', () => {
   const { mockChrome, w1, w2, t1, t2, t3, t4, t5, t6 } = initMockChrome();
   mockChrome.removeTab(t3.id);
-  // console.log(JSON.stringify(mockChrome.toJSON()));
   expect(mockChrome.toJSON()).toEqual({
     currentWindowId: 1001,
     nextTabId: 106,
@@ -340,7 +336,6 @@ test('removeTab', () => {
   });
 
   mockChrome.removeTab(t1.id);
-  // console.log(JSON.stringify(mockChrome.toJSON()));
   expect(mockChrome.toJSON()).toEqual({
     currentWindowId: 1001,
     nextTabId: 106,
@@ -421,7 +416,6 @@ test('setActiveTab', () => {
 test('moveTabToNewWindow', () => {
   const { mockChrome, w1, w2, t1, t2, t3, t4, t5, t6 } = initMockChrome();
   mockChrome.moveTabToWindow(t6.id, w1.id);
-  // console.log(JSON.stringify(mockChrome.toJSON()));
   expect(mockChrome.toJSON()).toEqual({
     currentWindowId: 1001,
     nextTabId: 106,
@@ -501,7 +495,6 @@ test('moveTabToNewWindow', () => {
   });
 
   mockChrome.moveTabToNewWindow(t6.id);
-  // console.log(JSON.stringify(mockChrome.toJSON()));
   expect(mockChrome.toJSON()).toEqual({
     currentWindowId: 1003,
     nextTabId: 106,

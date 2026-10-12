@@ -672,7 +672,6 @@ class MockChrome {
 
 export function getMockChrome() {
   const mc = new MockChrome();
-  // @ts-ignore
-  global.chrome = mc;
+  (globalThis as unknown as { chrome: MockChrome }).chrome = mc;
   return mc;
 }

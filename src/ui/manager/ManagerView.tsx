@@ -28,8 +28,7 @@ export const ManagerView = (props: IManagerContainerProps) => {
 
   const setRouteAndPushHistoryState = useMemo(() => {
     return (value: ManagerViewRoute) => {
-      // @ts-ignore
-      const url = new URL(window.location);
+      const url = new URL(window.location.href);
       url.searchParams.set('route', value);
       window.history.pushState({}, '', url);
       setCurrentRoute(value);

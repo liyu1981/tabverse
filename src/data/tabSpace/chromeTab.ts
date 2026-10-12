@@ -105,8 +105,7 @@ async function captureGroupsOfWindow(tabIdByChromeTabId: Map<number, string>) {
 }
 
 function doCapturePreview(chromeTabId: number, chromeWindowId: number) {
-  // @ts-ignore
-  if (isJestTest() && chrome.mocked) {
+  if (isJestTest() && (chrome as { mocked?: boolean }).mocked) {
     // in our mock testing, the chrome is mockChrome which will have
     // .mocked=true
     return;
