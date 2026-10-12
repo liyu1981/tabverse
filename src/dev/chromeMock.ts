@@ -359,10 +359,22 @@ class MockWindowsApi {
    * code that opens a tabverse in one.
    */
   create(
-    _createData: chrome.windows.CreateData,
+    createData: chrome.windows.CreateData,
     callback?: (window: chrome.windows.Window) => void,
   ): Promise<chrome.windows.Window> {
     const created = this.chrome.addWindow();
+    // Honour `url` the way Chrome does: the window opens with those tabs and no
+    // blank new-tab page. The mock used to ignore it, which hid the difference
+    // between "create a window then add a tab" (leaves Chrome's blank tab) and
+    // "create the window with the tab" (does not).
+    const urls = createData?.url;
+    const list = Array.isArray(urls) ? urls : urls ? [urls] : [];
+    for (const url of list) {
+      this.chrome.insertTabFromData(
+        { title: '', url, favIconUrl: '', pinned: false },
+        created.id,
+      );
+    }
     callback?.(created as unknown as chrome.windows.Window);
     return Promise.resolve(created as unknown as chrome.windows.Window);
   }

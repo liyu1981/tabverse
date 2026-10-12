@@ -334,7 +334,7 @@ export function TabSpaceListView() {
       </div>
       <div className={classes.titleButtons}>
         <SuggestNameButton tabs={nameTabs} onApply={applySuggestedName} />
-        <Tooltip content="Save and close">
+        <Tooltip content="Save and close" placement="bottom">
           <Button
             className="tv-icon-button"
             aria-label="Save and close this tabverse"
@@ -344,7 +344,7 @@ export function TabSpaceListView() {
             onClick={() => void saveAndClose()}
           />
         </Tooltip>
-        <Tooltip content="Export as .tabverse file">
+        <Tooltip content="Export as .tabverse file" placement="bottom">
           <Button
             className="tv-icon-button"
             aria-label="Export this tabverse to a .tabverse file"

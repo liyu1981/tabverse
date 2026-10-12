@@ -1,4 +1,5 @@
 import {
+  isBlankNewTab,
   openTabSpaceOfWindow,
   openTabSpacesOf,
   openTabverseUrlInWindow,
@@ -111,4 +112,39 @@ test('opening in a window without a tabverse creates its tab', async () => {
 
   const tabs = await chrome.tabs.query({ windowId: w1.id });
   expect(tabs.some((t: any) => t.url === managerUrl('ts-new'))).toBe(true);
+});
+
+test('a blank new tab is not a page to keep', () => {
+  expect(isBlankNewTab({ url: 'chrome://newtab/' } as chrome.tabs.Tab)).toBe(
+    true,
+  );
+  expect(
+    isBlankNewTab({ url: 'chrome://new-tab-page/' } as chrome.tabs.Tab),
+  ).toBe(true);
+  expect(isBlankNewTab({ url: 'about:blank' } as chrome.tabs.Tab)).toBe(true);
+  expect(isBlankNewTab({} as chrome.tabs.Tab)).toBe(true);
+  expect(isBlankNewTab({ url: 'https://x.com' } as chrome.tabs.Tab)).toBe(
+    false,
+  );
+});
+
+test('opening in a window whose only tab is blank reuses it', async () => {
+  const mockChrome = getMockChrome();
+  const w1 = mockChrome.addWindow();
+  const blank = mockChrome.insertTabFromData(
+    {
+      title: 'New Tab',
+      url: 'chrome://newtab/',
+      favIconUrl: '',
+      pinned: false,
+    },
+    w1.id,
+  );
+  const before = (await chrome.tabs.query({ windowId: w1.id })).length;
+
+  await openTabverseUrlInWindow(managerUrl('ts-new'), w1.id, []);
+
+  const tabs = await chrome.tabs.query({ windowId: w1.id });
+  expect(tabs.length).toEqual(before);
+  expect(mockChrome.getTab(blank.id)?.url).toEqual(managerUrl('ts-new'));
 });

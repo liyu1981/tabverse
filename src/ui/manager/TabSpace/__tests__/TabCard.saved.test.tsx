@@ -40,12 +40,12 @@ function cardFor(chromeTabId: number): string {
 }
 
 test('a saved tab offers no close button', () => {
-  expect(cardFor(-1)).not.toContain('Close this tab');
-  expect(cardFor(0)).not.toContain('Close this tab');
+  expect(cardFor(-1)).not.toContain('aria-label="Close this tab"');
+  expect(cardFor(0)).not.toContain('aria-label="Close this tab"');
 });
 
 test('a live tab still offers one', () => {
   const html = cardFor(42);
-  expect(html).toContain('Close this tab');
+  expect(html).toContain('aria-label="Close this tab"');
   expect(html).toContain('a title');
 });

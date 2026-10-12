@@ -131,7 +131,30 @@ export async function openTabverseUrlInWindow(
     await chrome.tabs.update(existing.chromeTabId, { url });
     return;
   }
+  // A window Chrome just opened has a single blank new-tab page. It is not a
+  // page the user chose, so navigate it instead of adding a second tab: the
+  // blank one would otherwise be adopted into the tabverse and left at the end.
+  const blank = (await chrome.tabs.query({ windowId })).find(isBlankNewTab);
+  if (blank?.id !== undefined) {
+    await chrome.tabs.update(blank.id, { url, active: true });
+    return;
+  }
   await chrome.tabs.create({ url, windowId, active: true });
+}
+
+/**
+ * Chrome's placeholder page in a freshly opened window (`chrome://newtab/`,
+ * `chrome://new-tab-page/`, `about:blank`). It is a tab nobody opened on
+ * purpose, so opening a tabverse navigates it rather than adding a second tab.
+ */
+export function isBlankNewTab(tab: chrome.tabs.Tab): boolean {
+  const url = tab.url ?? tab.pendingUrl ?? '';
+  return (
+    url === '' ||
+    url === 'about:blank' ||
+    url.startsWith('chrome://newtab') ||
+    url.startsWith('chrome://new-tab-page')
+  );
 }
 
 /** Brings the window that has this tabverse to the front, on its own tab. */

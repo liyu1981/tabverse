@@ -4,7 +4,6 @@ import { getNewId } from '../common';
 import { logger } from '../../global';
 import { openOrSwitchToTabSpace } from './openTabverses';
 import { sendChromeMessage, TabSpaceMsg } from '../../message/message';
-import { concat } from 'lodash';
 
 /**
  * The one place a Tabverse tab's url is built.
@@ -120,23 +119,6 @@ export async function orderWindowTabs(
 }
 
 /**
- * Opens a new window, hands it to `tabCreateFn` and closes the tabs Chrome put
- * there by default. Used when restoring a saved tabverse into a new window.
- */
-export async function createNewChromeWindowWithTab(
-  tabCreateFn: (chromeWindow: chrome.windows.Window) => Promise<any>[],
-): Promise<chrome.windows.Window> {
-  const chromeWindow = await chrome.windows.create({ focused: true });
-  const existingTabs = await chrome.tabs.query({ windowId: chromeWindow.id });
-  const allPromises = concat([], tabCreateFn(chromeWindow));
-  existingTabs.forEach((tab) => {
-    allPromises.push(chrome.tabs.remove(tab.id));
-  });
-  await Promise.all(allPromises);
-  return chromeWindow;
-}
-
-/**
  * Opens a tabverse in a new window - or, if it is already open somewhere, goes
  * to the window that has it.
  *
@@ -150,12 +132,12 @@ export async function restoreSavedTabSpaceUtil(
 ): Promise<void> {
   await openOrSwitchToTabSpace(tabSpaceId, {
     create: async () => {
-      const window = await chrome.windows.create({ focused: true });
-      await chrome.tabs.create({
-        active: true,
-        pinned: true,
+      // Opening the window *with* the tabverse URL means Chrome never puts its
+      // blank new-tab page in it, so there is nothing left to close and nothing
+      // for the manager to adopt. The manager page pins itself first on load.
+      await chrome.windows.create({
+        focused: true,
         url: tabverseUrl(TabSpaceOp.LoadSaved, tabSpaceId),
-        windowId: window.id,
       });
     },
   });

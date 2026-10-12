@@ -14,6 +14,7 @@ import {
   loadTabSpacesByIds,
   queryRecentSavedTabSpaces,
 } from '../../data/tabSpace/util';
+import { importTabverseFile } from '../../data/tabSpace/importTabSpace';
 import {
   OpenTabSpace,
   openTabSpaceOfWindow,
@@ -69,6 +70,8 @@ export function PopupView() {
   const [pendingReplace, setPendingReplace] = useState<PendingReplace | null>(
     null,
   );
+  const [importStatus, setImportStatus] = useState<string | null>(null);
+  const importInputRef = useRef<HTMLInputElement | null>(null);
   // bumped by the Enter key, which wants the search to happen now
   const [searchNonce, setSearchNonce] = useState<number>(0);
 
@@ -181,6 +184,21 @@ export function PopupView() {
     openUrlInCurrentWindow(tabverseUrl(TabSpaceOp.New));
   };
 
+  // An import is a new, independent tabverse: every id in the file is reminted,
+  // so it never collides with what is already here. It lands in the saved list
+  // (as the newest row), it does not open.
+  const onImportFile = async (file: File) => {
+    try {
+      const result = await importTabverseFile(file);
+      setImportStatus(`Imported "${result.name}"`);
+      setText('');
+      setSearchNonce((nonce) => nonce + 1);
+    } catch (err) {
+      logger.error('popup could not import the tabverse', err);
+      setImportStatus('That file is not a Tabverse export.');
+    }
+  };
+
   const openInThisWindow = (tabSpace: TabSpace) => {
     if (currentTabSpaceId) {
       setPendingReplace({
@@ -279,7 +297,28 @@ export function PopupView() {
           }
           onClick={createNewTabSpace}
         />
+        <Button
+          icon="import"
+          text="Import"
+          title="Import a .tabverse file as a new tabverse"
+          onClick={() => importInputRef.current?.click()}
+        />
+        <input
+          ref={importInputRef}
+          type="file"
+          accept=".tabverse,application/json"
+          className={classes.importInput}
+          onChange={(event) => {
+            const file = event.currentTarget.files?.[0];
+            // clearing the value lets the same file be chosen twice in a row
+            event.currentTarget.value = '';
+            if (file) void onImportFile(file);
+          }}
+        />
       </div>
+      {importStatus ? (
+        <div className={classes.notice}>{importStatus}</div>
+      ) : null}
       <div className={classes.searchContainer}>
         <InputGroup
           leftIcon="search"

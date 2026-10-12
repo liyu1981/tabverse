@@ -278,29 +278,33 @@ p {
 
 /* ---- the pill segmented control ------------------------------------------ */
 
-/* A grey well with a white pill for the current one, which is what the
-   extension's tag inputs do. */
+/* The tab triggers, matching the extension's right-side tools and the search
+   result tabs: a plain row of pills, bold, brand-filled when active. */
 .segmented {
   display: flex;
-  gap: 4px;
-  background: var(--sunken);
-  padding: 3px;
-  border-radius: 18px;
+  gap: 6px;
 }
 
 .segmented .bp6-button {
   background: transparent;
   box-shadow: none;
-  color: var(--text-muted);
-  padding: 5px 12px;
+  color: var(--text);
+  padding: 4px 12px;
   min-height: 0;
+  font-weight: 600;
+  border-radius: var(--radius);
+  transition: all 200ms ease-in;
+}
+
+.segmented .bp6-button:hover {
+  background: #ddd;
+  color: inherit;
 }
 
 .segmented .bp6-button.bp6-active {
-  background: var(--surface);
-  color: var(--brand);
-  font-weight: 500;
-  box-shadow: var(--shadow);
+  background: var(--brand);
+  color: #f6f7f9;
+  box-shadow: none;
 }
 
 /* ---- pager --------------------------------------------------------------- */

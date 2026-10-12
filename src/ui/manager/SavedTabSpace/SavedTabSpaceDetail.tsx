@@ -8,7 +8,6 @@ import { TabCard } from '../TabSpace/TabCard';
 import { TabSpace } from '../../../data/tabSpace/TabSpace';
 import { TabSpaceId } from '../../../message/message';
 import classes from './SavedTabSpaceDetail.module.scss';
-import { createNewChromeWindowWithTab } from '../../../data/tabSpace/chromeUtil';
 import { logger } from '../../../global';
 import { TabSpaceQuery } from '../../../data/tabSpaceQuery/TabSpaceQuery';
 import { Tab, TabCore } from '../../../data/tabSpace/Tab';
@@ -26,15 +25,10 @@ interface SavedTabSpaceDetailProps {
 }
 
 export function SavedTabSpaceDetail(props: SavedTabSpaceDetailProps) {
+  // Opening the window *with* the tab's url means Chrome never adds its own
+  // blank new-tab page, so there is nothing left to close afterwards.
   const openTabInNewWindow = (savedTab: TabCore) =>
-    createNewChromeWindowWithTab((theChromeWindow) => {
-      return [
-        chrome.tabs.create({
-          windowId: theChromeWindow.id,
-          url: savedTab.url,
-        }),
-      ];
-    });
+    chrome.windows.create({ focused: true, url: savedTab.url });
   const savedTabCard = (savedTab: Tab) => (
     <TabCard key={savedTab.id} tab={savedTab} onActivate={openTabInNewWindow} />
   );

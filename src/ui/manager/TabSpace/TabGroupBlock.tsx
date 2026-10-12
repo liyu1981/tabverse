@@ -2,6 +2,7 @@ import { Tab } from '../../../data/tabSpace/Tab';
 import { TabGroupHint } from '../../../data/tabSpace/TabSpace';
 import { subEntriesOfTabs } from '../../../data/tabSpace/tabEntries';
 import { TAB_GROUP_COLORS_JS } from '../../../data/tabSpace/tabGroup';
+import { Tooltip } from '@blueprintjs/core';
 import React from 'react';
 import classes from './TabGroupBlock.module.scss';
 
@@ -34,9 +35,11 @@ export function TabGroupBlock(props: ITabGroupBlockProps) {
           className={classes.label}
           style={{ backgroundColor: TAB_GROUP_COLORS_JS[group.color] }}
         >
-          <span className={classes.title} title={group.title}>
-            {group.title || '(untitled group)'}
-          </span>
+          <Tooltip content={group.title} placement="bottom">
+            <span className={classes.title}>
+              {group.title || '(untitled group)'}
+            </span>
+          </Tooltip>
         </span>
         <small className={classes.count}>
           {props.tabCount ?? group.tabIds.length}

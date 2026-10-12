@@ -151,28 +151,26 @@
   width: 100%;
   text-align: left;
   background: none;
-  border: 1px solid transparent;
-  border-radius: 12px;
+  border: none;
+  border-radius: var(--radius);
   padding: 8px 12px;
-  color: var(--text-muted);
+  color: var(--text);
   cursor: pointer;
   font: inherit;
+  font-weight: 600;
+  transition: all 200ms ease-in;
 }
 
 .railItem:hover {
-  background: var(--surface);
-  color: var(--text);
+  background: #ddd;
+  color: inherit;
 }
 
-// The selected tab is marked on its left edge, so the rail reads as a
-// navigation column rather than four more buttons. Applied on top of railItem
-// rather than composed into it, so the two classes stay independent.
+// The selected section is a filled pill, like the extension's tab triggers and
+// the search result tabs.
 .railActive {
-  background: var(--surface);
-  border-color: var(--border);
-  box-shadow: var(--shadow);
-  color: var(--brand);
-  font-weight: 500;
+  background: var(--brand);
+  color: #f6f7f9;
 }
 
 .railLabel {
@@ -187,7 +185,8 @@
 }
 
 .railActive .railNote {
-  color: var(--brand);
+  color: inherit;
+  opacity: 0.8;
 }
 
 .panels {

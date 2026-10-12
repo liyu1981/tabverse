@@ -6,6 +6,7 @@ import {
   Intent,
   Popover,
   Tag,
+  Tooltip,
 } from '@blueprintjs/core';
 
 import { CollapsibleLabel } from '../../common/CollapsibleLabel';
@@ -83,15 +84,17 @@ function TabBookmarkBtn({
   return isBookmarked ? (
     <div></div>
   ) : (
-    <Button
-      className="tv-icon-button"
-      icon="bookmark"
-      minimal={true}
-      title="Save this tab as a bookmark"
-      onClick={() => {
-        onBookmark(tab);
-      }}
-    />
+    <Tooltip content="Save this tab as a bookmark" placement="bottom">
+      <Button
+        className="tv-icon-button"
+        icon="bookmark"
+        minimal={true}
+        aria-label="Save this tab as a bookmark"
+        onClick={() => {
+          onBookmark(tab);
+        }}
+      />
+    </Tooltip>
   );
 }
 
@@ -148,40 +151,52 @@ export function TabCard(props: ITabCardProps) {
         ) : null}
         <FavIcon className={classes.favIcon} url={props.tab.favIconUrl} />
       </div>
-      <button
-        type="button"
-        className={clsx(classes.content, classes.contentButton)}
-        title={props.tab.title}
-        onClick={() => activate(props.tab)}
+      <Tooltip
+        content={props.tab.title}
+        placement="bottom"
+        // Blueprint wraps the target in its own element, and that wrapper is the
+        // flex item: `.content` (grow + min-width: 0) has to sit on it, or the
+        // action buttons stop being pushed to the right.
+        className={classes.content}
       >
-        <div className={clsx(classes.tabTitle, classes.wrapText)}>
-          <b>
-            <CollapsibleLabel
-              maxLength={TAB_TITLE_MAX_LENGTH}
-              text={props.tab.title}
-            />
-          </b>
-          {props.tab.pinned ? (
-            <Tag
-              minimal={true}
-              icon="pin"
-              intent={Intent.PRIMARY}
-              className={classes.pinnedTag}
-              title="This tab is pinned in Chrome"
-            >
-              pinned
-            </Tag>
-          ) : null}
-        </div>
-        <div className={clsx(classes.tabUrl, classes.wrapText)}>
-          <small>
-            <CollapsibleLabel
-              maxLength={TAB_URL_MAX_LENGTH}
-              text={props.tab.url}
-            />
-          </small>
-        </div>
-      </button>
+        <button
+          type="button"
+          className={classes.contentButton}
+          onClick={() => activate(props.tab)}
+        >
+          <div className={clsx(classes.tabTitle, classes.wrapText)}>
+            <b>
+              <CollapsibleLabel
+                maxLength={TAB_TITLE_MAX_LENGTH}
+                text={props.tab.title}
+              />
+            </b>
+            {props.tab.pinned ? (
+              <Tooltip
+                content="This tab is pinned in Chrome"
+                placement="bottom"
+              >
+                <Tag
+                  minimal={true}
+                  icon="pin"
+                  intent={Intent.PRIMARY}
+                  className={classes.pinnedTag}
+                >
+                  pinned
+                </Tag>
+              </Tooltip>
+            ) : null}
+          </div>
+          <div className={clsx(classes.tabUrl, classes.wrapText)}>
+            <small>
+              <CollapsibleLabel
+                maxLength={TAB_URL_MAX_LENGTH}
+                text={props.tab.url}
+              />
+            </small>
+          </div>
+        </button>
+      </Tooltip>
       {/* after the content, because the card is a flex row: source order is
           layout order, the close button has to come last to sit on the right.
 
@@ -195,28 +210,32 @@ export function TabCard(props: ITabCardProps) {
           <ButtonGroup>
             {props.actions}
             {props.onToggleWhitelist ? (
-              <Button
-                className="tv-icon-button"
-                icon="lock"
-                minimal={true}
-                active={props.isWhitelisted === true}
-                intent={
-                  props.isWhitelisted === true ? Intent.PRIMARY : Intent.NONE
-                }
-                title={
+              <Tooltip
+                placement="bottom"
+                content={
                   props.isWhitelisted === true
                     ? 'This tab is never suspended; click to allow it'
                     : 'Never suspend this tab'
                 }
-                aria-label={
-                  props.isWhitelisted === true
-                    ? 'Allow this tab to be suspended'
-                    : 'Never suspend this tab'
-                }
-                onClick={() => {
-                  props.onToggleWhitelist?.(props.tab);
-                }}
-              />
+              >
+                <Button
+                  className="tv-icon-button"
+                  icon="lock"
+                  minimal={true}
+                  active={props.isWhitelisted === true}
+                  intent={
+                    props.isWhitelisted === true ? Intent.PRIMARY : Intent.NONE
+                  }
+                  aria-label={
+                    props.isWhitelisted === true
+                      ? 'Allow this tab to be suspended'
+                      : 'Never suspend this tab'
+                  }
+                  onClick={() => {
+                    props.onToggleWhitelist?.(props.tab);
+                  }}
+                />
+              </Tooltip>
             ) : null}
             {props.isBookmarked === undefined ? (
               ''
@@ -227,15 +246,17 @@ export function TabCard(props: ITabCardProps) {
                 onBookmark={props.onBookmark}
               />
             )}
-            <Button
-              className="tv-icon-button"
-              icon="cross"
-              minimal={true}
-              title="Close this tab"
-              onClick={() => {
-                closeTab(props.tab);
-              }}
-            />
+            <Tooltip content="Close this tab" placement="bottom">
+              <Button
+                className="tv-icon-button"
+                icon="cross"
+                minimal={true}
+                aria-label="Close this tab"
+                onClick={() => {
+                  closeTab(props.tab);
+                }}
+              />
+            </Tooltip>
           </ButtonGroup>
         ) : (
           <></>

@@ -22,11 +22,17 @@
 }
 
 .createContainer {
+  display: flex;
+  gap: 8px;
   padding: 0 14px 10px 14px;
 }
 
 .createButton {
-  width: 100%;
+  flex: 1;
+}
+
+.importInput {
+  display: none;
 }
 
 .searchContainer {
