@@ -281,7 +281,7 @@ pnpm test               # vitest + coverage
 pnpm run typecheck      # tsc --noEmit
 pnpm run lint:check     # biome lint
 pnpm run format:check   # biome format
-pnpm run build-crx      # production bundle + dist_crx/tabverse.zip (store package)
+pnpm run build-store    # production bundle + dist_store/tabverse.zip (store package)
 ```
 
 ## Running the server

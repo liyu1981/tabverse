@@ -190,13 +190,14 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: build store zip
-        # produces dist_crx/tabverse.zip; .crx signing is intentionally not
-        # done here (the web store takes a zip, keys stay local)
-        run: pnpm run build-crx
+        # produces dist_store/tabverse.zip; the web store takes the zip, and a
+        # hand install extracts it and uses "Load unpacked". No .crx: modern
+        # Chrome blocks installing an off-store .crx.
+        run: pnpm run build-store
 
       - name: archive store package
         uses: actions/upload-artifact@v4
         with:
           name: tabverse-store-zip
-          path: dist_crx/tabverse.zip
+          path: dist_store/tabverse.zip
           retention-days: 14

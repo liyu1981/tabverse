@@ -10,7 +10,7 @@
     "includes": [
       "**",
       "!**/dist",
-      "!**/dist_crx",
+      "!**/dist_store",
       "!**/server/internal/webui/dist",
       "!**/coverage",
       "!**/doc",

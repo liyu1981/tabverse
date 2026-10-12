@@ -76,5 +76,5 @@ while a pairing is in progress (see `externally_connectable` above).
 1. `npm version <x.y.z>` then `node tools/version_update <x.y.z>` (updates
    `src/global.ts`; the manifest version is injected from `package.json`).
 2. `npm ci && npm run typecheck && npm run lint:check && npm run format:check && npm test`
-3. `npm run build-crx` → upload `dist_crx/tabverse.zip`.
+3. `pnpm run build-store` → upload `dist_store/tabverse.zip`.
 4. Re-check the disclosure answers above if sync behaviour changed.

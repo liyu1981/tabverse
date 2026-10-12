@@ -26,7 +26,7 @@ pnpm run ui:build    # console -> server/internal/webui/dist (embedded, never co
 
 ```sh
 pnpm run build        # production bundle -> dist/
-pnpm run build-crx    # production bundle + dist_crx/tabverse.zip (store package)
+pnpm run build-store    # production bundle + dist_store/tabverse.zip (store package)
 pnpm test             # vitest + coverage
 pnpm run typecheck    # tsc --noEmit
 pnpm run lint:check   # biome lint

@@ -22,15 +22,20 @@ network. Pairing with a server is optional and comes later.
 Tabverse is a Chrome extension (Manifest V3, Chrome 140 or newer).
 
 The Chrome Web Store listing is still under review, so the store button on this
-site is disabled for now. In the meantime, install it manually:
+site is disabled for now. In the meantime, install it from the GitHub release:
 
-1. Download the latest `.crx` from the
+1. Download `tabverse.zip` from the
    [GitHub releases](https://github.com/liyu1981/tabverse/releases).
-2. Follow the
-   [manual installation guide](https://www.cnet.com/tech/services-and-software/how-to-install-chrome-extensions-manually/)
-   to load it into Chrome.
+2. **Extract it to a folder, and keep that folder.** Chrome loads a folder, not
+   a zip; extracting each new version into the *same* folder keeps the extension
+   id - and so your settings - stable, while a new folder is a new extension.
+3. Open `chrome://extensions`, turn on **Developer mode**, click **Load
+   unpacked**, and pick the extracted folder.
 
-Developers can build `dist/` from source and load it unpacked; the
+The
+[manual installation guide](https://www.cnet.com/tech/services-and-software/how-to-install-chrome-extensions-manually/)
+walks the same steps through with screenshots. Developers can build `dist/` from
+source and load it unpacked; the
 [repository](https://github.com/liyu1981/tabverse) has the commands.
 
 ## What it does

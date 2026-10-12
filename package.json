@@ -14,7 +14,7 @@
     "build": "vite build",
     "dev": "vite build --watch --mode development",
     "build-doc": "./tools/builddoc.sh",
-    "build-crx": "./tools/buildcrx.sh",
+    "build-store": "./tools/buildstore.sh",
     "ui:build": "vite build --config server/ui/vite.config.mts && node -e \"require('fs').writeFileSync('server/internal/webui/dist/.gitkeep','')\"",
     "ui:dev": "vite --config server/ui/vite.config.mts",
     "site:prepare": "bash tools/embedsite.sh",

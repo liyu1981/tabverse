@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.10.2">
 <title data-rh="true">Get Started | Tabverse</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://liyu1981.github.io/tabverse/docs/intro"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Get Started | Tabverse"><meta data-rh="true" name="description" content="Tabverse is a Chrome extension that turns a window full of related tabs into a"><meta data-rh="true" property="og:description" content="Tabverse is a Chrome extension that turns a window full of related tabs into a"><link data-rh="true" rel="icon" href="/tabverse/img/icon19.png"><link data-rh="true" rel="canonical" href="https://liyu1981.github.io/tabverse/docs/intro"><link data-rh="true" rel="alternate" href="https://liyu1981.github.io/tabverse/docs/intro" hreflang="en"><link data-rh="true" rel="alternate" href="https://liyu1981.github.io/tabverse/docs/intro" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Get Started","item":"https://liyu1981.github.io/tabverse/docs/intro"}]}</script><link rel="stylesheet" href="/tabverse/assets/css/styles.bbfd2aaa.css">
-<script src="/tabverse/assets/js/runtime~main.3aaa363c.js" defer="defer"></script>
+<script src="/tabverse/assets/js/runtime~main.4c63b29a.js" defer="defer"></script>
 <script src="/tabverse/assets/js/main.ca65ccd6.js" defer="defer"></script>
 </head>
 <body>
@@ -25,15 +25,20 @@ network. Pairing with a server is optional and comes later.</p>
 <h2 class="anchor anchorTargetStickyNavbar_K9Hy" id="install">Install<a href="#install" class="hash-link" aria-label="Direct link to Install" title="Direct link to Install" translate="no">​</a></h2>
 <p>Tabverse is a Chrome extension (Manifest V3, Chrome 140 or newer).</p>
 <p>The Chrome Web Store listing is still under review, so the store button on this
-site is disabled for now. In the meantime, install it manually:</p>
+site is disabled for now. In the meantime, install it from the GitHub release:</p>
 <ol>
-<li class="">Download the latest <code>.crx</code> from the
+<li class="">Download <code>tabverse.zip</code> from the
 <a href="https://github.com/liyu1981/tabverse/releases" target="_blank" rel="noopener noreferrer" class="">GitHub releases</a>.</li>
-<li class="">Follow the
-<a href="https://www.cnet.com/tech/services-and-software/how-to-install-chrome-extensions-manually/" target="_blank" rel="noopener noreferrer" class="">manual installation guide</a>
-to load it into Chrome.</li>
+<li class=""><strong>Extract it to a folder, and keep that folder.</strong> Chrome loads a folder, not
+a zip; extracting each new version into the <em>same</em> folder keeps the extension
+id - and so your settings - stable, while a new folder is a new extension.</li>
+<li class="">Open <code>chrome://extensions</code>, turn on <strong>Developer mode</strong>, click <strong>Load
+unpacked</strong>, and pick the extracted folder.</li>
 </ol>
-<p>Developers can build <code>dist/</code> from source and load it unpacked; the
+<p>The
+<a href="https://www.cnet.com/tech/services-and-software/how-to-install-chrome-extensions-manually/" target="_blank" rel="noopener noreferrer" class="">manual installation guide</a>
+walks the same steps through with screenshots. Developers can build <code>dist/</code> from
+source and load it unpacked; the
 <a href="https://github.com/liyu1981/tabverse" target="_blank" rel="noopener noreferrer" class="">repository</a> has the commands.</p>
 <h2 class="anchor anchorTargetStickyNavbar_K9Hy" id="what-it-does">What it does<a href="#what-it-does" class="hash-link" aria-label="Direct link to What it does" title="Direct link to What it does" translate="no">​</a></h2>
 <ul>

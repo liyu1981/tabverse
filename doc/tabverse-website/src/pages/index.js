@@ -46,7 +46,7 @@ function HomepageHeader() {
               )}
               href="https://github.com/liyu1981/tabverse/releases"
             >
-              Download from Github(.crx)
+              Download from Github (.zip)
             </Link>
           </div>
         </div>
