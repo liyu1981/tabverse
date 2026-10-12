@@ -6,9 +6,11 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"time"
 
 	_ "embed"
 
+	"github.com/liyu1981/tabverse/server/internal/config"
 	"github.com/liyu1981/tabverse/server/internal/version"
 )
 
@@ -54,6 +56,8 @@ func configCommand(args []string) error {
 	fs := flag.NewFlagSet("config", flag.ContinueOnError)
 	fs.SetOutput(os.Stderr)
 	force := fs.Bool("force", false, "replace an existing .env")
+	upgrade := fs.Bool("upgrade", false,
+		"merge an existing .env into the current template (backing it up first)")
 	dir := fs.String("dir", ".", "directory to write it into")
 	if err := fs.Parse(args); err != nil {
 		return errUsage
@@ -63,6 +67,9 @@ func configCommand(args []string) error {
 	}
 
 	target := filepath.Join(*dir, ".env")
+	if *upgrade {
+		return upgradeConfig(target)
+	}
 	switch _, err := os.Stat(target); {
 	case err == nil && !*force:
 		return fmt.Errorf("%s already exists; edit it, or pass --force to replace it", target)
@@ -90,4 +97,51 @@ func configCommand(args []string) error {
 	fmt.Fprintf(os.Stdout, "\n(a service reads its .env from %s/.tabversed, so install\n", homeDirHint())
 	fmt.Fprintln(os.Stdout, " it with --dir or write the file there)")
 	return nil
+}
+
+// upgradeConfig rewrites an existing .env from the current template, keeping the
+// settings it already had.
+//
+// The old file is backed up first, because the one thing an upgrade must not do
+// is lose the session signing key or an OAuth secret. Then the template is the
+// skeleton and the old values are moved onto it (`config.UpgradeEnvFile`).
+func upgradeConfig(target string) error {
+	old, err := os.ReadFile(target)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return fmt.Errorf("%s does not exist; run `tabversed config` to write it first", target)
+		}
+		return err
+	}
+	upgraded, err := config.UpgradeEnvFile(string(old), envExample)
+	if err != nil {
+		// A file the parser cannot read is one whose settings cannot be moved;
+		// stopping with the line number beats guessing at the rest.
+		return fmt.Errorf("%s: %w", target, err)
+	}
+	backup := backupPath(target)
+	if err := os.WriteFile(backup, old, 0o600); err != nil {
+		return fmt.Errorf("back up to %s: %w", backup, err)
+	}
+	body := []byte(upgraded)
+	if len(body) == 0 || body[len(body)-1] != '\n' {
+		body = append(body, '\n')
+	}
+	if err := os.WriteFile(target, body, 0o600); err != nil {
+		return fmt.Errorf("write %s: %w", target, err)
+	}
+	fmt.Fprintf(os.Stdout, "backed up %s to %s\n", target, backup)
+	fmt.Fprintf(os.Stdout, "upgraded %s from the current template\n", target)
+	fmt.Fprintln(os.Stdout, "\nYour settings were kept; review the file for anything new to fill in.")
+	return nil
+}
+
+// backupPath is .env.bak, or a timestamped name when one is already there, so
+// two upgrades never overwrite the same backup.
+func backupPath(target string) string {
+	candidate := target + ".bak"
+	if _, err := os.Stat(candidate); os.IsNotExist(err) {
+		return candidate
+	}
+	return target + ".bak." + time.Now().Format("20060102-150405")
 }

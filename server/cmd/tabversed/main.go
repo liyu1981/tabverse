@@ -79,6 +79,11 @@ Commands:
                      unless you pass --force. This is the same file
                      server/.env.example documents every variable in.
 
+  config --upgrade   Rewrites an existing .env from the current template, after
+                     backing it up to .env.bak: the settings you had are moved
+                     onto the new file, so an upgrade keeps the secrets and
+                     gains the variables a newer build added.
+
   service install    Write, enable and register a systemd *user* unit, so the
   service status     server survives a logout and can be inspected, restarted
   service start      and stopped without a terminal. Uses "systemctl --user",

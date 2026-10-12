@@ -104,6 +104,7 @@ tabversed                # the help
 tabversed serve          # the server, in the foreground (what the binary used to do)
 tabversed version        # "tabversed v1.2.3 (linux/amd64, go1.27)"
 tabversed config         # write a .env here, from the embedded template (0600, --force to replace)
+tabversed config --upgrade  # merge an existing .env onto the current template (backed up to .env.bak)
 tabversed service install|status|start|restart|stop|logs
 ```
 
