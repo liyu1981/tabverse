@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="500" height="300" viewBox="0 0 500 300" role="img" aria-label="Feature screenshot coming soon">
-  <rect x="2" y="2" width="496" height="296" rx="18" fill="#f6f7f9" stroke="#c5c6c7" stroke-width="2" stroke-dasharray="10 8"/>
-  <g fill="none" stroke="#54617a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.5">
-    <rect x="190" y="104" width="120" height="86" rx="10"/>
-    <circle cx="222" cy="132" r="9"/>
-    <path d="M196 178 l34 -30 26 22 20 -16 38 24"/>
-  </g>
-  <text x="250" y="228" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="18" fill="#797a7a">screenshot coming soon</text>
-</svg>

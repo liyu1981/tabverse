@@ -51,7 +51,7 @@ const getFeatureList = (baseUrl) => [
   },
   {
     title: 'Your tabverses, on every browser you use',
-    img: `${baseUrl}img/feature-placeholder.svg`,
+    img: `${baseUrl}img/tabverse-feature-5.png`,
     description: (
       <>
         Pair Tabverse with a sync server and your tabverses, notes, todos and
@@ -62,7 +62,7 @@ const getFeatureList = (baseUrl) => [
   },
   {
     title: 'Notes, todos, bookmarks and history, right beside your tabs',
-    img: `${baseUrl}img/feature-placeholder.svg`,
+    img: `${baseUrl}img/tabverse-feature-6.png`,
     description: (
       <>
         Every tabverse keeps its own notes, todos, bookmarks and history of
@@ -73,7 +73,7 @@ const getFeatureList = (baseUrl) => [
   },
   {
     title: 'On-device AI that never leaves your browser',
-    img: `${baseUrl}img/feature-placeholder.svg`,
+    img: `${baseUrl}img/tabverse-feature-7.png`,
     description: (
       <>
         Where Chrome already ships its built-in model, Tabverse can summarize a
