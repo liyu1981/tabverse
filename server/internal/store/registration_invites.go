@@ -25,6 +25,15 @@ type RegistrationInvite struct {
 	UsedAt int64 `json:"used_at"`
 	// HasCode reports whether a code is also required to register.
 	HasCode bool `json:"has_code"`
+	// Code is the code in the clear (empty when the invited address is the whole
+	// gate), kept so the invitation message can be rendered at any time - the
+	// hash alone cannot reproduce it.
+	Code string `json:"code"`
+	// EmailSubject/EmailBody are the invitation message. They are *not* columns:
+	// the API renders them from Code and ExpiresAt for the console's draft, so
+	// they are here only to keep the wire type one struct.
+	EmailSubject string `json:"email_subject"`
+	EmailBody    string `json:"email_body"`
 }
 
 // Live reports whether the invite may still be used at time `now` (unix ms).
@@ -39,7 +48,7 @@ func normalizeInviteEmail(email string) string {
 // CreateRegistrationInvite upserts an invitation for an address. Re-inviting
 // the same address refreshes it (a new code, a new expiry, unused again)
 // rather than stacking rows, because the address is the key.
-func (s *Store) CreateRegistrationInvite(ctx context.Context, email, codeHash, invitedBy string, ttlMS int64) (RegistrationInvite, error) {
+func (s *Store) CreateRegistrationInvite(ctx context.Context, email, code, codeHash, invitedBy string, ttlMS int64) (RegistrationInvite, error) {
 	email = normalizeInviteEmail(email)
 	if email == "" {
 		return RegistrationInvite{}, errors.New("email is required")
@@ -50,20 +59,21 @@ func (s *Store) CreateRegistrationInvite(ctx context.Context, email, codeHash, i
 		expires = now + ttlMS
 	}
 	if _, err := s.db.ExecContext(ctx, `
-		INSERT INTO registration_invites (email, code_hash, invited_by, created_at, expires_at, used_at)
-		VALUES (?, ?, ?, ?, ?, 0)
+		INSERT INTO registration_invites (email, code, code_hash, invited_by, created_at, expires_at, used_at)
+		VALUES (?, ?, ?, ?, ?, ?, 0)
 		ON CONFLICT(email) DO UPDATE SET
+			code       = excluded.code,
 			code_hash  = excluded.code_hash,
 			invited_by = excluded.invited_by,
 			created_at = excluded.created_at,
 			expires_at = excluded.expires_at,
 			used_at    = 0`,
-		email, codeHash, invitedBy, now, expires); err != nil {
+		email, code, codeHash, invitedBy, now, expires); err != nil {
 		return RegistrationInvite{}, err
 	}
 	return RegistrationInvite{
 		Email: email, InvitedBy: invitedBy, CreatedAt: now,
-		ExpiresAt: expires, HasCode: codeHash != "",
+		ExpiresAt: expires, HasCode: codeHash != "", Code: code,
 	}, nil
 }
 
@@ -71,7 +81,7 @@ func (s *Store) CreateRegistrationInvite(ctx context.Context, email, codeHash, i
 // can show pending, used and expired in one list.
 func (s *Store) ListRegistrationInvites(ctx context.Context) ([]RegistrationInvite, error) {
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT email, invited_by, created_at, expires_at, used_at, code_hash
+		SELECT email, invited_by, created_at, expires_at, used_at, code_hash, code
 		FROM registration_invites ORDER BY created_at DESC`)
 	if err != nil {
 		return nil, err
@@ -82,7 +92,7 @@ func (s *Store) ListRegistrationInvites(ctx context.Context) ([]RegistrationInvi
 		var inv RegistrationInvite
 		var codeHash string
 		if err := rows.Scan(&inv.Email, &inv.InvitedBy, &inv.CreatedAt,
-			&inv.ExpiresAt, &inv.UsedAt, &codeHash); err != nil {
+			&inv.ExpiresAt, &inv.UsedAt, &codeHash, &inv.Code); err != nil {
 			return nil, err
 		}
 		inv.HasCode = codeHash != ""
@@ -96,9 +106,10 @@ func (s *Store) RegistrationInviteFor(ctx context.Context, email string) (Regist
 	var inv RegistrationInvite
 	var codeHash string
 	err := s.db.QueryRowContext(ctx, `
-		SELECT email, invited_by, created_at, expires_at, used_at, code_hash
+		SELECT email, invited_by, created_at, expires_at, used_at, code_hash, code
 		FROM registration_invites WHERE email = ?`, normalizeInviteEmail(email)).
-		Scan(&inv.Email, &inv.InvitedBy, &inv.CreatedAt, &inv.ExpiresAt, &inv.UsedAt, &codeHash)
+		Scan(&inv.Email, &inv.InvitedBy, &inv.CreatedAt, &inv.ExpiresAt, &inv.UsedAt, &codeHash,
+			&inv.Code)
 	if errors.Is(err, sql.ErrNoRows) {
 		return RegistrationInvite{}, ErrNotFound
 	}
@@ -123,13 +134,15 @@ func (s *Store) RevokeRegistrationInvite(ctx context.Context, email string) erro
 	return nil
 }
 
-// SetRegistrationInviteCode replaces an invite's code hash. That is what a
-// re-send does: the old code is not recoverable (only its hash is stored), so a
-// fresh one is minted and the previous one stops working.
-func (s *Store) SetRegistrationInviteCode(ctx context.Context, email, codeHash string) error {
+// SetRegistrationInviteCode sets an invite's code in the clear and the hash a
+// registration is checked against. It backfills an invite that predates the
+// plaintext code: only its hash was stored, and a hash cannot reproduce the
+// code, so the message rendered from it would name none - useless once the hash
+// is the gate.
+func (s *Store) SetRegistrationInviteCode(ctx context.Context, email, code, codeHash string) error {
 	res, err := s.db.ExecContext(ctx,
-		`UPDATE registration_invites SET code_hash = ? WHERE email = ?`,
-		codeHash, normalizeInviteEmail(email))
+		`UPDATE registration_invites SET code = ?, code_hash = ? WHERE email = ?`,
+		code, codeHash, normalizeInviteEmail(email))
 	if err != nil {
 		return err
 	}

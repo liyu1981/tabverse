@@ -148,7 +148,9 @@ func (s *Store) migrate(ctx context.Context) error {
 		// above, which is a pairing code for one that does. Empty `code_hash`
 		// means the invited address is the whole gate; a non-empty one is a code
 		// the registrant must also supply. `used_at`/`expires_at` of 0 mean
-		// unused/no expiry.
+		// unused/no expiry. `code` is the code in the clear, kept so the
+		// invitation message can be rendered at any time (the hash alone cannot
+		// reproduce it).
 		`CREATE TABLE IF NOT EXISTS registration_invites (
 			email      TEXT PRIMARY KEY,
 			code_hash  TEXT NOT NULL DEFAULT '',
@@ -286,6 +288,9 @@ func (s *Store) migrate(ctx context.Context) error {
 		// (an invite-only server). It can sign in, but the console shows the
 		// "request received" notice until an operator invites it.
 		{table: "users", column: "pending_at", decl: "INTEGER NOT NULL DEFAULT 0"},
+		// The invitation code in the clear, so the message can be rendered on
+		// demand (the hash alone cannot reproduce it).
+		{table: "registration_invites", column: "code", decl: "TEXT NOT NULL DEFAULT ''"},
 		// Revocation cut-off for stateless session tokens: any session issued
 		// before this instant is rejected, which is what makes "sign out
 		// everywhere" and "revoke on password change" possible without keeping

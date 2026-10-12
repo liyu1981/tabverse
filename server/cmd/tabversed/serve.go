@@ -91,7 +91,7 @@ func serve(args []string) error {
 			"mounted, which is for local development only")
 	}
 	if !cfg.MailConfigured() {
-		logger.Warn("no mail transport configured (TABVERSED_SMTPFAST_API_KEY or " +
+		logger.Warn("no mail transport configured (TABVERSED_RESEND_API_KEY or " +
 			"TABVERSED_SMTP_HOST): sign-in links and invitations will be printed to " +
 			"this log instead of emailed")
 	}

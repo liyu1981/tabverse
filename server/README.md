@@ -370,7 +370,7 @@ person another person's browsing history - and the server says so in the log.
 | `TABVERSED_LINK_BY_EMAIL` | `true` | link a social login to an account with the same address; `0` refuses instead |
 | `TABVERSED_REQUIRE_EMAIL_VERIFICATION` | `true` | refuse a session for an unproven address. A Google sign-in proves itself (ADR 0017) and the emailed link does; a GitHub sign-in does not, and needs this off |
 | `TABVERSED_SMTP_HOST` / `_PORT` / `_USER` / `_PASS` / `_FROM` | _(none)_ | where sign-in links go |
-| `TABVERSED_SMTPFAST_API_KEY` / `_FROM` / `_BASE_URL` | _(none)_ | send through SMTPfast (smtpfa.st), a Resend-compatible HTTP email API; preferred over SMTP when set. `_FROM` falls back to `SMTP_FROM` and must be on a verified domain |
+| `TABVERSED_RESEND_API_KEY` / `_FROM` / `_BASE_URL` | _(none)_ | send through Resend (resend.com), an HTTP email API; preferred over SMTP when set. `_FROM` falls back to `SMTP_FROM` and must be on a verified domain |
 | `TABVERSED_GITHUB_CLIENT_ID` / `_SECRET` | _(none)_ | enable the GitHub button |
 | `TABVERSED_GOOGLE_CLIENT_ID` / `_SECRET` | _(none)_ | enable the Google button |
 | `TABVERSED_DEV_MODE` | `false` | the auth library's fake OAuth provider, for local development |

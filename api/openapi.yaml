@@ -890,7 +890,6 @@ paths:
               properties:
                 email: { type: string }
                 ttl_seconds: { type: integer, minimum: 60, maximum: 7776000 }
-                with_code: { type: boolean }
                 send_email: { type: boolean }
       responses:
         '200':

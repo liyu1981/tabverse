@@ -11,7 +11,7 @@ func TestRegistrationInviteLifecycle(t *testing.T) {
 	st := newTestStore(t)
 	ctx := context.Background()
 
-	inv, err := st.CreateRegistrationInvite(ctx, "Alice@Example.com", "", "op", 3600_000)
+	inv, err := st.CreateRegistrationInvite(ctx, "Alice@Example.com", "", "", "op", 3600_000)
 	if err != nil {
 		t.Fatalf("create: %v", err)
 	}
@@ -62,7 +62,7 @@ func TestRegistrationInviteRequired(t *testing.T) {
 func TestRegistrationInviteCode(t *testing.T) {
 	st := newTestStore(t)
 	ctx := context.Background()
-	if _, err := st.CreateRegistrationInvite(ctx, "bob@example.com", "hash-a", "op", 0); err != nil {
+	if _, err := st.CreateRegistrationInvite(ctx, "bob@example.com", "CODE-A", "hash-a", "op", 0); err != nil {
 		t.Fatalf("create: %v", err)
 	}
 	// The wrong code is the same as no invite at all.
@@ -82,7 +82,7 @@ func TestRegistrationInviteExpiryAndRevoke(t *testing.T) {
 	ctx := context.Background()
 
 	// A 1ms lifetime, then a pause: expired.
-	if _, err := st.CreateRegistrationInvite(ctx, "old@example.com", "", "op", 1); err != nil {
+	if _, err := st.CreateRegistrationInvite(ctx, "old@example.com", "", "", "op", 1); err != nil {
 		t.Fatalf("create: %v", err)
 	}
 	time.Sleep(5 * time.Millisecond)
@@ -92,7 +92,7 @@ func TestRegistrationInviteExpiryAndRevoke(t *testing.T) {
 	}
 
 	// Revoked is the same as never invited.
-	if _, err := st.CreateRegistrationInvite(ctx, "gone@example.com", "", "op", 3600_000); err != nil {
+	if _, err := st.CreateRegistrationInvite(ctx, "gone@example.com", "", "", "op", 3600_000); err != nil {
 		t.Fatalf("create: %v", err)
 	}
 	if err := st.RevokeRegistrationInvite(ctx, "gone@example.com"); err != nil {
@@ -111,7 +111,7 @@ func TestListRegistrationInvites(t *testing.T) {
 	st := newTestStore(t)
 	ctx := context.Background()
 	for _, email := range []string{"a@example.com", "b@example.com"} {
-		if _, err := st.CreateRegistrationInvite(ctx, email, "", "op", 3600_000); err != nil {
+		if _, err := st.CreateRegistrationInvite(ctx, email, "", "", "op", 3600_000); err != nil {
 			t.Fatalf("create %s: %v", email, err)
 		}
 	}
@@ -162,5 +162,29 @@ func TestRegistrationRequestIsAPendingAccount(t *testing.T) {
 	}
 	if len(requests) != 0 {
 		t.Fatalf("the request should be gone, got %+v", requests)
+	}
+}
+
+// The code is kept in the clear, so the invitation message can be rendered from
+// it at any time (the hash alone cannot reproduce it).
+func TestRegistrationInviteKeepsTheCode(t *testing.T) {
+	st := newTestStore(t)
+	ctx := context.Background()
+	if _, err := st.CreateRegistrationInvite(ctx, "coded@example.com", "CODE-1", "hash-1", "op", 3600_000); err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	inv, err := st.RegistrationInviteFor(ctx, "coded@example.com")
+	if err != nil {
+		t.Fatalf("read back: %v", err)
+	}
+	if inv.Code != "CODE-1" || !inv.HasCode {
+		t.Fatalf("code = %q has_code = %v", inv.Code, inv.HasCode)
+	}
+	invs, err := st.ListRegistrationInvites(ctx)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if len(invs) != 1 || invs[0].Code != "CODE-1" {
+		t.Fatalf("list = %+v", invs)
 	}
 }

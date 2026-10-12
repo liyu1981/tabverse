@@ -18,6 +18,27 @@
   text-align: center;
 }
 
+// The invitation dialog's collapsible sections: a header row and its body.
+.foldSection {
+  border-bottom: 1px solid var(--border);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.foldBody {
+  padding: 8px 4px 14px 4px;
+}
+
+// The drafted invitation, read-only: monospace so a code lines up, and pre-wrap
+// so the paragraphs are the ones the server wrote.
+.draftText {
+  margin-top: 8px;
+  font-family: monospace;
+  white-space: pre-wrap;
+}
+
 // A list of rows, the way the extension's saved-tabverse list is one: the name
 // over the numbers, and the counts on the right. An operator reads these against
 // each other, which is what a row is for.

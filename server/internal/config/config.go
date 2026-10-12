@@ -88,13 +88,13 @@ type Config struct {
 	SMTPUser string
 	SMTPPass string
 	SMTPFrom string
-	// SMTPfast (smtpfa.st) is a Resend-compatible HTTP email API. When its key
-	// is set it is preferred over SMTP: one HTTPS call, no local mail setup.
-	// SMTPFastFrom defaults to SMTPFrom, and the address must be on a domain
-	// verified in the SMTPfast dashboard.
-	SMTPFastAPIKey  string
-	SMTPFastFrom    string
-	SMTPFastBaseURL string
+	// Resend (resend.com) is an HTTP email API. When its key is set it is
+	// preferred over SMTP: one HTTPS call, no local mail setup. ResendFrom
+	// falls back to SMTPFrom, and the address must be on a domain verified in
+	// the Resend dashboard.
+	ResendAPIKey  string
+	ResendFrom    string
+	ResendBaseURL string
 	// Social logins. Each pair enables one provider; an unset pair means that
 	// button is not offered at all, rather than offered and broken.
 	GitHubClientID     string
@@ -162,15 +162,29 @@ func (c Config) SocialProviders() []string {
 // LAN-only deployment.
 func (c Config) SMTPConfigured() bool { return c.SMTPHost != "" }
 
-// SMTPFastConfigured reports whether the SMTPfast HTTP API is set up. It is
+// ResendConfigured reports whether the Resend HTTP API is set up. It is
 // preferred over SMTP when both are configured.
-func (c Config) SMTPFastConfigured() bool {
-	return strings.TrimSpace(c.SMTPFastAPIKey) != ""
+func (c Config) ResendConfigured() bool {
+	return strings.TrimSpace(c.ResendAPIKey) != ""
 }
 
 // MailConfigured reports whether the server can deliver mail at all - through
-// SMTPfast or SMTP. With neither, messages are logged instead of sent.
-func (c Config) MailConfigured() bool { return c.SMTPFastConfigured() || c.SMTPConfigured() }
+// Resend or SMTP. With neither, messages are logged instead of sent.
+func (c Config) MailConfigured() bool { return c.ResendConfigured() || c.SMTPConfigured() }
+
+// MailTransport names the transport the server would use: "resend" when its key
+// is set, "smtp" when a host is, and "" when neither (messages are logged). The
+// console labels its send button from it and disables sending when it is empty.
+func (c Config) MailTransport() string {
+	switch {
+	case c.ResendConfigured():
+		return "resend"
+	case c.SMTPConfigured():
+		return "smtp"
+	default:
+		return ""
+	}
+}
 
 func Getenv(name, fallback string) string {
 	if v := os.Getenv(name); v != "" {
@@ -308,9 +322,9 @@ func Load(version string) (Config, error) {
 	cfg.SMTPUser = Getenv("TABVERSED_SMTP_USER", "")
 	cfg.SMTPPass = Getenv("TABVERSED_SMTP_PASS", "")
 	cfg.SMTPFrom = Getenv("TABVERSED_SMTP_FROM", "")
-	cfg.SMTPFastAPIKey = Getenv("TABVERSED_SMTPFAST_API_KEY", "")
-	cfg.SMTPFastFrom = Getenv("TABVERSED_SMTPFAST_FROM", "")
-	cfg.SMTPFastBaseURL = Getenv("TABVERSED_SMTPFAST_BASE_URL", "https://smtpfa.st/api/v1")
+	cfg.ResendAPIKey = Getenv("TABVERSED_RESEND_API_KEY", "")
+	cfg.ResendFrom = Getenv("TABVERSED_RESEND_FROM", "")
+	cfg.ResendBaseURL = Getenv("TABVERSED_RESEND_BASE_URL", "https://api.resend.com")
 	if cfg.DevMode, err = GetenvBool("TABVERSED_DEV_MODE", false); err != nil {
 		return Config{}, err
 	}

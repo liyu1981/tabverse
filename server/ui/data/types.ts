@@ -68,6 +68,12 @@ export interface Me {
    */
   email_registration?: boolean;
   /**
+   * Which transport the server would use to send mail: `'resend'`, `'smtp'`, or
+   * `''` when neither is configured (messages are logged). The console labels
+   * its send button from it and disables sending when it is empty.
+   */
+  mail_transport?: 'resend' | 'smtp' | '';
+  /**
    * Whether there is a site at `/` worth going back to: this build carries the
    * documentation rather than only the redirect page (adr/0024). The top bar
    * offers the link on this answer alone, because in a build without the docs
@@ -173,6 +179,13 @@ export interface RegistrationInvite {
   used_at: Millis;
   /** Whether a code is also required to register. */
   has_code: boolean;
+  /**
+   * The rendered invitation, stored with the invite so the console can show the
+   * drafted message at any time (the code in it is not recoverable from the
+   * hash alone).
+   */
+  email_subject: string;
+  email_body: string;
 }
 
 /** The rendered invitation email, so the console can show it to copy. */

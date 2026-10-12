@@ -44,21 +44,50 @@ func TestRegistrationInvitesAdminAPI(t *testing.T) {
 	ts, srv := newInviteOnlyServer(t)
 	op := operatorSession(t, ts, srv)
 
-	// Create one, with a code. The response carries the rendered email so a
-	// deployment with no SMTP has something to copy.
+	// Create one. The response carries the rendered email so a deployment with no
+	// SMTP has something to copy, and that message names the code it minted.
 	r := adminDo(t, op, http.MethodPost, "/console/api/v1/admin/registration-invites",
-		map[string]any{"email": "newbie@example.com", "with_code": true, "ttl_seconds": 3600})
+		map[string]any{"email": "newbie@example.com", "ttl_seconds": 3600})
 	r.mustStatus(t, http.StatusOK)
-	if _, ok := r.body["code"].(string); !ok {
+	createdCode, _ := r.body["code"].(string)
+	if createdCode == "" {
 		t.Fatalf("create should return a code: %s", r.raw)
 	}
-	if _, ok := r.body["email"].(map[string]any); !ok {
-		t.Fatalf("create should return the rendered email: %s", r.raw)
+	createdEmail, _ := r.body["email"].(map[string]any)
+	createdBody, _ := createdEmail["body"].(string)
+	if !strings.Contains(createdBody, createdCode) {
+		t.Fatalf("the created message should name the code %q: %q", createdCode, createdBody)
 	}
 
-	// It is listed.
+	// It is listed with the same message, so a dialog opened from the list has
+	// the code to copy and to send.
 	r = adminDo(t, op, http.MethodGet, "/console/api/v1/admin/registration-invites", nil)
 	r.mustStatus(t, http.StatusOK)
+	list, _ := r.body["invites"].([]any)
+	if len(list) != 1 {
+		t.Fatalf("invites = %s", r.raw)
+	}
+	listed, _ := list[0].(map[string]any)
+	listedSubject, _ := listed["email_subject"].(string)
+	listedBody, _ := listed["email_body"].(string)
+	if !strings.Contains(listedBody, createdCode) {
+		t.Fatalf("the listed message should name the code %q: %q", createdCode, listedBody)
+	}
+
+	// Sending the drafted message - exactly what the console posts - puts the
+	// code in the body of the mail that goes out.
+	var sentText string
+	srv.accounts.SetSenderOverride(func(_, text string) error {
+		sentText = text
+		return nil
+	})
+	r = adminDo(t, op, http.MethodPost,
+		"/console/api/v1/admin/registration-invites/newbie@example.com/send",
+		map[string]any{"subject": listedSubject, "text": listedBody})
+	r.mustStatus(t, http.StatusOK)
+	if !strings.Contains(sentText, createdCode) {
+		t.Fatalf("the sent message should name the code %q: %q", createdCode, sentText)
+	}
 
 	// Revoke it, then revoking again is a 404.
 	r = adminDo(t, op, http.MethodDelete,
@@ -67,6 +96,42 @@ func TestRegistrationInvitesAdminAPI(t *testing.T) {
 	r = adminDo(t, op, http.MethodDelete,
 		"/console/api/v1/admin/registration-invites/newbie@example.com", nil)
 	r.mustStatus(t, http.StatusNotFound)
+}
+
+// An invitation stored before the code was kept in the clear still produces a
+// message with a code: reading the list mints one and stores it, so the draft
+// the console copies registers.
+func TestRegistrationInviteWithoutStoredCodeIsBackfilled(t *testing.T) {
+	ts, srv := newInviteOnlyServer(t)
+	op := operatorSession(t, ts, srv)
+
+	// A legacy row: the invited address alone, with no code recorded.
+	if _, err := srv.store.CreateRegistrationInvite(context.Background(),
+		"legacy@example.com", "", "", "op", 3600_000); err != nil {
+		t.Fatalf("create: %v", err)
+	}
+
+	r := adminDo(t, op, http.MethodGet, "/console/api/v1/admin/registration-invites", nil)
+	r.mustStatus(t, http.StatusOK)
+	list, _ := r.body["invites"].([]any)
+	if len(list) != 1 {
+		t.Fatalf("invites = %s", r.raw)
+	}
+	inv, _ := list[0].(map[string]any)
+	code, _ := inv["code"].(string)
+	if code == "" {
+		t.Fatalf("the list should backfill a code: %s", r.raw)
+	}
+	body, _ := inv["email_body"].(string)
+	if !strings.Contains(body, code) {
+		t.Fatalf("the draft should name the code %q: %s", code, body)
+	}
+
+	// The minted code is the one registration accepts.
+	r = doJSON(t, http.MethodPost,
+		ts.URL+"/console/api/v1/console/signin-link?address=legacy@example.com&user=legacy@example.com&code="+code,
+		"", nil)
+	r.mustStatus(t, http.StatusOK)
 }
 
 func TestSigninRefusedWithoutInvite(t *testing.T) {
@@ -78,13 +143,18 @@ func TestSigninRefusedWithoutInvite(t *testing.T) {
 		ts.URL+"/console/api/v1/console/signin-link?address=nobody@example.com&user=nobody@example.com", "", nil)
 	r.mustStatus(t, http.StatusForbidden)
 
-	// After the operator invites it, the same request goes through.
+	// After the operator invites it, the same request goes through - with the code
+	// the invitation carries, which every invitation now has.
 	invite := adminDo(t, op, http.MethodPost,
 		"/console/api/v1/admin/registration-invites",
 		map[string]any{"email": "nobody@example.com"})
 	invite.mustStatus(t, http.StatusOK)
+	code, _ := invite.body["code"].(string)
+	if code == "" {
+		t.Fatalf("the invitation should carry a code: %s", invite.raw)
+	}
 	r = doJSON(t, http.MethodPost,
-		ts.URL+"/console/api/v1/console/signin-link?address=nobody@example.com&user=nobody@example.com", "", nil)
+		ts.URL+"/console/api/v1/console/signin-link?address=nobody@example.com&user=nobody@example.com&code="+code, "", nil)
 	r.mustStatus(t, http.StatusOK)
 }
 

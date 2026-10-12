@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 	"strings"
@@ -26,8 +27,8 @@ type registrationInviteEmail struct {
 
 type registrationInviteResponse struct {
 	Invite store.RegistrationInvite `json:"invite"`
-	// Code is present only when this call created (or re-issued) one, and only
-	// in that response: the store keeps the hash.
+	// Code is the code this call minted, present only in a response that created
+	// or re-issued one. The invite carries the stored code as well.
 	Code  string                  `json:"code,omitempty"`
 	Email registrationInviteEmail `json:"email"`
 }
@@ -41,12 +42,30 @@ func validInviteEmail(email string) bool {
 	return at > 0 && at < len(email)-1 && !strings.ContainsAny(email, " \t\r\n")
 }
 
+// ensureInviteCode returns the invite's code, minting and storing a fresh one
+// when the invite has none. An invite made before the code was kept in the
+// clear has an empty Code, and a message rendered from it would name no code at
+// all - useless, because registering with the invited address also means
+// supplying the code. The new code replaces any old hash, so a previous code
+// stops working (it was never kept in the clear and cannot be recovered).
+func (s *Server) ensureInviteCode(ctx context.Context, inv *store.RegistrationInvite) (string, error) {
+	if inv.Code != "" {
+		return inv.Code, nil
+	}
+	display, normalized := auth.NewInviteCode()
+	if err := s.store.SetRegistrationInviteCode(ctx, inv.Email, display, auth.HashToken(normalized)); err != nil {
+		return "", err
+	}
+	inv.Code = display
+	inv.HasCode = true
+	return display, nil
+}
+
 // handleAdminCreateRegistrationInvite invites one address to register.
 func (s *Server) handleAdminCreateRegistrationInvite(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Email      string `json:"email"`
 		TTLSeconds int    `json:"ttl_seconds"`
-		WithCode   bool   `json:"with_code"`
 		SendEmail  bool   `json:"send_email"`
 	}
 	if r.ContentLength != 0 {
@@ -67,13 +86,12 @@ func (s *Server) handleAdminCreateRegistrationInvite(w http.ResponseWriter, r *h
 		writeErr(w, http.StatusBadRequest, "bad_request", "ttl_seconds must be within [60, 7776000]")
 		return
 	}
-	code, codeHash := "", ""
-	if req.WithCode {
-		display, normalized := auth.NewInviteCode()
-		code, codeHash = display, auth.HashToken(normalized)
-	}
+	// Every invitation carries a code: the message names it, and registering with
+	// the invited address also means supplying it.
+	display, normalized := auth.NewInviteCode()
+	code, codeHash := display, auth.HashToken(normalized)
 	ctx := r.Context()
-	inv, err := s.store.CreateRegistrationInvite(ctx, email, codeHash, s.actorOf(r),
+	inv, err := s.store.CreateRegistrationInvite(ctx, email, code, codeHash, s.actorOf(r),
 		int64(req.TTLSeconds)*1000)
 	if err != nil {
 		writeStoreErr(w, err)
@@ -89,6 +107,7 @@ func (s *Server) handleAdminCreateRegistrationInvite(w http.ResponseWriter, r *h
 			subject, body = sentSubject, sentBody
 		}
 	}
+	inv.EmailSubject, inv.EmailBody = subject, body
 	_ = s.store.AppendAudit(ctx, store.AuditEntry{
 		Actor: s.actorOf(r), Target: email, Action: store.AuditRegistrationInviteAdded,
 		IP: clientIP(r), Detail: "ttl " + strconv.Itoa(req.TTLSeconds) + "s",
@@ -110,14 +129,42 @@ func (s *Server) handleAdminListRegistrationInvites(w http.ResponseWriter, r *ht
 	if invs == nil {
 		invs = []store.RegistrationInvite{}
 	}
+	// The message is rendered here rather than stored: it is a function of the
+	// code and the expiry, so the console always has the draft to show - an
+	// invite opened from the list included. An invite with no code kept (one
+	// stored before the code was) has one minted now, so the draft names a code
+	// that actually registers.
+	for i := range invs {
+		code, err := s.ensureInviteCode(r.Context(), &invs[i])
+		if err != nil {
+			// The draft is a convenience, and a code that cannot be minted must
+			// not take the whole list down with it.
+			s.logger.Warn("could not mint a code for an invitation",
+				"email", invs[i].Email, "err", err)
+			code = invs[i].Code
+		}
+		subject, body := s.accounts.RenderRegistrationInvite(code, invs[i].ExpiresAt)
+		invs[i].EmailSubject, invs[i].EmailBody = subject, body
+	}
 	writeJSON(w, http.StatusOK, map[string]any{"invites": invs})
 }
 
-// handleAdminSendRegistrationInvite (re)delivers an invitation. A coded invite
-// cannot be re-sent with its old code - only the hash is stored - so a re-send
-// mints a fresh one and the previous code stops working. The expiry is left
-// alone.
+// handleAdminSendRegistrationInvite delivers an invitation through the server's
+// mail transport. It does not re-render anything: the console sends the drafted
+// message as the body, and a caller that sends none gets the server's own
+// rendering of it. An invite that has no stored code gets one minted first; an
+// existing code is not regenerated (only a fresh create does that).
 func (s *Server) handleAdminSendRegistrationInvite(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Subject string `json:"subject"`
+		Text    string `json:"text"`
+	}
+	if r.ContentLength != 0 {
+		if err := decodeJSON(w, r, &req); err != nil {
+			writeErr(w, http.StatusBadRequest, "bad_request", err.Error())
+			return
+		}
+	}
 	email := strings.ToLower(strings.TrimSpace(r.PathValue("email")))
 	ctx := r.Context()
 	inv, err := s.store.RegistrationInviteFor(ctx, email)
@@ -130,26 +177,29 @@ func (s *Server) handleAdminSendRegistrationInvite(w http.ResponseWriter, r *htt
 			"that address has already registered")
 		return
 	}
-	code := ""
-	if inv.HasCode {
-		display, normalized := auth.NewInviteCode()
-		code = display
-		if err := s.store.SetRegistrationInviteCode(ctx, email, auth.HashToken(normalized)); err != nil {
-			writeStoreErr(w, err)
-			return
-		}
-	}
-	subject, body, err := s.accounts.SendRegistrationInvite(email, code, inv.ExpiresAt)
+	// A code is guaranteed before anything is sent: an invite that has none gets
+	// one minted now, so the message - the console's or the server's rendering -
+	// can carry a code that registers.
+	code, err := s.ensureInviteCode(ctx, &inv)
 	if err != nil {
+		writeStoreErr(w, err)
+		return
+	}
+	subject, body := strings.TrimSpace(req.Subject), req.Text
+	if subject == "" || strings.TrimSpace(body) == "" {
+		subject, body = s.accounts.RenderRegistrationInvite(code, inv.ExpiresAt)
+	}
+	if err := s.accounts.SendMessage(email, subject, body); err != nil {
 		s.logger.Warn("could not send the registration invitation", "to", email, "err", err)
 	}
+	inv.EmailSubject, inv.EmailBody = subject, body
 	_ = s.store.AppendAudit(ctx, store.AuditEntry{
 		Actor: s.actorOf(r), Target: email, Action: store.AuditRegistrationInviteSent,
 		IP: clientIP(r),
 	})
 	writeJSON(w, http.StatusOK, registrationInviteResponse{
-		Invite: inv, Code: code,
-		Email: registrationInviteEmail{Subject: subject, Body: body},
+		Invite: inv,
+		Email:  registrationInviteEmail{Subject: subject, Body: body},
 	})
 }
 
@@ -188,9 +238,11 @@ func (s *Server) handleAdminListRegistrationRequests(w http.ResponseWriter, r *h
 	writeJSON(w, http.StatusOK, map[string]any{"requests": requests})
 }
 
-// handleAdminInviteRegistrationRequest approves one: it mints an invitation (so
-// the manual list shows it and the email path can use the code), emails it, and
-// activates the account so the social login that asked works too.
+// handleAdminInviteRegistrationRequest approves one: it mints an invitation and
+// activates the account, but does not send anything. Sending is the operator's
+// explicit "Send with Resend" action (`handleAdminSendRegistrationInvite`), so a
+// click here never mails somebody by accident; the response carries the rendered
+// email for the console's copy section.
 func (s *Server) handleAdminInviteRegistrationRequest(w http.ResponseWriter, r *http.Request) {
 	userID := r.PathValue("user_id")
 	ctx := r.Context()
@@ -210,7 +262,7 @@ func (s *Server) handleAdminInviteRegistrationRequest(w http.ResponseWriter, r *
 		return
 	}
 	display, normalized := auth.NewInviteCode()
-	inv, err := s.store.CreateRegistrationInvite(ctx, acc.Email, auth.HashToken(normalized),
+	inv, err := s.store.CreateRegistrationInvite(ctx, acc.Email, display, auth.HashToken(normalized),
 		s.actorOf(r), defaultInviteTTLSeconds*1000)
 	if err != nil {
 		writeStoreErr(w, err)
@@ -220,10 +272,8 @@ func (s *Server) handleAdminInviteRegistrationRequest(w http.ResponseWriter, r *
 		writeStoreErr(w, err)
 		return
 	}
-	subject, body, err := s.accounts.SendRegistrationInvite(acc.Email, display, inv.ExpiresAt)
-	if err != nil {
-		s.logger.Warn("could not send the registration invitation", "to", acc.Email, "err", err)
-	}
+	subject, body := s.accounts.RenderRegistrationInvite(display, inv.ExpiresAt)
+	inv.EmailSubject, inv.EmailBody = subject, body
 	_ = s.store.AppendAudit(ctx, store.AuditEntry{
 		Actor: s.actorOf(r), Target: userID, Action: store.AuditRegistrationRequestInvited,
 		IP: clientIP(r), Detail: acc.Email,

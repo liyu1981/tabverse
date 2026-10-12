@@ -1,12 +1,14 @@
 import {
   Button,
-  Checkbox,
+  Collapse,
   Dialog,
   DialogBody,
   HTMLTable,
+  Icon,
   InputGroup,
+  TextArea,
 } from '@blueprintjs/core';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useUnit } from 'effector-react';
 
 import { api } from '../data/api';
@@ -25,37 +27,32 @@ import dataClasses from '../data.module.scss';
  * The operator's control over who may register on an invite-only server
  * (TABVERSED_REGISTRATION_REQUIRES_INVITE).
  *
- * The whole life of an invite is here: create one (with an optional code, and
- * optionally mailed), copy the message when there is no SMTP, re-send it, and
- * revoke it. The message text is the server's - `renderRegistrationInvite`
- * echoes what Go wrote - so a deployment with mail and one without send the
- * same thing.
+ * Two sections: the requests from people who logged in without an invitation,
+ * then the invites the operator makes by hand. Nothing sends mail on its own -
+ * a click on a row opens a dialog with the two ways to deliver the invitation:
+ * send it through the server, or copy the drafted message and send it yourself.
  */
 export function RegistrationInvitesPanel() {
   const me = useUnit($me);
-  // Whether the server can actually post mail, which decides whether "send the
-  // email" can mean anything.
-  const canEmail = me?.smtp === true;
-  const [invites, setInvites] = useState<RegistrationInvite[]>([]);
+  // Which transport the server would use, and whether it can send at all.
+  const transport = me?.mail_transport || '';
+  const canSend = transport !== '';
+  const sendLabel = transport === 'resend' ? 'Send with Resend' : 'Send email';
+
   // People who logged in without an invitation: the requests to approve.
   const [requests, setRequests] = useState<UserSummary[]>([]);
+  const [invites, setInvites] = useState<RegistrationInvite[]>([]);
   const [email, setEmail] = useState('');
-  const [withCode, setWithCode] = useState(false);
-  const [sendEmail, setSendEmail] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [template, setTemplate] = useState<RegistrationInviteResult | null>(
-    null,
-  );
-  // A deployment with a mail server sends the invitation by default; one
-  // without cannot, so the box is off and the template is the thing to copy.
-  // Set once, so unticking it sticks.
-  const defaultedSend = useRef(false);
-  useEffect(() => {
-    if (!defaultedSend.current && canEmail) {
-      defaultedSend.current = true;
-      setSendEmail(true);
-    }
-  }, [canEmail]);
+
+  // The dialog is for one address, and the drafts cache holds the rendered
+  // message from the last create, approve or send for it.
+  const [dialogEmail, setDialogEmail] = useState<string | null>(null);
+  const [drafts, setDrafts] = useState<
+    Record<string, RegistrationInviteResult>
+  >({});
+  const [sendOpen, setSendOpen] = useState(true);
+  const [copyOpen, setCopyOpen] = useState(false);
 
   const reload = useCallback(async () => {
     try {
@@ -73,20 +70,30 @@ export function RegistrationInvitesPanel() {
     void reload();
   }, [reload]);
 
+  const openDialog = (address: string) => {
+    setDialogEmail(address);
+    // The manual section is the first one and the draft is the point, so it
+    // opens; the send section opens too, because sending is one click away.
+    setCopyOpen(true);
+    setSendOpen(true);
+  };
+
+  const remember = (result: RegistrationInviteResult) => {
+    setDrafts((prev) => ({ ...prev, [result.invite.email]: result }));
+  };
+
+  // Creating an invite records it and opens the dialog; it sends nothing.
   const invite = async () => {
     const address = email.trim().toLowerCase();
     if (!address) return;
     setBusy(true);
     try {
-      const result = await api.inviteRegistration({
-        email: address,
-        with_code: withCode,
-        send_email: sendEmail,
-      });
+      const result = await api.inviteRegistration({ email: address });
       setEmail('');
-      setTemplate(result);
+      remember(result);
       pushToast({ message: `Invited ${address}`, kind: 'good' });
       await reload();
+      openDialog(result.invite.email);
     } catch (error) {
       reportFailure('Inviting', error);
     } finally {
@@ -94,9 +101,17 @@ export function RegistrationInvitesPanel() {
     }
   };
 
-  const resend = async (address: string) => {
+  // The one action that sends, and it says what happened. The body is the
+  // drafted message from the manual section above - the server does not
+  // re-render it.
+  const send = async (
+    address: string,
+    message: { subject: string; text: string },
+  ) => {
     try {
-      setTemplate(await api.sendRegistrationInvite(address));
+      const result = await api.sendRegistrationInvite(address, message);
+      remember(result);
+      pushToast({ message: `Invitation sent to ${address}`, kind: 'good' });
       await reload();
     } catch (error) {
       reportFailure('Sending the invitation', error);
@@ -107,21 +122,22 @@ export function RegistrationInvitesPanel() {
     try {
       await api.revokeRegistrationInvite(address);
       pushToast({ message: `Revoked the invite for ${address}`, kind: 'good' });
+      if (dialogEmail === address) setDialogEmail(null);
       await reload();
     } catch (error) {
       reportFailure('Revoking the invitation', error);
     }
   };
 
-  // Approving a request mints an invitation (with a code, emailed) and
-  // activates the account, so both ways in work: the social login that asked,
-  // and the code.
+  // Approving mints an invitation and activates the account; it does not send.
   const approveRequest = async (request: UserSummary) => {
     const who = request.email || request.id;
     try {
-      setTemplate(await api.inviteRegistrationRequest(request.id));
+      const result = await api.inviteRegistrationRequest(request.id);
+      remember(result);
       pushToast({ message: `Invited ${who}`, kind: 'good' });
       await reload();
+      openDialog(result.invite.email);
     } catch (error) {
       reportFailure('Inviting', error);
     }
@@ -144,10 +160,20 @@ export function RegistrationInvitesPanel() {
     return 'pending';
   };
 
+  const current = dialogEmail
+    ? invites.find((candidate) => candidate.email === dialogEmail)
+    : undefined;
+  const draft = dialogEmail ? drafts[dialogEmail] : null;
+  // The stored message is the draft, and it is there the moment the dialog
+  // opens - no waiting for a send. A cached create/approve/send response wins
+  // when present, because a coded invite's code changes when it is re-sent.
+  const subject = draft?.email.subject || current?.email_subject || '';
+  const body = draft?.email.body || current?.email_body || '';
+  const draftText = subject && body ? `${subject}\n\n${body}` : '';
+
   const copy = async () => {
-    if (!template) return;
-    const text = `${template.email.subject}\n\n${template.email.body}`;
-    if (await copyText(text)) {
+    if (!draftText) return;
+    if (await copyText(draftText)) {
       pushToast({ message: 'Invitation copied', kind: 'good' });
     } else {
       pushToast({
@@ -230,24 +256,8 @@ export function RegistrationInvitesPanel() {
           value={email}
           onChange={(event) => setEmail(event.currentTarget.value)}
         />
-        <Checkbox
-          checked={withCode}
-          label="Require a code"
-          onChange={(event) => setWithCode(event.currentTarget.checked)}
-        />
-        <Checkbox
-          checked={sendEmail}
-          disabled={!canEmail}
-          label="Send the email"
-          title={
-            canEmail
-              ? "Deliver the invitation through this server's mail settings"
-              : 'No mail server is configured - copy the email instead'
-          }
-          onChange={(event) => setSendEmail(event.currentTarget.checked)}
-        />
         <Button intent="primary" loading={busy} onClick={invite}>
-          Invite
+          Create invite
         </Button>
       </div>
 
@@ -260,7 +270,6 @@ export function RegistrationInvitesPanel() {
               <th>Email</th>
               <th>Status</th>
               <th>Expires</th>
-              <th>Code</th>
               <th />
             </tr>
           </thead>
@@ -274,15 +283,15 @@ export function RegistrationInvitesPanel() {
                     ? new Date(inv.expires_at).toLocaleString()
                     : 'never'}
                 </td>
-                <td className="muted">{inv.has_code ? 'required' : '—'}</td>
                 <td>
                   <div className="actions">
                     <Button
                       small={true}
                       minimal={true}
-                      onClick={() => resend(inv.email)}
+                      intent="primary"
+                      onClick={() => openDialog(inv.email)}
                     >
-                      Send email
+                      Send
                     </Button>
                     <Button
                       small={true}
@@ -301,36 +310,92 @@ export function RegistrationInvitesPanel() {
       )}
 
       <Dialog
-        isOpen={template !== null}
-        onClose={() => setTemplate(null)}
-        title="Invitation email"
+        isOpen={dialogEmail !== null}
+        onClose={() => setDialogEmail(null)}
+        title={dialogEmail ? `Invitation for ${dialogEmail}` : 'Invitation'}
         icon="envelope"
       >
         <DialogBody>
-          {template ? (
-            <>
-              <p className="muted small">
-                Copy this and send it to the address, or turn on "Send the
-                email" to have the server deliver it.
-              </p>
-              {template.code ? (
-                <p>
-                  Code: <span className="mono">{template.code}</span>
+          <FoldSection
+            title="Manual copy & send"
+            isOpen={copyOpen}
+            onToggle={() => setCopyOpen((open) => !open)}
+          >
+            <Button icon="clipboard" onClick={copy} disabled={!draftText}>
+              Copy email
+            </Button>
+            <TextArea
+              className={dataClasses.draftText}
+              readOnly={true}
+              value={
+                draftText ||
+                'The invitation has no stored message yet; create it again to draft one.'
+              }
+              rows={12}
+              fill={true}
+            />
+          </FoldSection>
+
+          <FoldSection
+            title={sendLabel}
+            isOpen={sendOpen}
+            onToggle={() => setSendOpen((open) => !open)}
+          >
+            {canSend ? (
+              <>
+                <p className="muted small">
+                  Send the drafted message above through this server's mail
+                  settings.
                 </p>
-              ) : null}
-              <p>
-                <strong>{template.email.subject}</strong>
+                <Button
+                  intent="primary"
+                  icon="send-message"
+                  disabled={!draftText}
+                  onClick={() =>
+                    dialogEmail && send(dialogEmail, { subject, text: body })
+                  }
+                >
+                  {sendLabel}
+                </Button>
+              </>
+            ) : (
+              <p className="muted small">
+                No mail transport is configured, so the server cannot send it.
+                Use the manual copy above.
               </p>
-              <pre style={{ whiteSpace: 'pre-wrap' }}>
-                {template.email.body}
-              </pre>
-              <Button intent="primary" onClick={copy}>
-                Copy the email
-              </Button>
-            </>
-          ) : null}
+            )}
+          </FoldSection>
         </DialogBody>
       </Dialog>
     </section>
+  );
+}
+
+/**
+ * One collapsible section of the dialog: a header that toggles, and its body.
+ * Blueprint's `Collapse` does the animation; the header is ours so the caret
+ * and the wording are the same as the note tool's.
+ */
+function FoldSection(props: {
+  title: string;
+  isOpen: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className={dataClasses.foldSection}>
+      <button
+        type="button"
+        className="bp6-button bp6-minimal"
+        aria-expanded={props.isOpen}
+        onClick={props.onToggle}
+      >
+        <Icon icon={props.isOpen ? 'caret-down' : 'caret-right'} />
+        <span style={{ marginLeft: 6 }}>{props.title}</span>
+      </button>
+      <Collapse isOpen={props.isOpen} keepChildrenMounted={false}>
+        <div className={dataClasses.foldBody}>{props.children}</div>
+      </Collapse>
+    </div>
   );
 }

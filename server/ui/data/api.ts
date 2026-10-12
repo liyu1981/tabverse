@@ -151,11 +151,13 @@ export interface ConsoleApi {
   inviteRegistration(input: {
     email: string;
     ttl_seconds?: number;
-    with_code?: boolean;
     send_email?: boolean;
   }): Promise<RegistrationInviteResult>;
   listRegistrationInvites(): Promise<RegistrationInvite[]>;
-  sendRegistrationInvite(email: string): Promise<RegistrationInviteResult>;
+  sendRegistrationInvite(
+    email: string,
+    message?: { subject: string; text: string },
+  ): Promise<RegistrationInviteResult>;
   revokeRegistrationInvite(email: string): Promise<void>;
   // ---- registration requests (a login with no invitation yet) ----
   listRegistrationRequests(): Promise<UserSummary[]>;
@@ -425,10 +427,14 @@ export function createConsoleApi(fetchFn: FetchLike = fetch): ConsoleApi {
       return data.invites || [];
     },
 
-    sendRegistrationInvite: (email: string) =>
+    sendRegistrationInvite: (
+      email: string,
+      message?: { subject: string; text: string },
+    ) =>
       call<RegistrationInviteResult>(
         'POST',
         `/console/api/v1/admin/registration-invites/${encodeURIComponent(email)}/send`,
+        message,
       ),
 
     revokeRegistrationInvite: (email: string) =>

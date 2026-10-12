@@ -40,6 +40,9 @@ func (s *Server) handleConsoleMe(w http.ResponseWriter, r *http.Request) {
 			// the link went, and it used to say "no mail server is configured" to
 			// everybody, which is false on every deployment that has one.
 			"smtp": s.cfg.MailConfigured(),
+			// "resend" | "smtp" | "" - which transport the console's send
+			// button would use, and whether it can send at all.
+			"mail_transport": s.cfg.MailTransport(),
 			// Whether there is a site to go back to at "/": this build carries the
 			// documentation or only the redirect page, and the bar shows its
 			// "tabverse" link back on that answer (adr/0024).
@@ -87,6 +90,7 @@ func (s *Server) handleConsoleMe(w http.ResponseWriter, r *http.Request) {
 		// console shows the "request received" notice instead of the account.
 		"pending_registration": acc.Pending(),
 		"smtp":                 s.cfg.MailConfigured(),
+		"mail_transport":       s.cfg.MailTransport(),
 		// Whether there is a site to go back to at "/", for the same button as
 		// above: the flag does not depend on who is asking.
 		"docs": webui.HasDocs(),

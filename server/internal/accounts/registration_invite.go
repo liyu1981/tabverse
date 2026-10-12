@@ -39,6 +39,16 @@ func (s *Service) RenderRegistrationInvite(code string, expiresAt int64) (subjec
 	return RegistrationInviteEmail(s.publicURL, code, expiresAt)
 }
 
+// SendMessage delivers an operator's own message - the console's drafted
+// invitation - through the same sender. It renders nothing: the body is the
+// caller's.
+func (s *Service) SendMessage(dest, subject, body string) error {
+	if s.sendOverride != nil {
+		return s.sendOverride(dest, subject+"\n\n"+body)
+	}
+	return s.mail.SendInvite(dest, subject, body)
+}
+
 // SendRegistrationInvite renders and delivers an invitation. With no SMTP
 // configured the sender logs it, so the call still succeeds and the caller
 // still has the text to show.
