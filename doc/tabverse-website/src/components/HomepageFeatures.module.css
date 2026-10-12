@@ -14,6 +14,9 @@
 
 .featureImg {
   min-width: 500px;
+  border-radius: 14px;
+  /* The shared lift (custom.css), so the homepage and the manual match. */
+  box-shadow: var(--tabverse-lift);
 }
 
 /* On desktop the cards alternate: the odd ones put the picture on the left.

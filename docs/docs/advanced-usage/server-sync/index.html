@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.10.2">
-<title data-rh="true">Sync with a server | Tabverse</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://liyu1981.github.io/tabverse/docs/advanced-usage/server-sync"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Sync with a server | Tabverse"><meta data-rh="true" name="description" content="Tabverse is local first. On its own it needs no account and no network: every"><meta data-rh="true" property="og:description" content="Tabverse is local first. On its own it needs no account and no network: every"><link data-rh="true" rel="icon" href="/tabverse/img/icon19.png"><link data-rh="true" rel="canonical" href="https://liyu1981.github.io/tabverse/docs/advanced-usage/server-sync"><link data-rh="true" rel="alternate" href="https://liyu1981.github.io/tabverse/docs/advanced-usage/server-sync" hreflang="en"><link data-rh="true" rel="alternate" href="https://liyu1981.github.io/tabverse/docs/advanced-usage/server-sync" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Sync with a server","item":"https://liyu1981.github.io/tabverse/docs/advanced-usage/server-sync"}]}</script><link rel="stylesheet" href="/tabverse/assets/css/styles.8cc2a2a3.css">
-<script src="/tabverse/assets/js/runtime~main.f783f8d0.js" defer="defer"></script>
-<script src="/tabverse/assets/js/main.0c9e4a33.js" defer="defer"></script>
+<title data-rh="true">Sync with a server | Tabverse</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://liyu1981.github.io/tabverse/docs/advanced-usage/server-sync"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Sync with a server | Tabverse"><meta data-rh="true" name="description" content="Tabverse is local first. On its own it needs no account and no network: every"><meta data-rh="true" property="og:description" content="Tabverse is local first. On its own it needs no account and no network: every"><link data-rh="true" rel="icon" href="/tabverse/img/icon19.png"><link data-rh="true" rel="canonical" href="https://liyu1981.github.io/tabverse/docs/advanced-usage/server-sync"><link data-rh="true" rel="alternate" href="https://liyu1981.github.io/tabverse/docs/advanced-usage/server-sync" hreflang="en"><link data-rh="true" rel="alternate" href="https://liyu1981.github.io/tabverse/docs/advanced-usage/server-sync" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Sync with a server","item":"https://liyu1981.github.io/tabverse/docs/advanced-usage/server-sync"}]}</script><link rel="stylesheet" href="/tabverse/assets/css/styles.bbfd2aaa.css">
+<script src="/tabverse/assets/js/runtime~main.0674cb8d.js" defer="defer"></script>
+<script src="/tabverse/assets/js/main.5739f82c.js" defer="defer"></script>
 </head>
 <body>
 <svg style="display: none;"><defs>
@@ -26,11 +26,22 @@ nothing else. See <a class="" href="/tabverse/docs/self-host-server">Self-host a
 <li class="">the periodic session snapshots older clients wrote (pruned by retention)</li>
 </ul>
 <h2 class="anchor anchorTargetStickyNavbar_K9Hy" id="pairing-a-device">Pairing a device<a href="#pairing-a-device" class="hash-link" aria-label="Direct link to Pairing a device" title="Direct link to Pairing a device" translate="no">​</a></h2>
+<p>The sync settings are in <strong>Settings ▸ Sync</strong> (the <strong>Sync</strong> button at the bottom
+left). Once a device is paired, the <strong>Status</strong> tab shows the server, the device
+and account ids, and when it last synced, with <strong>Sync now</strong>, <strong>Upload local
+data</strong> and <strong>Disconnect</strong>:</p>
+<p><img decoding="async" loading="lazy" alt="Settings ▸ Sync ▸ Status" src="/tabverse/assets/images/user_manual_sync_status-7c9a2a619e15586be7b0533b85d3bfbf.png" width="1395" height="610" class="img_Os6B"></p>
+<p>The <strong>Setup</strong> tab has the two ways to pair.</p>
+<p><strong>Tabverse official server</strong> - the server the project runs. Sign in with your
+email (or Google), name the device and approve it; there is no code to copy.</p>
+<p><img decoding="async" loading="lazy" alt="Settings ▸ Sync ▸ Setup: the official server" src="/tabverse/assets/images/user_manual_sync_with_official_server-d77b97deffe7103567a135d1c2288619.png" width="1387" height="652" class="img_Os6B"></p>
+<p><strong>Custom server</strong> - a <code>tabversed</code> you run yourself. Paste its URL and a
+single-use pairing code minted in its console (see
+<a class="" href="/tabverse/docs/self-host-server">Self-host a server</a>).</p>
+<p><img decoding="async" loading="lazy" alt="Settings ▸ Sync ▸ Setup: a custom server" src="/tabverse/assets/images/user_manual_sync_with_selfhost_server-3d92d3cf772b762b9c6f7675b500deef.png" width="1397" height="697" class="img_Os6B"></p>
 <p>Each browser pairs once and receives its own device token, which is the only
-credential that reaches the account&#x27;s data. You pair from the extension&#x27;s sync
-dialog with a single-use code minted in the server&#x27;s console (or through the
-wizard for the official server). A device can be unpaired from the server at any
-time.</p>
+credential that reaches the account&#x27;s data. A device can be unpaired from the
+server at any time, and <strong>Disconnect</strong> stops the sync on this side.</p>
 <h2 class="anchor anchorTargetStickyNavbar_K9Hy" id="accounts-and-the-console">Accounts and the console<a href="#accounts-and-the-console" class="hash-link" aria-label="Direct link to Accounts and the console" title="Direct link to Accounts and the console" translate="no">​</a></h2>
 <p>A device is <em>paired</em>; it is not a login. The server also has a small web console,
 where you sign in to see and manage the account:</p>

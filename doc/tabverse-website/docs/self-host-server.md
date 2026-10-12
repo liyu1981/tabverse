@@ -38,8 +38,11 @@ Then:
    first time, that registers the account; the link is emailed if SMTP is
    configured, and printed to the server log otherwise.
 2. In the console's **Pair Code** tab, mint a single-use code.
-3. In the extension, open the sync dialog and pair with the server URL (the
-   address *the browser* can reach it at) and that code.
+3. In the extension, open **Settings ▸ Sync ▸ Setup ▸ Custom server** and pair
+   with the server URL (the address *the browser* can reach it at) and that
+   code:
+
+   ![Settings ▸ Sync ▸ Setup: a custom server](../static/img/user_manual_sync_with_selfhost_server.png)
 
 The extension may talk to any `http`/`https` server (`adr/0010`); a device token
 is a bearer credential, so prefer `https://` or a trusted network.

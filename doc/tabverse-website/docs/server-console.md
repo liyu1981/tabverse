@@ -8,7 +8,11 @@ Every `tabversed` server serves a small web console at `/console`. It is the web
 UI of the deployment: the [sync server](./advanced-usage/server-sync)'s account
 and data surface. It is also where you mint the pairing code a browser needs.
 
+![The server console: the account's stored data](../static/img/user_manual_server_console.png)
+
 ## For a signed-in account
+
+The rail on the left is the account, section by section:
 
 - **Pair Code** - mint a single-use code to pair another browser, with a
   lifetime you choose. Copy it together with the server URL into the extension's
@@ -16,10 +20,13 @@ and data surface. It is also where you mint the pairing code a browser needs.
 - **Devices & Tokens** - see every paired device and when it was last seen, and
   revoke a lost one. Revoking a token cuts that device off; it has to pair
   again.
-- **Stored data** - the account's tabverses, raw records and a full text
-  [search](./advanced-usage/omni-search), all read only. A record written from
-  the console would lose the next sync conflict, so it does not offer to write
-  one.
+- **Stored data** - the account's tabverses and raw records, read only. The
+  counters at the top count records by entity; clicking a tabverse opens the same
+  read-only view the extension draws. A record written from the console would
+  lose the next sync conflict, so it does not offer to write one.
+- **Search** - full text search over the account's own records.
+- **Admin** - the operator's account directory, when there is an operator (see
+  below).
 
 Sign-in is a single-use link emailed to you, or GitHub / Google if the operator
 enabled it. "Sign out everywhere" ends every browser session on the account;

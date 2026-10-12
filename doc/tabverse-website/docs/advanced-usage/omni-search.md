@@ -37,5 +37,7 @@ When a server is paired, the left sidebar gets an **Omni Search** entry. It is
 the same unified search as a full view: a query box, the kind tabs, and one card
 per matched tabverse, each with a button to open that tabverse in a new window.
 
+![Omni search: a tabverse card with its matches and Open in new window](../../static/img/user_manual_restore_from_omni_search.png)
+
 The server's [console](../server-console) offers the same search to an operator
 looking at an account.

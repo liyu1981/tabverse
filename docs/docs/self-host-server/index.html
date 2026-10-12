@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.10.2">
-<title data-rh="true">Self-host a server | Tabverse</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://liyu1981.github.io/tabverse/docs/self-host-server"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Self-host a server | Tabverse"><meta data-rh="true" name="description" content="Tabverse is local first; a server is optional. If you want the same tabverses on"><meta data-rh="true" property="og:description" content="Tabverse is local first; a server is optional. If you want the same tabverses on"><link data-rh="true" rel="icon" href="/tabverse/img/icon19.png"><link data-rh="true" rel="canonical" href="https://liyu1981.github.io/tabverse/docs/self-host-server"><link data-rh="true" rel="alternate" href="https://liyu1981.github.io/tabverse/docs/self-host-server" hreflang="en"><link data-rh="true" rel="alternate" href="https://liyu1981.github.io/tabverse/docs/self-host-server" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Self-host a server","item":"https://liyu1981.github.io/tabverse/docs/self-host-server"}]}</script><link rel="stylesheet" href="/tabverse/assets/css/styles.8cc2a2a3.css">
-<script src="/tabverse/assets/js/runtime~main.f783f8d0.js" defer="defer"></script>
-<script src="/tabverse/assets/js/main.0c9e4a33.js" defer="defer"></script>
+<title data-rh="true">Self-host a server | Tabverse</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://liyu1981.github.io/tabverse/docs/self-host-server"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Self-host a server | Tabverse"><meta data-rh="true" name="description" content="Tabverse is local first; a server is optional. If you want the same tabverses on"><meta data-rh="true" property="og:description" content="Tabverse is local first; a server is optional. If you want the same tabverses on"><link data-rh="true" rel="icon" href="/tabverse/img/icon19.png"><link data-rh="true" rel="canonical" href="https://liyu1981.github.io/tabverse/docs/self-host-server"><link data-rh="true" rel="alternate" href="https://liyu1981.github.io/tabverse/docs/self-host-server" hreflang="en"><link data-rh="true" rel="alternate" href="https://liyu1981.github.io/tabverse/docs/self-host-server" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Self-host a server","item":"https://liyu1981.github.io/tabverse/docs/self-host-server"}]}</script><link rel="stylesheet" href="/tabverse/assets/css/styles.bbfd2aaa.css">
+<script src="/tabverse/assets/js/runtime~main.0674cb8d.js" defer="defer"></script>
+<script src="/tabverse/assets/js/main.5739f82c.js" defer="defer"></script>
 </head>
 <body>
 <svg style="display: none;"><defs>
@@ -34,12 +34,20 @@ link is printed to the server log, which is fine for a LAN.</li>
 <div class="language-sh codeBlockContainer_h39z theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_UwYu"><pre tabindex="0" class="prism-code language-sh codeBlock_sOT5 thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_UFD9"><div class="token-line" style="color:#393A34"><span class="token plain">pnpm install</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">pnpm run ui:build        # build the console, embedded into the binary</span><br></div><div class="token-line" style="color:#393A34"><span class="token plain">pnpm run server:dev      # listens on 0.0.0.0:8223, db ./server/data/tabversed.db</span><br></div></code></pre></div></div>
 <p>Then:</p>
 <ol>
-<li class="">Open <code>http://localhost:8223/console</code> and <strong>sign in</strong> with your address. The
+<li class="">
+<p>Open <code>http://localhost:8223/console</code> and <strong>sign in</strong> with your address. The
 first time, that registers the account; the link is emailed if SMTP is
-configured, and printed to the server log otherwise.</li>
-<li class="">In the console&#x27;s <strong>Pair Code</strong> tab, mint a single-use code.</li>
-<li class="">In the extension, open the sync dialog and pair with the server URL (the
-address <em>the browser</em> can reach it at) and that code.</li>
+configured, and printed to the server log otherwise.</p>
+</li>
+<li class="">
+<p>In the console&#x27;s <strong>Pair Code</strong> tab, mint a single-use code.</p>
+</li>
+<li class="">
+<p>In the extension, open <strong>Settings ▸ Sync ▸ Setup ▸ Custom server</strong> and pair
+with the server URL (the address <em>the browser</em> can reach it at) and that
+code:</p>
+<p><img decoding="async" loading="lazy" alt="Settings ▸ Sync ▸ Setup: a custom server" src="/tabverse/assets/images/user_manual_sync_with_selfhost_server-3d92d3cf772b762b9c6f7675b500deef.png" width="1397" height="697" class="img_Os6B"></p>
+</li>
 </ol>
 <p>The extension may talk to any <code>http</code>/<code>https</code> server (<code>adr/0010</code>); a device token
 is a bearer credential, so prefer <code>https://</code> or a trusted network.</p>
@@ -59,7 +67,7 @@ worth setting on a real deployment:</p>
 <code>TABVERSED_SYNC_BATCH_LIMIT</code>, <code>TABVERSED_SEARCH_LIMIT</code>,
 <code>TABVERSED_WS_ORIGINS</code>, the session TTLs and the social provider keys - is in
 the <a href="https://github.com/liyu1981/tabverse/blob/main/server/README.md" target="_blank" rel="noopener noreferrer" class="">server README</a>.</p>
-<h2 class="anchor anchorTargetStickyNavbar_K9Hy" id="tls">TLS<a href="#tls" class="hash-link" aria-label="Direct link to TLS" title="Direct link to TLS" translate="no"> ​</a></h2>
+<h2 class="anchor anchorTargetStickyNavbar_K9Hy" id="tls">TLS<a href="#tls" class="hash-link" aria-label="Direct link to TLS" title="Direct link to TLS" translate="no">​</a></h2>
 <p>Serve it behind a reverse proxy (Caddy, nginx, or a tunnel) that terminates
 TLS, and set <code>TABVERSED_PUBLIC_URL</code> to the public origin. The console sets
 <code>Secure</code> cookies and HSTS on that basis; <code>TABVERSED_REQUIRE_HTTPS=true</code> makes

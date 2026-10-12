@@ -14,6 +14,14 @@
   --ifm-color-primary-lighter: #6a8193;
   --ifm-color-primary-lightest: #7d91a1;
   --ifm-code-font-size: 95%;
+
+  /* The shared lift for screenshots: the homepage feature cards and the
+     manual's pictures both use it, so the two read as the same product. */
+  --tabverse-lift:
+    0 0 0 1px rgba(15, 23, 42, 0.04),
+    0 2px 4px rgba(15, 23, 42, 0.05),
+    0 12px 24px -6px rgba(15, 23, 42, 0.12),
+    0 32px 56px -20px rgba(15, 23, 42, 0.22);
 }
 
 .docusaurus-highlight-code-line {
@@ -27,10 +35,13 @@ html[data-theme='dark'] .docusaurus-highlight-code-line {
   background-color: rgba(0, 0, 0, 0.3);
 }
 
-/* Screenshots in the manual should shrink to their column on a phone. */
+/* Screenshots in the manual should shrink to their column on a phone, and
+   carry the same lift as the homepage cards. */
 .markdown img {
   max-width: 100%;
   height: auto;
+  border-radius: 14px;
+  box-shadow: var(--tabverse-lift);
 }
 
 /* The homepage feature screenshots and the hero already carry their own

@@ -10,32 +10,41 @@ your saved tabverses, and exporting and importing them as files.
 
 ## Create a new tabverse
 
-Click the Tabverse `T` icon in Chrome's toolbar. If the current window is not
-already a tabverse, Tabverse opens it as one, in a new tab.
+Click the Tabverse `T` icon in Chrome's toolbar to open the popup, then
+**New tabverse**:
 
-![Start Tabverse](../../static/img/tabverse-manual-1.png)
+![The Tabverse toolbar popup](../../static/img/user_manual_chrome_popup.png)
 
-**Create New Tabverse** (top-left) opens a **new Chrome window** with a new
-tabverse in it, so you can start something new without disturbing what you are
-doing.
+- If the current window is not a tabverse yet, it becomes one, in a new tab.
+- If it already has one, Tabverse asks first: the current tabverse is already
+  saved, and continuing replaces it here - the tabs the window has open become
+  part of the new one.
 
-A window holds at most one tabverse at a time. If the window already has one,
-the manager asks before replacing it, and tells you the current one is already
-saved.
+A window holds at most one tabverse at a time.
 
 ## The manager interface
 
-![Tabverse UI Overview](../../static/img/tabverse-manual-2.png)
+![Tabverse UI overview](../../static/img/user_manual_general_interface.png)
 
-- **Saved tabverses** (left, top) - every tabverse saved in this browser, newest
-  first. Click the *last update* / *created* sub-heading to switch the sort.
-  Clicking a row opens its [restore dialog](#restore-a-saved-tabverse).
-- **This window's tabs** (left, bottom) - the live tabs of the window the
-  tabverse is in. The name at the top is editable; hovering a tab shows its
-  details and a preview.
-- **Tools** (right) - [Todo](./todo), [Note](./note), [Bookmark](./bookmark)
-  and [History](./history), attached to this tabverse. You can pin one tool to
-  the top and move the rest into the scrolling list below it.
+- **1 - Current Tabverse**: the sidebar entry for the tabverse of this window
+  (its name is below it). The other entries are **Saved Tabverses** and
+  **Omni Search**.
+- **2 - This window's tabs**: the live tabs the tabverse manages. The name at
+  the top is editable; the box filters the list (`/` focuses it); the header
+  says how many tabs there are and when the tabverse was last saved. Split views
+  are drawn as one block, and each row has its own buttons (pin, suspend,
+  bookmark, close). The icons at the top right are the AI name suggestion,
+  **Save & close** and **Export**.
+- **3 - Tools**: [Todo](./todo), [Note](./note), [Bookmark](./bookmark) and
+  [History](./history) for this tabverse. One tool can be pinned to the top; the
+  rest move into the scrolling list below it.
+- **4 - Sync / Settings**: the bottom-left buttons. **Sync** opens the sync
+  settings; **Settings** opens the dialog with Sync, Tabs (tab suspension), AI
+  and About.
+- **5 - The right rail**: two panels that are about the tooling around a
+  tabverse, not about the tabverse itself - **AI history** and the **Server
+  console**. Click an icon to open the panel; it pushes the tabverse to the
+  left.
 
 Everything is saved as you work: tab events (open, close, move, pin) and tool
 edits are written to this browser's database immediately. There is no "save"
@@ -49,9 +58,10 @@ simply put down and stays in the saved list, ready to restore.
 
 ## Restore a saved tabverse
 
-Click any saved tabverse to open its dialog:
+Open **Saved Tabverses** in the sidebar and click a row; its detail opens on the
+right:
 
-![Saved Tabverse Dialog](../../static/img/tabverse-manual-3.png)
+![A saved tabverse: Load to New, Load to Current, Delete](../../static/img/user_manual_restore_from_saved.png)
 
 - **Load to New** - opens the tabverse in a new Chrome window, with all its
   saved tabs.
@@ -81,8 +91,8 @@ tabverse to a `.tabverse` file: the tabverse itself, its tabs and tab groups,
 notes, todos, bookmarks and history, as one JSON document. It does not change
 the tabverse or close anything.
 
-**Import** (the button beside **New** in the toolbar popup) reads a `.tabverse`
-file back as a **new, independent** tabverse:
+**Import** (in the toolbar popup) reads a `.tabverse` file back as a **new,
+independent** tabverse:
 
 - every id is reminted, so importing the same file twice - or into a browser
   that already holds the original - never collides;

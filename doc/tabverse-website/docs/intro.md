@@ -47,19 +47,19 @@ Developers can build `dist/` from source and load it unpacked; the
 
 ## Your first Tabverse
 
-After installing, click the Tabverse `T` icon in Chrome's toolbar.
+After installing, click the Tabverse `T` icon in Chrome's toolbar to open the
+popup:
 
-![Start Tabverse](../static/img/tabverse-manual-1.png)
+![The Tabverse toolbar popup](../static/img/user_manual_chrome_popup.png)
 
-Tabverse opens the current window as a tabverse in a new tab. The
-[Basic Usage](./basic-usage/tabverses) pages walk the interface section by
-section; the short version is:
+- **New tabverse** makes the current window a tabverse (if it already has one,
+  Tabverse asks first - the current one is already saved).
+- **Import** reads a `.tabverse` file as a new saved tabverse.
+- The search box and the **Recent** list reach every tabverse saved in this
+  browser; a row badged *this window* is the one you are in.
 
-- the **left** side lists your saved tabverses and the tabs of the one you are
-  in;
-- the **right** side holds the Todo, Note, Bookmark and History tools;
-- **Save & close** puts the tabverse down - it is saved automatically as you
-  work, so this only closes the window's manager tab.
+The [Basic Usage](./basic-usage/tabverses) pages walk the manager interface
+section by section.
 
 ## Optional: server sync
 

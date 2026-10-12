@@ -21,11 +21,29 @@ nothing else. See [Self-host a server](../self-host-server) to run one.
 
 ## Pairing a device
 
+The sync settings are in **Settings ▸ Sync** (the **Sync** button at the bottom
+left). Once a device is paired, the **Status** tab shows the server, the device
+and account ids, and when it last synced, with **Sync now**, **Upload local
+data** and **Disconnect**:
+
+![Settings ▸ Sync ▸ Status](../../static/img/user_manual_sync_status.png)
+
+The **Setup** tab has the two ways to pair.
+
+**Tabverse official server** - the server the project runs. Sign in with your
+email (or Google), name the device and approve it; there is no code to copy.
+
+![Settings ▸ Sync ▸ Setup: the official server](../../static/img/user_manual_sync_with_official_server.png)
+
+**Custom server** - a `tabversed` you run yourself. Paste its URL and a
+single-use pairing code minted in its console (see
+[Self-host a server](../self-host-server)).
+
+![Settings ▸ Sync ▸ Setup: a custom server](../../static/img/user_manual_sync_with_selfhost_server.png)
+
 Each browser pairs once and receives its own device token, which is the only
-credential that reaches the account's data. You pair from the extension's sync
-dialog with a single-use code minted in the server's console (or through the
-wizard for the official server). A device can be unpaired from the server at any
-time.
+credential that reaches the account's data. A device can be unpaired from the
+server at any time, and **Disconnect** stops the sync on this side.
 
 ## Accounts and the console
 
