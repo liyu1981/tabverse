@@ -8,6 +8,8 @@ The History tool is the list of tabs **closed from this tabverse** - one row per
 url, most recent first. It is a convenience for bringing something back, not a
 copy of Chrome's own history. A tabverse keeps up to 999 closed tabs.
 
+![The History tool: closed tabs, the search box and the group switch](../../static/img/user_manual_history_tool.png)
+
 ## Bring one back
 
 - Click a row's **title**, or its **undo** button, to reopen it as a new tab in

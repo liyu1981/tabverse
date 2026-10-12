@@ -8,6 +8,8 @@ The Note tool holds rich-text notes attached to the tabverse. A note is a small
 document with a name; it is saved with the tabverse, restored with it, and -
 when you pair a server - synced like everything else.
 
+![The Note tool: a note with its rich-text toolbar, and a second one below](../../static/img/user_manual_note_tool.png)
+
 ## Create and edit
 
 - **New Note** adds a note named `Note <timestamp>` and opens its editor.

@@ -56,12 +56,23 @@ button to remember.
 tabverse's manager tab. The window and its tabs stay open - the tabverse is
 simply put down and stays in the saved list, ready to restore.
 
+## Search saved tabverses
+
+Open **Saved Tabverses** in the sidebar. Its search box is a scoped query
+builder: pick a scope (*anywhere*, *title*, *url*, …), type your terms, and
+press Enter. It searches this browser's tabverses - names and contents (tab
+titles and urls, notes, todos, bookmarks, history) - and lists matching
+tabverses, not loose rows.
+
+![Search saved tabverses: a scoped query and the matched tabverse](../../static/img/user_manual_restore_from_saved.png)
+
+This search is **local**: it scans what this browser holds. When a server is
+paired, a second, server-backed search appears in the sidebar and knows every
+tabverse on the account - see [Omni search](../advanced-usage/omni-search).
+
 ## Restore a saved tabverse
 
-Open **Saved Tabverses** in the sidebar and click a row; its detail opens on the
-right:
-
-![A saved tabverse: Load to New, Load to Current, Delete](../../static/img/user_manual_restore_from_saved.png)
+A matched tabverse's card (the view above) offers:
 
 - **Load to New** - opens the tabverse in a new Chrome window, with all its
   saved tabs.
@@ -73,16 +84,6 @@ right:
   brings that window to the front instead of opening a second copy.
 - **Delete** - deletes the saved tabverse and everything attached to it. There
   is no confirmation and no undo.
-
-## Search saved tabverses
-
-The search box above the saved list searches this browser's tabverses - their
-names and their contents: tab titles and urls, notes, todos, bookmarks and
-history. Results are shown as tabverses, not as loose rows.
-
-This search is **local**: it scans what this browser holds. If you pair with a
-server, a second, server-backed search appears in the sidebar and knows every
-tabverse on the account - see [Omni search](../advanced-usage/omni-search).
 
 ## Export and import
 

@@ -8,6 +8,8 @@ The Todo tool is a checklist for the current tabverse. It is saved with the
 tabverse, restored with it, and - when you pair a server - synced like
 everything else.
 
+![The Todo tool: a completed and an open todo, with the filter and the All/Active/Completed switch](../../static/img/user_manual_todo_tool.png)
+
 ## Add and complete
 
 - **Add** - type in the box at the top ("What needs to be done?") and press

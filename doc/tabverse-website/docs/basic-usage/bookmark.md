@@ -14,11 +14,16 @@ There is no "add" box in the Bookmark tool; bookmarks come from where you
 already are:
 
 - **From a tab** - hover a tab in the tab list and click its bookmark button
-  ("Save this tab as a bookmark").
+  ("Save this tab as a bookmark"):
+
+  ![The bookmark button on a tab row](../../static/img/user_manual_bookmark_tool_add_bookmark.png)
+
 - **From the history** - the bookmark button on a closed tab saves it here and
   removes it from the history (see [History](./history)).
 
 ## Use the list
+
+![The Bookmark tool: each row's name and url, with open and delete](../../static/img/user_manual_bookmark_tool.png)
 
 Each row shows the page's favicon, its **name** (click to rename) and its url.
 
