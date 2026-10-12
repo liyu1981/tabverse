@@ -42,6 +42,7 @@ import { getPreview } from '../../../data/tabSpace/TabPreviewCache';
 import { logger } from '../../../global';
 import { saveAndCloseTabSpace } from '../../../data/tabSpace/closeTabSpace';
 import { saveCurrentBookmarks } from '../../../data/bookmark/util';
+import { exportTabVerse } from '../../../data/tabSpace/exportTabSpace';
 import {
   tabverseEntries,
   tabverseTabs,
@@ -210,6 +211,17 @@ export function TabSpaceListView() {
     }
   };
 
+  // The export is a snapshot: it flushes pending edits, then hands the browser
+  // one .tabverse file holding the tabverse and its notes, todos, bookmarks
+  // and history. It does not touch the tabverse itself.
+  const exportCurrentTabverse = async () => {
+    try {
+      await exportTabVerse(tabSpace.id, tabSpace.name);
+    } catch (err) {
+      logger.error('could not export the tabverse', err);
+    }
+  };
+
   useEffect(() => {
     setSelectedTabs((lastSelectedTabs) => {
       return lastSelectedTabs
@@ -330,6 +342,15 @@ export function TabSpaceListView() {
             minimal={true}
             loading={isClosing}
             onClick={() => void saveAndClose()}
+          />
+        </Tooltip>
+        <Tooltip content="Export as .tabverse file">
+          <Button
+            className="tv-icon-button"
+            aria-label="Export this tabverse to a .tabverse file"
+            icon="export"
+            minimal={true}
+            onClick={() => void exportCurrentTabverse()}
           />
         </Tooltip>
       </div>
