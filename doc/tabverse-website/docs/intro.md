@@ -4,72 +4,69 @@ sidebar_position: 1
 
 # Get Started
 
-## What is a **Tabverse**?
+Tabverse is a Chrome extension that turns a window full of related tabs into a
+named workspace you can put down and pick up again.
 
-When we are working on something, we usually open a chrome window and a lot of
-tabs in it. Those tabs are all related the same topic. They are searches,
-results, documents, online tools. We then define a **Tabverse** as the group of this
-window and all its tabs, plus a managing application who can helps us to
-remember tabs and making notes etc. It will help us on those tedious book
-keeping work so that when we want a break from our work (or have finished our
-work), we can simply close the window, but with Tabverse's help, all data is
-reserved.
+When you work on something, you usually open one Chrome window and a pile of
+tabs in it - searches, results, documents, tools, all about the same thing.
+That window and its tabs are a **Tabverse**. Tabverse gives the window a name,
+remembers it, and hangs the small things that go with the work - notes, todos,
+bookmarks, the tabs you closed - off it, so that when you are done (or just
+need a break) you can close the window without losing the thread.
 
-## Installation
+Everything is **local first**: on its own, Tabverse needs no account and no
+network. Pairing with a server is optional and comes later.
 
-The Chrome Web Store listing is still under review, so that button is disabled
-on this site for now. In the meantime you can install Tabverse manually:
-download the latest `.crx` from the
-[GitHub releases](https://github.com/liyu1981/tabverse/releases), then follow the
-[manual installation guide](https://www.cnet.com/tech/services-and-software/how-to-install-chrome-extensions-manually/)
-to load it into Chrome.
+## Install
 
-## What Tabverse does
+Tabverse is a Chrome extension (Manifest V3, Chrome 140 or newer).
 
-- **Tabverses.** One Chrome window is one workspace; save it and restore it
-  later, with all its tabs. See [Restore a saved Tabverse](./restore.md).
-- **Notes, todos and bookmarks** attached to a tabverse.
-- **History** of the tabs closed from that tabverse.
-- **On-device AI** that can summarize a tab into a note, or suggest a name for a
-  tab collection ([details](./ai.md)).
-- **One search** across tabs, history, notes, todos and bookmarks
-  ([details](./search.md)).
-- **Optional server sync**, so the same workspace is on every browser you use
-  ([details](./server-sync.md)).
+The Chrome Web Store listing is still under review, so the store button on this
+site is disabled for now. In the meantime, install it manually:
 
-## Get Started after Installation
+1. Download the latest `.crx` from the
+   [GitHub releases](https://github.com/liyu1981/tabverse/releases).
+2. Follow the
+   [manual installation guide](https://www.cnet.com/tech/services-and-software/how-to-install-chrome-extensions-manually/)
+   to load it into Chrome.
 
-After installing, Tabverse can be started by clicking the `T` icon in chrome
-extension's menu.
+Developers can build `dist/` from source and load it unpacked; the
+[repository](https://github.com/liyu1981/tabverse) has the commands.
+
+## What it does
+
+- **Tabverses** - one Chrome window is one workspace. Name it, save it, and
+  restore it later with all its tabs. → [Tabverses](./basic-usage/tabverses)
+- **Todo, Note, Bookmark and History tools** attached to the tabverse, each
+  saved and restored with it.
+- **One search** across tabs, history, notes, todos and bookmarks.
+- **On-device AI** that can summarize a tab into a note or suggest a name for a
+  tab collection, where Chrome ships its built-in model.
+- **Optional server sync**, so the same workspace is on every browser you use,
+  with a server you run yourself.
+
+## Your first Tabverse
+
+After installing, click the Tabverse `T` icon in Chrome's toolbar.
 
 ![Start Tabverse](../static/img/tabverse-manual-1.png)
 
-By clicking Tabverse icon, we will then create our first Tabverse in a new tab
-in current window. Below is an example of Tabverse.
+Tabverse opens the current window as a tabverse in a new tab. The
+[Basic Usage](./basic-usage/tabverses) pages walk the interface section by
+section; the short version is:
 
-![Tabverse UI Overview](../static/img/tabverse-manual-2.png)
+- the **left** side lists your saved tabverses and the tabs of the one you are
+  in;
+- the **right** side holds the Todo, Note, Bookmark and History tools;
+- **Save & close** puts the tabverse down - it is saved automatically as you
+  work, so this only closes the window's manager tab.
 
-Let's walk through **Tabverse** UI section by section:
+## Optional: server sync
 
-- **Section 1** is for `Create New Tabverse`.
-  `Create New Tabverse` will open a new chrome window as well as a new tabverse,
-  so you can start work on something new there.
+Tabverse works entirely in this browser. If you want the same tabverses on a
+second browser or machine, you can pair it with a **`tabversed`** server that
+you run yourself; the extension talks only to the address you enter.
 
-- **Section 2** is showing the Tabverse of the current window. Each Tabverse
-  manages the tabs of the window it was created in; Tabverses in other windows
-  are managed from those windows.
-
-- **Section 3** is showing all saved Tabverses in local storage. It is sorted by
-  either last update time, or created time (clicking the sub string in header to
-  switch). Clicking one saved Tabverse entry will open a dialog showing its
-  details as well as offering [restore options](/docs/restore).
-
-- **Section 4** is showing the current tabs in current Window, which is managing
-  by our Tabverse. You can set the name for it, choose to save it, and hovering
-  on each tab entry for checking its detail and preview.
-
-- **Section 5** are several utils to help us to do our work. They are Todos,
-  Notes and Bookmarks. If you have saved your Tabverse, all your Todos, Notes
-  and Bookmarks will be saved and associated to your Tabverse. Later if you
-  restore one of your saved Tabverse, all associated Todos, Notes and Bookmarks
-  will be restored too.
+- [Sync with a server](./advanced-usage/server-sync) - what syncs, how pairing
+  works, and the privacy posture.
+- [Self-host a server](./self-host-server) - run `tabversed` for yourself.
