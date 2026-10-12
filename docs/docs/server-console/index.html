@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.10.2">
 <title data-rh="true">Server Console Usage | Tabverse</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://liyu1981.github.io/tabverse/docs/server-console"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Server Console Usage | Tabverse"><meta data-rh="true" name="description" content="Every tabversed server serves a small web console at /console. It is the web"><meta data-rh="true" property="og:description" content="Every tabversed server serves a small web console at /console. It is the web"><link data-rh="true" rel="icon" href="/tabverse/img/icon19.png"><link data-rh="true" rel="canonical" href="https://liyu1981.github.io/tabverse/docs/server-console"><link data-rh="true" rel="alternate" href="https://liyu1981.github.io/tabverse/docs/server-console" hreflang="en"><link data-rh="true" rel="alternate" href="https://liyu1981.github.io/tabverse/docs/server-console" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Server Console Usage","item":"https://liyu1981.github.io/tabverse/docs/server-console"}]}</script><link rel="stylesheet" href="/tabverse/assets/css/styles.bbfd2aaa.css">
-<script src="/tabverse/assets/js/runtime~main.7faccc13.js" defer="defer"></script>
+<script src="/tabverse/assets/js/runtime~main.b94ef57d.js" defer="defer"></script>
 <script src="/tabverse/assets/js/main.ca65ccd6.js" defer="defer"></script>
 </head>
 <body>
@@ -30,9 +30,9 @@ counters at the top count records by entity; clicking a tabverse opens the same
 read-only view the extension draws. A record written from the console would
 lose the next sync conflict, so it does not offer to write one.</li>
 <li class=""><strong>Search</strong> - full text search over the account&#x27;s own records.</li>
-<li class=""><strong>Admin</strong> - the operator&#x27;s account directory, when there is an operator (see
-below).</li>
 </ul>
+<p>An operator also gets a separate <strong>Admin</strong> page at <code>/console/admin</code>, reached
+from a button in the header next to <em>tabverse</em> (see below).</p>
 <p>Sign-in is a single-use link emailed to you, or GitHub / Google if the operator
 enabled it. &quot;Sign out everywhere&quot; ends every browser session on the account;
 paired devices keep syncing, because their tokens are a different credential.</p>

@@ -88,6 +88,13 @@ type Config struct {
 	SMTPUser string
 	SMTPPass string
 	SMTPFrom string
+	// SMTPfast (smtpfa.st) is a Resend-compatible HTTP email API. When its key
+	// is set it is preferred over SMTP: one HTTPS call, no local mail setup.
+	// SMTPFastFrom defaults to SMTPFrom, and the address must be on a domain
+	// verified in the SMTPfast dashboard.
+	SMTPFastAPIKey  string
+	SMTPFastFrom    string
+	SMTPFastBaseURL string
 	// Social logins. Each pair enables one provider; an unset pair means that
 	// button is not offered at all, rather than offered and broken.
 	GitHubClientID     string
@@ -150,10 +157,20 @@ func (c Config) SocialProviders() []string {
 	return out
 }
 
-// SMTPConfigured reports whether verification links can actually be sent. With
-// no SMTP host the sender logs the link instead, which is the sane behaviour
-// for a LAN-only deployment.
+// SMTPConfigured reports whether verification links can be sent over SMTP. With
+// no SMTP host the links are logged instead, which is the sane behaviour for a
+// LAN-only deployment.
 func (c Config) SMTPConfigured() bool { return c.SMTPHost != "" }
+
+// SMTPFastConfigured reports whether the SMTPfast HTTP API is set up. It is
+// preferred over SMTP when both are configured.
+func (c Config) SMTPFastConfigured() bool {
+	return strings.TrimSpace(c.SMTPFastAPIKey) != ""
+}
+
+// MailConfigured reports whether the server can deliver mail at all - through
+// SMTPfast or SMTP. With neither, messages are logged instead of sent.
+func (c Config) MailConfigured() bool { return c.SMTPFastConfigured() || c.SMTPConfigured() }
 
 func Getenv(name, fallback string) string {
 	if v := os.Getenv(name); v != "" {
@@ -291,6 +308,9 @@ func Load(version string) (Config, error) {
 	cfg.SMTPUser = Getenv("TABVERSED_SMTP_USER", "")
 	cfg.SMTPPass = Getenv("TABVERSED_SMTP_PASS", "")
 	cfg.SMTPFrom = Getenv("TABVERSED_SMTP_FROM", "")
+	cfg.SMTPFastAPIKey = Getenv("TABVERSED_SMTPFAST_API_KEY", "")
+	cfg.SMTPFastFrom = Getenv("TABVERSED_SMTPFAST_FROM", "")
+	cfg.SMTPFastBaseURL = Getenv("TABVERSED_SMTPFAST_BASE_URL", "https://smtpfa.st/api/v1")
 	if cfg.DevMode, err = GetenvBool("TABVERSED_DEV_MODE", false); err != nil {
 		return Config{}, err
 	}

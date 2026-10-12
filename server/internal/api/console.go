@@ -37,7 +37,7 @@ func (s *Server) handleConsoleMe(w http.ResponseWriter, r *http.Request) {
 			// Whether a link can actually be posted. The sign-in view says where
 			// the link went, and it used to say "no mail server is configured" to
 			// everybody, which is false on every deployment that has one.
-			"smtp": s.cfg.SMTPConfigured(),
+			"smtp": s.cfg.MailConfigured(),
 			// Whether there is a site to go back to at "/": this build carries the
 			// documentation or only the redirect page, and the bar shows its
 			// "tabverse" link back on that answer (adr/0024).
@@ -66,22 +66,22 @@ func (s *Server) handleConsoleMe(w http.ResponseWriter, r *http.Request) {
 	}
 	operator := s.operatorExists(r)
 	writeJSON(w, http.StatusOK, map[string]any{
-		"signed_in":       true,
-		"user_id":         acc.ID,
-		"name":            acc.Name,
-		"email":           acc.Email,
-		"role":            role,
-		"email_verified":  acc.EmailVerifiedAt != nil,
-		"created_at":      acc.CreatedAt,
-		"csrf_header":     accountsCSRFHeader,
-		"csrf":            s.csrfToken(r),
-		"stats":           stats,
-		"devices":         devices,
-		"providers":       s.cfg.SocialProviders(),
-		"admin_email":     s.cfg.AdminEmail,
-		"operator_exists": operator,
+		"signed_in":          true,
+		"user_id":            acc.ID,
+		"name":               acc.Name,
+		"email":              acc.Email,
+		"role":               role,
+		"email_verified":     acc.EmailVerifiedAt != nil,
+		"created_at":         acc.CreatedAt,
+		"csrf_header":        accountsCSRFHeader,
+		"csrf":               s.csrfToken(r),
+		"stats":              stats,
+		"devices":            devices,
+		"providers":          s.cfg.SocialProviders(),
+		"admin_email":        s.cfg.AdminEmail,
+		"operator_exists":    operator,
 		"email_registration": !s.cfg.DisableEmailRegistration,
-		"smtp":            s.cfg.SMTPConfigured(),
+		"smtp":               s.cfg.MailConfigured(),
 		// Whether there is a site to go back to at "/", for the same button as
 		// above: the flag does not depend on who is asking.
 		"docs": webui.HasDocs(),

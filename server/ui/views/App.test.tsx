@@ -149,16 +149,19 @@ test('a signed-in person gets the account view, not the form', async () => {
   expect(html).not.toContain('Send sign-in link');
 });
 
-test('the rail carries the account`s four tabs, with the admin one for an operator', async () => {
+test('the rail carries the account`s four tabs, and not the operator page', async () => {
+  // The admin page is a page of its own (/console/admin), not a tab, so the
+  // rail is the same for an operator and for anybody else.
   await seedAccount('usr_1', 'admin');
   const html = renderToStaticMarkup(<AccountView />);
   expect(html).toContain('Pair Code');
   expect(html).toContain('Devices &amp; Tokens');
   expect(html).toContain('Stored data');
-  expect(html).toContain('Admin');
+  expect(html).toContain('Search');
+  expect(html).not.toContain('>Admin<');
 });
 
-test('the admin tab is not offered to a person', async () => {
+test('the admin tab is not offered to a person either', async () => {
   await seedAccount('usr_2', 'user');
   const html = renderToStaticMarkup(<AccountView />);
   expect(html).toContain('Stored data');

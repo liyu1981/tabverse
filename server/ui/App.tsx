@@ -1,27 +1,36 @@
+import { AnchorButton } from '@blueprintjs/core';
 import React, { useEffect } from 'react';
 import { useUnit } from 'effector-react';
 
 import { boot } from './data/actions';
-import { $bootStatus } from './data/stores/session';
+import { $bootStatus, $me } from './data/stores/session';
+import { $view } from './data/stores/view';
 import { AssumeBar } from './components/AssumeBar';
 import { OperatorHint, TopBar } from './components/TopBar';
 import { Toasts } from './components/Toasts';
 import { AccountView } from './views/AccountView';
+import { AdminView } from './views/AdminView';
 import { LoadingView, SignInView } from './views/SignInView';
 import { PairView } from './views/PairView';
 import { TabverseDrawer } from './views/tabverse/TabverseDrawer';
 import { readPairFromUrl, takeStashedPairRequest } from './data/pair';
+import classes from './layout.module.scss';
 
 /**
  * The whole console: a frame that never changes (the brand bar, the read-only
  * bar, the toasts) and one of two things under it - the sign-in form or the
- * account view, which is itself four tabs (adr/0014).
+ * signed-in console, which is either the account view at /console or the
+ * operator's page at /console/admin (`stores/view.ts`).
  *
  * Boot runs once, at mount: ask who we are, then land on whatever the URL names
  * or on the account the session belongs to.
  */
 export function App() {
-  const status = useUnit($bootStatus);
+  const { status, me, view } = useUnit({
+    status: $bootStatus,
+    me: $me,
+    view: $view,
+  });
   // The extension opened this page at `/console/pair?ext=…&nonce=…` (adr/0020,
   // adr/0024). The request is read from the URL, or from the stash a sign-in
   // round trip left behind, and while one is pending this is the pair view -
@@ -53,6 +62,10 @@ export function App() {
   // sign in first, and a "sign in to continue" banner over a form that is about
   // to be replaced is the one thing worth avoiding.
   const showPair = pairRequest !== null && status !== 'loading';
+  // The operator's page is its own view; a person who lands on it gets a
+  // sentence and a way back rather than a page they cannot use.
+  const onAdmin = view === 'admin';
+  const isOperator = me?.role === 'admin';
 
   return (
     <>
@@ -60,13 +73,43 @@ export function App() {
       <OperatorHint />
       <AssumeBar />
       {showPair ? <PairView request={pairRequest} /> : null}
-      {!showPair && status === 'signed-in' ? <AccountView /> : null}
+      {!showPair && status === 'signed-in' && onAdmin && isOperator ? (
+        <AdminView />
+      ) : null}
+      {!showPair && status === 'signed-in' && onAdmin && !isOperator ? (
+        <OperatorOnlyView />
+      ) : null}
+      {!showPair && status === 'signed-in' && !onAdmin ? <AccountView /> : null}
       {!showPair && status === 'signed-out' ? <SignInView /> : null}
       {status === 'loading' ? <LoadingView /> : null}
       {/* The drawer is outside the account view on purpose: it belongs to the
           console, not to a tab, and it survives the tab it was opened from. */}
-      {!showPair && status === 'signed-in' ? <TabverseDrawer /> : null}
+      {!showPair && status === 'signed-in' && !onAdmin ? (
+        <TabverseDrawer />
+      ) : null}
       <Toasts />
     </>
+  );
+}
+
+/** A person on the operator's page. */
+function OperatorOnlyView() {
+  return (
+    <main className={classes.content}>
+      <div className={classes.viewHead}>
+        <div>
+          <h1>Operators only</h1>
+          <p className="muted small">
+            This page is for the server's operators. Your own account is at the
+            console.
+          </p>
+        </div>
+        <div className={classes.viewActions}>
+          <AnchorButton minimal={true} small={true} href="/console">
+            Console
+          </AnchorButton>
+        </div>
+      </div>
+    </main>
   );
 }

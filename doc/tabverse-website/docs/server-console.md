@@ -25,8 +25,9 @@ The rail on the left is the account, section by section:
   read-only view the extension draws. A record written from the console would
   lose the next sync conflict, so it does not offer to write one.
 - **Search** - full text search over the account's own records.
-- **Admin** - the operator's account directory, when there is an operator (see
-  below).
+
+An operator also gets a separate **Admin** page at `/console/admin`, reached
+from a button in the header next to *tabverse* (see below).
 
 Sign-in is a single-use link emailed to you, or GitHub / Google if the operator
 enabled it. "Sign out everywhere" ends every browser session on the account;

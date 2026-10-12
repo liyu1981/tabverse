@@ -294,14 +294,15 @@ operator cannot be demoted or disabled.
 
 ### What you see
 
-Everybody lands on **their own account** with the three tabs - Pair Code,
-Devices & Tokens, Stored data. An operator gets a **fourth tab, "Admin"** (ADR
-0014): the accounts, with *Impersonate*, *Make/Remove operator* and *Delete*
-per row.
+Everybody lands on **their own account** with the four tabs - Pair Code,
+Devices & Tokens, Stored data, Search. An operator also gets a **separate page
+at `/console/admin`** (ADR 0014), reached from a button in the header: the
+accounts, with *Impersonate*, *Make/Remove operator* and *Delete* per row, and
+the registration invites.
 
-*Impersonate* switches the three account tabs to that account, read-only, titled
-`alice (impersonated by admin)`; the Admin tab stays put, so another account is
-one click and coming back is *Stop looking*.
+*Impersonate* switches the account tabs to that account, read-only, titled
+`alice (impersonated by admin)`; the admin page is one click away in the header,
+so another account is one click and coming back is *Stop looking*.
 
 There is no "create account" anywhere: registration is the only way an account
 comes into existence, so there is a single path that can prove an address. The
@@ -368,6 +369,7 @@ person another person's browsing history - and the server says so in the log.
 | `TABVERSED_LINK_BY_EMAIL` | `true` | link a social login to an account with the same address; `0` refuses instead |
 | `TABVERSED_REQUIRE_EMAIL_VERIFICATION` | `true` | refuse a session for an unproven address. A Google sign-in proves itself (ADR 0017) and the emailed link does; a GitHub sign-in does not, and needs this off |
 | `TABVERSED_SMTP_HOST` / `_PORT` / `_USER` / `_PASS` / `_FROM` | _(none)_ | where sign-in links go |
+| `TABVERSED_SMTPFAST_API_KEY` / `_FROM` / `_BASE_URL` | _(none)_ | send through SMTPfast (smtpfa.st), a Resend-compatible HTTP email API; preferred over SMTP when set. `_FROM` falls back to `SMTP_FROM` and must be on a verified domain |
 | `TABVERSED_GITHUB_CLIENT_ID` / `_SECRET` | _(none)_ | enable the GitHub button |
 | `TABVERSED_GOOGLE_CLIENT_ID` / `_SECRET` | _(none)_ | enable the Google button |
 | `TABVERSED_DEV_MODE` | `false` | the auth library's fake OAuth provider, for local development |
@@ -406,13 +408,14 @@ With the token set:
   bookmarks, closed tabs, ordering aggregates) and tells the account's devices,
   so their next sync removes their copy too (ADR 0015)
 
-The account view is three tabs, rail on the left, panel on the right: **Pair
+The account view is four tabs, rail on the left, panel on the right: **Pair
 Code** (mint a code, copy it and the server URL), **Devices & Tokens** (revoke,
-archive, inspect) and **Stored data** (tabverses, search, records). An operator
-gets a fourth tab, **Admin**, which is the accounts themselves. Each tab carries
-its own counters in the rail, so an operator can see what is behind one without
-opening it, and the first visit on an account with no devices lands on Pair
-Code. `#user=…&tab=credentials&tabspace=…` opens a specific account, tab and
+archive, inspect), **Stored data** (tabverses, records) and **Search**. An
+operator also gets the standalone page at **`/console/admin`**, which is the
+accounts and the registration invites. Each tab carries its own counters in the
+rail, so a person can see what is behind one without opening it, and the first
+visit on an account with no devices lands on Pair Code.
+`?user=…&tab=credentials&tabspace=…` opens a specific account, tab and
 tabverse directly (ADR 0014, ADR 0018).
 - **accounts and tokens** — rename, delete (records, devices, tokens, invites
   and search index rows), mint a pairing code for a given account, revoke one

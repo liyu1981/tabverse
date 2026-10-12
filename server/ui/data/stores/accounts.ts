@@ -12,7 +12,7 @@ import { createEvent, createStore } from 'effector';
 import { createInviteFx, loadAccountFx, loadUsersFx } from '../effects';
 import type { Invite, UserDetail, UserSummary } from '../types';
 
-export type AccountTab = 'pair' | 'credentials' | 'data' | 'search' | 'admin';
+export type AccountTab = 'pair' | 'credentials' | 'data' | 'search';
 export type StoredDataView = 'tabverses' | 'records';
 
 export const openAccount = createEvent<string>();

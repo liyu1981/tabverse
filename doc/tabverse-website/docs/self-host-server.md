@@ -81,9 +81,10 @@ worth setting on a real deployment:
 | `TABVERSED_ADDR` | `0.0.0.0:8223` | listen address; use `127.0.0.1:8223` to stay local |
 | `TABVERSED_PUBLIC_URL` | _(unset)_ | the origin the deployment is reached at; used for sign-in links and social callbacks |
 | `TABVERSED_ADMIN_EMAIL` | _(unset)_ | whose **first registration becomes the operator** |
-| `TABVERSED_REGISTRATION_REQUIRES_INVITE` | `false` | make registration invite-only: invite addresses from the console's **Admin** tab. The admin address is always exempt |
+| `TABVERSED_REGISTRATION_REQUIRES_INVITE` | `false` | make registration invite-only: invite addresses from the console's **Admin** page (`/console/admin`). The admin address is always exempt |
 | `TABVERSED_EMAIL_REGISTRATION` | `true` (official build: `false`) | the passwordless email path; `0` means social logins only |
 | `TABVERSED_SMTP_HOST` / `_FROM` | _(none)_ | where sign-in links are sent |
+| `TABVERSED_SMTPFAST_API_KEY` / `_FROM` | _(none)_ | send through [SMTPfast](https://smtpfa.st) (a Resend-compatible HTTP API) instead; preferred over SMTP when set |
 | `TABVERSED_SECURE_COOKIES` | `true` | turn off only for plain http on a trusted LAN |
 | `TABVERSED_DB` | `data/tabversed.db` | central SQLite file (accounts, devices, tokens) |
 | `TABVERSED_USERS_DIR` | `users/` beside it | per-account content databases (`adr/0027`) |
@@ -127,8 +128,9 @@ account that matches becomes the operator on first registration - no token, no
 code. If the address already has an account, the next start promotes it. Once an
 operator exists the variable grants nothing, so leaving it set is harmless.
 
-The operator gets a fourth console tab, **Admin**, with the accounts,
-*Impersonate*, and role changes. See the [Server Console](./server-console).
+The operator gets a separate **Admin** page at `/console/admin` (a button in the
+header), with the accounts, *Impersonate*, role changes, and the registration
+invites. See the [Server Console](./server-console).
 
 ## Next
 

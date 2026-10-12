@@ -15,13 +15,11 @@ import {
   $account,
   $credentialsArchived,
   $tab,
-  $users,
   visibleCredentials,
 } from '../data/stores/accounts';
 import type { AccountTab } from '../data/stores/accounts';
-import { $isAssumed, $me } from '../data/stores/session';
+import { $isAssumed } from '../data/stores/session';
 import { PromptDialog, TypedConfirmDialog } from '../components/Dialogs';
-import { AdminPanel } from './AdminPanel';
 import { CredentialsPanel } from './CredentialsPanel';
 import { PairCodePanel } from './PairCodePanel';
 import { SearchPanel } from './SearchPanel';
@@ -33,25 +31,23 @@ const TABS: { id: AccountTab; label: string }[] = [
   { id: 'credentials', label: 'Devices & Tokens' },
   { id: 'data', label: 'Stored data' },
   { id: 'search', label: 'Search' },
-  { id: 'admin', label: 'Admin' },
 ];
 
 /**
- * The account view, which is the console: three things a person does with their
- * account - add a device, look at the credentials, look at the data - and, for
- * an operator, a fourth tab that is the accounts (adr/0014).
+ * The account view, which is the console: the four things a person does with
+ * their account - add a device, look at the credentials, look at the data,
+ * search it. The operator's page is not one of these tabs any more; it is its
+ * own page at /console/admin (`AdminView`), reached from the header.
  *
- * The rail's notes are the same numbers the panels show, so an operator can see
+ * The rail's notes are the same numbers the panels show, so a person can see
  * what is behind a tab without opening it.
  */
 export function AccountView() {
-  const { account, tab, showArchived, assumed, me, users } = useUnit({
+  const { account, tab, showArchived, assumed } = useUnit({
     account: $account,
     tab: $tab,
     showArchived: $credentialsArchived,
     assumed: $isAssumed,
-    me: $me,
-    users: $users,
   });
   const [renaming, setRenaming] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -64,7 +60,6 @@ export function AccountView() {
   // could do. So the frame is always drawn and the parts that need an account
   // are the parts that wait for one.
   const user = account?.user;
-  const onDirectory = tab === 'admin';
 
   // While an operator is looking through this account the header says so. It is
   // in the title and not only in the banner, because a screenshot or a "what did
@@ -83,14 +78,12 @@ export function AccountView() {
     credentials: account?.devices ? credentialsNote(account, showArchived) : '',
     data: account?.stats ? `${account.stats.live} records` : '',
     search: 'full text',
-    admin: users.length ? `${users.length} accounts` : 'no accounts yet',
   };
 
   return (
     <main className={classes.content}>
-      {/* The account header belongs to the three account tabs; on the
-          directory it would be describing an account nobody is looking at. */}
-      {!onDirectory && user ? (
+      {/* The account header belongs to the account. */}
+      {user ? (
         <div className={classes.viewHead}>
           <div>
             <h1>{title}</h1>
@@ -133,13 +126,6 @@ export function AccountView() {
       <div className={classes.tabbed}>
         <nav className={classes.rail} aria-label="Account sections">
           {TABS.map((entry) => {
-            // The Admin tab is the only operator-only affordance, so it is the
-            // only thing that has to appear or disappear - and it is keyed on
-            // *this* page's role, not the account being looked at, so an
-            // operator looking through somebody can always get back in one click.
-            if (entry.id === 'admin' && me?.role !== 'admin') {
-              return null;
-            }
             const active = tab === entry.id;
             return (
               <button
@@ -163,7 +149,6 @@ export function AccountView() {
           {account && tab === 'credentials' ? <CredentialsPanel /> : null}
           {account && tab === 'data' ? <StoredDataPanel /> : null}
           {account && tab === 'search' ? <SearchPanel /> : null}
-          {tab === 'admin' ? <AdminPanel /> : null}
         </div>
       </div>
 

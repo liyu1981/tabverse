@@ -90,9 +90,10 @@ func serve(args []string) error {
 		logger.Warn("TABVERSED_DEV_MODE is on: the library's fake OAuth provider is " +
 			"mounted, which is for local development only")
 	}
-	if !cfg.SMTPConfigured() {
-		logger.Warn("no TABVERSED_SMTP_HOST: sign-in links will be printed to this log " +
-			"instead of emailed")
+	if !cfg.MailConfigured() {
+		logger.Warn("no mail transport configured (TABVERSED_SMTPFAST_API_KEY or " +
+			"TABVERSED_SMTP_HOST): sign-in links and invitations will be printed to " +
+			"this log instead of emailed")
 	}
 	// The operator bootstrap: an account that already uses TABVERSED_ADMIN_EMAIL
 	// is promoted on start, so setting the variable on an existing deployment

@@ -1,9 +1,14 @@
 package accounts
 
 import (
+	"bytes"
+	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
 	"net"
+	"net/http"
 	"net/smtp"
 	"strconv"
 	"strings"
@@ -13,12 +18,13 @@ import (
 )
 
 // The passwordless flow is only as good as the delivery of its link, so the
-// sender has two honest modes and no pretending in between:
+// sender has honest modes and no pretending in between:
 //
+//   - SMTPfast configured: one HTTPS call to the smtpfa.st API
 //   - SMTP configured: send it
-//   - no SMTP: log it
+//   - neither: log it
 //
-// The second is not a stub. A self hoster running on a LAN has nowhere to send
+// The last is not a stub. A self hoster running on a LAN has nowhere to send
 // mail, and a deployment that cannot deliver a link should say so out loud
 // rather than accept a login nobody can complete.
 
@@ -48,13 +54,17 @@ func (m *mailSender) SendInvite(dest, subject, body string) error {
 	return m.sendMessage(dest, subject, body)
 }
 
-// sendMessage is the one delivery path: SMTP when configured, a loud log line
-// otherwise. The no-SMTP case is not a stub - a LAN deployment has nowhere to
-// send mail, and a message nobody can receive has to be visible somewhere.
+// sendMessage is the one delivery path. SMTPfast when its key is set (one HTTPS
+// call, no local mail setup), then SMTP, then a loud log line - the no-mail case
+// is not a stub, because a LAN deployment has nowhere to send and a message
+// nobody can receive has to be visible somewhere.
 func (m *mailSender) sendMessage(dest, subject, body string) error {
+	if m.cfg.SMTPFastConfigured() {
+		return m.sendViaSMTPFast(dest, subject, body)
+	}
 	if !m.cfg.SMTPConfigured() {
-		m.log.Warn("no TABVERSED_SMTP_HOST configured: printing the message instead of "+
-			"emailing it. Set the SMTP_* variables to send it properly.", "to", dest)
+		m.log.Warn("no mail transport configured (TABVERSED_SMTPFAST_API_KEY or "+
+			"TABVERSED_SMTP_HOST): printing the message instead of emailing it.", "to", dest)
 		m.log.Info("  Subject: " + subject)
 		for _, line := range strings.Split(body, "\n") {
 			if line = strings.TrimSpace(line); line != "" {
@@ -128,4 +138,52 @@ func hostOnly(host string) string {
 		return host[:i]
 	}
 	return host
+}
+
+// sendViaSMTPFast delivers through SMTPfast (smtpfa.st), a Resend-compatible
+// HTTP email API. It is preferred when configured: one HTTPS call, no local mail
+// setup, and the response says whether the message was accepted.
+//
+// `from` must be on a domain verified in the SMTPfast dashboard; SMTPFastFrom
+// falls back to SMTPFrom so one address can serve both transports.
+func (m *mailSender) sendViaSMTPFast(dest, subject, body string) error {
+	from := strings.TrimSpace(m.cfg.SMTPFastFrom)
+	if from == "" {
+		from = strings.TrimSpace(m.cfg.SMTPFrom)
+	}
+	if from == "" {
+		return fmt.Errorf("smtpfast: set TABVERSED_SMTPFAST_FROM (or TABVERSED_SMTP_FROM) to a verified sending address")
+	}
+	// A sign-in link or an invitation is mail the recipient needs because of an
+	// action on their account, so it is transactional: it skips marketing
+	// opt-outs and carries no unsubscribe header.
+	payload, err := json.Marshal(map[string]any{
+		"from":     from,
+		"to":       []string{dest},
+		"subject":  subject,
+		"text":     body,
+		"category": "transactional",
+	})
+	if err != nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	url := strings.TrimRight(m.cfg.SMTPFastBaseURL, "/") + "/emails"
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(payload))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Authorization", "Bearer "+m.cfg.SMTPFastAPIKey)
+	req.Header.Set("Content-Type", "application/json")
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("smtpfast: %w", err)
+	}
+	defer res.Body.Close()
+	if res.StatusCode < 200 || res.StatusCode >= 300 {
+		msg, _ := io.ReadAll(io.LimitReader(res.Body, 2048))
+		return fmt.Errorf("smtpfast %d: %s", res.StatusCode, strings.TrimSpace(string(msg)))
+	}
+	return nil
 }

@@ -16,7 +16,13 @@
  */
 
 import { ApiError, api } from './api';
-import { readQuery, writeQuery } from './queryRoute';
+import {
+  ADMIN_PATH,
+  CONSOLE_PATH,
+  onAdminPath,
+  readQuery,
+  writeQuery,
+} from './queryRoute';
 import {
   $dataArchived,
   $directoryQuery,
@@ -38,6 +44,8 @@ import {
   setSearchQuery,
 } from './stores/browse';
 import { closeTabspace, openTabspace } from './stores/drawer';
+import { setView } from './stores/view';
+import type { ConsoleView } from './stores/view';
 import { $isOperator, $ownUserId, sessionExpired } from './stores/session';
 import { reportFailure, reportSuccess } from './stores/toasts';
 import {
@@ -125,6 +133,13 @@ export async function boot(): Promise<void> {
   loadTotalsFx().catch(() => undefined);
 
   if (typeof window === 'undefined') return;
+  // The operator's page is a different path, not a tab: it has no account of
+  // its own, and its sections are its own rail.
+  if (onAdminPath()) {
+    setView('admin');
+    await loadDirectory();
+    return;
+  }
   const params = readQuery(window.location);
   const target = params.get('user') || $ownUserId.getState();
   if (!target) return;
@@ -145,6 +160,26 @@ export async function boot(): Promise<void> {
 
 export async function loadDirectory(): Promise<void> {
   await loadUsersFx($directoryQuery.getState() || undefined);
+}
+
+/**
+ * Moves between the console and the operator's admin page. The URL follows
+ * (`history.pushState`), so a reload or a bookmark lands on the same page.
+ */
+export async function goToView(view: ConsoleView): Promise<void> {
+  setView(view);
+  if (typeof window !== 'undefined' && window.history?.pushState) {
+    window.history.pushState(
+      {},
+      '',
+      view === 'admin' ? ADMIN_PATH : CONSOLE_PATH,
+    );
+  }
+  if (view === 'admin') {
+    await loadDirectory();
+    return;
+  }
+  await refreshCurrentView();
 }
 
 export async function openAccount(userId: string): Promise<void> {
@@ -171,12 +206,6 @@ export async function openAccount(userId: string): Promise<void> {
 export async function changeTab(tab: AccountTab): Promise<void> {
   setTab(tab);
   route({ tab, tabspace: '' });
-  // The drawer belongs to the account tabs; on the directory it would describe
-  // an account nobody is looking at.
-  if (tab === 'admin') {
-    closeTabspace();
-    await loadDirectory();
-  }
   if (tab === 'search' && $search.getState().q) await runSearch();
 }
 
@@ -190,10 +219,6 @@ export async function refreshCurrentView(): Promise<void> {
   const userId = $selectedUserId.getState();
   if (!userId) {
     await boot();
-    return;
-  }
-  if ($tab.getState() === 'admin') {
-    await loadDirectory();
     return;
   }
   await openAccount(userId);
@@ -434,8 +459,7 @@ export async function refreshImpersonation(redirect = true): Promise<void> {
   // Back to being ourselves. An operator gets the directory, because that is
   // where they came from; anybody else gets their own account back.
   if ($isOperator.getState()) {
-    setTab('admin');
-    await loadDirectory();
+    await goToView('admin');
     return;
   }
   const own = $ownUserId.getState();
@@ -449,13 +473,16 @@ export async function startImpersonation(userId: string): Promise<boolean> {
   if (!done.ok) return false;
   // ...and land on the account, not back on the list that started this: the
   // point was to look at *their* tabverses.
-  const wasOnAdmin = $tab.getState() === 'admin';
   await loadImpersonationFx().catch(() => null);
-  await openAccount(userId);
-  if (wasOnAdmin) {
-    setTab('data');
-    route({ tab: 'data' });
+  // Leave the admin page for the account itself: the console's state lives in
+  // the query of /console, and the admin page is a different path.
+  setView('console');
+  if (typeof window !== 'undefined' && window.history?.pushState) {
+    window.history.pushState({}, '', CONSOLE_PATH);
   }
+  await openAccount(userId);
+  setTab('data');
+  route({ tab: 'data' });
   reportSuccess('Read only — the banner at the top says so');
   return true;
 }

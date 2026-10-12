@@ -26,6 +26,21 @@ export interface RouteState {
   q?: string;
 }
 
+/** The console's mount, and the one standalone page under it. */
+export const CONSOLE_PATH = '/console';
+export const ADMIN_PATH = '/console/admin';
+
+/**
+ * Whether the address bar is on the standalone admin page. Read once, at boot,
+ * because moving between the two pages is an in-app navigation afterwards
+ * (`stores/view.ts`).
+ */
+export function onAdminPath(): boolean {
+  if (typeof window === 'undefined' || !window.location) return false;
+  // A trailing slash is a link somebody typed; the shell serves it too.
+  return window.location.pathname.replace(/\/+$/, '') === ADMIN_PATH;
+}
+
 export interface LocationLike {
   pathname: string;
   search: string;

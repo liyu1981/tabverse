@@ -4,6 +4,7 @@ import { useUnit } from 'effector-react';
 
 import { refreshCurrentView, signOut } from '../data/actions';
 import { $bootStatus, $config, $me, $totals } from '../data/stores/session';
+import { $view } from '../data/stores/view';
 import classes from '../layout.module.scss';
 
 /**
@@ -12,11 +13,12 @@ import classes from '../layout.module.scss';
  * the console reads as the extension's window with its content swapped.
  */
 export function TopBar() {
-  const { config, me, totals, status } = useUnit({
+  const { config, me, totals, status, view } = useUnit({
     config: $config,
     me: $me,
     totals: $totals,
     status: $bootStatus,
+    view: $view,
   });
 
   return (
@@ -48,6 +50,23 @@ export function TopBar() {
             title="tabverse, at this server's index"
           >
             tabverse
+          </AnchorButton>
+        ) : null}
+        {/* The operator's page is a different path, so this is a real link and
+            not a route of the console's own state. Only an operator sees it. */}
+        {me?.role === 'admin' ? (
+          <AnchorButton
+            minimal={true}
+            small={true}
+            icon={view === 'admin' ? 'arrow-left' : 'shield'}
+            href={view === 'admin' ? '/console' : '/console/admin'}
+            title={
+              view === 'admin'
+                ? 'Back to the console'
+                : 'The accounts on this server, and who may register'
+            }
+          >
+            {view === 'admin' ? 'Console' : 'Admin'}
           </AnchorButton>
         ) : null}
         <Button
