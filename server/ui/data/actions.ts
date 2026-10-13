@@ -107,7 +107,13 @@ async function attempt<T>(
     return { ok: true, value: await run() };
   } catch (e) {
     if (e instanceof ApiError && e.isUnauthorized) {
+      // The session is gone. Blank the store, then re-read `/me`: a blank store
+      // loses the deployment's settings, so the sign-in page it lands on would
+      // offer the passwordless form on a server that has it turned off until a
+      // refresh. `whoAmI` answers a 401 with the signed-out document, so this
+      // cannot loop.
       sessionExpired();
+      void loadMeFx();
       return { ok: false, value: null };
     }
     reportFailure(what, e);
@@ -550,9 +556,10 @@ export async function requestSigninLink(
 /**
  * Creates the account for the session the register page is on, then sends the
  * person back to sign in. `request` records an invitation request instead of
- * creating the account outright (an invite-only server, no code). The server
- * signs the pending session out either way, so `sessionExpired` is the signal
- * whichever way it goes (adr/0029).
+ * creating the account outright (an invite-only server, no code). Either way the
+ * session changed, so the action re-reads it rather than assuming: a blank
+ * store loses the deployment's settings, and the sign-in page would then offer
+ * the passwordless form on a server that has it turned off until a refresh.
  */
 export async function registerAccount(
   email: string,
@@ -569,11 +576,12 @@ export async function registerAccount(
     }),
   );
   if (done.ok) {
-    // A request keeps the session, which now resolves to the pending account:
-    // re-read who we are so the console shows the waiting notice. A normal
-    // registration signs the session out, so go back to the sign-in form.
-    if (request) await loadMeFx();
-    else sessionExpired();
+    // A request keeps the session, now pointing at the pending account, so the
+    // console shows the waiting notice. A normal registration signs it out, so
+    // the same call comes back as the signed-out deployment. Re-read it either
+    // way, and keep the XSRF pair in step with the new session.
+    const me = await loadMeFx();
+    api.setCsrf(me?.csrf_header || '', me?.csrf || '');
   }
   return done;
 }

@@ -27,6 +27,7 @@ import {
   loadTabspaces,
   openAccount as openAccountAction,
   openTabspaceById,
+  registerAccount,
   toggleDataArchived,
 } from '../actions';
 import type {
@@ -282,6 +283,30 @@ test('the session store has one answer for "signed out", whoever noticed', () =>
   sessionExpired();
   expect($bootStatus.getState()).toBe('signed-out');
   expect($me.getState()).toBeNull();
+});
+
+test('registering re-reads the deployment so the sign-in page keeps its settings', async () => {
+  // The bug this guards: a normal registration ends the session, and blanking
+  // the store left the sign-in page with its defaults - the passwordless form
+  // on an official (email-registration-off) server - until a manual refresh.
+  sessionExpired();
+  const { seen } = stubApi({
+    '/console/api/v1/console/register': { status: 204 },
+    '/console/api/v1/console/me': {
+      body: {
+        signed_in: false,
+        email_registration: false,
+        providers: ['google'],
+      },
+    },
+  });
+
+  await registerAccount('new@example.com', true);
+
+  expect($me.getState()?.email_registration).toBe(false);
+  expect($bootStatus.getState()).toBe('signed-out');
+  // It really did re-read the deployment rather than only clear the store.
+  expect(seen.some((c) => c.url.includes('/console/me'))).toBe(true);
 });
 
 test('a stale selection is dropped when the account changes', () => {
