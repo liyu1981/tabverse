@@ -261,6 +261,13 @@
   color: var(--brand);
 }
 
+/* The "request an invitation" escape hatch under the primary button: a quiet,
+   link-weight action, not a second way to create an account. */
+.requestInvite {
+  font-size: 13px;
+  font-weight: 400;
+}
+
 .socialList {
   display: flex;
   flex-direction: column;

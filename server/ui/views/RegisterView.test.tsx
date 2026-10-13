@@ -65,10 +65,24 @@ test('a provider login with no account asks for an address and the agreement', a
   expect(say(html)).toContain('Create account');
 });
 
-test('the invitation code is offered for an invite-only server', async () => {
-  await pendingRegistration({});
+test('an invite-only server requires the code, and offers to request one', async () => {
+  await pendingRegistration({
+    invite_required: true,
+    admin_email: 'operator@example.com',
+  });
   const html = renderToStaticMarkup(<RegisterView />);
-  expect(say(html)).toContain('Invitation code');
+  expect(say(html)).toContain('Invitation code (required)');
+  expect(say(html)).toContain('request an invitation');
+});
+
+test('the operator address is exempt from the invitation code', async () => {
+  await pendingRegistration({
+    invite_required: true,
+    admin_email: 'yli@example.com',
+  });
+  const html = renderToStaticMarkup(<RegisterView />);
+  expect(say(html)).toContain('Invitation code (only if you were given one)');
+  expect(say(html)).not.toContain('request an invitation');
 });
 
 test('a provider with no address leaves the email empty', async () => {

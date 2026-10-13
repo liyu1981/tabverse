@@ -97,6 +97,12 @@ export interface Me {
    */
   needs_registration?: boolean;
   registration?: PendingRegistration;
+  /**
+   * Whether new accounts need an operator's invitation on this server
+   * (`TABVERSED_REGISTRATION_REQUIRES_INVITE`). The register page then asks for
+   * the code and offers to request one.
+   */
+  invite_required?: boolean;
 }
 
 /** `GET /console/api/v1/console/me` while a session has no account yet. */

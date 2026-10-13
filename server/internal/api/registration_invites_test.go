@@ -170,6 +170,46 @@ func TestRegistrationRefusedWithoutInvite(t *testing.T) {
 	r.mustStatus(t, http.StatusNoContent)
 }
 
+// The admin address is exempt from the invitation gate, so the first operator
+// can always register on a server that is invite-only from the start.
+func TestAdminEmailBypassesTheInvitationCode(t *testing.T) {
+	ts, srv := newInviteOnlyServer(t)
+
+	pending := pendingSession(t, ts, srv, testAdminEmail)
+	r := pending.doJSON(t, http.MethodPost, "/console/api/v1/console/register",
+		map[string]any{"email": testAdminEmail, "agree": true})
+	r.mustStatus(t, http.StatusNoContent)
+
+	op := signInAs(t, ts, srv, testAdminEmail)
+	if role, _ := op.do(t, http.MethodGet, "/console/api/v1/console/me").body["role"].(string); role != store.RoleAdmin {
+		t.Fatalf("the admin address registered without a code but role = %v", role)
+	}
+}
+
+// An address with no code can *request* an invitation instead of being refused:
+// the account is created pending, the operator can approve it, and the next
+// sign-in shows the waiting notice rather than asking to register again.
+func TestRequestingAnInvitationLeavesAPendingAccount(t *testing.T) {
+	ts, srv := newInviteOnlyServer(t)
+	_ = operatorSession(t, ts, srv) // an operator exists; this is not the bootstrap
+
+	pending := pendingSession(t, ts, srv, "hopeful@example.com")
+	r := pending.doJSON(t, http.MethodPost, "/console/api/v1/console/register",
+		map[string]any{"email": "hopeful@example.com", "agree": true, "request": true})
+	r.mustStatus(t, http.StatusNoContent)
+
+	// The session is kept for a request: it now resolves to the pending account,
+	// so the console can show the waiting notice right away - and on the next
+	// visit, because the session cookie is still valid.
+	me := pending.do(t, http.MethodGet, "/console/api/v1/console/me").body
+	if me["signed_in"] != true || me["pending_registration"] != true {
+		t.Fatalf("the account should be waiting for an invitation: %v", me)
+	}
+	if me["needs_registration"] == true {
+		t.Fatalf("a pending account must not be asked to register again: %v", me)
+	}
+}
+
 // The invitation goes out through the same SMTP the sign-in link uses, which is
 // the point: one mail configuration, two messages.
 func TestRegistrationInviteIsEmailed(t *testing.T) {

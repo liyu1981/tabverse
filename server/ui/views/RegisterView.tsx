@@ -15,6 +15,11 @@ import classes from '../layout.module.scss';
  * account is identified by - and the agreement is the second thing the old
  * one-step flow never asked for. On success the server signs the pending
  * session out and this page gives way to the sign-in form.
+ *
+ * On an invite-only server the invitation code is required too, except for the
+ * operator's own address, which the server exempts so the first operator can
+ * always register (adr/0013). Somebody with no code can request one instead:
+ * that creates a pending account, and the next sign-in shows the waiting notice.
  */
 export function RegisterView() {
   const me = useUnit($me);
@@ -26,20 +31,40 @@ export function RegisterView() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
-  const submit = async (event: React.FormEvent) => {
-    event.preventDefault();
+  // The invitation code is required when the server gates registration on it -
+  // except for the operator's own address, which is exempt.
+  const adminEmail = me?.admin_email || '';
+  const emailIsAdmin =
+    adminEmail !== '' &&
+    email.trim().toLowerCase() === adminEmail.toLowerCase();
+  const needCode = me?.invite_required === true && !emailIsAdmin;
+
+  const run = async (request: boolean) => {
     if (!email.trim() || !agree) return;
+    if (!request && needCode && !code.trim()) return;
     setBusy(true);
     setError('');
-    const done = await registerAccount(email, agree, code);
+    const done = await registerAccount(
+      email,
+      agree,
+      request ? undefined : code,
+      request,
+    );
     setBusy(false);
     if (!done.ok) {
       setError(
-        'The account could not be created. If this server is invite-only, check the invitation code.',
+        request
+          ? 'The invitation could not be requested. Try again in a moment.'
+          : 'The account could not be created. Check the invitation code and try again.',
       );
     }
     // On success the server signed the session out and `sessionExpired` has
     // already switched the console back to the sign-in form.
+  };
+
+  const submit = (event: React.FormEvent) => {
+    event.preventDefault();
+    void run(false);
   };
 
   // The agreement has to be readable before it is accepted. An official build
@@ -76,8 +101,17 @@ export function RegisterView() {
             />
           </FormGroup>
           <FormGroup
-            label="Invitation code (only if you were given one)"
+            label={
+              needCode
+                ? 'Invitation code (required)'
+                : 'Invitation code (only if you were given one)'
+            }
             labelFor="register-code"
+            helperText={
+              needCode
+                ? 'This server is invite-only. Ask the operator for a code, or request one below.'
+                : undefined
+            }
           >
             <input
               id="register-code"
@@ -104,10 +138,21 @@ export function RegisterView() {
             intent="primary"
             fill={true}
             loading={busy}
-            disabled={!agree || !email.trim()}
+            disabled={!agree || !email.trim() || (needCode && !code.trim())}
           >
             Create account
           </Button>
+          {needCode && !code.trim() ? (
+            <Button
+              className={classes.requestInvite}
+              minimal={true}
+              fill={true}
+              disabled={!agree || !email.trim() || busy}
+              onClick={() => void run(true)}
+            >
+              I do not have a code - request an invitation
+            </Button>
+          ) : null}
         </form>
         <p className="muted small">
           After the account is created, sign in as usual. The next sign-in lands

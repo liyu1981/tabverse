@@ -550,8 +550,10 @@ func pendingRegistrationFor(u token.User) (PendingRegistration, bool) {
 // resurrect a deleted account or invent a new one (adr/0029).
 //
 // `codeHash` is the sha256 of an invitation code the registrant supplied, ""
-// when none; the invite policy decides whether it is needed.
-func (s *Service) Register(ctx context.Context, pending PendingRegistration, email, name, codeHash string) (string, error) {
+// when none; the invite policy decides whether it is needed. `request` turns a
+// missing invitation into a *request* instead of a refusal: the account is
+// created pending, so an operator can approve it (the console's request queue).
+func (s *Service) Register(ctx context.Context, pending PendingRegistration, email, name, codeHash string, request bool) (string, error) {
 	email = strings.ToLower(strings.TrimSpace(email))
 	if email == "" {
 		return "", errors.New("email is required")
@@ -566,8 +568,15 @@ func (s *Service) Register(ctx context.Context, pending PendingRegistration, ema
 	if pending.Provider == ProviderEmail && token.HashID(sha1.New(), email) != pending.Subject {
 		return "", ErrEmailMismatch
 	}
+	policy := s.registrationPolicy(email, codeHash)
+	if request {
+		// Only meaningful when the policy gates on an invitation: then a missing
+		// one records a pending account the operator can act on. The admin address
+		// is exempt from the policy entirely, so it just registers.
+		policy.CreatePending = true
+	}
 	userID, created, err := s.store.UpsertIdentity(ctx, pending.Provider, pending.Subject,
-		email, name, s.cfg.LinkByEmail, s.registrationPolicy(email, codeHash))
+		email, name, s.cfg.LinkByEmail, policy)
 	if err != nil {
 		return "", err
 	}

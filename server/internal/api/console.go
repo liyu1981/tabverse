@@ -36,6 +36,10 @@ func (s *Server) handleConsoleMe(w http.ResponseWriter, r *http.Request) {
 			"email_registration": !s.cfg.DisableEmailRegistration,
 			// Signed out: there is no account, so nothing is pending.
 			"pending_registration": false,
+			// Whether the operator gates new accounts on an invitation: the
+			// register page then asks for the code (unless the address is the
+			// operator's own, which is exempt) and offers to request one.
+			"invite_required": s.cfg.RegistrationRequiresInvite,
 			// Whether a link can actually be posted. The sign-in view says where
 			// the link went, and it used to say "no mail server is configured" to
 			// everybody, which is false on every deployment that has one.
@@ -103,8 +107,10 @@ func (s *Server) handleConsoleMe(w http.ResponseWriter, r *http.Request) {
 		// Set when this account came from a login with no invitation yet: the
 		// console shows the "request received" notice instead of the account.
 		"pending_registration": acc.Pending(),
-		"smtp":                 s.cfg.MailConfigured(),
-		"mail_transport":       s.cfg.MailTransport(),
+		// Whether new accounts need an invitation on this server.
+		"invite_required": s.cfg.RegistrationRequiresInvite,
+		"smtp":            s.cfg.MailConfigured(),
+		"mail_transport":  s.cfg.MailTransport(),
 		// Whether there is a site to go back to at "/", for the same button as
 		// above: the flag does not depend on who is asking.
 		"docs": webui.HasDocs(),
@@ -309,9 +315,10 @@ func (s *Server) handleConsoleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req struct {
-		Email string `json:"email"`
-		Agree bool   `json:"agree"`
-		Code  string `json:"code"`
+		Email   string `json:"email"`
+		Agree   bool   `json:"agree"`
+		Code    string `json:"code"`
+		Request bool   `json:"request"`
 	}
 	if r.ContentLength != 0 {
 		if err := decodeJSON(w, r, &req); err != nil {
@@ -328,7 +335,7 @@ func (s *Server) handleConsoleRegister(w http.ResponseWriter, r *http.Request) {
 	if code := auth.NormalizeInviteCode(req.Code); code != "" {
 		codeHash = auth.HashToken(code)
 	}
-	userID, err := s.accounts.Register(r.Context(), pending, req.Email, "", codeHash)
+	userID, err := s.accounts.Register(r.Context(), pending, req.Email, "", codeHash, req.Request)
 	if err != nil {
 		switch {
 		case errors.Is(err, store.ErrInviteRequired):
@@ -351,8 +358,12 @@ func (s *Server) handleConsoleRegister(w http.ResponseWriter, r *http.Request) {
 	_ = s.store.AppendAudit(r.Context(), store.AuditEntry{
 		Actor: userID, Target: userID, Action: store.AuditTermsAccepted, IP: clientIP(r),
 	})
-	// The next sign-in resolves to the new account: this session's subject now
-	// has one, but the console sends the person to sign in again (adr/0029).
-	s.accounts.SignOut(w)
+	// A normal registration signs the pending session out, so the next sign-in
+	// resolves to the new account. A *request* keeps the session: it now resolves
+	// to the pending account, and the console shows the waiting notice the moment
+	// the page re-reads who it is talking as (adr/0029).
+	if !req.Request {
+		s.accounts.SignOut(w)
+	}
 	w.WriteHeader(http.StatusNoContent)
 }

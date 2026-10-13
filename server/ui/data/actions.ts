@@ -549,21 +549,31 @@ export async function requestSigninLink(
 
 /**
  * Creates the account for the session the register page is on, then sends the
- * person back to sign in. The server signs the pending session out on success,
- * so `sessionExpired` is the signal whichever way it goes (adr/0029).
+ * person back to sign in. `request` records an invitation request instead of
+ * creating the account outright (an invite-only server, no code). The server
+ * signs the pending session out either way, so `sessionExpired` is the signal
+ * whichever way it goes (adr/0029).
  */
 export async function registerAccount(
   email: string,
   agree: boolean,
   code?: string,
+  request?: boolean,
 ): Promise<Attempt<void>> {
   const done = await attempt('Creating the account', () =>
     registerAccountFx({
       email: email.trim().toLowerCase(),
       agree,
       code: code?.trim() || undefined,
+      request,
     }),
   );
-  if (done.ok) sessionExpired();
+  if (done.ok) {
+    // A request keeps the session, which now resolves to the pending account:
+    // re-read who we are so the console shows the waiting notice. A normal
+    // registration signs the session out, so go back to the sign-in form.
+    if (request) await loadMeFx();
+    else sessionExpired();
+  }
   return done;
 }

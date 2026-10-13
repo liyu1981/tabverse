@@ -154,7 +154,7 @@ func TestAGoogleClaimBecomesAPendingRegistration(t *testing.T) {
 	}
 
 	// The explicit registration creates it and the provider's proof comes along.
-	userID, err := svc.Register(ctx, pending, pending.Email, pending.Name, "")
+	userID, err := svc.Register(ctx, pending, pending.Email, pending.Name, "", false)
 	if err != nil {
 		t.Fatalf("register: %v", err)
 	}
@@ -206,7 +206,7 @@ func TestAnUnprovenProviderLoginIsStillRefused(t *testing.T) {
 	if !ok {
 		t.Fatal("the login should be a pending registration, not a refusal")
 	}
-	userID, err := svc.Register(context.Background(), pending, "yli@example.com", "yli", "")
+	userID, err := svc.Register(context.Background(), pending, "yli@example.com", "yli", "", false)
 	if err != nil {
 		t.Fatalf("register: %v", err)
 	}

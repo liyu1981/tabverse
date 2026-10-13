@@ -88,6 +88,7 @@ export interface ConsoleApi {
     email: string;
     agree: boolean;
     code?: string;
+    request?: boolean;
   }): Promise<void>;
   signOut(): Promise<void>;
   /**

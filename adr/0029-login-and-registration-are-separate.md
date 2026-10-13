@@ -54,14 +54,19 @@ second one writes an account.**
    the pending claim, a non-empty email and `agree: true`. For the email
    provider the address must hash to the session's own subject (the link proved
    that address and nothing else); a provider that vouched for its address
-   (`email_verified`) carries that proof onto the account. It then signs the
-   session out, so the next sign-in resolves to the new account.
+   (`email_verified`) carries that proof onto the account. A normal registration
+   then signs the session out, so the next sign-in resolves to the new account; a
+   request keeps the session, which now resolves to the pending account.
 
 4. **The invite policy moves to registration.** An invite-only server refuses
-   registration with `ErrInviteRequired`; the register page has the invite-code
-   field. `handleConsoleSigninLink` no longer creates anything, so it no longer
-   pre-checks the invite either - an uninvited address can be sent a link, and
-   the register page is where it is told no.
+   a normal registration with `ErrInviteRequired`; the register page has the
+   invite-code field, marked required. The admin address is exempt, so the first
+   operator can always register. Somebody with no code can **request an
+   invitation** instead: `register` with `request: true` creates a *pending*
+   account (the `users.pending_at` flow), the operator sees it in the console's
+   request queue, and the requester's next sign-in shows the waiting notice
+   rather than the register page again. `handleConsoleSigninLink` no longer
+   creates anything, so it no longer pre-checks the invite either.
 
 5. **The user agreement is recorded.** The register page requires a checkbox,
    and the acceptance is stamped on the account (`users.terms_accepted_at`) and
@@ -82,10 +87,10 @@ second one writes an account.**
 - A social login now asks for one more click - the register form - than it did.
   That is the point: the account is the person's decision, with an address a
   provider might not have supplied (GitHub) and an agreement they can read.
-- The `users.pending_at` "registration request" flow (an invite-only social login
-  that is approved later) is no longer reachable, because no account is created
-  to be pending. The store and console code is left in place; the register page's
-  invite code is the path now.
+- The `users.pending_at` "registration request" flow survives, but only as an
+  explicit request from the register page. It is no longer an automatic side
+  effect of a social login; the console's request queue lists only people who
+  asked.
 - `EnsureAccount` and `Store.EnsureAccountForEmail` are gone; they existed only
   to create ahead of the session.
 - The register page is only reachable with a valid provider session. An
