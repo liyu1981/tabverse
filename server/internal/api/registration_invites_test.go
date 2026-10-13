@@ -127,24 +127,35 @@ func TestRegistrationInviteWithoutStoredCodeIsBackfilled(t *testing.T) {
 		t.Fatalf("the draft should name the code %q: %s", code, body)
 	}
 
-	// The minted code is the one registration accepts.
-	r = doJSON(t, http.MethodPost,
-		ts.URL+"/console/api/v1/console/signin-link?address=legacy@example.com&user=legacy@example.com&code="+code,
-		"", nil)
-	r.mustStatus(t, http.StatusOK)
+	// The minted code is the one registration accepts. Registration is the step
+	// the invite gates now, not the link request (adr/0029).
+	pending := pendingSession(t, ts, srv, "legacy@example.com")
+	if me := pending.do(t, http.MethodGet, "/console/api/v1/console/me").body; me["needs_registration"] != true {
+		t.Fatalf("the session should be a pending registration: %v", me)
+	}
+	reg := pending.doJSON(t, http.MethodPost, "/console/api/v1/console/register",
+		map[string]any{"email": "legacy@example.com", "agree": true, "code": code})
+	reg.mustStatus(t, http.StatusNoContent)
 }
 
-func TestSigninRefusedWithoutInvite(t *testing.T) {
+func TestRegistrationRefusedWithoutInvite(t *testing.T) {
 	ts, srv := newInviteOnlyServer(t)
 	op := operatorSession(t, ts, srv) // the admin address is exempt
 
-	// An address nobody invited cannot register.
-	r := doJSON(t, http.MethodPost,
-		ts.URL+"/console/api/v1/console/signin-link?address=nobody@example.com&user=nobody@example.com", "", nil)
+	// A signed-in-but-unregistered session cannot create an account while the
+	// server is invite-only and no invitation covers the address. The sign-in
+	// link itself is not refused any more; registration is where the invite is
+	// checked (adr/0029).
+	pending := pendingSession(t, ts, srv, "nobody@example.com")
+	if me := pending.do(t, http.MethodGet, "/console/api/v1/console/me").body; me["needs_registration"] != true {
+		t.Fatalf("the session should be a pending registration: %v", me)
+	}
+	r := pending.doJSON(t, http.MethodPost, "/console/api/v1/console/register",
+		map[string]any{"email": "nobody@example.com", "agree": true})
 	r.mustStatus(t, http.StatusForbidden)
 
-	// After the operator invites it, the same request goes through - with the code
-	// the invitation carries, which every invitation now has.
+	// After the operator invites it, the same registration goes through - with
+	// the code the invitation carries, which every invitation now has.
 	invite := adminDo(t, op, http.MethodPost,
 		"/console/api/v1/admin/registration-invites",
 		map[string]any{"email": "nobody@example.com"})
@@ -153,9 +164,10 @@ func TestSigninRefusedWithoutInvite(t *testing.T) {
 	if code == "" {
 		t.Fatalf("the invitation should carry a code: %s", invite.raw)
 	}
-	r = doJSON(t, http.MethodPost,
-		ts.URL+"/console/api/v1/console/signin-link?address=nobody@example.com&user=nobody@example.com&code="+code, "", nil)
-	r.mustStatus(t, http.StatusOK)
+	pending = pendingSession(t, ts, srv, "nobody@example.com")
+	r = pending.doJSON(t, http.MethodPost, "/console/api/v1/console/register",
+		map[string]any{"email": "nobody@example.com", "agree": true, "code": code})
+	r.mustStatus(t, http.StatusNoContent)
 }
 
 // The invitation goes out through the same SMTP the sign-in link uses, which is

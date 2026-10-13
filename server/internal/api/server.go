@@ -153,6 +153,11 @@ func (s *Server) Handler() http.Handler {
 		// The sign-in form posts here rather than straight to the library, so
 		// the account exists before the link that claims it.
 		mux.HandleFunc("POST /console/api/v1/console/signin-link", s.handleConsoleSigninLink)
+		// Creating the account for a signed-in-but-unregistered session: the
+		// second half of the login/registration split (adr/0029). Soft guard, like
+		// /me, because the pending session is what it acts on.
+		mux.Handle("POST /console/api/v1/console/register",
+			s.accounts.Trace(http.HandlerFunc(s.handleConsoleRegister)))
 		// "Sign out everywhere" (ADR 0021). Ending the account's own console
 		// sessions is a session action, so it sits with the session routes and
 		// not with the operator ones; the same call for somebody else's account

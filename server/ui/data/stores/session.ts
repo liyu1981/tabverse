@@ -23,6 +23,8 @@ export type BootStatus =
   | 'loading'
   | 'signed-out'
   | 'signed-in'
+  /** Authenticated with a provider, but the account is a separate step. */
+  | 'needs-registration'
   /** A server too old to have accounts at all: the page says so. */
   | 'no-accounts';
 
@@ -42,6 +44,7 @@ export const $bootStatus = createStore<BootStatus>('loading')
   .on(loadMeFx, () => 'loading')
   .on(loadMeFx.doneData, (_, me) => {
     if (!me) return 'signed-out';
+    if (me.needs_registration) return 'needs-registration';
     return me.signed_in ? 'signed-in' : 'signed-out';
   })
   .on(sessionExpired, () => 'signed-out');

@@ -99,20 +99,23 @@ the [server README](https://github.com/liyu1981/tabverse/blob/main/server/README
 
 ## Who may register
 
-By default anybody who can reach the server can create an account by signing in.
-Two settings change that:
+By default anybody who can reach the server can create an account, but signing
+in and creating the account are **two steps** (ADR 0029). A social provider, or
+the emailed sign-in link, proves who the person is; a **Create your account**
+page then asks for the email (required) and their agreement to the user
+agreement. Nothing creates an account silently, so a session that outlives its
+account - a deleted one, or a database restored from before it existed - is sent
+back to that page instead of recreating a user.
 
-- **`TABVERSED_REGISTRATION_REQUIRES_INVITE=1`** makes it invite-only. A social
-  login with no invitation is not refused: it becomes a **pending request**, and
-  the person sees a "registration request received" notice instead of their
-  account. In the console's **Admin ▸ Registration invites** section an operator
-  sees the requests and can **Invite** (which activates the account and creates
-  an invitation) or **Delete** one, and can also invite an address by hand.
-  Every invitation carries a code and the message names it. Nothing sends mail
-  on its own: opening an invitation
-  shows the drafted message to copy, and an explicit **Send with Resend** button
-  sends that same message. The admin address is exempt, so the operator can
-  always register first.
+Two settings gate registration:
+
+- **`TABVERSED_REGISTRATION_REQUIRES_INVITE=1`** makes it invite-only: the
+  register page then needs an invitation code. Invite addresses from the
+  console's **Admin ▸ Registration invites** section. Every invitation carries a
+  code and the message names it. Nothing sends mail on its own: opening an
+  invitation shows the drafted message to copy, and an explicit **Send with
+  Resend** button sends that same message. The admin address is exempt, so the
+  operator can always register first.
 - **`TABVERSED_EMAIL_REGISTRATION=0`** turns the passwordless email path off and
   leaves social logins only. The official build defaults to this.
 

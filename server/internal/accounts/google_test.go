@@ -114,9 +114,11 @@ func TestGoogleUserSurvivesMissingFields(t *testing.T) {
 }
 
 // The end of the chain: a claim that says the provider vouched for the address
-// has to produce a *usable* account under the default settings, which is the
-// thing that was broken before - an unproven account is refused on every request.
-func TestAGoogleClaimProvesTheAddress(t *testing.T) {
+// no longer creates an account by itself. It becomes a pending registration,
+// and Register makes the account and carries the provider's proof onto it. This
+// is what the old updater did implicitly; splitting login from registration
+// moved it here (adr/0029).
+func TestAGoogleClaimBecomesAPendingRegistration(t *testing.T) {
 	st, err := store.Open(filepath.Join(t.TempDir(), "google.db"))
 	if err != nil {
 		t.Fatalf("open store: %v", err)
@@ -137,19 +139,39 @@ func TestAGoogleClaimProvesTheAddress(t *testing.T) {
 
 	ctx := context.Background()
 	claim := googleUser(googleData(t, googleUserInfo), nil)
+
+	// First request: no account, no account made - a pending registration.
 	out := svc.updater(claim)
-	if out.ID == "" {
-		t.Fatal("a verified Google login was refused with the default settings")
+	if out.ID != "" {
+		t.Fatal("the updater must not sign an unknown subject in")
 	}
-	acc, err := st.AccountByEmail(ctx, "yli@example.com")
+	pending, ok := pendingRegistrationFor(out)
+	if !ok || pending.Email != "yli@example.com" || !pending.EmailVerified {
+		t.Fatalf("pending = %+v, ok = %v", pending, ok)
+	}
+	if _, err := st.AccountByEmail(ctx, "yli@example.com"); err == nil {
+		t.Fatal("the updater created an account; registration is a separate step")
+	}
+
+	// The explicit registration creates it and the provider's proof comes along.
+	userID, err := svc.Register(ctx, pending, pending.Email, pending.Name, "")
 	if err != nil {
-		t.Fatalf("the account was not created with the address: %v", err)
+		t.Fatalf("register: %v", err)
+	}
+	acc, err := st.AccountByID(ctx, userID)
+	if err != nil {
+		t.Fatalf("account: %v", err)
 	}
 	if acc.EmailVerifiedAt == nil {
 		t.Error("the account is not marked verified after a provider that vouched for it")
 	}
 	if !acc.CanLogin() {
 		t.Error("the account cannot log in")
+	}
+
+	// A later request for the same subject now resolves to the account.
+	if again := svc.updater(claim); again.ID != userID {
+		t.Errorf("after registration the claim resolved to %q, want %q", again.ID, userID)
 	}
 }
 
@@ -175,7 +197,21 @@ func TestAnUnprovenProviderLoginIsStillRefused(t *testing.T) {
 	// no address at all
 	claim := token.User{ID: "github_abc123", Name: "yli", Picture: "https://avatars/1"}
 	out := svc.updater(claim)
+	// No account is made here. Even after an explicit registration the address
+	// is unproven, so a later request is refused on verification grounds.
 	if out.ID != "" {
 		t.Error("a login with no proven address was accepted under the default settings")
+	}
+	pending, ok := pendingRegistrationFor(out)
+	if !ok {
+		t.Fatal("the login should be a pending registration, not a refusal")
+	}
+	userID, err := svc.Register(context.Background(), pending, "yli@example.com", "yli", "")
+	if err != nil {
+		t.Fatalf("register: %v", err)
+	}
+	again := svc.updater(token.User{ID: "github_abc123", Name: "yli"})
+	if again.ID != "" {
+		t.Errorf("an unproven account signed in: %q (account %s)", again.ID, userID)
 	}
 }

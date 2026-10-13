@@ -84,6 +84,11 @@ export interface ConsoleApi {
   getConfig(): Promise<ServerConfig>;
   whoAmI(): Promise<Me | null>;
   requestSigninLink(email: string, code?: string): Promise<void>;
+  registerAccount(input: {
+    email: string;
+    agree: boolean;
+    code?: string;
+  }): Promise<void>;
   signOut(): Promise<void>;
   /**
    * End every console session this account has, including this browser's
@@ -278,6 +283,14 @@ export function createConsoleApi(fetchFn: FetchLike = fetch): ConsoleApi {
         `/console/api/v1/console/signin-link?${search.toString()}`,
       );
     },
+
+    /**
+     * Creates the account for the signed-in-but-unregistered session the
+     * register page is on (adr/0029). The server signs the session out on
+     * success, so the person signs in again afterwards.
+     */
+    registerAccount: (input) =>
+      call('POST', '/console/api/v1/console/register', input),
 
     signOut: () => call('POST', '/console/api/v1/console/signout'),
     revokeSessions: () =>

@@ -128,9 +128,11 @@ test('email registration off: social only, no address form', async () => {
   expect(say(html)).toContain('social provider only');
 });
 
-test('email registration on: the address form, with the optional invite code', async () => {
+test('email registration on: the address form, and no invite code (that moved to register)', async () => {
   await signedOut({ providers: [], email_registration: true });
   const html = renderToStaticMarkup(<SignInView />);
   expect(html).toContain('Send sign-in link');
-  expect(say(html)).toContain('Invitation code');
+  // The invitation code is asked at the register step now (adr/0029), not when
+  // the link is requested.
+  expect(say(html)).not.toContain('Invitation code');
 });

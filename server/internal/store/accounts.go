@@ -59,6 +59,9 @@ const (
 	AuditAccountRenamed  = "account_renamed"
 	AuditRoleChanged     = "role_changed"
 	AuditAccountDisabled = "account_disabled"
+	// The user agreement accepted at registration. Its own action, so "did this
+	// person agree, and to what" is answerable from the log alone.
+	AuditTermsAccepted = "terms_accepted"
 	// The one write the console makes to user data (adr/0015). Named
 	// separately because it is the only entry in this log that removed
 	// somebody's content.
@@ -214,6 +217,20 @@ func (s *Store) SetEmail(ctx context.Context, userID, email string) error {
 		return fmt.Errorf("email must not be empty")
 	}
 	res, err := s.db.ExecContext(ctx, `UPDATE users SET email = ? WHERE id = ?`, email, userID)
+	if err != nil {
+		return err
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+// SetTermsAccepted records that the account accepted the user agreement, and
+// when. Idempotent: re-accepting only moves the instant to now.
+func (s *Store) SetTermsAccepted(ctx context.Context, userID string) error {
+	res, err := s.db.ExecContext(ctx,
+		`UPDATE users SET terms_accepted_at = ? WHERE id = ?`, nowMS(), userID)
 	if err != nil {
 		return err
 	}
@@ -762,55 +779,6 @@ func (s *Store) CountAccounts(ctx context.Context) (int64, error) {
 	return n, err
 }
 
-// EnsureAccountForEmail returns the account for an address, creating it if this
-// is the first time it is seen.
-//
-// It exists because of the order the sign-in flow happens in. The library's
-// verify provider derives a stable subject from the address and puts it in the
-// session claim, and the session is checked against our accounts *before* the
-// claim is mapped to one - so an account that does not exist yet would have its
-// very first request refused. Asking for the link therefore creates the account,
-// and following the link is what proves the address.
-//
-// The row is inert until then: it holds an address nobody has confirmed and no
-// session can reach, so a stranger who submits somebody else's address gains
-// nothing but a row.
-func (s *Store) EnsureAccountForEmail(ctx context.Context, email, name string) (string, error) {
-	email = strings.ToLower(strings.TrimSpace(email))
-	if email == "" {
-		return "", fmt.Errorf("email is required")
-	}
-	if acc, err := s.AccountByEmail(ctx, email); err == nil {
-		return acc.ID, nil
-	} else if !errors.Is(err, ErrNotFound) {
-		return "", err
-	}
-	id := newAccountID()
-	if _, err := s.createUser(ctx, id, name, email); err != nil {
-		// A concurrent request for the same address may have won the race; that
-		// is the answer we wanted anyway.
-		if acc, err2 := s.AccountByEmail(ctx, email); err2 == nil {
-			return acc.ID, nil
-		}
-		return "", err
-	}
-	return id, nil
-}
-
-// createUser inserts a user outside a transaction, for the paths that are not
-// part of an identity upsert.
-func (s *Store) createUser(ctx context.Context, id, name, email string) (User, error) {
-	if name == "" {
-		name = email
-	}
-	if _, err := s.db.ExecContext(ctx,
-		`INSERT INTO users (id, name, email, role, created_at, rev_seq) VALUES (?, ?, ?, ?, ?, 0)`,
-		id, name, email, RoleUser, nowMS()); err != nil {
-		return User{}, err
-	}
-	return User{ID: id, Name: name, CreatedAt: time.Now().UTC()}, nil
-}
-
 // AccountIDForIdentity resolves the session id the library mints
 // ("<provider>_<subject>") to the account that owns the data.
 //
@@ -820,11 +788,13 @@ func (s *Store) createUser(ctx context.Context, id, name, email string) (User, e
 // account a given one belongs to. It is also what lets two providers share one
 // account.
 //
-// A subject with no identity row is a *new registration* rather than an unknown
-// one - it cannot have been forged, since forging it needs the signing secret -
-// so the caller may create the account. A subject that has been retired (its
-// account was deleted) is refused, which is what stops an old session from
-// resurrecting a deleted account.
+// A subject with no identity row is a *registration that has not happened yet*
+// rather than an unknown login - it cannot have been forged, since forging it
+// needs the signing secret. The caller decides what to do with it, and it never
+// creates on a read path any more (adr/0029): the register endpoint is the one
+// place that does. A subject that has been retired (its account was deleted) is
+// refused, which is what stops an old session from resurrecting a deleted
+// account.
 func (s *Store) AccountIDForIdentity(ctx context.Context, provider, subject string) (userID string, known bool, retired bool, err error) {
 	var user sql.NullString
 	err = s.db.QueryRowContext(ctx,

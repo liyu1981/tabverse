@@ -24,7 +24,7 @@ func (s *Server) handleConsoleMe(w http.ResponseWriter, r *http.Request) {
 	// The page's whole job is to read it and decide what to show.
 	acc, err := s.accounts.AccountFromRequest(r)
 	if err != nil {
-		writeJSON(w, http.StatusOK, map[string]any{
+		out := map[string]any{
 			"signed_in":       false,
 			"providers":       s.cfg.SocialProviders(),
 			"admin_email":     s.cfg.AdminEmail,
@@ -47,7 +47,21 @@ func (s *Server) handleConsoleMe(w http.ResponseWriter, r *http.Request) {
 			// documentation or only the redirect page, and the bar shows its
 			// "tabverse" link back on that answer (adr/0024).
 			"docs": webui.HasDocs(),
-		})
+		}
+		// A valid session whose subject has no account: the person authenticated
+		// with a provider, but the account is a separate step now. The console
+		// shows the register page instead of creating one (adr/0029). The claim's
+		// own email is offered when the provider supplied it.
+		if pending, ok := s.accounts.PendingRegistrationFromRequest(r); ok {
+			out["needs_registration"] = true
+			out["csrf"] = s.csrfToken(r)
+			out["registration"] = map[string]any{
+				"provider": pending.Provider,
+				"email":    pending.Email,
+				"name":     pending.Name,
+			}
+		}
+		writeJSON(w, http.StatusOK, out)
 		return
 	}
 
@@ -257,25 +271,12 @@ func (s *Server) handleConsoleSigninLink(w http.ResponseWriter, r *http.Request)
 		s.refuseSigninLink(w, r, ip)
 		return
 	}
-	// The optional invitation code, hashed the way the operator's invite stored
-	// it. Empty when the invite is address-only.
-	codeHash := ""
-	if code := auth.NormalizeInviteCode(r.URL.Query().Get("code")); code != "" {
-		codeHash = auth.HashToken(code)
-	}
-	// The account and the identity the session will resolve to, both created
-	// before the link goes out: a session is checked against our accounts before
-	// the claim is mapped to one, so an account that did not exist yet would have
-	// its first request refused.
-	if _, err := s.accounts.EnsureAccount(r.Context(), email, r.URL.Query().Get("user"), codeHash); err != nil {
-		if errors.Is(err, store.ErrInviteRequired) {
-			writeErr(w, http.StatusForbidden, "invite_required",
-				"this server is invite-only; ask the operator to invite your address")
-			return
-		}
-		writeStoreErr(w, err)
-		return
-	}
+	// No account is created here any more: asking for the link proves the
+	// address, and the account is made by the explicit register step that
+	// follows (adr/0029). The invite policy is applied there too, so an uninvited
+	// address gets a link whose register page says so, rather than a silent
+	// refusal here.
+	//
 	// The rewrite into the shape the library dispatches on. The `from` that
 	// brings the person back to the console is not set here: Handlers() puts it on
 	// every provider login, server side, so the two sign-in flows cannot drift.
@@ -291,4 +292,67 @@ func (s *Server) refuseSigninLink(w http.ResponseWriter, r *http.Request, key st
 	s.logger.Warn("sign-in link throttled", "key", key, "ip", clientIP(r))
 	writeErr(w, http.StatusTooManyRequests, "rate_limited",
 		"too many sign-in links requested; wait an hour and try again")
+}
+
+// handleConsoleRegister creates the account for a session that authenticated
+// but has none. It is the explicit second step of the login-and-registration
+// split (adr/0029): nothing else creates an account for a signed-in subject, so
+// a session that outlives its account cannot resurrect it or invent a new one.
+//
+// It runs under the soft guard, so the pending session is visible but not
+// required: a request with no such session is refused.
+func (s *Server) handleConsoleRegister(w http.ResponseWriter, r *http.Request) {
+	pending, ok := s.accounts.PendingRegistrationFromRequest(r)
+	if !ok {
+		writeErr(w, http.StatusUnauthorized, "no_pending_registration",
+			"sign in with a provider before creating an account")
+		return
+	}
+	var req struct {
+		Email string `json:"email"`
+		Agree bool   `json:"agree"`
+		Code  string `json:"code"`
+	}
+	if r.ContentLength != 0 {
+		if err := decodeJSON(w, r, &req); err != nil {
+			writeErr(w, http.StatusBadRequest, "bad_request", err.Error())
+			return
+		}
+	}
+	if !req.Agree {
+		writeErr(w, http.StatusBadRequest, "agreement_required",
+			"agree to the user agreement to create an account")
+		return
+	}
+	codeHash := ""
+	if code := auth.NormalizeInviteCode(req.Code); code != "" {
+		codeHash = auth.HashToken(code)
+	}
+	userID, err := s.accounts.Register(r.Context(), pending, req.Email, "", codeHash)
+	if err != nil {
+		switch {
+		case errors.Is(err, store.ErrInviteRequired):
+			writeErr(w, http.StatusForbidden, "invite_required",
+				"this server is invite-only; ask the operator to invite your address")
+		case errors.Is(err, accounts.ErrEmailMismatch):
+			writeErr(w, http.StatusBadRequest, "email_mismatch",
+				"create the account with the address the sign-in link was sent to")
+		default:
+			writeStoreErr(w, err)
+		}
+		return
+	}
+	// The agreement is recorded on the account and in the audit log, in the same
+	// transaction the account was made in spirit: a failure to stamp it is a
+	// warning, not a reason to fail a registration that already happened.
+	if err := s.store.SetTermsAccepted(r.Context(), userID); err != nil {
+		s.logger.Warn("could not record the user agreement", "user", userID, "err", err)
+	}
+	_ = s.store.AppendAudit(r.Context(), store.AuditEntry{
+		Actor: userID, Target: userID, Action: store.AuditTermsAccepted, IP: clientIP(r),
+	})
+	// The next sign-in resolves to the new account: this session's subject now
+	// has one, but the console sends the person to sign in again (adr/0029).
+	s.accounts.SignOut(w)
+	w.WriteHeader(http.StatusNoContent)
 }

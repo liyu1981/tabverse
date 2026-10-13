@@ -64,6 +64,7 @@ import {
   loadTabspacesFx,
   loadTotalsFx,
   loadUsersFx,
+  registerAccountFx,
   renameUserFx,
   revokeDeviceFx,
   revokeSessionsFx,
@@ -122,8 +123,11 @@ export async function boot(): Promise<void> {
   loadConfigFx().catch(() => undefined);
 
   const me = await loadMeFx();
-  if (!me || !me.signed_in) return;
+  if (!me) return;
+  // The XSRF pair is needed for the register POST too, where the session is not
+  // an account yet.
   api.setCsrf(me.csrf_header || '', me.csrf || '');
+  if (!me.signed_in) return;
 
   // The read-only window first: an operator who is looking through somebody
   // must land on *them*, not on their own account, or a reload would quietly
@@ -541,4 +545,25 @@ export async function requestSigninLink(
     reportFailure('Sending the link', e);
     return false;
   }
+}
+
+/**
+ * Creates the account for the session the register page is on, then sends the
+ * person back to sign in. The server signs the pending session out on success,
+ * so `sessionExpired` is the signal whichever way it goes (adr/0029).
+ */
+export async function registerAccount(
+  email: string,
+  agree: boolean,
+  code?: string,
+): Promise<Attempt<void>> {
+  const done = await attempt('Creating the account', () =>
+    registerAccountFx({
+      email: email.trim().toLowerCase(),
+      agree,
+      code: code?.trim() || undefined,
+    }),
+  );
+  if (done.ok) sessionExpired();
+  return done;
 }

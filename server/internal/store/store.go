@@ -288,6 +288,9 @@ func (s *Store) migrate(ctx context.Context) error {
 		// (an invite-only server). It can sign in, but the console shows the
 		// "request received" notice until an operator invites it.
 		{table: "users", column: "pending_at", decl: "INTEGER NOT NULL DEFAULT 0"},
+		// When the person accepted the user agreement while registering. 0 means
+		// no account has agreed yet (it predates the registration split).
+		{table: "users", column: "terms_accepted_at", decl: "INTEGER NOT NULL DEFAULT 0"},
 		// The invitation code in the clear, so the message can be rendered on
 		// demand (the hash alone cannot reproduce it).
 		{table: "registration_invites", column: "code", decl: "TEXT NOT NULL DEFAULT ''"},

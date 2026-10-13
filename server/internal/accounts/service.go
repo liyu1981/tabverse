@@ -33,6 +33,18 @@ import (
 // user ids arrive as "tabverse_usr_...".
 const ProviderEmail = "tabverse"
 
+// attrPendingRegistration marks a claim whose subject has no account yet. It
+// carries the claim id ("<provider>_<subject>"), so the register handler can
+// trust the subject it creates the account for. Login and registration are
+// separate steps now; this attribute is what a signed-in-but-unregistered
+// session looks like (adr/0029).
+const attrPendingRegistration = "pending_registration"
+
+// ErrEmailMismatch is returned when the address typed at registration is not the
+// one the session proved: an emailed link proved a specific address, and a
+// session for that provider may only register that one.
+var ErrEmailMismatch = errors.New("email does not match the signed-in address")
+
 // sessionCookie / xsrfCookie keep their names stable across restarts so a
 // deployment behind a proxy does not lose its cookies when an operator changes
 // nothing but the environment.
@@ -414,14 +426,15 @@ func (s *Service) updater(u token.User) token.User {
 		return u
 	}
 	if !known {
-		newID, _, err := s.store.UpsertIdentity(ctx, s.providerOf(claimID), claimID, u.Email, u.Name, s.cfg.LinkByEmail, s.registrationPolicy(u.Email, "", true))
-		if err != nil {
-			// A login we cannot place is a login we do not attribute to anybody.
-			u.ID = ""
-			u.Email = ""
-			return u
-		}
-		userID, known = newID, true
+		// A valid session whose subject has no account. Login and registration
+		// are separate steps (adr/0029): this request is answered as an
+		// authenticated-but-unregistered session, and only the explicit register
+		// endpoint creates the account. Nothing here writes to the database, so a
+		// session that outlives its account - or a wiped database - can never
+		// mint a fresh one.
+		u.ID = ""
+		u.SetStrAttr(attrPendingRegistration, claimID)
+		return u
 	}
 	u.ID = userID
 	// The operator bootstrap runs on the way past, so the first person to
@@ -481,6 +494,114 @@ func (s *Service) updater(u token.User) token.User {
 		}
 	}
 	return u
+}
+
+// PendingRegistration is a valid session whose subject has no account: the
+// person authenticated with a provider, but registration is a separate step
+// now, so no account exists yet. It is what `/console/me` reports as
+// `needs_registration`, and what the register endpoint creates the account for.
+type PendingRegistration struct {
+	// ClaimID is "<provider>_<subject>", the session's own id.
+	ClaimID string
+	// Provider and Subject are the two halves of ClaimID.
+	Provider string
+	Subject  string
+	// Email and Name are what the provider supplied, if anything. The email
+	// provider puts neither in the claim (it hashes the address into the
+	// subject), so Email may be empty even for a real address.
+	Email string
+	Name  string
+	// EmailVerified is the provider's own statement that Email is proven.
+	EmailVerified bool
+}
+
+// PendingRegistrationFromRequest returns the pending registration carried by the
+// request, or false when the session is an ordinary one (or there is none). The
+// attribute is only ever set by `updater`, so its presence means the session
+// authenticated and its subject has no account.
+func (s *Service) PendingRegistrationFromRequest(r *http.Request) (PendingRegistration, bool) {
+	u, err := token.GetUserInfo(r)
+	if err != nil || u.ID != "" {
+		return PendingRegistration{}, false
+	}
+	return pendingRegistrationFor(u)
+}
+
+// pendingRegistrationFor reads the marker `updater` put on a claim. Split out so
+// the tests can exercise the state without an *http.Request.
+func pendingRegistrationFor(u token.User) (PendingRegistration, bool) {
+	claimID := u.StrAttr(attrPendingRegistration)
+	if claimID == "" {
+		return PendingRegistration{}, false
+	}
+	provider, subject := claimID, ""
+	if i := strings.IndexByte(claimID, '_'); i > 0 {
+		provider, subject = claimID[:i], claimID[i+1:]
+	}
+	return PendingRegistration{
+		ClaimID: claimID, Provider: provider, Subject: subject,
+		Email: u.Email, Name: u.Name, EmailVerified: u.BoolAttr(emailVerifiedAttr),
+	}, true
+}
+
+// Register creates the account for a session that authenticated but has none.
+// It is the explicit second step login used to do in one: only this creates an
+// account for a signed-in subject, so an outliving session can no longer
+// resurrect a deleted account or invent a new one (adr/0029).
+//
+// `codeHash` is the sha256 of an invitation code the registrant supplied, ""
+// when none; the invite policy decides whether it is needed.
+func (s *Service) Register(ctx context.Context, pending PendingRegistration, email, name, codeHash string) (string, error) {
+	email = strings.ToLower(strings.TrimSpace(email))
+	if email == "" {
+		return "", errors.New("email is required")
+	}
+	name = strings.TrimSpace(name)
+	if name == "" {
+		name = pending.Name
+	}
+	// An emailed link proved the exact address it was sent to, and the library
+	// derived the subject by hashing that address; a session for the email
+	// provider may therefore only register the address it proved.
+	if pending.Provider == ProviderEmail && token.HashID(sha1.New(), email) != pending.Subject {
+		return "", ErrEmailMismatch
+	}
+	userID, created, err := s.store.UpsertIdentity(ctx, pending.Provider, pending.Subject,
+		email, name, s.cfg.LinkByEmail, s.registrationPolicy(email, codeHash))
+	if err != nil {
+		return "", err
+	}
+	if !created {
+		// The subject already had an account (a retried submit, or a link-by-email
+		// merge). Nothing to prove or promote again.
+		return userID, nil
+	}
+	// Two things prove an address: the emailed link that was followed, and a
+	// provider that reports the address as verified (google.go). The same
+	// reasoning as the old updater, applied at the point the account is made.
+	proof := ""
+	switch {
+	case pending.Provider == ProviderEmail:
+		proof = "proved by following the emailed sign-in link"
+	case pending.EmailVerified && email == strings.ToLower(strings.TrimSpace(pending.Email)):
+		proof = "proved by the provider, which reported the address as verified"
+	}
+	if proof != "" && s.cfg.RequireEmailVerification {
+		if err := s.store.MarkEmailVerified(ctx, userID); err != nil {
+			s.log.Warn("cannot record email verification", "err", err)
+		} else {
+			_ = s.store.AppendAudit(ctx, store.AuditEntry{
+				Actor: userID, Target: userID, Action: store.AuditEmailVerified, Detail: proof,
+			})
+		}
+	}
+	// The operator bootstrap runs on the way past, so the first person to
+	// register with the admin address is the operator from their first sign-in
+	// (adr/0013).
+	if _, err := s.promoteIfFirstOperator(ctx, userID, email); err != nil {
+		s.log.Warn("operator bootstrap failed", "err", err)
+	}
+	return userID, nil
 }
 
 // validate is the revocation hook: it runs inside the extractor, before the
@@ -788,35 +909,6 @@ func (s *Service) SignOut(w http.ResponseWriter) {
 	s.mw.JWTService.Reset(w)
 }
 
-// EnsureAccount makes sure the account behind an email address exists, together
-// with the identity row the session will resolve to.
-//
-// It has to happen *before* the link is sent, and it has to use the same
-// subject the library will put in the claim, because a session is checked
-// against our accounts before the claim is mapped to one. The passwordless
-// provider derives that subject by hashing the address, so the same derivation
-// is applied here; the journey test in internal/api walks the whole flow, so a
-// change in the library's derivation fails there rather than silently at
-// someone's first sign-in.
-func (s *Service) EnsureAccount(ctx context.Context, email, name, codeHash string) (string, error) {
-	// Hash exactly the string that was given: the library hashes whatever
-	// arrives in the `address` parameter, so normalising it here and not there
-	// would derive a different subject, and the first sign-in would create a
-	// second account instead of finding this one. The console lowercases the
-	// address before sending, so the two always see the same string.
-	email = strings.TrimSpace(email)
-	if email == "" {
-		return "", fmt.Errorf("email is required")
-	}
-	// The subject alone: the claim is "<provider>_<subject>", and the resolver
-	// splits on the first underscore, so storing the prefix here would make the
-	// row unmatchable and quietly create a second account on first sign-in.
-	subject := token.HashID(sha1.New(), email)
-	userID, _, err := s.store.UpsertIdentity(ctx, ProviderEmail, subject, email, name, s.cfg.LinkByEmail,
-		s.registrationPolicy(email, codeHash, false))
-	return userID, err
-}
-
 // registrationPolicy is the invite policy UpsertIdentity enforces when it would
 // create a *new* account. A sign-in to an existing account never consults it.
 //
@@ -824,16 +916,13 @@ func (s *Service) EnsureAccount(ctx context.Context, email, name, codeHash strin
 // before anybody exists to invite it. Without this an invite-only server could
 // never gain its first operator.
 //
-// `createPending` is true on the social path: a provider proves the address, so
-// an uninvited login becomes a *pending* account - the person signs in and is
-// told to wait, and an operator sees the request - instead of being refused.
-func (s *Service) registrationPolicy(email, codeHash string, createPending bool) store.RegistrationPolicy {
+// Registration is explicit now (adr/0029), so an uninvited address is simply
+// refused with ErrInviteRequired; there is no pending account to approve.
+func (s *Service) registrationPolicy(email, codeHash string) store.RegistrationPolicy {
 	if !s.cfg.RegistrationRequiresInvite || s.IsAdminEmail(email) {
 		return store.RegistrationPolicy{}
 	}
-	return store.RegistrationPolicy{
-		RequireInvite: true, CodeHash: codeHash, CreatePending: createPending,
-	}
+	return store.RegistrationPolicy{RequireInvite: true, CodeHash: codeHash}
 }
 
 // IsAdminEmail reports whether an address is the one the operator is expected

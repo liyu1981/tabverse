@@ -11,6 +11,7 @@ import { Toasts } from './components/Toasts';
 import { AccountView } from './views/AccountView';
 import { AdminView } from './views/AdminView';
 import { LoadingView, SignInView } from './views/SignInView';
+import { RegisterView } from './views/RegisterView';
 import { PairView } from './views/PairView';
 import { TabverseDrawer } from './views/tabverse/TabverseDrawer';
 import { readPairFromUrl, takeStashedPairRequest } from './data/pair';
@@ -86,6 +87,7 @@ export function App() {
       ) : null}
       {!showPair && signedIn && !onAdmin ? <AccountView /> : null}
       {!showPair && status === 'signed-out' ? <SignInView /> : null}
+      {!showPair && status === 'needs-registration' ? <RegisterView /> : null}
       {status === 'loading' ? <LoadingView /> : null}
       {/* The drawer is outside the account view on purpose: it belongs to the
           console, not to a tab, and it survives the tab it was opened from. */}

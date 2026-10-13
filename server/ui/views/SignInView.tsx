@@ -41,7 +41,6 @@ function orderedProviders(providers: string[]): string[] {
 export function SignInView() {
   const me = useUnit($me);
   const [email, setEmail] = useState('');
-  const [code, setCode] = useState('');
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -64,7 +63,7 @@ export function SignInView() {
     // Lowercased before it is sent, so the address the server hashes for the
     // session's identity and the one it stores are the same string however the
     // person typed it.
-    const ok = await requestSigninLink(email, code);
+    const ok = await requestSigninLink(email);
     setBusy(false);
     if (ok) {
       setSent(true);
@@ -122,20 +121,6 @@ export function SignInView() {
                 placeholder="you@example.com"
                 value={email}
                 onChange={(event) => setEmail(event.currentTarget.value)}
-              />
-            </FormGroup>
-            <FormGroup
-              label="Invitation code (only if you were given one)"
-              labelFor="signin-code"
-            >
-              <input
-                id="signin-code"
-                type="text"
-                autoComplete="off"
-                spellCheck={false}
-                placeholder="XXXX-XXXX-XXXX-XXXX"
-                value={code}
-                onChange={(event) => setCode(event.currentTarget.value)}
               />
             </FormGroup>
             <Button type="submit" intent="primary" fill={true} loading={busy}>

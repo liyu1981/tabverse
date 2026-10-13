@@ -90,6 +90,21 @@ export interface Me {
    * instead of the account.
    */
   pending_registration?: boolean;
+  /**
+   * Authenticated with a provider, but no account exists for the subject yet:
+   * registration is a separate step now (adr/0029), so the console shows the
+   * register page. `registration` carries what the provider supplied.
+   */
+  needs_registration?: boolean;
+  registration?: PendingRegistration;
+}
+
+/** `GET /console/api/v1/console/me` while a session has no account yet. */
+export interface PendingRegistration {
+  provider: string;
+  /** What the provider reported; empty when it reported nothing (GitHub). */
+  email: string;
+  name: string;
 }
 
 /** `GET /console/api/v1/console/impersonation`: the read-only window, if any. */

@@ -3,9 +3,8 @@ package api
 import (
 	"bytes"
 	"context"
-	"crypto/sha256"
+	"crypto/sha1"
 	"database/sql"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"io"
@@ -122,30 +121,29 @@ func operatorSession(t *testing.T, ts *httptest.Server, s *Server) *sessionClien
 func signInAs(t *testing.T, ts *httptest.Server, s *Server, email string) *sessionClient {
 	t.Helper()
 	ctx := context.Background()
-	created, err := s.store.CreateUser(ctx, "usr_"+shortHash(email), email)
-	acc := store.Account{ID: created.ID, Name: created.Name, Email: email}
+	// The subject the passwordless provider derives from the address, which is
+	// also the key the identity row is stored under. Registration is explicit now
+	// (adr/0029), so a test account is created the way Register would: the
+	// identity and a verified account together.
+	subject := token.HashID(sha1.New(), email)
+	accID, _, err := s.store.UpsertIdentity(ctx, accounts.ProviderEmail, subject,
+		email, email, true, store.RegistrationPolicy{})
 	if err != nil {
 		// Signing in twice is not a failure: the account is already there.
-		acc, err = s.store.AccountByEmail(ctx, email)
-		if err != nil {
+		acc, err2 := s.store.AccountByEmail(ctx, email)
+		if err2 != nil {
 			t.Fatalf("create account: %v", err)
 		}
+		accID = acc.ID
 	}
-	if err := s.store.SetEmail(ctx, acc.ID, email); err != nil {
-		t.Fatalf("set email: %v", err)
-	}
-	// Verifying an address revokes sessions issued before the proof, so a login
-	// in the same second is refused once (accounts.SessionRevocationWindow).
-	// A real person clicks the link and signs in a moment later; the test steps
-	// over the same boundary rather than pretending it is not there.
-	if err := s.store.MarkEmailVerified(ctx, acc.ID); err != nil {
+	if err := s.store.MarkEmailVerified(ctx, accID); err != nil {
 		t.Fatalf("verify: %v", err)
 	}
-	waitOutRevocationWindow(t, s, acc.ID)
+	waitOutRevocationWindow(t, s, accID)
 
 	rec := httptest.NewRecorder()
 	mw := s.accounts.Middleware()
-	if _, err := mw.JWTService.Set(rec, sessionClaimsFor(acc.ID, email)); err != nil {
+	if _, err := mw.JWTService.Set(rec, sessionClaimsFor(subject, email)); err != nil {
 		t.Fatalf("sign in: %v", err)
 	}
 	client := &sessionClient{cookies: rec.Result().Cookies(), ts: ts, xsrfHeader: "X-XSRF-Token"}
@@ -153,11 +151,18 @@ func signInAs(t *testing.T, ts *httptest.Server, s *Server, email string) *sessi
 	return client
 }
 
-// shortHash keeps a stable, readable id per address, so a test that refers to an
-// account twice finds the same one.
-func shortHash(s string) string {
-	sum := sha256.Sum256([]byte(s))
-	return hex.EncodeToString(sum[:8])
+// pendingSession mints a valid session whose subject has no account: the state
+// a real provider login leaves the console in before registration (adr/0029).
+// The email provider derives its subject by hashing the address, so the claim
+// uses that hash and Register will accept the same address back.
+func pendingSession(t *testing.T, ts *httptest.Server, s *Server, email string) *sessionClient {
+	t.Helper()
+	subject := token.HashID(sha1.New(), email)
+	rec := httptest.NewRecorder()
+	if _, err := s.accounts.Middleware().JWTService.Set(rec, sessionClaimsFor(subject, email)); err != nil {
+		t.Fatalf("mint a pending session: %v", err)
+	}
+	return &sessionClient{cookies: rec.Result().Cookies(), ts: ts, xsrfHeader: "X-XSRF-Token", srv: s}
 }
 
 type sessionClient struct {
@@ -687,19 +692,21 @@ func waitOutRevocationWindow(t *testing.T, s *Server, userID string) {
 
 // sessionClaimsFor builds the claims the library would sign after a login: a
 // provider shaped id, exactly as accounts.ResolveAccountID expects, and the
-// address the provider reported, which is what the account is linked by.
-func sessionClaimsFor(userID, email string) token.Claims {
+// address the provider reported, which is what the account is linked by. The
+// subject is the passwordless provider's hash of the address, matching the
+// identity row `signInAs` writes.
+func sessionClaimsFor(subject, email string) token.Claims {
 	now := time.Now()
 	return token.Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
-			ID:        "session-" + userID,
+			ID:        "session-" + subject,
 			Audience:  jwt.ClaimStrings{"tabversed"},
 			IssuedAt:  jwt.NewNumericDate(now),
 			ExpiresAt: jwt.NewNumericDate(now.Add(time.Hour)),
 		},
 		User: &token.User{
-			ID:       accounts.ProviderEmail + "_" + userID,
-			Name:     userID,
+			ID:       accounts.ProviderEmail + "_" + subject,
+			Name:     email,
 			Email:    email,
 			Audience: "tabversed",
 		},
@@ -782,8 +789,19 @@ func TestTheFirstOperatorJourney(t *testing.T) {
 		t.Fatalf("the link did not sign anybody in; cookies: %v", followed.Cookies())
 	}
 
-	// 3. that session is the operator
-	client := &sessionClient{ts: ts, cookies: []*http.Cookie{session, xsrf}, xsrfHeader: "X-XSRF-Token"}
+	// 3. the explicit register step: following the link proved the address but
+	// no longer creates the account by itself (adr/0029).
+	pending := &sessionClient{ts: ts, cookies: []*http.Cookie{session, xsrf}, xsrfHeader: "X-XSRF-Token"}
+	pendingMe := pending.do(t, http.MethodGet, "/console/api/v1/console/me").body
+	if pendingMe["needs_registration"] != true {
+		t.Fatalf("the link should ask for registration: %v", pendingMe)
+	}
+	reg := pending.doJSON(t, http.MethodPost, "/console/api/v1/console/register",
+		map[string]any{"email": testAdminEmail, "agree": true})
+	reg.mustStatus(t, http.StatusNoContent)
+
+	// 4. a fresh session is the operator
+	client := signInAs(t, ts, s, testAdminEmail)
 	me := client.do(t, http.MethodGet, "/console/api/v1/console/me").body
 	if me["signed_in"] != true {
 		t.Fatalf("the session from the link does not work: %v", me)

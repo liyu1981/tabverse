@@ -51,6 +51,11 @@ export const stopImpersonationFx = createEffect<void, void>(() =>
 
 export const signOutFx = createEffect<void, void>(() => api.signOut());
 
+export const registerAccountFx = createEffect<
+  { email: string; agree: boolean; code?: string },
+  void
+>((input) => api.registerAccount(input));
+
 export const revokeSessionsFx = createEffect<void, void>(() =>
   api.revokeSessions(),
 );

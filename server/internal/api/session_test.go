@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"crypto/sha1"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -10,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-pkgz/auth/v2/token"
 	"github.com/golang-jwt/jwt/v5"
 
 	"github.com/liyu1981/tabverse/server/internal/accounts"
@@ -58,10 +60,11 @@ func newSessionServer(t *testing.T, adminEmail string, tweak func(*config.Config
 func expiredSessionClient(t *testing.T, ts *httptest.Server, s *Server, email string) *sessionClient {
 	t.Helper()
 	fresh := signInAs(t, ts, s, email)
-	userID := fresh.do(t, http.MethodGet, "/console/api/v1/console/me").body["user_id"].(string)
+	_ = fresh
+	subject := token.HashID(sha1.New(), email)
 
 	rec := httptest.NewRecorder()
-	claims := sessionClaimsFor(userID, email)
+	claims := sessionClaimsFor(subject, email)
 	past := time.Now().Add(-time.Minute)
 	claims.ExpiresAt = jwt.NewNumericDate(past)
 	claims.IssuedAt = jwt.NewNumericDate(past)
@@ -86,15 +89,15 @@ func expiredSessionClient(t *testing.T, ts *httptest.Server, s *Server, email st
 	}
 }
 
-// realSession walks the whole sign-in - the console's form, then the link it
-// emails - and returns the session that produced.
+// realSession walks the whole sign-in - the console's form, the link it emails,
+// then the explicit register step - and returns a signed-in session.
 //
 // It exists because a session cannot be faked into existence for these tests.
 // The library derives the claim's subject from the address, so the identity row
-// that revocation is checked against only exists once a real sign-in has been
-// through EnsureAccount; minting claims by hand (as signInAs does) produces a
-// session whose subject resolves to nothing, and SessionAllowed treats an
-// unknown subject as "a registration that has not happened yet" and allows it.
+// that revocation is checked against only exists once registration has been
+// through Register; minting claims by hand (as signInAs does) produces a session
+// whose subject resolves to nothing, and SessionAllowed treats an unknown
+// subject as "a registration that has not happened yet" and allows it.
 //
 // `label` is the display name that goes into the link. The confirmation token
 // carries no id of its own, so two requests made in the same second with the
@@ -139,9 +142,24 @@ func realSession(t *testing.T, s *Server, ts *httptest.Server, email, label stri
 		ts: ts, cookies: []*http.Cookie{session, xsrf},
 		xsrfHeader: "X-XSRF-Token", srv: s,
 	}
+	// Following the link signs the address in but does not create the account:
+	// that is the explicit register step now (adr/0029). Register the first
+	// time; a later link for the same address is already signed in.
+	me := client.do(t, http.MethodGet, "/console/api/v1/console/me").body
+	if me["needs_registration"] == true {
+		reg := client.doJSON(t, http.MethodPost, "/console/api/v1/console/register",
+			map[string]any{"email": email, "agree": true})
+		if reg.status != http.StatusNoContent {
+			t.Fatalf("register: %d %s", reg.status, reg.raw)
+		}
+		// The session from the link is signed out at registration; a fresh one
+		// resolves to the account that now exists.
+		client = signInAs(t, ts, s, email)
+		me = client.do(t, http.MethodGet, "/console/api/v1/console/me").body
+	}
 	// The one request that resolves the identity row, so the sessions this test
 	// makes are revocable ones.
-	if me := client.do(t, http.MethodGet, "/console/api/v1/console/me").body; me["signed_in"] != true {
+	if me["signed_in"] != true {
 		t.Fatalf("the real sign-in does not work: %v", me)
 	}
 	return client

@@ -195,7 +195,7 @@ git-ignored, because it holds the auth secret and the provider secret - and
 | `TABVERSED_SEARCH_LIMIT`     | `50`                | max search hits                                             |
 | `TABVERSED_WS_ORIGINS`       | _(any)_             | comma separated Origin allow list for the WebSocket upgrade |
 | `TABVERSED_ADMIN_EMAIL`      | _(unset)_           | whose first registration becomes the operator (ADR 0013) |
-| `TABVERSED_REGISTRATION_REQUIRES_INVITE` | `false` | new accounts are created only for an address an operator invited. A social login with no invitation becomes a *pending request* (the person is told to wait; an operator approves or rejects it in the console). The admin address is always exempt, so the operator can register first |
+| `TABVERSED_REGISTRATION_REQUIRES_INVITE` | `false` | new accounts are created only for an address an operator invited. Login and registration are two steps (ADR 0029): a social login with no invitation lands on the register page, which needs an invitation code. The admin address is always exempt, so the operator can register first |
 | `TABVERSED_EMAIL_REGISTRATION` | `true` (official build: `false`) | the passwordless email sign-in and registration path; off means social logins only |
 | `TABVERSED_SESSION_TTL`      | `24h`                | how long one console sign-in lasts; `0` = no bound (ADR 0021) |
 | `TABVERSED_SESSION_COOKIE_TTL` | _(same as the session)_ | how long the browser keeps the cookie; defaults to `TABVERSED_SESSION_TTL` so the credential never outlives the session |
@@ -305,16 +305,21 @@ the registration invites.
 `alice (impersonated by admin)`; the admin page is one click away in the header,
 so another account is one click and coming back is *Stop looking*.
 
-There is no "create account" anywhere: registration is the only way an account
-comes into existence, so there is a single path that can prove an address. The
-accounts sidebar is gone - it was a second copy of the directory for an operator
-and a single useless row for a person.
+There is no "create account" in the admin page: registration is the only way an
+account comes into existence, so there is a single path that can prove an
+address - and it is two steps (ADR 0029): a provider login with no account
+lands on the **Create your account** page, which records the address and the
+user agreement. The accounts sidebar is gone - it was a second copy of the
+directory for an operator and a single useless row for a person.
 
 ### Signing in
 
 A single-use link sent to the address you type - there is no password anywhere,
 so nothing to forget, reuse or leak. The link works once and expires in 30
-minutes. With no `TABVERSED_SMTP_HOST` the link is printed to the server log,
+minutes. Following it proves the address; creating the account is the separate
+**Create your account** step that follows, where the address (and, on an
+invite-only server, the invitation code) and the user agreement are entered.
+With no `TABVERSED_SMTP_HOST` the link is printed to the server log,
 which is what a LAN-only deployment wants. GitHub and Google are offered when
 configured; a self hosted OpenID Connect provider is *not* wired (the auth
 library's custom provider speaks plain OAuth2, not OIDC discovery with id_token

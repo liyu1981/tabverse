@@ -145,6 +145,16 @@ func ResolveAccountID(ctx context.Context, st *store.Store, sessionID string) (s
 	if err != nil {
 		return "", false, err
 	}
+	if !known && !retired && subject != sessionID {
+		// Backward compatibility: identities written by the original account
+		// updater stored the whole claim id as the subject (provider prefix
+		// included). New ones store the bare subject; this keeps a session on a
+		// deployment that upgraded from being mistaken for a fresh registration.
+		userID, known, retired, err = st.AccountIDForIdentity(ctx, provider, sessionID)
+		if err != nil {
+			return "", false, err
+		}
+	}
 	if retired {
 		return "", true, store.ErrNotFound
 	}

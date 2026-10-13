@@ -37,6 +37,13 @@ info:
     operator, and an operator may name others. `POST /console/api/v1/auth/bootstrap` is
     refused as soon as the deployment has a user or an account.
 
+    Login and registration are two steps (ADR 0029). A provider login whose
+    subject has no account is answered by `GET /console/api/v1/console/me` with
+    `needs_registration` instead of an account, and
+    `POST /console/api/v1/console/register` creates it. Nothing else creates an
+    account for a signed-in subject, so a session that outlives its account - a
+    deleted one, or a wiped database - cannot resurrect it.
+
     ## Revisions
     The server keeps a per-user monotonic revision counter (`rev_seq`). Every
     accepted record write assigns the next value as the record's `rev`.
