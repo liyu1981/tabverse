@@ -129,6 +129,11 @@ test('a todo is the extension`s row, and the circle is state, not a control', ()
   );
   expect(html).toContain('ship the console');
   expect(html).toContain('later');
+  // The content is a button, like the extension: the stylesheet keys the row and
+  // the completed strike-through off `button.content`, so a span renders as a
+  // bare label and a completed todo looks like any other.
+  expect(html).toContain('ship the console</button>');
+  expect(html).toContain('later</button>');
   // completed sorts to the bottom, as the extension sorts it
   expect(html.indexOf('later')).toBeGreaterThan(
     html.indexOf('ship the console'),

@@ -45,7 +45,14 @@ export function TodoPanel(props: { todos: Todo[] }) {
             readOnly={true}
             aria-label={todo.completed ? 'completed' : 'not completed'}
           />
-          <span className={todoClasses.content}>{todo.content}</span>
+          {/* The content is a `button`, exactly as in the extension, because the
+              stylesheet draws the row and the completed strike-through with
+              `.toggle + button.content` and `li.completed button.content`. A
+              span would render as a bare label. It has no handler - reading is
+              all this view does - so it is out of the tab order. */}
+          <button type="button" tabIndex={-1} className={todoClasses.content}>
+            {todo.content}
+          </button>
         </div>
       </li>
     ));
