@@ -112,7 +112,9 @@ Two settings gate registration:
 - **`TABVERSED_REGISTRATION_REQUIRES_INVITE=1`** makes it invite-only: the
   register page then requires an invitation code. Invite addresses from the
   console's **Admin ▸ Registration invites** section. Every invitation carries a
-  code and the message names it. Nothing sends mail on its own: opening an
+  code, the message names it, and it also carries a link that opens the console
+  with the address and the code already filled in. Nothing sends mail on its
+  own: opening an
   invitation shows the drafted message to copy, and an explicit **Send with
   Resend** button sends that same message. A person with no code can **request
   an invitation** on the register page: that creates a pending request the

@@ -97,7 +97,7 @@ func (s *Server) handleAdminCreateRegistrationInvite(w http.ResponseWriter, r *h
 		writeStoreErr(w, err)
 		return
 	}
-	subject, body := s.accounts.RenderRegistrationInvite(code, inv.ExpiresAt)
+	subject, body := s.accounts.RenderRegistrationInvite(email, code, inv.ExpiresAt)
 	if req.SendEmail {
 		if sentSubject, sentBody, sendErr := s.accounts.SendRegistrationInvite(email, code, inv.ExpiresAt); sendErr != nil {
 			// The invite exists; a mail failure must not lose it. The console
@@ -143,7 +143,7 @@ func (s *Server) handleAdminListRegistrationInvites(w http.ResponseWriter, r *ht
 				"email", invs[i].Email, "err", err)
 			code = invs[i].Code
 		}
-		subject, body := s.accounts.RenderRegistrationInvite(code, invs[i].ExpiresAt)
+		subject, body := s.accounts.RenderRegistrationInvite(invs[i].Email, code, invs[i].ExpiresAt)
 		invs[i].EmailSubject, invs[i].EmailBody = subject, body
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"invites": invs})
@@ -187,7 +187,7 @@ func (s *Server) handleAdminSendRegistrationInvite(w http.ResponseWriter, r *htt
 	}
 	subject, body := strings.TrimSpace(req.Subject), req.Text
 	if subject == "" || strings.TrimSpace(body) == "" {
-		subject, body = s.accounts.RenderRegistrationInvite(code, inv.ExpiresAt)
+		subject, body = s.accounts.RenderRegistrationInvite(email, code, inv.ExpiresAt)
 	}
 	if err := s.accounts.SendMessage(email, subject, body); err != nil {
 		s.logger.Warn("could not send the registration invitation", "to", email, "err", err)
@@ -277,7 +277,7 @@ func (s *Server) handleAdminInviteRegistrationRequest(w http.ResponseWriter, r *
 		writeStoreErr(w, err)
 		return
 	}
-	subject, body := s.accounts.RenderRegistrationInvite(display, inv.ExpiresAt)
+	subject, body := s.accounts.RenderRegistrationInvite(acc.Email, display, inv.ExpiresAt)
 	inv.EmailSubject, inv.EmailBody = subject, body
 	_ = s.store.AppendAudit(ctx, store.AuditEntry{
 		Actor: s.actorOf(r), Target: userID, Action: store.AuditRegistrationRequestInvited,

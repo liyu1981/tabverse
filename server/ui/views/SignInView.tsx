@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useUnit } from 'effector-react';
 
 import { requestSigninLink } from '../data/actions';
+import { $invitation } from '../data/stores/invitation';
 import { $me } from '../data/stores/session';
 import { ProviderMark, providerLabel } from '../components/ProviderMark';
 import classes from '../layout.module.scss';
@@ -40,7 +41,10 @@ function orderedProviders(providers: string[]): string[] {
 
 export function SignInView() {
   const me = useUnit($me);
-  const [email, setEmail] = useState('');
+  // A link from an invitation fills the address in (adr/0029). The code it
+  // carries is kept for the register step, where it is actually asked for.
+  const invitation = useUnit($invitation);
+  const [email, setEmail] = useState(invitation?.email ?? '');
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');

@@ -5,6 +5,7 @@ import React from 'react';
 import { RegisterView } from './RegisterView';
 import { setApi, createConsoleApi } from '../data/api';
 import { loadMeFx } from '../data/effects';
+import { invitationLoaded, invitationUsed } from '../data/stores/invitation';
 import { sessionExpired } from '../data/stores/session';
 
 /**
@@ -49,6 +50,7 @@ async function pendingRegistration(me: Record<string, unknown>) {
 
 beforeEach(() => {
   sessionExpired();
+  invitationUsed();
 });
 
 test('a provider login with no account asks for an address and the agreement', async () => {
@@ -102,4 +104,18 @@ test('without the embedded docs the agreement falls back to the repository', asy
   const html = renderToStaticMarkup(<RegisterView />);
   expect(html).toContain('github.com/liyu1981/tabverse');
   expect(html).not.toContain('href="/terms"');
+});
+
+test('a link from an invitation fills the code in', async () => {
+  invitationLoaded({ email: 'invited@example.com', code: 'CODE-1' });
+  // A provider that supplied no address, so the invitation's address is the one
+  // that shows up, and the code is required because the server is invite-only.
+  await pendingRegistration({
+    registration: { provider: 'github', email: '', name: 'yli' },
+    invite_required: true,
+    admin_email: 'operator@example.com',
+  });
+  const html = renderToStaticMarkup(<RegisterView />);
+  expect(html).toContain('value="invited@example.com"');
+  expect(html).toContain('value="CODE-1"');
 });

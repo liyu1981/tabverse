@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useUnit } from 'effector-react';
 
 import { registerAccount } from '../data/actions';
+import { $invitation } from '../data/stores/invitation';
 import { $me } from '../data/stores/session';
 import { providerLabel } from '../components/ProviderMark';
 import classes from '../layout.module.scss';
@@ -26,10 +27,13 @@ import classes from '../layout.module.scss';
  */
 export function RegisterView() {
   const me = useUnit($me);
+  const invitation = useUnit($invitation);
   const registration = me?.registration;
   const provider = registration?.provider || '';
-  const [email, setEmail] = useState(registration?.email || '');
-  const [code, setCode] = useState('');
+  const [email, setEmail] = useState(
+    registration?.email || invitation?.email || '',
+  );
+  const [code, setCode] = useState(invitation?.code || '');
   const [agree, setAgree] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');

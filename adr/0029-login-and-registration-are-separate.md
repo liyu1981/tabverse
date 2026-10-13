@@ -70,8 +70,11 @@ second one writes an account.**
    operator sees it in the console's request queue, and the requester's next
    sign-in shows the waiting notice. Approving that request mints the invitation
    and **discards the placeholder**, so the person still registers with the code
-   like anybody else - the code is never skipped. `handleConsoleSigninLink` no
-   longer creates anything, so it no longer pre-checks the invite either.
+   like anybody else - the code is never skipped. The invitation message carries
+   a console link with the address and code in its query; the console reads it
+   at boot, keeps it in sessionStorage across the sign-in redirect (which drops
+   the query), and pre-fills the sign-in address and the register code.
+   `handleConsoleSigninLink` no longer creates anything, so it no longer pre-checks the invite either.
 
 5. **The user agreement is recorded.** The register page requires a checkbox,
    and the acceptance is stamped on the account (`users.terms_accepted_at`) and

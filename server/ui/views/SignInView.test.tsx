@@ -5,6 +5,7 @@ import React from 'react';
 import { SignInView } from './SignInView';
 import { setApi, createConsoleApi } from '../data/api';
 import { loadMeFx } from '../data/effects';
+import { invitationLoaded, invitationUsed } from '../data/stores/invitation';
 import { sessionExpired } from '../data/stores/session';
 
 /**
@@ -46,6 +47,7 @@ async function signedOut(me: Record<string, unknown>) {
 
 beforeEach(() => {
   sessionExpired();
+  invitationUsed();
 });
 
 test('the provider buttons come before the address form', async () => {
@@ -135,4 +137,11 @@ test('email registration on: the address form, and no invite code (that moved to
   // The invitation code is asked at the register step now (adr/0029), not when
   // the link is requested.
   expect(say(html)).not.toContain('Invitation code');
+});
+
+test('a link from an invitation fills the address in', async () => {
+  invitationLoaded({ email: 'invited@example.com', code: 'CODE-1' });
+  await signedOut({ providers: [], email_registration: true });
+  const html = renderToStaticMarkup(<SignInView />);
+  expect(html).toContain('value="invited@example.com"');
 });

@@ -47,6 +47,7 @@ import { closeTabspace, openTabspace } from './stores/drawer';
 import { setView } from './stores/view';
 import type { ConsoleView } from './stores/view';
 import { $isOperator, $ownUserId, sessionExpired } from './stores/session';
+import { invitationUsed } from './stores/invitation';
 import { reportFailure, reportSuccess } from './stores/toasts';
 import {
   archiveDeviceFx,
@@ -576,6 +577,9 @@ export async function registerAccount(
     }),
   );
   if (done.ok) {
+    // The invitation has done its job - the account exists - so it will not
+    // pre-fill a later registration.
+    invitationUsed();
     // A request keeps the session, now pointing at the pending account, so the
     // console shows the waiting notice. A normal registration signs it out, so
     // the same call comes back as the signed-out deployment. Re-read it either
