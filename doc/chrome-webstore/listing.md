@@ -60,7 +60,7 @@ Answers to give in the dashboard:
 |---|---|
 | Does this item collect user content? | **Yes — only when the user enables sync** (tab URLs/titles, notes, todos, bookmarks), stored on the sync server the user chose: one they run themselves, or Tabverse's own server (tabversed.liyu1981.xyz) with the one-click connection. Nothing is sent until sync is set up. |
 | Does it collect browsing history? | **Yes — only when the user enables sync**, for the purpose of restoring tab groups. Never sold or shared. |
-| Does it collect personally identifiable information? | No. There are no accounts, emails or names beyond a self-chosen device label. |
+| Does it collect personally identifiable information? | No. The extension itself collects no accounts, emails or names beyond a self-chosen device label. A sync server you pair with may have console accounts; you create and sign into those on that server, and the address is stored there, not sent to us. |
 | Is it used for analytics/advertising? | No. |
 
 ## Remote code

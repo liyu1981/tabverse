@@ -34,9 +34,12 @@ pnpm run server:dev      # listens on 0.0.0.0:8223, db ./server/data/tabversed.d
 
 Then:
 
-1. Open `http://localhost:8223/console` and **sign in** with your address. The
-   first time, that registers the account; the link is emailed if SMTP is
-   configured, and printed to the server log otherwise.
+1. Open `http://localhost:8223/console` and **sign in** - with a provider, or by
+   typing your address and following the link it emails (printed to the server
+   log if no SMTP is set). Signing in proves who you are; the **Create your
+   account** page that follows records the address and your agreement, and then
+   the account exists. The first account registered with `TABVERSED_ADMIN_EMAIL`
+   becomes the operator.
 2. In the console's **Pair Code** tab, mint a single-use code.
 3. In the extension, open **Settings ▸ Sync ▸ Setup ▸ Custom server** and pair
    with the server URL (the address *the browser* can reach it at) and that

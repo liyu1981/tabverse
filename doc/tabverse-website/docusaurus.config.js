@@ -133,6 +133,10 @@ const config = {
                 label: 'Privacy Policy',
                 to: '/privacy',
               },
+              {
+                label: 'User Agreement',
+                to: '/terms',
+              },
             ],
           },
           {

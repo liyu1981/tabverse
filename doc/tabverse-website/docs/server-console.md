@@ -30,8 +30,14 @@ An operator also gets a separate **Admin** page at `/console/admin`, reached
 from a button in the header next to *tabverse* (see below).
 
 Sign-in is a single-use link emailed to you, or GitHub / Google if the operator
-enabled it. "Sign out everywhere" ends every browser session on the account;
-paired devices keep syncing, because their tokens are a different credential.
+enabled it. Signing in and creating an account are **two steps** (ADR 0029): the
+first time, following the link or the provider lands on a **Create your
+account** page, which records the address and your agreement to the user
+agreement, and the account exists after that. On an invite-only server the page
+also asks for an invitation code - an invitation link from the operator fills
+that in - and an address with no code can request one there. "Sign out
+everywhere" ends every browser session on the account; paired devices keep
+syncing, because their tokens are a different credential.
 
 ## For an operator
 

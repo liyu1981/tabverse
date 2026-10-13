@@ -39,3 +39,7 @@ server/internal/webui/docs/*
 # a deployment's real settings, which hold two secrets. The template next to it
 # is the tracked one.
 server/.env
+# Backups of those settings: `tabversed config --upgrade` writes .env.bak, and a
+# timestamped .env.bak.<stamp> when one is already there. They hold the same
+# secrets, so they are never committed either.
+*.bak*

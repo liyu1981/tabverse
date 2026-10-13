@@ -55,9 +55,10 @@ where you sign in to see and manage the account:
 - (operators) the directory of accounts on the server
 
 Sign-in is a single-use link emailed to you, or GitHub / Google if the operator
-of that server configured it. There is no master token or shared password: the
-person who runs the server is an ordinary account, and everything done in the
-console is recorded. See the [Server Console](../server-console).
+of that server configured it; the first time, that leads to a **Create your
+account** page before the account exists. There is no master token or shared
+password: the person who runs the server is an ordinary account, and everything
+done in the console is recorded. See the [Server Console](../server-console).
 
 ## Privacy
 

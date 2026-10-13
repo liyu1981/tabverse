@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.10.2">
 <title data-rh="true">Self-host a server | Tabverse</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://liyu1981.github.io/tabverse/docs/self-host-server"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Self-host a server | Tabverse"><meta data-rh="true" name="description" content="Tabverse is local first; a server is optional. If you want the same tabverses on"><meta data-rh="true" property="og:description" content="Tabverse is local first; a server is optional. If you want the same tabverses on"><link data-rh="true" rel="icon" href="/tabverse/img/icon19.png"><link data-rh="true" rel="canonical" href="https://liyu1981.github.io/tabverse/docs/self-host-server"><link data-rh="true" rel="alternate" href="https://liyu1981.github.io/tabverse/docs/self-host-server" hreflang="en"><link data-rh="true" rel="alternate" href="https://liyu1981.github.io/tabverse/docs/self-host-server" hreflang="x-default"><script data-rh="true" type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Self-host a server","item":"https://liyu1981.github.io/tabverse/docs/self-host-server"}]}</script><link rel="stylesheet" href="/tabverse/assets/css/styles.bbfd2aaa.css">
-<script src="/tabverse/assets/js/runtime~main.18ff704b.js" defer="defer"></script>
-<script src="/tabverse/assets/js/main.ca65ccd6.js" defer="defer"></script>
+<script src="/tabverse/assets/js/runtime~main.1de1488b.js" defer="defer"></script>
+<script src="/tabverse/assets/js/main.c2129bc0.js" defer="defer"></script>
 </head>
 <body>
 <svg style="display: none;"><defs>
@@ -35,9 +35,12 @@ link is printed to the server log, which is fine for a LAN.</li>
 <p>Then:</p>
 <ol>
 <li class="">
-<p>Open <code>http://localhost:8223/console</code> and <strong>sign in</strong> with your address. The
-first time, that registers the account; the link is emailed if SMTP is
-configured, and printed to the server log otherwise.</p>
+<p>Open <code>http://localhost:8223/console</code> and <strong>sign in</strong> - with a provider, or by
+typing your address and following the link it emails (printed to the server
+log if no SMTP is set). Signing in proves who you are; the <strong>Create your
+account</strong> page that follows records the address and your agreement, and then
+the account exists. The first account registered with <code>TABVERSED_ADMIN_EMAIL</code>
+becomes the operator.</p>
 </li>
 <li class="">
 <p>In the console&#x27;s <strong>Pair Code</strong> tab, mint a single-use code.</p>
@@ -68,20 +71,29 @@ worth setting on a real deployment:</p>
 <code>TABVERSED_WS_ORIGINS</code>, the session TTLs and the social provider keys - is in
 the <a href="https://github.com/liyu1981/tabverse/blob/main/server/README.md" target="_blank" rel="noopener noreferrer" class="">server README</a>.</p>
 <h2 class="anchor anchorTargetStickyNavbar_K9Hy" id="who-may-register">Who may register<a href="#who-may-register" class="hash-link" aria-label="Direct link to Who may register" title="Direct link to Who may register" translate="no">​</a></h2>
-<p>By default anybody who can reach the server can create an account by signing in.
-Two settings change that:</p>
+<p>By default anybody who can reach the server can create an account, but signing
+in and creating the account are <strong>two steps</strong> (ADR 0029). A social provider, or
+the emailed sign-in link, proves who the person is; a <strong>Create your account</strong>
+page then asks for the email (required) and their agreement to the user
+agreement. Nothing creates an account silently, so a session that outlives its
+account - a deleted one, or a database restored from before it existed - is sent
+back to that page instead of recreating a user.</p>
+<p>Two settings gate registration:</p>
 <ul>
-<li class=""><strong><code>TABVERSED_REGISTRATION_REQUIRES_INVITE=1</code></strong> makes it invite-only. A social
-login with no invitation is not refused: it becomes a <strong>pending request</strong>, and
-the person sees a &quot;registration request received&quot; notice instead of their
-account. In the console&#x27;s <strong>Admin ▸ Registration invites</strong> section an operator
-sees the requests and can <strong>Invite</strong> (which activates the account and creates
-an invitation) or <strong>Delete</strong> one, and can also invite an address by hand.
-Every invitation carries a code and the message names it. Nothing sends mail
-on its own: opening an invitation
-shows the drafted message to copy, and an explicit <strong>Send with Resend</strong> button
-sends that same message. The admin address is exempt, so the operator can
-always register first.</li>
+<li class=""><strong><code>TABVERSED_REGISTRATION_REQUIRES_INVITE=1</code></strong> makes it invite-only: the
+register page then requires an invitation code. Invite addresses from the
+console&#x27;s <strong>Admin ▸ Registration invites</strong> section. Every invitation carries a
+code, the message names it, and it also carries a link that opens the console
+with the address and the code already filled in. Nothing sends mail on its
+own: opening an
+invitation shows the drafted message to copy, and an explicit <strong>Send with
+Resend</strong> button sends that same message. A person with no code can <strong>request
+an invitation</strong> on the register page: that creates a pending request the
+operator sees in the console, and the requester&#x27;s next sign-in shows a waiting
+notice instead of the console. Approving a request mints the invitation and
+drops the request; the person then registers with the code like anybody else -
+the code is never skipped. The admin address is exempt from the code, so the
+operator can always register first.</li>
 <li class=""><strong><code>TABVERSED_EMAIL_REGISTRATION=0</code></strong> turns the passwordless email path off and
 leaves social logins only. The official build defaults to this.</li>
 </ul>
@@ -107,6 +119,6 @@ invites. See the <a class="" href="/tabverse/docs/server-console">Server Console
 running.</li>
 <li class=""><a class="" href="/tabverse/docs/advanced-usage/server-sync">Sync with a server</a> - the extension side of
 pairing.</li>
-</ul></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="row margin-top--sm theme-doc-footer-edit-meta-row"><div class="col noPrint_A8eo"><a href="https://github.com/liyu1981/tabverse/edit/main/doc/tabverse-website/docs/self-host-server.md" target="_blank" rel="noopener noreferrer" class="theme-edit-this-page"><svg fill="currentColor" height="20" width="20" viewBox="0 0 40 40" class="iconEdit_BiXu" aria-hidden="true"><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"></path></g></svg>Edit this page</a></div><div class="col lastUpdated_eC6k"></div></div></footer></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href="/tabverse/docs/advanced-usage/ai"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">On-device AI</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/tabverse/docs/server-console"><div class="pagination-nav__sublabel">Next</div><div class="pagination-nav__label">Server Console Usage</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_kF1a thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#what-you-need" class="table-of-contents__link toc-highlight">What you need</a></li><li><a href="#quick-start-from-source" class="table-of-contents__link toc-highlight">Quick start (from source)</a></li><li><a href="#run-it-as-a-service" class="table-of-contents__link toc-highlight">Run it as a service</a></li><li><a href="#configuration" class="table-of-contents__link toc-highlight">Configuration</a></li><li><a href="#who-may-register" class="table-of-contents__link toc-highlight">Who may register</a></li><li><a href="#tls" class="table-of-contents__link toc-highlight">TLS</a></li><li><a href="#becoming-the-operator" class="table-of-contents__link toc-highlight">Becoming the operator</a></li><li><a href="#next" class="table-of-contents__link toc-highlight">Next</a></li></ul></div></div></div></div></main></div></div></div><footer class="theme-layout-footer footer"><div class="container container-fluid"><div class="row footer__links"><div class="theme-layout-footer-column col footer__col"><div class="footer__title">Tabverse</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://github.com/liyu1981/tabverse" target="_blank" rel="noopener noreferrer" class="footer__link-item">Open Source<svg width="13.5" height="13.5" aria-label="(opens in new tab)" class="iconExternalLink_mUEw"><use href="#theme-svg-external-link"></use></svg></a></li><li class="footer__item"><a href="https://github.com/liyu1981/tabverse/discussions" target="_blank" rel="noopener noreferrer" class="footer__link-item">Feedback &amp; Issue<svg width="13.5" height="13.5" aria-label="(opens in new tab)" class="iconExternalLink_mUEw"><use href="#theme-svg-external-link"></use></svg></a></li></ul></div><div class="theme-layout-footer-column col footer__col"><div class="footer__title">Community</div><ul class="footer__items clean-list"><li class="footer__item"><a class="footer__link-item" href="/tabverse/privacy">Privacy Policy</a></li></ul></div><div class="theme-layout-footer-column col footer__col"><div class="footer__title">More</div><ul class="footer__items clean-list"><li class="footer__item"><a class="footer__link-item" href="/tabverse/docs/intro">User Manual</a></li></ul></div></div><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2026 Tabverse Project. This website is built with Docusaurus.</div></div></div></footer></div>
+</ul></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="row margin-top--sm theme-doc-footer-edit-meta-row"><div class="col noPrint_A8eo"><a href="https://github.com/liyu1981/tabverse/edit/main/doc/tabverse-website/docs/self-host-server.md" target="_blank" rel="noopener noreferrer" class="theme-edit-this-page"><svg fill="currentColor" height="20" width="20" viewBox="0 0 40 40" class="iconEdit_BiXu" aria-hidden="true"><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"></path></g></svg>Edit this page</a></div><div class="col lastUpdated_eC6k"></div></div></footer></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href="/tabverse/docs/advanced-usage/ai"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">On-device AI</div></a><a class="pagination-nav__link pagination-nav__link--next" href="/tabverse/docs/server-console"><div class="pagination-nav__sublabel">Next</div><div class="pagination-nav__label">Server Console Usage</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_kF1a thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#what-you-need" class="table-of-contents__link toc-highlight">What you need</a></li><li><a href="#quick-start-from-source" class="table-of-contents__link toc-highlight">Quick start (from source)</a></li><li><a href="#run-it-as-a-service" class="table-of-contents__link toc-highlight">Run it as a service</a></li><li><a href="#configuration" class="table-of-contents__link toc-highlight">Configuration</a></li><li><a href="#who-may-register" class="table-of-contents__link toc-highlight">Who may register</a></li><li><a href="#tls" class="table-of-contents__link toc-highlight">TLS</a></li><li><a href="#becoming-the-operator" class="table-of-contents__link toc-highlight">Becoming the operator</a></li><li><a href="#next" class="table-of-contents__link toc-highlight">Next</a></li></ul></div></div></div></div></main></div></div></div><footer class="theme-layout-footer footer"><div class="container container-fluid"><div class="row footer__links"><div class="theme-layout-footer-column col footer__col"><div class="footer__title">Tabverse</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://github.com/liyu1981/tabverse" target="_blank" rel="noopener noreferrer" class="footer__link-item">Open Source<svg width="13.5" height="13.5" aria-label="(opens in new tab)" class="iconExternalLink_mUEw"><use href="#theme-svg-external-link"></use></svg></a></li><li class="footer__item"><a href="https://github.com/liyu1981/tabverse/discussions" target="_blank" rel="noopener noreferrer" class="footer__link-item">Feedback &amp; Issue<svg width="13.5" height="13.5" aria-label="(opens in new tab)" class="iconExternalLink_mUEw"><use href="#theme-svg-external-link"></use></svg></a></li></ul></div><div class="theme-layout-footer-column col footer__col"><div class="footer__title">Community</div><ul class="footer__items clean-list"><li class="footer__item"><a class="footer__link-item" href="/tabverse/privacy">Privacy Policy</a></li><li class="footer__item"><a class="footer__link-item" href="/tabverse/terms">User Agreement</a></li></ul></div><div class="theme-layout-footer-column col footer__col"><div class="footer__title">More</div><ul class="footer__items clean-list"><li class="footer__item"><a class="footer__link-item" href="/tabverse/docs/intro">User Manual</a></li></ul></div></div><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2026 Tabverse Project. This website is built with Docusaurus.</div></div></div></footer></div>
 </body>
 </html>

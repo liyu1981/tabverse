@@ -11,9 +11,8 @@ information in relation to this policy. The Personal Information that I collect
 is used for providing and improving the Service. I will not use or share your
 information with anyone except as described in this Privacy Policy.
 
-The terms used in this Privacy Policy have the same meanings as in our Terms and
-Conditions, which are accessible at Tabverse unless otherwise defined in this
-Privacy Policy.
+The terms used in this Privacy Policy have the same meanings as in our
+[User Agreement](/terms) unless otherwise defined in this Privacy Policy.
 
 **Information Collection and Use**
 
@@ -47,11 +46,14 @@ to **the server you configured** over an encrypted connection:
 **Console accounts.** You can sign in to the server's own web console to add
 devices and look at your data. Signing in means either a single-use link sent to
 your email address - there is no password to store anywhere - or GitHub or
-Google, and only if the server operator configured that. Signing in adds your
-**email address** to that server's database, because it is what the link is sent
-to, or what the sign-in provider returns for the account (with Google, that is
-the address you gave Google, and whether Google reports it as verified); it is
-never sent anywhere else. Sessions are cookies on that server only,
+Google, and only if the server operator configured that. Signing in and creating
+the account are two steps: the account is created when you finish the **Create
+your account** page, which stores your **email address** (what the link was sent
+to, or what the sign-in provider returned - with Google, the address you gave
+Google, and whether Google reports it as verified), records your agreement to
+the [user agreement](/terms), and, on an invite-only server, takes the
+invitation code you were given. It is never sent anywhere else. Sessions are
+cookies on that server only,
 and an operator of a multi-user server can open a **read only, time limited,
 logged** view of your account to answer support questions; they cannot change
 anything that way. The console has no master password or token: the person who
@@ -65,8 +67,9 @@ server URL you entered. Server side retention removes session snapshots after
 14 days by default (configurable, 0 keeps them forever). You can disconnect at
 any time from the sync dialog; your local copy remains untouched.
 
-There are no accounts, no analytics, no advertising and no tracking in
-Tabverse.
+The extension itself has no accounts, no analytics, no advertising and no
+tracking. An account exists only on a server you choose to pair with, and only
+if you create one there.
 
 **Log Data**
 
@@ -140,7 +143,8 @@ review this page periodically for any changes. I will notify you of any changes
 by posting the new Privacy Policy on this page.
 
 This policy is effective as of 2021-12-06; the server sync section was added in 2026,
-and the console accounts paragraph was updated when social sign-in was added.
+and the console accounts paragraph was updated when social sign-in was added and
+again when registration became its own step.
 
 **Contact Us**
 
