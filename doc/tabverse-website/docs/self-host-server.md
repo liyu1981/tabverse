@@ -117,8 +117,10 @@ Two settings gate registration:
   Resend** button sends that same message. A person with no code can **request
   an invitation** on the register page: that creates a pending request the
   operator sees in the console, and the requester's next sign-in shows a waiting
-  notice instead of the console. The admin address is exempt from the code, so
-  the operator can always register first.
+  notice instead of the console. Approving a request mints the invitation and
+  drops the request; the person then registers with the code like anybody else -
+  the code is never skipped. The admin address is exempt from the code, so the
+  operator can always register first.
 - **`TABVERSED_EMAIL_REGISTRATION=0`** turns the passwordless email path off and
   leaves social logins only. The official build defaults to this.
 

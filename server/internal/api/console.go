@@ -19,6 +19,15 @@ import (
 // /console/me, so the page has one source of truth and no second guess about
 // which credential it is holding.
 
+// signinAddressCookie remembers the address a passwordless sign-in link was
+// sent to, so the register page can offer it back. The claim for that provider
+// only carries a hash of the address, not the address itself (adr/0029), so
+// without this the person has to retype what they just typed.
+const signinAddressCookie = "tv_signin_address"
+
+// signinAddressTTL matches the link's own 30 minute life, in seconds.
+const signinAddressTTL = 30 * 60
+
 func (s *Server) handleConsoleMe(w http.ResponseWriter, r *http.Request) {
 	// Accounts are unconditional (adr/0013), so this endpoint has one shape.
 	// The page's whole job is to read it and decide what to show.
@@ -59,9 +68,19 @@ func (s *Server) handleConsoleMe(w http.ResponseWriter, r *http.Request) {
 		if pending, ok := s.accounts.PendingRegistrationFromRequest(r); ok {
 			out["needs_registration"] = true
 			out["csrf"] = s.csrfToken(r)
+			// The passwordless provider's claim has no address in it, so the
+			// address the link was sent to comes back from the cookie set when it
+			// was requested. A social provider's own address is already on the
+			// claim and wins.
+			email := pending.Email
+			if email == "" && pending.Provider == accounts.ProviderEmail {
+				if c, err := r.Cookie(signinAddressCookie); err == nil {
+					email = c.Value
+				}
+			}
 			out["registration"] = map[string]any{
 				"provider": pending.Provider,
-				"email":    pending.Email,
+				"email":    email,
 				"name":     pending.Name,
 			}
 		}
@@ -283,10 +302,24 @@ func (s *Server) handleConsoleSigninLink(w http.ResponseWriter, r *http.Request)
 	// address gets a link whose register page says so, rather than a silent
 	// refusal here.
 	//
+	// The register page needs the address again after the link is followed, and
+	// the passwordless claim hashes it into the subject instead of carrying it,
+	// so remember it here for as long as the link is good.
+	http.SetCookie(w, &http.Cookie{
+		Name: signinAddressCookie, Value: addrKey, Path: webui.Mount,
+		MaxAge: signinAddressTTL, HttpOnly: true, Secure: s.cfg.SecureCookies,
+		SameSite: http.SameSiteLaxMode,
+	})
 	// The rewrite into the shape the library dispatches on. The `from` that
 	// brings the person back to the console is not set here: Handlers() puts it on
 	// every provider login, server side, so the two sign-in flows cannot drift.
+	// The address is lower-cased before it is hashed, so the subject the session
+	// resolves through matches the address Register will hash (it lower-cases
+	// too), and one mailbox is one account however it was typed.
 	hijack := r.Clone(r.Context())
+	q := hijack.URL.Query()
+	q.Set("address", addrKey)
+	hijack.URL.RawQuery = q.Encode()
 	hijack.URL.Path = "/" + accounts.ProviderEmail + "/login"
 	s.accounts.Handlers().ServeHTTP(w, hijack)
 }
@@ -357,6 +390,12 @@ func (s *Server) handleConsoleRegister(w http.ResponseWriter, r *http.Request) {
 	}
 	_ = s.store.AppendAudit(r.Context(), store.AuditEntry{
 		Actor: userID, Target: userID, Action: store.AuditTermsAccepted, IP: clientIP(r),
+	})
+	// The address cookie has done its job; drop it so a later registration does
+	// not inherit a stale one.
+	http.SetCookie(w, &http.Cookie{
+		Name: signinAddressCookie, Value: "", Path: webui.Mount, MaxAge: -1,
+		HttpOnly: true, Secure: s.cfg.SecureCookies,
 	})
 	// A normal registration signs the pending session out, so the next sign-in
 	// resolves to the new account. A *request* keeps the session: it now resolves

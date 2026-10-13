@@ -27,10 +27,12 @@ import dataClasses from '../data.module.scss';
  * The operator's control over who may register on an invite-only server
  * (TABVERSED_REGISTRATION_REQUIRES_INVITE).
  *
- * Two sections: the requests from people who logged in without an invitation,
- * then the invites the operator makes by hand. Nothing sends mail on its own -
- * a click on a row opens a dialog with the two ways to deliver the invitation:
- * send it through the server, or copy the drafted message and send it yourself.
+ * Two sections: the requests from people who asked for an invitation on the
+ * register page, then the invites the operator makes by hand. Approving a
+ * request mints the invitation and drops the request; the person registers with
+ * the code like anybody else. Nothing sends mail on its own - a click on a row
+ * opens a dialog with the two ways to deliver the invitation: send it through
+ * the server, or copy the drafted message and send it yourself.
  */
 export function RegistrationInvitesPanel() {
   const me = useUnit($me);
@@ -129,7 +131,8 @@ export function RegistrationInvitesPanel() {
     }
   };
 
-  // Approving mints an invitation and activates the account; it does not send.
+  // Approving mints an invitation for the address and drops the placeholder; it
+  // does not send. The person still registers with the code.
   const approveRequest = async (request: UserSummary) => {
     const who = request.email || request.id;
     try {

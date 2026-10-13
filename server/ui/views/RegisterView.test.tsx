@@ -63,6 +63,8 @@ test('a provider login with no account asks for an address and the agreement', a
   expect(say(html)).toContain('user agreement');
   expect(html).toContain('href="/terms"');
   expect(say(html)).toContain('Create account');
+  // Invites are off, so there is no invitation-code box at all.
+  expect(say(html)).not.toContain('Invitation code');
 });
 
 test('an invite-only server requires the code, and offers to request one', async () => {
@@ -75,13 +77,13 @@ test('an invite-only server requires the code, and offers to request one', async
   expect(say(html)).toContain('request an invitation');
 });
 
-test('the operator address is exempt from the invitation code', async () => {
+test('the operator address is exempt: no invitation-code box at all', async () => {
   await pendingRegistration({
     invite_required: true,
     admin_email: 'yli@example.com',
   });
   const html = renderToStaticMarkup(<RegisterView />);
-  expect(say(html)).toContain('Invitation code (only if you were given one)');
+  expect(say(html)).not.toContain('Invitation code');
   expect(say(html)).not.toContain('request an invitation');
 });
 

@@ -187,6 +187,25 @@ func (s *Store) DeleteUser(ctx context.Context, id string) error {
 	return s.users.Delete(id)
 }
 
+// DiscardPendingAccount removes a pending placeholder and its identities (the
+// central delete cascades them) *without* retiring its subjects.
+//
+// That is the whole point, and it is what separates this from DeleteUser:
+// approving a registration request mints an invitation and drops the
+// placeholder, and the person must be able to register with that invitation
+// afterwards. A retired subject resolves to "refused"; without the retirement
+// it resolves to "no account yet", which is the register page (adr/0029).
+func (s *Store) DiscardPendingAccount(ctx context.Context, id string) error {
+	res, err := s.db.ExecContext(ctx, `DELETE FROM users WHERE id = ?`, id)
+	if err != nil {
+		return err
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return ErrNotFound
+	}
+	return s.users.Delete(id)
+}
+
 // TokenInfo describes one issued device token. The hash is the full stored
 // hash because that is what a revoke takes; the raw token was never stored, so
 // the console can only show a short fingerprint of it.

@@ -210,6 +210,41 @@ func TestRequestingAnInvitationLeavesAPendingAccount(t *testing.T) {
 	}
 }
 
+// The register page is offered the address a sign-in link was sent to, which
+// the passwordless claim does not carry (adr/0029).
+func TestTheRegisterPageGetsTheSigninAddress(t *testing.T) {
+	ts, srv := newInviteOnlyServer(t)
+
+	var senderCalled bool
+	srv.accounts.SetSenderOverride(func(string, string) error { senderCalled = true; return nil })
+	client := &sessionClient{ts: ts, xsrfHeader: "X-XSRF-Token", srv: srv}
+	r := client.doJSON(t, http.MethodPost,
+		"/console/api/v1/console/signin-link?address=Linker@Example.com&user=linker&site=http://127.0.0.1:8223", nil)
+	r.mustStatus(t, http.StatusOK)
+	if !senderCalled {
+		t.Fatal("the link was not sent")
+	}
+	var remembered string
+	for _, c := range client.cookies {
+		if c.Name == "tv_signin_address" {
+			remembered = c.Value
+		}
+	}
+	if remembered != "linker@example.com" {
+		t.Fatalf("remembered address = %q, want the lower-cased one", remembered)
+	}
+
+	// The pending session - the same subject the link mints - reads it back.
+	pending := pendingSession(t, ts, srv, "linker@example.com")
+	pending.cookies = append(pending.cookies,
+		&http.Cookie{Name: "tv_signin_address", Value: remembered})
+	me := pending.do(t, http.MethodGet, "/console/api/v1/console/me").body
+	reg, _ := me["registration"].(map[string]any)
+	if reg == nil || reg["email"] != "linker@example.com" {
+		t.Fatalf("registration = %v, want the remembered address", me["registration"])
+	}
+}
+
 // The invitation goes out through the same SMTP the sign-in link uses, which is
 // the point: one mail configuration, two messages.
 func TestRegistrationInviteIsEmailed(t *testing.T) {
@@ -251,22 +286,28 @@ func TestRegistrationRequestsAdminAPI(t *testing.T) {
 	r := adminDo(t, op, http.MethodGet, "/console/api/v1/admin/registration-requests", nil)
 	r.mustStatus(t, http.StatusOK)
 
-	// Approving invites it and activates the account.
+	// Approving mints the invitation and discards the placeholder, so the person
+	// registers with the code like anybody else (adr/0029).
 	r = adminDo(t, op, http.MethodPost,
 		"/console/api/v1/admin/registration-requests/"+uid+"/invite", nil)
 	r.mustStatus(t, http.StatusOK)
-	acc, err := srv.store.AccountByID(context.Background(), uid)
-	if err != nil {
-		t.Fatalf("account: %v", err)
+	if code, _ := r.body["code"].(string); code == "" {
+		t.Fatalf("the approval should return an invitation code: %s", r.raw)
 	}
-	if acc.Pending() {
-		t.Fatalf("the account should be active after the invite")
+	if _, err := srv.store.AccountByID(context.Background(), uid); err == nil {
+		t.Fatalf("the pending placeholder should be gone after the invite")
 	}
+	// ...and the person can now register with the code, which is the point.
+	code, _ := r.body["code"].(string)
+	reverify := pendingSession(t, ts, srv, "asker@example.com")
+	reg := reverify.doJSON(t, http.MethodPost, "/console/api/v1/console/register",
+		map[string]any{"email": "asker@example.com", "agree": true, "code": code})
+	reg.mustStatus(t, http.StatusNoContent)
 
-	// A second approval is a conflict, not a silent no-op.
+	// A second approval has nothing left to approve.
 	r = adminDo(t, op, http.MethodPost,
 		"/console/api/v1/admin/registration-requests/"+uid+"/invite", nil)
-	r.mustStatus(t, http.StatusConflict)
+	r.mustStatus(t, http.StatusNotFound)
 }
 
 // Rejecting a request removes the pending account.

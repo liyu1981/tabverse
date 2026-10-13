@@ -12,14 +12,17 @@ import classes from '../layout.module.scss';
  *
  * A provider login whose subject has no account lands here instead of being
  * turned into one silently (adr/0029). The email is required - it is what the
- * account is identified by - and the agreement is the second thing the old
- * one-step flow never asked for. On success the server signs the pending
- * session out and this page gives way to the sign-in form.
+ * account is identified by, and the server fills it in already when the login
+ * carried one (a social provider's address, or the address a sign-in link was
+ * sent to). The agreement is the second thing the old one-step flow never asked
+ * for. On success the server signs the pending session out and this page gives
+ * way to the sign-in form.
  *
- * On an invite-only server the invitation code is required too, except for the
- * operator's own address, which the server exempts so the first operator can
- * always register (adr/0013). Somebody with no code can request one instead:
- * that creates a pending account, and the next sign-in shows the waiting notice.
+ * The invitation code field appears only when it applies: never when the server
+ * does not gate registration on an invitation, and never for the operator's own
+ * address, which is exempt so the first operator can always register (adr/0013).
+ * When it does apply the code is required; somebody with no code can request an
+ * invitation instead.
  */
 export function RegisterView() {
   const me = useUnit($me);
@@ -31,17 +34,15 @@ export function RegisterView() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
-  // The invitation code is required when the server gates registration on it -
-  // except for the operator's own address, which is exempt.
   const adminEmail = me?.admin_email || '';
   const emailIsAdmin =
     adminEmail !== '' &&
     email.trim().toLowerCase() === adminEmail.toLowerCase();
-  const needCode = me?.invite_required === true && !emailIsAdmin;
+  const showCode = me?.invite_required === true && !emailIsAdmin;
 
   const run = async (request: boolean) => {
     if (!email.trim() || !agree) return;
-    if (!request && needCode && !code.trim()) return;
+    if (!request && showCode && !code.trim()) return;
     setBusy(true);
     setError('');
     const done = await registerAccount(
@@ -100,29 +101,23 @@ export function RegisterView() {
               onChange={(event) => setEmail(event.currentTarget.value)}
             />
           </FormGroup>
-          <FormGroup
-            label={
-              needCode
-                ? 'Invitation code (required)'
-                : 'Invitation code (only if you were given one)'
-            }
-            labelFor="register-code"
-            helperText={
-              needCode
-                ? 'This server is invite-only. Ask the operator for a code, or request one below.'
-                : undefined
-            }
-          >
-            <input
-              id="register-code"
-              type="text"
-              autoComplete="off"
-              spellCheck={false}
-              placeholder="XXXX-XXXX-XXXX-XXXX"
-              value={code}
-              onChange={(event) => setCode(event.currentTarget.value)}
-            />
-          </FormGroup>
+          {showCode ? (
+            <FormGroup
+              label="Invitation code (required)"
+              labelFor="register-code"
+              helperText="This server is invite-only. Ask the operator for a code, or request one below."
+            >
+              <input
+                id="register-code"
+                type="text"
+                autoComplete="off"
+                spellCheck={false}
+                placeholder="XXXX-XXXX-XXXX-XXXX"
+                value={code}
+                onChange={(event) => setCode(event.currentTarget.value)}
+              />
+            </FormGroup>
+          ) : null}
           <Checkbox
             checked={agree}
             onChange={(event) => setAgree(event.currentTarget.checked)}
@@ -138,11 +133,11 @@ export function RegisterView() {
             intent="primary"
             fill={true}
             loading={busy}
-            disabled={!agree || !email.trim() || (needCode && !code.trim())}
+            disabled={!agree || !email.trim() || (showCode && !code.trim())}
           >
             Create account
           </Button>
-          {needCode && !code.trim() ? (
+          {showCode && !code.trim() ? (
             <Button
               className={classes.requestInvite}
               minimal={true}

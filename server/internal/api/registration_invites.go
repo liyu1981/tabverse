@@ -238,8 +238,9 @@ func (s *Server) handleAdminListRegistrationRequests(w http.ResponseWriter, r *h
 	writeJSON(w, http.StatusOK, map[string]any{"requests": requests})
 }
 
-// handleAdminInviteRegistrationRequest approves one: it mints an invitation and
-// activates the account, but does not send anything. Sending is the operator's
+// handleAdminInviteRegistrationRequest approves one: it mints an invitation for
+// the address and discards the pending placeholder, so the person registers
+// with the code like anybody else (adr/0029). Sending is the operator's
 // explicit "Send with Resend" action (`handleAdminSendRegistrationInvite`), so a
 // click here never mails somebody by accident; the response carries the rendered
 // email for the console's copy section.
@@ -268,7 +269,11 @@ func (s *Server) handleAdminInviteRegistrationRequest(w http.ResponseWriter, r *
 		writeStoreErr(w, err)
 		return
 	}
-	if err := s.store.SetUserPending(ctx, userID, 0); err != nil {
+	// The request was only a placeholder. Approving it mints the invitation and
+	// discards the placeholder, so the person registers with the code like
+	// anybody else - activating it here would let an invite be skipped, which is
+	// the whole gate (adr/0029).
+	if err := s.store.DiscardPendingAccount(ctx, userID); err != nil {
 		writeStoreErr(w, err)
 		return
 	}

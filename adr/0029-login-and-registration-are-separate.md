@@ -47,8 +47,11 @@ second one writes an account.**
 2. **A pending registration is a first-class session state.** `GET
    /console/api/v1/console/me` answers `signed_in: false` with
    `needs_registration: true` and the provider's `email`/`name` when they are
-   known, and the console shows the register page. The `pending_registration`
-   (invite waiting) field is a different thing and keeps its meaning.
+   known, and the console shows the register page. When the provider is the
+   passwordless email one its claim carries only a hash of the address, so the
+   address the link was sent to comes back from a short-lived cookie set when the
+   link was requested; the page pre-fills it. The `pending_registration` (invite
+   waiting) field is a different thing and keeps its meaning.
 
 3. **`POST /console/api/v1/console/register` creates the account.** It requires
    the pending claim, a non-empty email and `agree: true`. For the email
@@ -59,14 +62,16 @@ second one writes an account.**
    request keeps the session, which now resolves to the pending account.
 
 4. **The invite policy moves to registration.** An invite-only server refuses
-   a normal registration with `ErrInviteRequired`; the register page has the
-   invite-code field, marked required. The admin address is exempt, so the first
-   operator can always register. Somebody with no code can **request an
-   invitation** instead: `register` with `request: true` creates a *pending*
-   account (the `users.pending_at` flow), the operator sees it in the console's
-   request queue, and the requester's next sign-in shows the waiting notice
-   rather than the register page again. `handleConsoleSigninLink` no longer
-   creates anything, so it no longer pre-checks the invite either.
+   a normal registration with `ErrInviteRequired`; the register page shows an
+   invitation-code field only then (and never for the admin address, which is
+   exempt so the first operator can always register). The field is required.
+   Somebody with no code can **request an invitation** instead: `register` with
+   `request: true` creates a *pending* account (the `users.pending_at` flow), the
+   operator sees it in the console's request queue, and the requester's next
+   sign-in shows the waiting notice. Approving that request mints the invitation
+   and **discards the placeholder**, so the person still registers with the code
+   like anybody else - the code is never skipped. `handleConsoleSigninLink` no
+   longer creates anything, so it no longer pre-checks the invite either.
 
 5. **The user agreement is recorded.** The register page requires a checkbox,
    and the acceptance is stamped on the account (`users.terms_accepted_at`) and
@@ -90,7 +95,9 @@ second one writes an account.**
 - The `users.pending_at` "registration request" flow survives, but only as an
   explicit request from the register page. It is no longer an automatic side
   effect of a social login; the console's request queue lists only people who
-  asked.
+  asked. Approving one does not activate a signable account: the placeholder is
+  deleted and an invitation is minted, so registration with the code is always
+  the step that creates the account.
 - `EnsureAccount` and `Store.EnsureAccountForEmail` are gone; they existed only
   to create ahead of the session.
 - The register page is only reachable with a valid provider session. An
