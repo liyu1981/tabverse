@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/liyu1981/tabverse/main/public/static/tabverse_logo_universe.svg" alt="Tabverse" width="200">
+  <img src="https://raw.githubusercontent.com/liyu1981/tabverse/main/doc/tabverse-website/static/img/tabverse-feature-1.png" alt="Tabverse's sidebar: the current tabverse, saved tabverses and omni search" width="480" style="box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18); border-radius: 12px;">
 </p>
 
 <h1 align="center">Tabverse</h1>
