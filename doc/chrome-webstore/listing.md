@@ -4,7 +4,7 @@ Store assets (screenshots) live next to this file. This document holds the
 text and the answers the developer dashboard asks for, so a release does not
 have to rediscover them. Privacy policy source:
 `doc/tabverse-website/src/pages/privacy.md` (published at
-`https://tabverse.github.io/tabverse/privacy`).
+`https://liyu1981.github.io/tabverse/privacy`).
 
 ## Single purpose
 
