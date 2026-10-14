@@ -1,7 +1,7 @@
 /**
  * The per-tabverse suspension whitelist (`src/data/tabSpace/suspendWhitelist.ts`).
  *
- * Two layers are pinned here: the durable map (our tab ids, in
+ * Two layers are pinned here: the durable map (URLs, in
  * `chrome.storage.local`) and the resolved live set (chrome tab ids, in
  * `chrome.storage.session`) that the worker reads. The resolver between them is
  * a pure function, so it is tested on plain tab objects.
@@ -15,7 +15,7 @@ import {
   SUSPEND_WHITELIST_SESSION_PREFIX,
   type SessionAreaLike,
   getWhitelistVersion,
-  getWhitelistedTabIds,
+  getWhitelistedUrls,
   isWhitelisted,
   loadWhitelist,
   publishWhitelistForTabSpace,
@@ -75,7 +75,7 @@ afterEach(() => {
 describe('loadWhitelist', () => {
   test('nothing stored is an empty list', async () => {
     await loadWhitelist();
-    expect(getWhitelistedTabIds('t1').size).toBe(0);
+    expect(getWhitelistedUrls('t1').size).toBe(0);
     expect(isWhitelisted('t1', 'a')).toBe(false);
   });
 
@@ -88,9 +88,9 @@ describe('loadWhitelist', () => {
       },
     });
     await loadWhitelist();
-    expect(Array.from(getWhitelistedTabIds('t1')).sort()).toEqual(['a', 'b']);
-    expect(getWhitelistedTabIds('t2').size).toBe(0);
-    expect(Array.from(getWhitelistedTabIds('t3'))).toEqual(['c']);
+    expect(Array.from(getWhitelistedUrls('t1')).sort()).toEqual(['a', 'b']);
+    expect(getWhitelistedUrls('t2').size).toBe(0);
+    expect(Array.from(getWhitelistedUrls('t3'))).toEqual(['c']);
   });
 
   test('an unreadable store reads as empty', async () => {
@@ -103,7 +103,7 @@ describe('loadWhitelist', () => {
     };
     setSuspendWhitelistStorageForTest(broken);
     await expect(loadWhitelist()).resolves.toBeUndefined();
-    expect(getWhitelistedTabIds('t1').size).toBe(0);
+    expect(getWhitelistedUrls('t1').size).toBe(0);
   });
 });
 
@@ -162,15 +162,28 @@ describe('setWhitelisted and toggleWhitelisted', () => {
 
 describe('resolveWhitelistedChromeTabIds', () => {
   const tabs = [
-    { id: 'a', chromeTabId: 10 },
-    { id: 'b', chromeTabId: 20 },
-    { id: 'c', chromeTabId: -1 }, // a saved tab, no live id
+    { id: 'a', url: 'https://a.example/', chromeTabId: 10 },
+    { id: 'b', url: 'https://b.example/', chromeTabId: 20 },
+    { id: 'c', url: 'https://c.example/', chromeTabId: -1 }, // a saved tab, no live id
   ] as Tab[];
 
-  test('keeps the live tabs that are whitelisted', () => {
-    expect(resolveWhitelistedChromeTabIds(new Set(['a', 'c']), tabs)).toEqual([
-      10,
-    ]);
+  test('keeps the live tabs whose URL is whitelisted', () => {
+    expect(
+      resolveWhitelistedChromeTabIds(
+        new Set(['https://a.example/', 'https://c.example/']),
+        tabs,
+      ),
+    ).toEqual([10]);
+  });
+
+  test('two live tabs on the same URL are both kept', () => {
+    const twice = [
+      { id: 'a', url: 'https://a.example/', chromeTabId: 10 },
+      { id: 'b', url: 'https://a.example/', chromeTabId: 11 },
+    ] as Tab[];
+    expect(
+      resolveWhitelistedChromeTabIds(new Set(['https://a.example/']), twice),
+    ).toEqual([10, 11]);
   });
 
   test('an empty whitelist resolves to nothing', () => {

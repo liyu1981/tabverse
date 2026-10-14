@@ -6,11 +6,18 @@
  * not a synced property of the tab. Two layers:
  *
  *  1. **Durable intent, in `chrome.storage.local`**, keyed by tabverse id and
- *     holding our own `Tab.id`s. This is what the tab list toggles, and it
- *     survives a browser restart.
+ *     holding **URLs**. This is what the tab list toggles, and it survives a
+ *     browser restart.
  *  2. **A resolved live set, in `chrome.storage.session`**, keyed by tabverse
  *     id and holding `chromeTabId`s. The manager page is the only context that
  *     knows both, so it publishes the mapping; the service worker reads it.
+ *
+ * It is the URL, not our `Tab.id`, because that id is minted when a tab is
+ * first seen (a fresh nanoid on every manager-page load and every scan), so a
+ * lock keyed by it would be forgotten the moment the page reloads or the
+ * browser restarts. A URL means the same tab tomorrow, which is the whole point
+ * of "never suspend this". Empty URLs are ignored: a tab still loading has
+ * nothing to protect, and every such tab would otherwise match.
  *
  * The session layer is per-tabverse rather than one object so two manager pages
  * never race a read-modify-write of the same key. It is `chrome.storage.session`
@@ -31,7 +38,7 @@ import {
 } from '../../data/repo/outbox';
 import type { Tab } from './Tab';
 
-export const SUSPEND_WHITELIST_KEY = 'tabverse_suspend_whitelist_v1';
+export const SUSPEND_WHITELIST_KEY = 'tabverse_suspend_whitelist_v2';
 export const SUSPEND_WHITELIST_SESSION_PREFIX =
   'tabverse_suspend_whitelisted_tabs_v1:';
 
@@ -76,14 +83,16 @@ function decodeDurable(value: unknown): Map<string, Set<string>> {
   if (!value || typeof value !== 'object') {
     return out;
   }
-  for (const [tabSpaceId, ids] of Object.entries(
+  for (const [tabSpaceId, urls] of Object.entries(
     value as Record<string, unknown>,
   )) {
-    if (!Array.isArray(ids)) {
+    if (!Array.isArray(urls)) {
       continue;
     }
     const set = new Set(
-      ids.filter((id): id is string => typeof id === 'string' && id.length > 0),
+      urls.filter(
+        (url): url is string => typeof url === 'string' && url !== '',
+      ),
     );
     if (set.size > 0) {
       out.set(tabSpaceId, set);
@@ -104,13 +113,13 @@ export function subscribeWhitelist(listener: () => void): () => void {
   };
 }
 
-/** The whitelisted tab ids for one tabverse. A stable set until it changes. */
-export function getWhitelistedTabIds(tabSpaceId: string): ReadonlySet<string> {
+/** The whitelisted URLs for one tabverse. A stable set until it changes. */
+export function getWhitelistedUrls(tabSpaceId: string): ReadonlySet<string> {
   return durable.get(tabSpaceId) ?? EMPTY;
 }
 
-export function isWhitelisted(tabSpaceId: string, tabId: string): boolean {
-  return getWhitelistedTabIds(tabSpaceId).has(tabId);
+export function isWhitelisted(tabSpaceId: string, url: string): boolean {
+  return url !== '' && getWhitelistedUrls(tabSpaceId).has(url);
 }
 
 /** Reads the durable whitelist once; a failure reads as empty. */
@@ -127,25 +136,30 @@ export async function loadWhitelist(): Promise<void> {
 
 async function persistDurable(): Promise<void> {
   const out: Record<string, string[]> = {};
-  for (const [tabSpaceId, ids] of durable) {
-    if (ids.size > 0) {
-      out[tabSpaceId] = Array.from(ids);
+  for (const [tabSpaceId, urls] of durable) {
+    if (urls.size > 0) {
+      out[tabSpaceId] = Array.from(urls);
     }
   }
   await storage().set({ [SUSPEND_WHITELIST_KEY]: out });
 }
 
-/** Adds or removes one tab; the in-memory answer moves before the write. */
+/** Adds or removes one URL; the in-memory answer moves before the write. */
 export async function setWhitelisted(
   tabSpaceId: string,
-  tabId: string,
+  url: string,
   whitelisted: boolean,
 ): Promise<void> {
+  // A tab with no URL yet has nothing to remember and would match every other
+  // empty one, so it is not whitelisted at all.
+  if (url === '') {
+    return;
+  }
   const next = new Set(durable.get(tabSpaceId) ?? []);
   if (whitelisted) {
-    next.add(tabId);
+    next.add(url);
   } else {
-    next.delete(tabId);
+    next.delete(url);
   }
   if (next.size > 0) {
     durable.set(tabSpaceId, next);
@@ -160,29 +174,30 @@ export async function setWhitelisted(
   }
 }
 
-/** Flips one tab, and returns its new state. */
+/** Flips one URL, and returns its new state. */
 export async function toggleWhitelisted(
   tabSpaceId: string,
-  tabId: string,
+  url: string,
 ): Promise<boolean> {
-  const next = !isWhitelisted(tabSpaceId, tabId);
-  await setWhitelisted(tabSpaceId, tabId, next);
+  const next = !isWhitelisted(tabSpaceId, url);
+  await setWhitelisted(tabSpaceId, url, next);
   return next;
 }
 
 /**
- * The live `chromeTabId`s of the whitelisted tabs, in the order given.
+ * The live `chromeTabId`s of the tabs whose URL is whitelisted.
  *
  * Pure, so it is the part the tests pin: a tab with no live id (`-1` on a saved
- * tab) has nothing to protect and is dropped.
+ * tab) has nothing to protect and is dropped, and two tabs on the same URL are
+ * both protected - the lock is on the URL, not on one of them.
  */
 export function resolveWhitelistedChromeTabIds(
-  whitelistedTabIds: ReadonlySet<string>,
+  whitelistedUrls: ReadonlySet<string>,
   tabs: Tab[],
 ): number[] {
   const out: number[] = [];
   for (const tab of tabs) {
-    if (tab.chromeTabId > 0 && whitelistedTabIds.has(tab.id)) {
+    if (tab.chromeTabId > 0 && tab.url !== '' && whitelistedUrls.has(tab.url)) {
       out.push(tab.chromeTabId);
     }
   }

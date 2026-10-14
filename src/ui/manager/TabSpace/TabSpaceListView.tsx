@@ -50,7 +50,7 @@ import {
 import { filterActiveTabs } from '../../../data/tabSpace/activeTabFilter';
 import { focusLiveTabUtil } from '../../../data/tabSpace/chromeUtil';
 import {
-  getWhitelistedTabIds,
+  getWhitelistedUrls,
   loadWhitelist,
   subscribeWhitelist,
   toggleWhitelisted,
@@ -109,10 +109,10 @@ export function TabSpaceListView() {
   useEffect(() => {
     void loadWhitelist();
   }, []);
-  const whitelistedTabIds = useSyncExternalStore(
+  const whitelistedUrls = useSyncExternalStore(
     subscribeWhitelist,
-    () => getWhitelistedTabIds(tabSpace.id),
-    () => getWhitelistedTabIds(tabSpace.id),
+    () => getWhitelistedUrls(tabSpace.id),
+    () => getWhitelistedUrls(tabSpace.id),
   );
 
   const isBookmarked = (url: string): boolean => {
@@ -247,9 +247,9 @@ export function TabSpaceListView() {
           needSelector={true}
           tabPreview={getPreview(tab.chromeTabId, tabPreviewCache)}
           isBookmarked={isBookmarked(tab.url)}
-          isWhitelisted={whitelistedTabIds.has(tab.id)}
+          isWhitelisted={whitelistedUrls.has(tab.url)}
           onToggleWhitelist={(tab: Tab) => {
-            void toggleWhitelisted(tabSpace.id, tab.id);
+            void toggleWhitelisted(tabSpace.id, tab.url);
           }}
           actions={<SummarizeTabButton tab={tab} tabSpaceId={tabSpace.id} />}
           onBookmark={(tab: Tab) => {

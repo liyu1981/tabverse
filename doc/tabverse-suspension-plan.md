@@ -121,15 +121,18 @@ nothing to do with another device, and it keeps the change wire-free.
 
 ## 3. The whitelist
 
-Per tabverse, and **device-local**. The stable handle we have is our own
-`Tab.id`; the handle the worker needs is the session-scoped `chromeTabId`. The
-bridge is the manager page, which is the only context that knows both at once.
+Per tabverse, and **device-local**. The stable handle is the tab's **URL**: our
+own `Tab.id` is minted when a tab is first seen, so a lock keyed by it is
+forgotten the moment the manager page reloads or the browser restarts, and the
+whole point of "never suspend this" is that it holds tomorrow. The handle the
+worker needs is the session-scoped `chromeTabId`. The bridge is the manager
+page, which is the only context that knows both at once.
 
 Two layers:
 
 1. **Durable intent, in `chrome.storage.local`**:
-   `tabverse_suspend_whitelist_v1 = { [tabSpaceId]: string[] }` holding our
-   `Tab.id`s. Toggled from the tab list (§5).
+   `tabverse_suspend_whitelist_v2 = { [tabSpaceId]: string[] }` holding **URLs**.
+   Toggled from the tab list (§5).
 2. **Resolved live set, in `chrome.storage.session`**:
    `tabverse_suspend_whitelisted_tabs_v1 = number[]` of `chromeTabId`s, written
    by the manager page whenever the tabverse or the whitelist changes, using the
@@ -142,10 +145,11 @@ durable layer at all - the page has already resolved it. When no manager page is
 open, the tabverse does not exist, so there is nothing to protect and nothing to
 suspend in its window.
 
-*Alternative if the whitelist must hold with the page closed:* store URLs (or
-origins) per tabverse and match live tabs by `tab.url`. Durable and page-free,
-but blunter: a tab that navigates stops matching, and URL equality is a weak
-identity. Rejected as the default; noted in §8.
+A URL is a blunter handle than a tab id: a tab that navigates stops matching,
+and two tabs on the same URL are both protected. That is the trade for a lock
+that survives a reload and a restart, which is what the feature has to mean.
+Empty URLs are ignored, so a tab still loading never locks itself and its
+siblings.
 
 ## 4. Where it runs
 
@@ -224,8 +228,8 @@ the sync layer. `Tab.suspended` already carries the result.
 2. **Scope: tabverse windows only, or every window?** Recommended tabverse
    windows (§1). Global is more useful and more surprising; it also has to
    decide what to do with a window that has no tabverse at all.
-3. **Whitelist key.** Recommended our `Tab.id` + a session-resolved
-   `chromeTabId` set. The durable URL alternative is in §3.
+3. **Whitelist key.** Settled: URLs, so the lock survives a reload and a
+   restart (§3).
 4. **Should pinned/audible be configurable skips**, or fixed? Recommended
    fixed, matching every other tab suspender's safe default.
 5. **Split-view halves.** Confirm Chrome's behaviour when one half of a split is

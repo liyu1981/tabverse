@@ -13,7 +13,7 @@
  */
 import { $tabSpace } from './store';
 import {
-  getWhitelistedTabIds,
+  getWhitelistedUrls,
   loadWhitelist,
   publishWhitelistForTabSpace,
   resolveWhitelistedChromeTabIds,
@@ -29,7 +29,7 @@ export function startMonitorSuspendWhitelist(): void {
 function publishCurrentWhitelist(): void {
   const tabSpace = $tabSpace.getState();
   const ids = resolveWhitelistedChromeTabIds(
-    getWhitelistedTabIds(tabSpace.id),
+    getWhitelistedUrls(tabSpace.id),
     tabSpace.tabs.toArray(),
   );
   void publishWhitelistForTabSpace(tabSpace.id, ids);
