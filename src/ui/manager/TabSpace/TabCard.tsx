@@ -32,7 +32,21 @@ import clsx from 'clsx';
 const TAB_TITLE_MAX_LENGTH = 56;
 const TAB_URL_MAX_LENGTH = 48;
 
-const TabDetailPreviewPanel = (props) => {
+/**
+ * How much of a tab's url the hover preview shows.
+ *
+ * The preview is the wider surface - `previewCard` is capped at 524px, minus
+ * its 8px padding - so the row's 48 is too short here, but a query-heavy or
+ * percent-encoded url still runs past it. Without a cap, `previewWrapText`'s
+ * `word-break: break-all` folds it into a header taller than the thumbnail it
+ * is there to caption. The full url stays in the label's tooltip.
+ */
+const PREVIEW_URL_MAX_LENGTH = 64;
+
+export const TabDetailPreviewPanel = (props: {
+  tab?: Tab;
+  tabPreview?: string;
+}) => {
   return props.tab ? (
     <Card interactive={false} className={classes.previewCard}>
       <div className={classes.previewHeaderContainer}>
@@ -45,7 +59,12 @@ const TabDetailPreviewPanel = (props) => {
             {props.tab.title}
           </h3>
         </div>
-        <div className={classes.previewWrapText}>{props.tab.url}</div>
+        <div className={classes.previewWrapText}>
+          <CollapsibleLabel
+            text={props.tab.url}
+            maxLength={PREVIEW_URL_MAX_LENGTH}
+          />
+        </div>
       </div>
       {/* A thumbnail is a cache entry, not a promise: the popover opens before
           one has been captured (and after a reaping, data/tabSpace/previewReaper).
