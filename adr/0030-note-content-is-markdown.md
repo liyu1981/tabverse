@@ -28,7 +28,8 @@ schema the toolbar draws. So the codec exists; what was missing was choosing it.
 2. It exposes `getContent()` / `setContent(markdown)` through a ref
    (`RichTextEditorHandle`). That is the interface for anything that drives the
    editor, the model included; `Note.tsx` reads the body back with
-   `getContent()` rather than keeping a parallel copy in state.
+   `getContent()` rather than keeping a parallel copy in state. (ADR 0031 later
+   made `setContent` a *proposal* that a diff review decides.)
 3. The styling vocabulary is the schema's markdown: `#`-`######` headings,
    `-`/`1.` lists, `>` blockquotes, fenced code, `---`, `**bold**`, `*italic*`,
    `~~strike~~`, `` `code` ``, `[text](url)`, and `++underline++` (TipTap's own

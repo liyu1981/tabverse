@@ -1,0 +1,172 @@
+/* The before/after review dialog: two aligned columns, one row per line. */
+
+.dialog {
+  width: min(92vw, 900px);
+  max-width: 900px;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+  min-height: 0;
+}
+
+.summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  font-size: 12px;
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.added {
+  color: #1c8b4a;
+}
+
+.removed {
+  color: #c23030;
+}
+
+.columns,
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.columns {
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.columnHead {
+  padding: 6px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.columnHead + .columnHead {
+  border-left: 1px solid var(--border-strong);
+}
+
+.scroll {
+  overflow: auto;
+  min-height: 0;
+  flex: 1;
+}
+
+.rows {
+  font-family: var(--monospace, monospace);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.row + .row {
+  border-top: 1px solid color-mix(in srgb, var(--border-strong) 50%, transparent);
+}
+
+.rowAdded .after {
+  background: color-mix(in srgb, #1c8b4a 12%, transparent);
+}
+
+.rowRemoved .before {
+  background: color-mix(in srgb, #c23030 12%, transparent);
+}
+
+.rowChanged .before {
+  background: color-mix(in srgb, #c23030 10%, transparent);
+}
+
+.rowChanged .after {
+  background: color-mix(in srgb, #1c8b4a 10%, transparent);
+}
+
+.rowReverted {
+  opacity: 0.55;
+}
+
+.cell {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 1px 12px 1px 0;
+  min-width: 0;
+}
+
+.after {
+  border-left: 1px solid var(--border-strong);
+  padding-left: 12px;
+}
+
+.lineNo {
+  flex: none;
+  width: 3ch;
+  text-align: right;
+  user-select: none;
+  color: var(--muted);
+}
+
+.lineText {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+.changedWord {
+  background: color-mix(in srgb, var(--brand) 30%, transparent);
+  border-radius: 2px;
+}
+
+.lineEdit {
+  flex: 1;
+  min-width: 0;
+  resize: none;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--brand) 8%, transparent);
+  color: inherit;
+  font: inherit;
+  padding: 0 2px;
+  field-sizing: content;
+}
+
+.lineEdit:focus {
+  outline: none;
+  border-color: var(--brand);
+  background: var(--sunken);
+}
+
+.toggle {
+  flex: none;
+  margin-left: 4px;
+}
+
+.collapsedRow {
+  padding: 2px 12px;
+  text-align: center;
+  background: var(--sunken);
+}
+
+.empty {
+  padding: 40px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--border-strong);
+}
+
+.footerActions {
+  display: flex;
+  gap: 8px;
+}

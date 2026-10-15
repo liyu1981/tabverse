@@ -1,4 +1,9 @@
-import React, { useImperativeHandle } from 'react';
+import React, {
+  useCallback,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from 'react';
 
 import { Icon } from '@blueprintjs/core';
 import type { IconName } from '@blueprintjs/icons';
@@ -8,6 +13,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import { Markdown } from '@tiptap/markdown';
 import clsx from 'clsx';
 
+import { NoteReviewDialog } from './NoteReviewDialog';
 import classes from './RichTextEditor.module.scss';
 
 /**
@@ -15,9 +21,14 @@ import classes from './RichTextEditor.module.scss';
  *
  * TipTap, and **the document is Markdown**: the editor reads it in and writes
  * it out as markdown (`note.data` holds markdown), through `@tiptap/markdown`
- * over the same schema the toolbar draws. `getContent`/`setContent` are the
- * API for anything that drives the editor programmatically - the on-device
- * model above all, which answers in markdown.
+ * over the same schema the toolbar draws.
+ *
+ * `getContent()` reads the body; `setContent(markdown)` **proposes** one - it
+ * does not write. The proposal opens a before/after review dialog
+ * (`NoteReviewDialog`), and only the result the person accepts (or edits, or
+ * rejects) is written back. That is the rule for anything that drives the
+ * editor from outside, the on-device model above all: a model's answer is shown
+ * as a diff before it becomes the note.
  *
  * The styling vocabulary is the schema, and the markdown that maps to it:
  * paragraphs and hard breaks, `#`-`######` headings, `-`/`1.` lists, `>`
@@ -140,22 +151,47 @@ function StyleButton(props: { button: IStyleButton; editor: Editor | null }) {
 export interface RichTextEditorHandle {
   /** The document as Markdown. */
   getContent(): string;
-  /** Replace the document with Markdown. */
+  /**
+   * Propose a new document. Does not write: it opens the review dialog, and
+   * only the accepted result is applied.
+   */
   setContent(markdown: string): void;
+  /** Re-open the review for a proposal that has not been decided yet. */
+  openReview(): void;
+}
+
+interface PendingReview {
+  before: string;
+  after: string;
 }
 
 export interface IRichTextEditorProps {
   /** The initial document, Markdown. */
   markdown: string;
   onChange?: (markdown: string) => void;
+  /** Called after the review applies a result, so the owner can save it. */
+  onApply?: () => void;
   onBlur?: () => void;
+  onFocus?: () => void;
   placeholder?: string;
   className?: string;
   ref?: React.Ref<RichTextEditorHandle>;
 }
 
 export function RichTextEditor(props: IRichTextEditorProps) {
-  const { markdown, onChange, onBlur, placeholder, className, ref } = props;
+  const {
+    markdown,
+    onChange,
+    onApply,
+    onBlur,
+    onFocus,
+    placeholder,
+    className,
+    ref,
+  } = props;
+
+  const [review, setReview] = useState<PendingReview | null>(null);
+  const pendingRef = useRef<PendingReview | null>(null);
 
   const editor = useEditor({
     extensions: [
@@ -175,27 +211,55 @@ export function RichTextEditor(props: IRichTextEditorProps) {
     onUpdate: (update) => {
       onChange?.(update.editor.getMarkdown());
     },
+    onFocus: () => {
+      onFocus?.();
+    },
     onBlur: () => {
-      if (onBlur) {
-        onBlur();
-      }
+      onBlur?.();
     },
   });
+
+  const openReview = useCallback(() => {
+    const pending = pendingRef.current;
+    if (pending === null || pending.before === pending.after) {
+      pendingRef.current = null;
+      return;
+    }
+    setReview(pending);
+  }, []);
 
   useImperativeHandle(
     ref,
     () => ({
       getContent: () => editor?.getMarkdown() ?? '',
       setContent: (next: string) => {
-        // emitUpdate so a controlled caller hears about a programmatic set the
-        // same way it hears about typing
-        editor?.commands.setContent(next, {
+        const before = editor?.getMarkdown() ?? '';
+        if (next === before) {
+          return;
+        }
+        pendingRef.current = { before, after: next };
+        openReview();
+      },
+      openReview,
+    }),
+    [editor, openReview],
+  );
+
+  const decide = useCallback(
+    (result: string) => {
+      const pending = pendingRef.current;
+      pendingRef.current = null;
+      setReview(null);
+      if (pending !== null && result !== pending.before) {
+        // emitUpdate so the owner hears about the applied body like a keystroke
+        editor?.commands.setContent(result, {
           contentType: 'markdown',
           emitUpdate: true,
         });
-      },
-    }),
-    [editor],
+      }
+      onApply?.();
+    },
+    [editor, onApply],
   );
 
   return (
@@ -215,6 +279,13 @@ export function RichTextEditor(props: IRichTextEditorProps) {
       <div className={classes.editor}>
         <EditorContent editor={editor} />
       </div>
+      {review ? (
+        <NoteReviewDialog
+          before={review.before}
+          after={review.after}
+          onClose={decide}
+        />
+      ) : null}
     </div>
   );
 }

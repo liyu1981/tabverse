@@ -1,7 +1,8 @@
 import { Button, Collapse, EditableText, Icon } from '@blueprintjs/core';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { Note } from '../../data/note/Note';
+import { getActiveNoteEditor, setActiveNoteEditor } from './activeNoteEditor';
 import { RichTextEditor, type RichTextEditorHandle } from './RichTextEditor';
 import classes from './Note.module.scss';
 
@@ -16,6 +17,16 @@ export const NoteView = (props: INoteViewProps) => {
   // The editor owns the body, and `getContent()` is how it is read back as
   // markdown; note.data is markdown.
   const editorRef = useRef<RichTextEditorHandle>(null);
+
+  useEffect(() => {
+    return () => {
+      // Only the note that is still the active one clears it, so unmounting an
+      // old note cannot take the slot from a newer one.
+      if (getActiveNoteEditor() === editorRef.current) {
+        setActiveNoteEditor(null);
+      }
+    };
+  }, []);
 
   const updateCurrentNote = () => {
     props.updateFunc(props.note.id, {
@@ -74,6 +85,8 @@ export const NoteView = (props: INoteViewProps) => {
         <RichTextEditor
           ref={editorRef}
           markdown={props.note.data}
+          onFocus={() => setActiveNoteEditor(editorRef.current)}
+          onApply={updateCurrentNote}
           onBlur={updateCurrentNote}
           placeholder="Write your notes here ..."
         />

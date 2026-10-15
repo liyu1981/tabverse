@@ -1,6 +1,8 @@
 /**
  * The summarize action on a live tab: read the page, summarize it with the
- * on-device model, and drop the result into a new note of this tabverse.
+ * on-device model, and put the result into a note of this tabverse - proposed
+ * into the note being edited when the notebook is open (with the review
+ * dialog), otherwise a new note.
  *
  * The shape follows `SuggestNameButton` - a presentational view that can be
  * checked by what it renders, and a container that owns the availability
@@ -44,6 +46,7 @@ import {
 } from '../../../ai/summarize';
 import { ensureAiSession, evictAiSession } from '../../../ai/session';
 import { addNoteToTabSpace, newSummaryNote } from '../../../data/note/util';
+import { getActiveNoteEditor } from '../../notebook/activeNoteEditor';
 import type { Tab } from '../../../data/tabSpace/Tab';
 import { extractTabText } from '../../../data/tabSpace/tabText';
 import { logger } from '../../../global';
@@ -135,14 +138,20 @@ export function SummarizeTabButton(props: SummarizeTabButtonProps) {
         setStatus('No summary came back - try again.');
         return;
       }
-      await addNoteToTabSpace(
-        tabSpaceId,
-        newSummaryNote(
-          summaryNoteName(tab.title),
-          summaryNoteBody(tab.title, tab.url, summary),
-        ),
-      );
-      setStatus('Added a note to this tabverse.');
+      const body = summaryNoteBody(tab.title, tab.url, summary);
+      const target = getActiveNoteEditor();
+      if (target !== null) {
+        // A note is open: propose the summary into it and let the review dialog
+        // decide, rather than dropping a second note beside it.
+        target.setContent(body);
+        setStatus('Review the summary in the open note.');
+      } else {
+        await addNoteToTabSpace(
+          tabSpaceId,
+          newSummaryNote(summaryNoteName(tab.title), body),
+        );
+        setStatus('Added a note to this tabverse.');
+      }
     } catch (err) {
       logger.log('summarize tab failed', err);
       // the session is not worth keeping after a failed prompt

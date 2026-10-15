@@ -63,6 +63,7 @@
     "date-fns": "^4.4.0",
     "depcheck": "^1.4.7",
     "dexie": "^4.4.6",
+    "diff": "^8.0.4",
     "effector": "^23.4.4",
     "effector-react": "^23.3.0",
     "fake-indexeddb": "^6.2.5",
