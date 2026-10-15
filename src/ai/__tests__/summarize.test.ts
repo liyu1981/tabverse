@@ -19,7 +19,7 @@ import {
   summaryNoteBody,
   summaryNoteName,
   summaryPromptBudgetFor,
-  summaryToNoteHtml,
+  summaryToNoteMarkdown,
 } from '../summarize';
 import type { AiSession } from '../session';
 
@@ -117,32 +117,28 @@ describe('summarizeTab', () => {
   });
 });
 
-describe('summaryToNoteHtml', () => {
-  test('a paragraph becomes a p', () => {
-    expect(summaryToNoteHtml('one paragraph')).toBe('<p>one paragraph</p>');
+describe('summaryToNoteMarkdown', () => {
+  test('a paragraph stays a paragraph', () => {
+    expect(summaryToNoteMarkdown('one paragraph')).toBe('one paragraph');
   });
 
   test('blank lines separate paragraphs', () => {
-    expect(summaryToNoteHtml('one\n\ntwo')).toBe('<p>one</p><p>two</p>');
+    expect(summaryToNoteMarkdown('one\n\ntwo')).toBe('one\n\ntwo');
   });
 
-  test('bullet lines become a list', () => {
-    expect(summaryToNoteHtml('- one\n- two')).toBe(
-      '<ul><li>one</li><li>two</li></ul>',
-    );
-    expect(summaryToNoteHtml('1. one\n2. two')).toBe(
-      '<ul><li>one</li><li>two</li></ul>',
-    );
+  test('bullet lines become a markdown list', () => {
+    expect(summaryToNoteMarkdown('- one\n- two')).toBe('- one\n- two');
+    expect(summaryToNoteMarkdown('1. one\n2. two')).toBe('- one\n- two');
   });
 
-  test('text is escaped, not trusted', () => {
-    expect(summaryToNoteHtml('<script>alert(1)</script>')).toBe(
-      '<p>&lt;script&gt;alert(1)&lt;/script&gt;</p>',
+  test('markup characters are escaped, not trusted', () => {
+    expect(summaryToNoteMarkdown('<script>alert(1)</script>')).toBe(
+      '\\<script\\>alert(1)\\</script\\>',
     );
   });
 
-  test('an empty summary is empty html', () => {
-    expect(summaryToNoteHtml('')).toBe('');
+  test('an empty summary is empty markdown', () => {
+    expect(summaryToNoteMarkdown('')).toBe('');
   });
 });
 
@@ -151,25 +147,25 @@ describe('summaryNoteBody', () => {
     expect(
       summaryNoteBody('Some Article', 'https://example.com/a', 'About tabs.'),
     ).toBe(
-      '<h3>Some Article</h3><p><a href="https://example.com/a">https://example.com/a</a></p><p>About tabs.</p>',
+      '### Some Article\n\n[https://example.com/a](<https://example.com/a>)\n\nAbout tabs.',
     );
   });
 
   test('a non-http url is plain text, never a link', () => {
     expect(summaryNoteBody('t', 'chrome://settings', 's')).toBe(
-      '<h3>t</h3><p>chrome://settings</p><p>s</p>',
+      '### t\n\nchrome://settings\n\ns',
     );
   });
 
-  test('escapes the title, the url and the summary', () => {
+  test('escapes the title, the url label and the summary', () => {
     expect(summaryNoteBody('<b>', 'https://e.com/?a=1&b=2', '<i>')).toBe(
-      '<h3>&lt;b&gt;</h3><p><a href="https://e.com/?a=1&amp;b=2">https://e.com/?a=1&amp;b=2</a></p><p>&lt;i&gt;</p>',
+      '### \\<b\\>\n\n[https://e.com/?a=1&b=2](<https://e.com/?a=1&b=2>)\n\n\\<i\\>',
     );
   });
 
   test('omits an empty title or url', () => {
-    expect(summaryNoteBody('', '', 'body')).toBe('<p>body</p>');
-    expect(summaryNoteBody('t', '', 'body')).toBe('<h3>t</h3><p>body</p>');
+    expect(summaryNoteBody('', '', 'body')).toBe('body');
+    expect(summaryNoteBody('t', '', 'body')).toBe('### t\n\nbody');
   });
 });
 

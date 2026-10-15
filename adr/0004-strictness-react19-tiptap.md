@@ -50,6 +50,8 @@ draft-js is archived and React-17-era; it was the last thing standing between
 the project and React 19.
 
 - Storage format for `note.data` becomes **HTML** (TipTap's document).
+  *Superseded by [ADR 0030](0030-note-content-is-markdown.md): the body is
+  Markdown now.*
 - `src/ui/notebook/draftLegacy.ts` converts legacy draft-js raw JSON on read;
   the next save persists HTML. Covered by unit tests (styles, headings,
   quotes, lists, code, links, HTML escaping).
@@ -93,8 +95,9 @@ leaves the device, which is only true by default now).
 
 - `npm run typecheck` gates the stricter subset in CI; a future pass can add
   flags one at a time.
-- Note content written by TipTap is HTML: anything reading `note.data` must
-  treat it as HTML (the localStorage export path does; equality checks are
-  format agnostic).
+- Note content written by TipTap was HTML, so anything reading `note.data` had
+  to treat it as HTML. **Superseded by
+  [ADR 0030](0030-note-content-is-markdown.md)**: a note body is Markdown, and
+  readers strip markdown (raw HTML included) instead.
 - Remaining follow-ups: `strictNullChecks`/`noImplicitAny`, and a decision on
   the registry when sync learns about open tabs.

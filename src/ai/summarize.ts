@@ -11,7 +11,7 @@
  * sanitized to a single line before it becomes a prompt, and the system prompt
  * says the text is data - the same defense `naming.ts` applies to tab titles,
  * with a bigger surface. The reply is data too: control characters stripped,
- * wrapped to a bounded length, and turned into the safe HTML a note holds.
+ * wrapped to a bounded length, and turned into the Markdown a note holds.
  */
 import type { AiSession } from './session';
 
@@ -69,13 +69,11 @@ function oneLine(text: string): string {
   return withoutControlChars(text).replace(/\s+/g, ' ').trim();
 }
 
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+function escapeMarkdown(text: string): string {
+  // The characters that could turn model text into markup: a fence, raw HTML,
+  // or an escaped markdown character. Emphasis markers are left alone - a
+  // summary that reads as bold is fine; a summary that opens a tag is not.
+  return text.replace(/([\\`<>])/g, '\\$1');
 }
 
 /**
@@ -153,13 +151,13 @@ export async function summarizeTab(
 }
 
 /**
- * The summary as the HTML a note stores (TipTap), so it renders as prose.
+ * The summary as the Markdown a note stores, so it renders as prose.
  *
- * Bullet and numbered lines become a `<ul>`; everything else is paragraphs.
- * Every fragment is escaped - the summary came from a model, but it is still
- * untrusted text that ends up in an HTML document.
+ * Bullet and numbered lines become `-` items; everything else is paragraphs,
+ * blank-line separated. The summary came from a model, so it is escaped for the
+ * characters that could open a fence or raw HTML.
  */
-export function summaryToNoteHtml(summary: string): string {
+export function summaryToNoteMarkdown(summary: string): string {
   const lines = String(summary ?? '')
     .replace(/\r\n?/g, '\n')
     .split('\n');
@@ -169,14 +167,14 @@ export function summaryToNoteHtml(summary: string): string {
 
   const flushParagraph = () => {
     if (paragraph.length > 0) {
-      blocks.push(`<p>${paragraph.map(escapeHtml).join('<br>')}</p>`);
+      blocks.push(paragraph.map(escapeMarkdown).join('\n'));
       paragraph = [];
     }
   };
   const flushBullets = () => {
     if (bullets.length > 0) {
       blocks.push(
-        `<ul>${bullets.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>`,
+        bullets.map((item) => `- ${escapeMarkdown(item)}`).join('\n'),
       );
       bullets = [];
     }
@@ -200,7 +198,7 @@ export function summaryToNoteHtml(summary: string): string {
   }
   flushParagraph();
   flushBullets();
-  return blocks.join('');
+  return blocks.join('\n\n');
 }
 
 /**
@@ -219,18 +217,21 @@ export function summaryNoteBody(
   const head: string[] = [];
   const cleanTitle = oneLine(title);
   if (cleanTitle) {
-    head.push(`<h3>${escapeHtml(cleanTitle)}</h3>`);
+    head.push(`### ${escapeMarkdown(cleanTitle)}`);
   }
   const cleanUrl = oneLine(url);
   if (cleanUrl) {
-    const safe = escapeHtml(cleanUrl);
+    // Angle brackets keep a url with parentheses or spaces in one piece.
     head.push(
       /^https?:\/\//i.test(cleanUrl)
-        ? `<p><a href="${safe}">${safe}</a></p>`
-        : `<p>${safe}</p>`,
+        ? `[${escapeMarkdown(cleanUrl)}](<${cleanUrl.replace(/[<>\s]+/g, '')}>)`
+        : escapeMarkdown(cleanUrl),
     );
   }
-  return `${head.join('')}${summaryToNoteHtml(summary)}`;
+  const body = summaryToNoteMarkdown(summary);
+  return [head.join('\n\n'), body]
+    .filter((block) => block.length > 0)
+    .join('\n\n');
 }
 
 /** The note's name: the tab title, prefixed and bounded. */

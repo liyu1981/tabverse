@@ -52,7 +52,7 @@ function note(over: Partial<Note> = {}): Note {
     id: 'n1',
     tabSpaceId: 'ts_1',
     name: 'plan',
-    data: '<p>first line</p>',
+    data: 'first line',
     createdAt: 0,
     updatedAt: 1,
     version: 0,
@@ -165,14 +165,12 @@ test('no todo can be added, ticked or deleted from here', () => {
 
 test('a note is its name and its body, as text', () => {
   const html = renderToStaticMarkup(
-    <NotePanel
-      notes={[note({ data: '<p>first <strong>line</strong></p>' })]}
-    />,
+    <NotePanel notes={[note({ data: 'first **line**' })]} />,
   );
   expect(html).toContain('plan');
   expect(html).toContain('first line');
-  // and no markup: that HTML was written on another machine
-  expect(html).not.toContain('<strong>');
+  // and no markup: that markdown was written on another machine
+  expect(html).not.toContain('**');
 });
 
 test('a note is a card, like everything else this drawer puts in a column', () => {

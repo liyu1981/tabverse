@@ -65,9 +65,9 @@ export const saveCurrentNotes = () => {
   saveCurrentAllNote();
 };
 
-/** A new note from a summary: the given name and HTML body. */
-export function newSummaryNote(name: string, html: string): Note {
-  return setData(html, setName(name, newEmptyNote()));
+/** A new note from a summary: the given name and Markdown body. */
+export function newSummaryNote(name: string, markdown: string): Note {
+  return setData(markdown, setName(name, newEmptyNote()));
 }
 
 /**

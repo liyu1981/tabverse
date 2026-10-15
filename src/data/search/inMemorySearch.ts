@@ -12,6 +12,7 @@
  * unchanged, which is what a box you have just cleared should do.
  */
 import { valueMatchesTerms } from './searchable';
+import { markdownToPlainText } from '../note/markdownText';
 
 /** "Foo  bar " -> ["foo", "bar"]. */
 export function tokenizeFilterText(text: string): string[] {
@@ -44,20 +45,10 @@ export function filterByText<T>(
 }
 
 /**
- * A note body is TipTap HTML; searching the raw string would let "strong" match
- * a `<strong>` tag. Tags become spaces (so two words either side of one do not
- * run together) and the common entities are decoded; runs of whitespace
- * collapse.
+ * A note body is Markdown; searching the raw string would let "##" or "**" or
+ * a link target match. The plain text behind it is what the terms are matched
+ * against, collapsed to one line like every other searchable row.
  */
-export function htmlToText(html: string): string {
-  return String(html ?? '')
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/&amp;/gi, '&')
-    .replace(/&lt;/gi, '<')
-    .replace(/&gt;/gi, '>')
-    .replace(/&quot;/gi, '"')
-    .replace(/&#39;/gi, "'")
-    .replace(/\s+/g, ' ')
-    .trim();
+export function markdownToText(markdown: string): string {
+  return markdownToPlainText(markdown).replace(/\s+/g, ' ').trim();
 }

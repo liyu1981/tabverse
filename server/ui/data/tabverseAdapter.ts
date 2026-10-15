@@ -149,8 +149,9 @@ function toNote(row: BundleRow, tabspaceId: string): Note {
   return {
     ...baseFields(row, tabspaceId),
     name: typeof row.data?.name === 'string' ? row.data.name : '',
-    // HTML, written by the editor on the machine that saved it. The console
-    // shows it as text (data/noteText.ts); this is where the shape comes from.
+    // Markdown, written by the editor on the machine that saved it. The
+    // console shows it as text (data/note/markdownText.ts); this is where the
+    // shape comes from.
     data: typeof row.data?.data === 'string' ? row.data.data : '',
   };
 }

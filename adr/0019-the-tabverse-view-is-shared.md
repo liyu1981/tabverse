@@ -110,13 +110,11 @@ extension's own entry builder. The view around them stays the console's.**
    the count - stay.
 
 8. **A note body is text, and the tools' own wording is reused where it is
-   plain text.** `note.data` is HTML written on another machine, and this page
-   holds that person's whole account, so it is not rendered as markup: `data/
-   noteText.ts` strips it, and the console puts the result in a `<pre>`. The
-   pre-TipTap draft-js format goes through the extension's own
-   `normalizeNoteHtml` first, so an old note is not a wall of JSON here either.
-   History keeps `calendarLabel` from `src/time.ts` rather than a second
-   wording for "Today at 14:30".
+   plain text.** `note.data` is Markdown written on another machine, and this
+   page holds that person's whole account, so it is not rendered as markup:
+   `data/note/markdownText.ts` strips the markdown (and any raw HTML in it), and
+   the console puts the result in a `<pre>`. History keeps `calendarLabel` from
+   `src/time.ts` rather than a second wording for "Today at 14:30".
 
 ## Consequences
 

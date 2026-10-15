@@ -4,13 +4,14 @@
  *
  * The rule is the same substring test the popup's offline search uses, so this
  * pins that: every term must appear, case-insensitively, in the row's text; an
- * empty query is "no filter"; and a note body is searched as text, not as HTML.
+ * empty query is "no filter"; and a note body is searched as text, not as
+ * markdown.
  */
 import { describe, expect, test } from 'vitest';
 
 import {
   filterByText,
-  htmlToText,
+  markdownToText,
   textMatchesTerms,
   tokenizeFilterText,
 } from '../inMemorySearch';
@@ -73,21 +74,28 @@ describe('filterByText', () => {
   });
 });
 
-describe('htmlToText', () => {
-  test('strips tags and decodes the common entities', () => {
-    expect(htmlToText('<p>a <strong>b</strong></p>')).toBe('a b');
-    expect(htmlToText('a &amp; b &lt;c&gt;')).toBe('a & b <c>');
+describe('markdownToText', () => {
+  test('strips markdown and decodes the common entities', () => {
+    expect(markdownToText('a **bold** word')).toBe('a bold word');
+    expect(markdownToText('a &amp; b &lt;c&gt;')).toBe('a & b <c>');
   });
 
-  test('tags become spaces so words do not run together', () => {
-    expect(htmlToText('<p>foo</p><p>bar</p>')).toBe('foo bar');
+  test('block boundaries become spaces so words do not run together', () => {
+    expect(markdownToText('foo\n\nbar')).toBe('foo bar');
+    expect(markdownToText('- one\n- two')).toBe('one two');
+  });
+
+  test('a link keeps its words and loses its target', () => {
+    expect(markdownToText('see [the docs](https://x.example)')).toBe(
+      'see the docs',
+    );
   });
 
   test('collapses whitespace', () => {
-    expect(htmlToText('<p>a\n\n  b</p>')).toBe('a b');
+    expect(markdownToText('a\n\n  b')).toBe('a b');
   });
 
   test('an empty body is empty text', () => {
-    expect(htmlToText('')).toBe('');
+    expect(markdownToText('')).toBe('');
   });
 });

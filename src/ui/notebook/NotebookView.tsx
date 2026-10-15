@@ -8,7 +8,7 @@ import { ErrorBoundary } from '../common/ErrorBoundary';
 import { ListFilter } from '../common/ListFilter';
 import { NoteView } from './Note';
 import classes from './NotebookView.module.scss';
-import { filterByText, htmlToText } from '../../data/search/inMemorySearch';
+import { filterByText, markdownToText } from '../../data/search/inMemorySearch';
 import { useStore } from 'effector-react';
 
 export function NotebookView() {
@@ -34,7 +34,7 @@ export function NotebookView() {
   // in memory, not a query: the list is already here (data/search/inMemorySearch)
   const currentNotes = filterByText(
     allNotes,
-    (note) => `${note.name} ${htmlToText(note.data)}`,
+    (note) => `${note.name} ${markdownToText(note.data)}`,
     filterText,
   );
 

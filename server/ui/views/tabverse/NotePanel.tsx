@@ -1,10 +1,9 @@
 import { Card } from '@blueprintjs/core';
 import React from 'react';
 
-import { normalizeNoteHtml } from '../../../../src/ui/notebook/draftLegacy';
+import { markdownToPlainText } from '../../../../src/data/note/markdownText';
 import noteClasses from '../../../../src/ui/notebook/Note.module.scss';
 import notebookClasses from '../../../../src/ui/notebook/NotebookView.module.scss';
-import { htmlToPlainText } from '../../data/noteText';
 import type { Note } from '../../data/tabverseAdapter';
 import classes from './tabverse.module.scss';
 
@@ -14,11 +13,9 @@ import classes from './tabverse.module.scss';
  * A note there is a title bar with a caret and a rich-text editor under it, both
  * inside the notebook's own white panel. The caret collapses the editor and the
  * editor is an editor - so this shows the title in the extension's type and the
- * body as text: `note.data` is HTML written on another machine, and a page
- * holding that person's account has no business putting it in its own document
- * (see `data/noteText.ts`). The legacy draft-js format goes through the
- * extension's own `normalizeNoteHtml` first, so an old note is not a wall of JSON
- * here either.
+ * body as text: `note.data` is Markdown written on another machine, and a page
+ * holding that person's account has no business putting its markup in its own
+ * document (see `data/note/markdownText.ts`).
  *
  * Each note is a card, which is what it looked like in the extension too - there
  * the white notebook panel supplied the surface, and here every other thing in
@@ -51,7 +48,7 @@ export function NotePanel(props: { notes: Note[] }) {
 }
 
 function bodyOf(note: Note): React.ReactNode {
-  const text = htmlToPlainText(normalizeNoteHtml(note.data));
+  const text = markdownToPlainText(note.data);
   if (!text) return <span className={classes.noteEmpty}>(empty)</span>;
   return <pre className={classes.noteText}>{text}</pre>;
 }

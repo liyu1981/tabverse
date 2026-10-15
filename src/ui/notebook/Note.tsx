@@ -1,9 +1,8 @@
 import { Button, Collapse, EditableText, Icon } from '@blueprintjs/core';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 
 import { Note } from '../../data/note/Note';
-import { normalizeNoteHtml } from './draftLegacy';
-import { RichTextEditor } from './RichTextEditor';
+import { RichTextEditor, type RichTextEditorHandle } from './RichTextEditor';
 import classes from './Note.module.scss';
 
 export interface INoteViewProps {
@@ -14,12 +13,15 @@ export interface INoteViewProps {
 
 export const NoteView = (props: INoteViewProps) => {
   const [name, setName] = useState(props.note.name);
-  // note.data holds HTML; content written by the old draft-js editor is
-  // converted on read and stored as HTML on the next save
-  const [html, setHtml] = useState(() => normalizeNoteHtml(props.note.data));
+  // The editor owns the body, and `getContent()` is how it is read back as
+  // markdown; note.data is markdown.
+  const editorRef = useRef<RichTextEditorHandle>(null);
 
   const updateCurrentNote = () => {
-    props.updateFunc(props.note.id, { name, data: html });
+    props.updateFunc(props.note.id, {
+      name,
+      data: editorRef.current?.getContent() ?? props.note.data,
+    });
   };
 
   const confirmName = () => {
@@ -70,8 +72,8 @@ export const NoteView = (props: INoteViewProps) => {
       </div>
       <Collapse isOpen={editorOpen} keepChildrenMounted={false}>
         <RichTextEditor
-          html={html}
-          onChange={setHtml}
+          ref={editorRef}
+          markdown={props.note.data}
           onBlur={updateCurrentNote}
           placeholder="Write your notes here ..."
         />
