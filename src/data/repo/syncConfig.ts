@@ -34,11 +34,11 @@ export interface SyncConfig {
   kind?: SyncSetupKind;
 }
 
-export type SyncSetupKind = 'official' | 'custom';
+type SyncSetupKind = 'official' | 'custom';
 
 export const DEFAULT_SYNC_INTERVAL_MS = 60 * 1000;
 
-export function defaultStorage(): StorageAreaLike {
+function defaultStorage(): StorageAreaLike {
   return new ChromeStorageArea();
 }
 

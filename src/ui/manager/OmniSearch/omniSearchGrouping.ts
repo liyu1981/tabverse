@@ -10,7 +10,7 @@ import { SearchHit } from '../../../data/repo/types';
  * listed. Kept pure and separate from the view so it can be tested without a
  * browser.
  */
-export const OMNI_ENTITY_ORDER = [
+const OMNI_ENTITY_ORDER = [
   'tabspace',
   'tab',
   'closedtab',
@@ -20,7 +20,7 @@ export const OMNI_ENTITY_ORDER = [
   'session',
 ];
 
-export const OMNI_ENTITY_LABEL: Record<string, string> = {
+const OMNI_ENTITY_LABEL: Record<string, string> = {
   tabspace: 'Tabverses',
   tab: 'Tabs',
   closedtab: 'History',

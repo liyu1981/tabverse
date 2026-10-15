@@ -32,7 +32,7 @@ import type {
   UserSummary,
 } from './types';
 
-export interface HttpResponseLike {
+interface HttpResponseLike {
   status: number;
   ok: boolean;
   text(): Promise<string>;
@@ -69,7 +69,7 @@ export class ApiError extends Error {
   }
 }
 
-export interface ListParams {
+interface ListParams {
   limit?: number;
   offset?: number;
   q?: string;

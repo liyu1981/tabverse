@@ -21,14 +21,14 @@ export function newEmptyGeneralStorage(): GeneralStorage {
   };
 }
 
-export function updateTotalSavedCount(
+function updateTotalSavedCount(
   totalSavedCount: number,
   targetStorage: GeneralStorage,
 ): GeneralStorage {
   return { ...targetStorage, totalSavedCount };
 }
 
-export function increaseSavedDataVersion(
+function increaseSavedDataVersion(
   targetStorage: GeneralStorage,
 ): GeneralStorage {
   return {
@@ -47,7 +47,7 @@ export function markInSaving(
   };
 }
 
-export function updateLastSavedTime(
+function updateLastSavedTime(
   lastSavedTime: number,
   targetStorage: GeneralStorage,
 ): GeneralStorage {

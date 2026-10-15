@@ -26,7 +26,7 @@ export interface StorageAreaLike {
   remove(keys: string[]): Promise<void>;
 }
 
-export const DEFAULT_OUTBOX_KEY = 'tabverse_outbox_v1';
+const DEFAULT_OUTBOX_KEY = 'tabverse_outbox_v1';
 
 /** chrome.storage.local (MV3 promise form) behind the injected interface. */
 export class ChromeStorageArea implements StorageAreaLike {

@@ -1,7 +1,6 @@
 import { IBase, setAttrForObject2 } from '../common';
 import { convertToSavedBase, newEmptyBase, toBase } from '../Base';
 import { List } from 'immutable';
-import { eq, omit } from 'lodash';
 
 import { NotTabSpaceId } from '../common';
 
@@ -88,7 +87,6 @@ export const setId = setAttrForObject2<string, Tab>('id');
 export const setTabSpaceId = setAttrForObject2<string, Tab>('tabSpaceId');
 export const setTitle = setAttrForObject2<string, Tab>('title');
 export const setUrl = setAttrForObject2<string, Tab>('url');
-export const setFavIconUrl = setAttrForObject2<string, Tab>('favIconUrl');
 export const setPinned = setAttrForObject2<boolean, Tab>('pinned');
 export const setChromeTabId = setAttrForObject2<number, Tab>('chromeTabId');
 export const setChromeWindowId = setAttrForObject2<number, Tab>(
@@ -156,7 +154,7 @@ export function findSplitPartnerByChromeId(
   );
 }
 
-export function toTabCore(targetTab: Tab): TabCore {
+function toTabCore(targetTab: Tab): TabCore {
   return {
     ...toBase(targetTab),
     tabSpaceId: targetTab.tabSpaceId,
@@ -188,11 +186,4 @@ export function convertAndGetTabSavePayload(
     tabSpaceId: savedTabSpaceId,
   };
   return { tab, savedTab };
-}
-
-export function isEqualWithoutCreatedAtUpdatedAt(t1: Tab, t2: Tab): boolean {
-  return eq(
-    omit(t1, ['createdAt', 'updatedAt']),
-    omit(t2, ['createdAt', 'updatedAt']),
-  );
 }

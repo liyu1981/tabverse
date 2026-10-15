@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export function getWindow() {
+function getWindow() {
   return typeof window === 'undefined' ? null : window;
 }
 

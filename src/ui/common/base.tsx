@@ -8,7 +8,7 @@ export interface IBasePageOptions {
   containerDivId?: string;
 }
 
-export const defaultPageOptions = {
+const defaultPageOptions = {
   containerDivId: 'root',
   pageComponent: null,
 };

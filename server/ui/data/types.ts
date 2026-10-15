@@ -11,12 +11,12 @@
  */
 
 /** RFC3339, as the accounts and admin handlers marshal `time.Time`. */
-export type IsoTime = string;
+type IsoTime = string;
 
 /** Unix milliseconds, as the record payloads and counters carry them. */
-export type Millis = number;
+type Millis = number;
 
-export type Role = 'user' | 'admin';
+type Role = 'user' | 'admin';
 
 /** The entities the server validates; the closed set the filters offer. */
 export const ENTITIES = [
@@ -30,8 +30,6 @@ export const ENTITIES = [
   'alltodo',
   'allbookmark',
 ] as const;
-
-export type EntityName = (typeof ENTITIES)[number];
 
 // ---- session ---------------------------------------------------------------
 
@@ -106,7 +104,7 @@ export interface Me {
 }
 
 /** `GET /console/api/v1/console/me` while a session has no account yet. */
-export interface PendingRegistration {
+interface PendingRegistration {
   provider: string;
   /** What the provider reported; empty when it reported nothing (GitHub). */
   email: string;
@@ -145,7 +143,7 @@ export interface UserList {
   users: UserSummary[];
 }
 
-export interface UserStats {
+interface UserStats {
   user_id: string;
   rev_seq: number;
   total: number;
@@ -210,7 +208,7 @@ export interface RegistrationInvite {
 }
 
 /** The rendered invitation email, so the console can show it to copy. */
-export interface RegistrationInviteEmail {
+interface RegistrationInviteEmail {
   subject: string;
   body: string;
 }
@@ -268,13 +266,6 @@ export interface BundleRow {
   /** Index in the client's own ordering (the tabverse's `tabIds`). */
   position: number;
   data: Record<string, any>;
-}
-
-export interface TabGroupHint {
-  id: string;
-  title: string;
-  color: string;
-  tabIds: string[];
 }
 
 export interface TabspaceBundle {

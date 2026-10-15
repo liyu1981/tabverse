@@ -46,7 +46,7 @@ export const OFFICIAL_CONSOLE_URL = `${OFFICIAL_SERVER_URL}/console`;
  * extension opens is one URL of the site the server already serves, and the
  * two things it needs travel in that URL's query.
  */
-export const OFFICIAL_PAIR_PATH = '/console/pair';
+const OFFICIAL_PAIR_PATH = '/console/pair';
 
 export const OFFICIAL_PAIR_URL = `${OFFICIAL_SERVER_URL}${OFFICIAL_PAIR_PATH}`;
 
@@ -184,7 +184,7 @@ export async function closePairWindow(
 const PENDING_PAIR_KEY = 'tabverse_pending_pair';
 
 /** How long a started pairing stays answerable. */
-export const PAIR_PENDING_TTL_MS = 10 * 60 * 1000;
+const PAIR_PENDING_TTL_MS = 10 * 60 * 1000;
 
 export interface PendingPair {
   nonce: string;

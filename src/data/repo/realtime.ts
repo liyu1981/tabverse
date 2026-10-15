@@ -36,7 +36,7 @@ export interface Scheduler {
   clearTimeout(handle: unknown): void;
 }
 
-export const realScheduler: Scheduler = {
+const realScheduler: Scheduler = {
   setTimeout: (callback, delayMs) => setTimeout(callback, delayMs),
   clearTimeout: (handle) => clearTimeout(handle as any),
 };

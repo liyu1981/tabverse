@@ -14,7 +14,7 @@ import { Tab } from './Tab';
  */
 
 /** Which of a tab's two searchable fields the whole query was found in. */
-export type ActiveTabMatchField = 'title' | 'url';
+type ActiveTabMatchField = 'title' | 'url';
 
 export interface ActiveTabMatch {
   tab: Tab;

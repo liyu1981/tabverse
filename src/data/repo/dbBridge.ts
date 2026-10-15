@@ -21,13 +21,13 @@ import { TAB_DB_TABLE_NAME } from '../tabSpace/Tab';
 import { TABSPACE_DB_TABLE_NAME } from '../tabSpace/TabSpace';
 import { EntityName, RecordInput, SyncRecord } from './types';
 
-export interface SyncTableBinding {
+interface SyncTableBinding {
   entity: EntityName;
   table: string;
 }
 
 /** Single source of truth for the entity <-> table mapping. */
-export const SYNC_TABLE_BINDINGS: SyncTableBinding[] = [
+const SYNC_TABLE_BINDINGS: SyncTableBinding[] = [
   { entity: 'tabspace', table: TABSPACE_DB_TABLE_NAME },
   { entity: 'tab', table: TAB_DB_TABLE_NAME },
   { entity: 'note', table: NOTE_DB_TABLE_NAME },
@@ -84,7 +84,7 @@ export function rowUpdatedAt(row: any): number {
  * and the count the pairing dialog shows, so the number of records the user is
  * asked to consent to is the number that actually goes.
  */
-export function isSyncableRow(entity: EntityName, row: any): boolean {
+function isSyncableRow(entity: EntityName, row: any): boolean {
   if (!row || typeof row.id !== 'string') {
     return false;
   }

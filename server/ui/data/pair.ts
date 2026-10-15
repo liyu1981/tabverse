@@ -212,7 +212,7 @@ export function sendCredentialsToExtension(
 
 const STASH_KEY = 'tabverse_pending_pair';
 
-export interface PairStash {
+interface PairStash {
   request: PairRequest;
   /** Where the person was sent to sign in, for the "back" line in the UI. */
   at: number;

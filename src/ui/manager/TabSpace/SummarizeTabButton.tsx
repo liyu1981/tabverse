@@ -49,10 +49,10 @@ import { extractTabText } from '../../../data/tabSpace/tabText';
 import { logger } from '../../../global';
 
 /** The line under the button when nothing has happened yet. */
-export const SUMMARIZE_READY_STATUS = 'Summarize this tab into a new note';
+const SUMMARIZE_READY_STATUS = 'Summarize this tab into a new note';
 
 /** Why the button is disabled: a suspended tab has no page to read. */
-export const SUMMARIZE_SUSPENDED_STATUS =
+const SUMMARIZE_SUSPENDED_STATUS =
   'This tab is suspended - open it to load it, then summarize it';
 
 export interface SummarizeTabButtonViewProps {

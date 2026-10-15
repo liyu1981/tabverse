@@ -49,15 +49,6 @@ export const $bootStatus = createStore<BootStatus>('loading')
   })
   .on(sessionExpired, () => 'signed-out');
 
-/** The XSRF echo pair, kept beside the identity it belongs to. */
-export const $csrf = createStore<{ header: string; token: string }>({
-  header: '',
-  token: '',
-}).on(loadMeFx.doneData, (_, me) => ({
-  header: me?.csrf_header || '',
-  token: me?.csrf || '',
-}));
-
 export const $impersonation = createStore<Impersonation | null>(null).on(
   loadImpersonationFx.doneData,
   (_, info) => info,

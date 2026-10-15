@@ -31,7 +31,6 @@ import {
   openAccount as openAccountEvent,
   setDataArchived,
   setDataView,
-  setDirectoryQuery,
   setTab,
 } from './stores/accounts';
 import {
@@ -177,7 +176,7 @@ export async function loadDirectory(): Promise<void> {
  * Moves between the console and the operator's admin page. The URL follows
  * (`history.pushState`), so a reload or a bookmark lands on the same page.
  */
-export async function goToView(view: ConsoleView): Promise<void> {
+async function goToView(view: ConsoleView): Promise<void> {
   setView(view);
   if (typeof window !== 'undefined' && window.history?.pushState) {
     window.history.pushState(
@@ -399,11 +398,6 @@ export async function runSearch(): Promise<void> {
   // operator looking through another account uses the account-named one.
   const self = userId === $ownUserId.getState();
   await attempt('Searching', () => searchFx({ userId, self, params }));
-}
-
-export async function changeDirectoryQuery(query: string): Promise<void> {
-  setDirectoryQuery(query);
-  await loadDirectory();
 }
 
 /** The one toggle for the panel: every view below it hides the same rows. */

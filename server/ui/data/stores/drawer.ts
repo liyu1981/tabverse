@@ -15,7 +15,7 @@ import type { TabspaceBundle } from '../types';
 export const openTabspace = createEvent<string>();
 export const closeTabspace = createEvent();
 
-export const $openTabspaceId = createStore<string>('')
+const $openTabspaceId = createStore<string>('')
   .on(openTabspace, (_, id) => id)
   .on(closeTabspace, () => '');
 

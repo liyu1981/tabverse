@@ -1,32 +1,9 @@
 import { createApi, createStore } from 'effector';
 import { forEach, map } from 'lodash';
 
-import {
-  GeneralStorage,
-  increaseSavedDataVersion,
-  InSavingStatus,
-  markInSaving,
-  newEmptyGeneralStorage,
-  updateLastSavedTime,
-  updateTotalSavedCount,
-} from './GeneralStorage';
+import { GeneralStorage, InSavingStatus } from './GeneralStorage';
 
 export const DEFAULT_SAVE_DEBOUNCE = 1000;
-
-export function createGeneralStorageStoreAndApi() {
-  const $store = createStore<GeneralStorage>(newEmptyGeneralStorage());
-  const api = createApi($store, {
-    increaseSavedDataVersion: (lastStorage) =>
-      increaseSavedDataVersion(lastStorage),
-    markInSaving: (lastStorage, inSaving: boolean) =>
-      markInSaving(inSaving, lastStorage),
-    updateLastSavedTime: (lastStorage, lastSavedTime: number) =>
-      updateLastSavedTime(lastSavedTime, lastStorage),
-    updateTotalSavedCount: (lastStorage, totalSavedCount: number) =>
-      updateTotalSavedCount(totalSavedCount, lastStorage),
-  });
-  return { $store, api };
-}
 
 export class StorageOverview {
   storages: { [k: string]: GeneralStorage };

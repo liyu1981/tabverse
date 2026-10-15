@@ -50,7 +50,6 @@ export function newEmptyClosedTab(): ClosedTab {
 export const setTabSpaceId = setAttrForObject2<string, ClosedTab>('tabSpaceId');
 export const setTitle = setAttrForObject2<string, ClosedTab>('title');
 export const setUrl = setAttrForObject2<string, ClosedTab>('url');
-export const setFavIconUrl = setAttrForObject2<string, ClosedTab>('favIconUrl');
 
 export function convertToSavedClosedTab(targetClosedTab: ClosedTab): ClosedTab {
   return produce(targetClosedTab, (draft) => {

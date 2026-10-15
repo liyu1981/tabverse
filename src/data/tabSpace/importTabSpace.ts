@@ -38,7 +38,7 @@ export function formatImportTime(now: number): string {
 }
 
 /** The literal prefix every imported tabverse gets, so it is obvious at a glance. */
-export const IMPORTED_TABVERSE_PREFIX = 'Imported: ';
+const IMPORTED_TABVERSE_PREFIX = 'Imported: ';
 
 export function importedTabverseName(
   originalName: string,

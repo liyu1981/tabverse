@@ -32,7 +32,7 @@ const allBookmarkApi = createApi($allBookmark, {
 
 const { $store: $bookmarkStorageStore, api: bookmarkStorageApi } =
   createGeneralStorageStoreAndApi();
-export const $bookmarkStorage = $bookmarkStorageStore;
+const $bookmarkStorage = $bookmarkStorageStore;
 
 forward({
   from: $bookmarkStorage,

@@ -82,7 +82,7 @@ function present<T>(rows: (T | undefined)[]): T[] {
 }
 
 /** Reads a tabverse and all of its rows out of the database. */
-export async function collectTabverseExport(
+async function collectTabverseExport(
   tabSpaceId: string,
 ): Promise<TabverseExport> {
   const tabverse = await db
@@ -163,7 +163,7 @@ export function tabverseFileName(
 }
 
 /** Hands a value to the browser as a download. */
-export function downloadJSON(filename: string, data: unknown): void {
+function downloadJSON(filename: string, data: unknown): void {
   const blob = new Blob([JSON.stringify(data, null, 2)], {
     type: 'application/json',
   });

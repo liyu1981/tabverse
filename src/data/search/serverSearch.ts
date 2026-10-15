@@ -9,7 +9,7 @@ import { ServerApiClient } from '../repo/serverApi';
 import { db } from '../../storage/db';
 
 /** The server caps a search at 200 hits; asking for more is a no-op. */
-export const SERVER_SEARCH_LIMIT = 200;
+const SERVER_SEARCH_LIMIT = 200;
 
 /**
  * A hit names the tabverse it belongs to (the server resolves it, see

@@ -32,7 +32,7 @@ export function invitationFromSearch(search: string): Invitation | null {
   return { email, code };
 }
 
-export function saveInvitation(invitation: Invitation): void {
+function saveInvitation(invitation: Invitation): void {
   try {
     storage()?.setItem(STORAGE_KEY, JSON.stringify(invitation));
   } catch {

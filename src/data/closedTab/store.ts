@@ -31,7 +31,7 @@ const allClosedTabApi = createApi($allClosedTab, {
 
 const { $store: $closedTabStorageStoreImpl, api: closedTabStorageApi } =
   createGeneralStorageStoreAndApi();
-export const $closedTabStorage = $closedTabStorageStoreImpl;
+const $closedTabStorage = $closedTabStorageStoreImpl;
 
 forward({
   from: $closedTabStorage,

@@ -12,12 +12,12 @@ import {
   inPlaceCopyFromOtherBase,
   newEmptyBase,
 } from '../Base';
-import { eq, omit } from 'lodash';
+import { omit } from 'lodash';
 
 import { List } from 'immutable';
 import { produce } from 'immer';
 
-export interface LiveTabSpace {
+interface LiveTabSpace {
   chromeTabId: number;
   chromeWindowId: number;
 }
@@ -62,7 +62,7 @@ export interface TabGroupHint {
   tabIds: string[];
 }
 
-export interface TabSpaceCore extends IBase {
+interface TabSpaceCore extends IBase {
   name: string;
   tabs: List<Tab>;
   tabGroups: TabGroupHint[];
@@ -119,13 +119,6 @@ export const setChromeWindowId = setAttrForObject2<number, TabSpace>(
 
 export function getTabIds(targetTabSpace: TabSpace): string[] {
   return targetTabSpace.tabs.map((tab) => tab.id).toArray();
-}
-
-export function isEqual(t1: TabSpace, t2: TabSpace): boolean {
-  return (
-    eq(omit(t1, 'tabs'), omit(t2, 'tabs')) &&
-    eq(t1.tabs.toArray(), t2.tabs.toArray())
-  );
 }
 
 export function fromSavedDataWithoutTabs(d: TabSpaceSavePayload): TabSpace {
@@ -208,10 +201,7 @@ export function updateTab(
   });
 }
 
-export function removeTabByIndex(
-  index: number,
-  targetTabSpace: TabSpace,
-): TabSpace {
+function removeTabByIndex(index: number, targetTabSpace: TabSpace): TabSpace {
   return produce(targetTabSpace, (draft) => {
     if (index >= 0 && index < draft.tabs.size) {
       draft.tabs = draft.tabs.remove(index);
@@ -268,7 +258,7 @@ export function replaceAllTabs(
  * silently broken entry, so membership is filtered to the tabs that are. A
  * group left with nothing is dropped.
  */
-export function filterTabGroups(
+function filterTabGroups(
   groups: TabGroupHint[] | undefined,
   validTabIds: Set<string>,
 ): TabGroupHint[] {

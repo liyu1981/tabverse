@@ -190,7 +190,7 @@ export function updateTabSpaceName(newName: string) {
   saveCurrentTabSpace();
 }
 
-export function getOnChromeTabAttached() {
+function getOnChromeTabAttached() {
   async function tabSpaceAction(
     chromeTabId: number,
     _attachInfo: chrome.tabs.OnAttachedInfo,
@@ -253,7 +253,7 @@ export function getOnChromeTabAttached() {
   };
 }
 
-export function getOnChromeTabCreated() {
+function getOnChromeTabCreated() {
   async function normalTabAction(chromeTab: chrome.tabs.Tab) {
     let t = fromLiveTab({
       chromeTabId: chromeTab.id,
@@ -276,7 +276,7 @@ export function getOnChromeTabCreated() {
   };
 }
 
-export function getOnChromeTabDetached() {
+function getOnChromeTabDetached() {
   function normalTabAction(
     chromeTabId: number,
     _detachInfo: chrome.tabs.OnDetachedInfo,
@@ -312,7 +312,7 @@ export function getOnChromeTabDetached() {
   };
 }
 
-export function getOnChromeTabRemoved() {
+function getOnChromeTabRemoved() {
   const normalTabAction = (
     chromeTabId: number,
     _removeInfo: chrome.tabs.OnRemovedInfo,

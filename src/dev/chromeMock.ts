@@ -92,7 +92,7 @@ interface IMockTab extends IMockTabData {
   active?: boolean;
 }
 
-export function toIMockTabData(t: IMockTab): IMockTabData {
+function toIMockTabData(t: IMockTab): IMockTabData {
   return pick(t, ['title', 'url', 'favIconUrl', 'pinned']);
 }
 

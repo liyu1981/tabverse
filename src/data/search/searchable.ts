@@ -42,7 +42,7 @@ export interface SearchableTypeSpec {
   tabSpaceIdOf: (row: any) => string;
 }
 
-export const SEARCHABLE_TYPES: SearchableTypeSpec[] = [
+const SEARCHABLE_TYPES: SearchableTypeSpec[] = [
   {
     entity: SearchableType.TabSpace as EntityName,
     table: TABSPACE_DB_TABLE_NAME,

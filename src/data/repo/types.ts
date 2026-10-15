@@ -20,7 +20,7 @@ export type EntityName =
   | 'alltodo'
   | 'allbookmark';
 
-export const ENTITY_NAMES: EntityName[] = [
+const ENTITY_NAMES: EntityName[] = [
   'tabspace',
   'tab',
   'note',
@@ -55,7 +55,7 @@ export interface SyncRecord extends RecordInput {
   device_id?: string;
 }
 
-export type RecordStatus = 'ok' | 'stale';
+type RecordStatus = 'ok' | 'stale';
 
 export interface RecordResult {
   entity: EntityName;

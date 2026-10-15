@@ -585,7 +585,7 @@ export async function loadTabSpaceByTabSpaceId(
  * loose) is picked up by the next real save, exactly like the metadata-only
  * updates of the tab event path.
  */
-export async function scanRestoredWindow(
+async function scanRestoredWindow(
   windowId: number,
   keptChromeTabIds: Iterable<number>,
 ): Promise<void> {

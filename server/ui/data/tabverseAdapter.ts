@@ -137,7 +137,7 @@ function baseFields(row: BundleRow, tabspaceId: string) {
   };
 }
 
-export function toTodo(row: BundleRow, tabspaceId: string): Todo {
+function toTodo(row: BundleRow, tabspaceId: string): Todo {
   return {
     ...baseFields(row, tabspaceId),
     content: typeof row.data?.content === 'string' ? row.data.content : '',
@@ -145,7 +145,7 @@ export function toTodo(row: BundleRow, tabspaceId: string): Todo {
   };
 }
 
-export function toNote(row: BundleRow, tabspaceId: string): Note {
+function toNote(row: BundleRow, tabspaceId: string): Note {
   return {
     ...baseFields(row, tabspaceId),
     name: typeof row.data?.name === 'string' ? row.data.name : '',
@@ -155,7 +155,7 @@ export function toNote(row: BundleRow, tabspaceId: string): Note {
   };
 }
 
-export function toBookmark(row: BundleRow, tabspaceId: string): Bookmark {
+function toBookmark(row: BundleRow, tabspaceId: string): Bookmark {
   return {
     ...baseFields(row, tabspaceId),
     name: typeof row.data?.name === 'string' ? row.data.name : '',
@@ -165,7 +165,7 @@ export function toBookmark(row: BundleRow, tabspaceId: string): Bookmark {
   };
 }
 
-export function toClosedTab(row: BundleRow, tabspaceId: string): ClosedTab {
+function toClosedTab(row: BundleRow, tabspaceId: string): ClosedTab {
   return {
     ...baseFields(row, tabspaceId),
     title: typeof row.data?.title === 'string' ? row.data.title : '',

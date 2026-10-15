@@ -30,7 +30,7 @@ export interface WindowTabForPlan {
   url?: string;
 }
 
-export interface RestorePlanEntry {
+interface RestorePlanEntry {
   savedTab: Tab;
   /**
    * The open tab this saved tab reuses, or undefined when it has to be opened.

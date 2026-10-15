@@ -29,7 +29,7 @@ const allNoteApi = createApi($allNote, {
 
 const { $store: $noteStorageStore, api: noteStorageApi } =
   createGeneralStorageStoreAndApi();
-export const $noteStorage = $noteStorageStore;
+const $noteStorage = $noteStorageStore;
 
 forward({
   from: $noteStorage,

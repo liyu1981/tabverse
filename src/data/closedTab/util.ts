@@ -140,7 +140,7 @@ const saveCurrentClosedTabsImpl = async () => {
   }
 };
 
-export const saveCurrentClosedTabs = debounce(
+const saveCurrentClosedTabs = debounce(
   saveCurrentClosedTabsImpl,
   DEFAULT_SAVE_DEBOUNCE,
 );

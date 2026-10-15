@@ -37,7 +37,6 @@ import { $tabSpace } from './store';
 import { loadTabSpacesByIds } from './util';
 import {
   OpenTabSpace,
-  openTabSpaceOfWindow,
   otherWindowTabSpaces,
   queryOpenTabSpaces,
 } from './openTabverses';
@@ -131,7 +130,7 @@ export async function refreshOpenTabSpaces(): Promise<OpenTabSpace[]> {
 }
 
 /** Fills the name/count map for the tabverses that are open. */
-export async function loadOtherWindowNames(
+async function loadOtherWindowNames(
   open: OpenTabSpace[] = $openTabSpaces.getState(),
 ): Promise<void> {
   const ids = Array.from(new Set(open.map((row) => row.tabSpaceId)));
@@ -159,13 +158,6 @@ export async function loadOtherWindowNames(
 /** Goes to the window that has this tabverse. */
 export async function switchToOtherWindow(row: OpenTabSpace): Promise<void> {
   await switchToOpenTabSpace(row);
-}
-
-/** The tabverse open in this window, if any (at most one, ADR 0006). */
-export function thisWindowsTabSpace(
-  open: OpenTabSpace[] = $openTabSpaces.getState(),
-): OpenTabSpace | undefined {
-  return openTabSpaceOfWindow(open, $tabSpace.getState().chromeWindowId);
 }
 
 // ---- the monitor -----------------------------------------------------------

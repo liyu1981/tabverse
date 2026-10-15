@@ -31,7 +31,7 @@ import { saveCurrentTabSpace } from './util';
  * open one converges inside that minute. The alternative - waiting for the event
  * that may never come - is the bug.
  */
-export const SPLIT_RESCAN_INTERVAL_MS = 60_000;
+const SPLIT_RESCAN_INTERVAL_MS = 60_000;
 
 /**
  * Re-reads every live tab's split state from Chrome and corrects the store,

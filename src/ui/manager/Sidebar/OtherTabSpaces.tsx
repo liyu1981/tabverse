@@ -16,7 +16,7 @@ import classes from './OtherTabSpaces.module.scss';
 import previewClasses from './TabverseHoverPreview.module.scss';
 
 /** How long the pointer has to rest on a row before its tabs are shown. */
-export const HOVER_PREVIEW_DELAY_MS = 1000;
+const HOVER_PREVIEW_DELAY_MS = 1000;
 
 const ICON_SIZE = 20;
 

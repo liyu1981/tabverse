@@ -16,7 +16,7 @@ import {
 import classes from './OmniSearch.module.scss';
 
 /** The server caps a search at 200 hits; asking for more is a no-op. */
-export const OMNI_SEARCH_LIMIT = 200;
+const OMNI_SEARCH_LIMIT = 200;
 const DEBOUNCE_MS = 300;
 
 /**

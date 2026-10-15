@@ -46,7 +46,7 @@ function publish(syncing: boolean): void {
 }
 
 /** Marks a sync as started; pair every call with `endSyncActivity`. */
-export function beginSyncActivity(): void {
+function beginSyncActivity(): void {
   running += 1;
   publish(true);
 }

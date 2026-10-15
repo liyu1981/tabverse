@@ -32,7 +32,7 @@ import classes from '../data.module.scss';
  * its name, dates and size, then the matched records with the query terms
  * highlighted.
  */
-export const SEARCH_KIND_ORDER = [
+const SEARCH_KIND_ORDER = [
   'tabspace',
   'tab',
   'closedtab',
@@ -42,7 +42,7 @@ export const SEARCH_KIND_ORDER = [
   'session',
 ];
 
-export const SEARCH_KIND_LABEL: Record<string, string> = {
+const SEARCH_KIND_LABEL: Record<string, string> = {
   tabspace: 'Tabverses',
   tab: 'Tabs',
   closedtab: 'History',
@@ -142,7 +142,7 @@ export function matchCount(tabverse: TabverseMatches, kind: string): number {
 }
 
 /** The kinds present in a tabverse, in the canonical kind order. */
-export function kindsInTabverse(tabverse: TabverseMatches): string[] {
+function kindsInTabverse(tabverse: TabverseMatches): string[] {
   const kinds = [...SEARCH_KIND_ORDER];
   for (const present of Object.keys(tabverse.byKind)) {
     if (!kinds.includes(present)) kinds.push(present);
@@ -187,13 +187,13 @@ export function hitsForTabverse(
   return out;
 }
 
-export interface TextPart {
+interface TextPart {
   text: string;
   match: boolean;
 }
 
 /** Splits `text` on the query terms (case-insensitive) for `<mark>`ing. */
-export function highlightTerms(text: string, terms: string[]): TextPart[] {
+function highlightTerms(text: string, terms: string[]): TextPart[] {
   const wanted = terms
     .map((term) => term.trim())
     .filter(Boolean)
@@ -223,7 +223,7 @@ export function highlightTerms(text: string, terms: string[]): TextPart[] {
 }
 
 /** The FTS snippet marks matches with `[ ]`; turn those into `<mark>`s. */
-export function parseSnippet(snippet: string): TextPart[] {
+function parseSnippet(snippet: string): TextPart[] {
   const parts: TextPart[] = [];
   const pattern = /\[([^\]]*)\]/g;
   let last = 0;
@@ -262,7 +262,7 @@ function Highlighted(props: { parts: TextPart[] }) {
 }
 
 /** "12 tabs · created 3d ago · updated 2h ago", only the parts we have. */
-export function tabverseMetaLine(tabverse: TabverseMatches): string {
+function tabverseMetaLine(tabverse: TabverseMatches): string {
   const bits: string[] = [];
   if (tabverse.tabs) {
     bits.push(`${tabverse.tabs} tab${tabverse.tabs === 1 ? '' : 's'}`);

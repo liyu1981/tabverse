@@ -20,7 +20,7 @@ export const setRecordEntity = createEvent<string>();
 export const setRecordDeleted = createEvent<boolean>();
 export const pageRecords = createEvent<number>();
 export const setSearchQuery = createEvent<string>();
-export const setSearchEntity = createEvent<string>();
+const setSearchEntity = createEvent<string>();
 /** A new account starts at the top of both lists with nothing filtered. */
 export const resetBrowse = createEvent();
 

@@ -60,7 +60,7 @@ const rightSideToolSavers = [
   },
 ];
 
-export async function saveAndFlushRightSideTools(): Promise<void> {
+async function saveAndFlushRightSideTools(): Promise<void> {
   const tabSpaceId = $tabSpace.getState().id;
   const results = await Promise.allSettled(
     rightSideToolSavers

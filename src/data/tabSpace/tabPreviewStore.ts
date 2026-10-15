@@ -22,12 +22,9 @@
 import { db } from '../../storage/db';
 import { logger } from '../../global';
 import { currentPreviewSessionId } from './previewSession';
-import {
-  TAB_PREVIEW_DB_SCHEMA,
-  TAB_PREVIEW_DB_TABLE_NAME,
-} from './tabPreviewSchema';
+import { TAB_PREVIEW_DB_TABLE_NAME } from './tabPreviewSchema';
 
-export { TAB_PREVIEW_DB_SCHEMA, TAB_PREVIEW_DB_TABLE_NAME };
+export { TAB_PREVIEW_DB_TABLE_NAME };
 
 export interface TabPreviewRow {
   /** the chrome tab id, as a string: the primary key of this table */

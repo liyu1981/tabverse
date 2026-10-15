@@ -37,7 +37,7 @@ const allTodoApi = createApi($allTodo, {
 
 const { $store: $todoStorageStoreImpl, api: todoStorageApi } =
   createGeneralStorageStoreAndApi();
-export const $todoStorage = $todoStorageStoreImpl;
+const $todoStorage = $todoStorageStoreImpl;
 
 forward({
   from: $todoStorage,
