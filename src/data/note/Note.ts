@@ -8,6 +8,11 @@ export interface Note extends IBase {
   tabSpaceId: string;
   name: string;
   data: string;
+  /**
+   * Whether the editor is folded shut. It is the note's own state rather than
+   * page state, so a refresh keeps the fold.
+   */
+  collapsed?: boolean;
 }
 
 export const NOTE_DB_TABLE_NAME = 'SavedNote';
@@ -19,6 +24,7 @@ export function newEmptyNote(): Note {
     tabSpaceId: NotTabSpaceId,
     name: `Note ${Date.now()}`,
     data: '',
+    collapsed: false,
   };
 }
 

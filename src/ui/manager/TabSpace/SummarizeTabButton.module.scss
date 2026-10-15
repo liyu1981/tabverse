@@ -1,0 +1,17 @@
+/*
+ * The summarize menu is a peek, not a modal.
+ *
+ * Blueprint's Popover renders a full-screen overlay container behind the menu.
+ * While the menu is open that container captures every click, so clicking a tab
+ * in the list only dismissed the menu - the click never reached the card, and
+ * the tab did not switch. The overlay is made click-through and the menu itself
+ * keeps its pointer events, so an outside click both closes the menu and does
+ * what it was aimed at.
+ */
+.portal :global(.bp6-overlay-container) {
+  pointer-events: none;
+}
+
+.portal :global(.bp6-popover) {
+  pointer-events: auto;
+}

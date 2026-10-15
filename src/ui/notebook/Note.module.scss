@@ -4,6 +4,17 @@
   height: 50px;
 }
 
+/* In the editor's row the title takes whatever the caret and the tools leave,
+   so a long name shows as much of itself as fits (the field ellipsizes). */
+.container .titleContainer {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.titleText {
+  width: 100%;
+}
+
 .collapseButton {
   width: 32px;
   /* a real <button> now: drop the button chrome and the line box, and centre
@@ -18,6 +29,12 @@
   color: inherit;
   line-height: 0;
   cursor: pointer;
+}
+
+/* The fold caret is how a person sees which note is selected: the selected
+   note's caret is red, the others keep the inherited colour. */
+.collapseButtonSelected {
+  color: #e53935;
 }
 
 .titleContainer {

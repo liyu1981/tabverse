@@ -13,6 +13,7 @@ import {
   MAX_NOTE_NAME_CHARS,
   MAX_SUMMARY_CHARS,
   SUMMARIZE_QUESTION,
+  SUMMARIZE_RESPONSE_SCHEMA,
   buildSummarizePrompt,
   parseSummary,
   summarizeTab,
@@ -65,6 +66,11 @@ describe('buildSummarizePrompt', () => {
 });
 
 describe('parseSummary', () => {
+  test('takes the summary field of a JSON reply', () => {
+    expect(parseSummary('{"summary":"a summary"}')).toBe('a summary');
+    expect(parseSummary('```json\n{"summary":"x"}\n```')).toBe('x');
+  });
+
   test('trims and collapses blank lines', () => {
     expect(parseSummary('  a summary.  \n\n\n\nmore.  ')).toBe(
       'a summary.\n\nmore.',
@@ -102,12 +108,15 @@ describe('summaryPromptBudgetFor', () => {
 });
 
 describe('summarizeTab', () => {
-  test('asks the session and parses the reply', async () => {
-    const session = fakeSession('  The page is about tabs.  ');
+  test('asks the session with the JSON constraint and parses the reply', async () => {
+    const session = fakeSession('{"summary":"  The page is about tabs.  "}');
     await expect(summarizeTab(session, 'a long page', 1000)).resolves.toBe(
       'The page is about tabs.',
     );
     expect(session.prompt).toHaveBeenCalledTimes(1);
+    expect(session.prompt.mock.calls[0][1]).toEqual({
+      responseConstraint: SUMMARIZE_RESPONSE_SCHEMA,
+    });
   });
 
   test('an empty page never reaches the model', async () => {

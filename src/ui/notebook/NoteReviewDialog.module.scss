@@ -3,14 +3,33 @@
 .dialog {
   width: min(92vw, 900px);
   max-width: 900px;
+  /* A bounded card: the rows scroll inside it, so the summary and the
+     decision buttons stay on screen however long the diff is. */
+  max-height: min(85vh, 720px);
+}
+
+.dialogBody {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
 }
 
 .body {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
   gap: 0;
   padding: 0;
-  min-height: 0;
+}
+
+.summary,
+.columns,
+.footer {
+  flex: none;
 }
 
 .summary {
@@ -54,9 +73,9 @@
 }
 
 .scroll {
-  overflow: auto;
+  flex: 1 1 auto;
   min-height: 0;
-  flex: 1;
+  overflow: auto;
 }
 
 .rows {

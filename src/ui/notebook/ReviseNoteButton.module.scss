@@ -1,0 +1,33 @@
+/* The dropdown off the note's AI button. */
+
+/* Blueprint's Popover puts a full-screen overlay container behind the menu, and
+   while it is open it captures outside clicks. Making it click-through keeps
+   the menu clickable while letting a click behind it reach the page (a tab in
+   the list, say), instead of being eaten. */
+.portal :global(.bp6-overlay-container) {
+  pointer-events: none;
+}
+
+.portal :global(.bp6-popover) {
+  pointer-events: auto;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 320px;
+  padding: 12px;
+}
+
+/* Blueprint's input radius is the big surface radius; this field is a small one
+   inside a menu, so it gets a much squarer corner. */
+.panel :global(.bp6-input) {
+  border-radius: 2px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}

@@ -34,10 +34,16 @@ diff let the person accept, edit or reject it.
    hidden while a proposal is pending.
 4. `Note.tsx` saves on apply (`onApply`), because the review is modal and the
    editor may not blur.
-5. The first real caller is the summarize action: when a note is being edited,
-   the summary is proposed into it (and reviewed) instead of always becoming a
-   new note. `src/ui/notebook/activeNoteEditor.ts` is the one slot that connects
-   the tab card's action to the notebook's editor; focus sets it.
+5. A note's own **Revise with AI** action (`ReviseNoteButton`) is a caller: it
+   asks the on-device model to rewrite the body from a short instruction and
+   hands the reply to `setContent`, so a model's revision is reviewed the same
+   way. The summarize action is the other: its menu offers **a new note** or
+   **append to the note being edited** (proposed through `setContent`, so the
+   append is reviewed too) - replacing what somebody is writing is not
+   something to do from one unlabelled click.
+   `src/ui/notebook/selectedNote.ts` is the one slot that connects the tab
+   card's action to the notebook's editor: the **selected note** is a selection,
+   not a focus, so it survives the blur that clicking the tab list causes.
 
 ## Consequences
 

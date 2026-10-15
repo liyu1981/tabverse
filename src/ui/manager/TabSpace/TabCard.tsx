@@ -158,11 +158,19 @@ export function TabCard(props: ITabCardProps) {
         // flex item: `.content` (grow + min-width: 0) has to sit on it, or the
         // action buttons stop being pushed to the right.
         className={classes.content}
+        // The whole span is the row's click target, not just the text inside
+        // the button: the span is what stretches, so the padding around the
+        // title and URL jumps too.
+        targetProps={{ onClick: () => activate(props.tab) }}
       >
         <button
           type="button"
           className={classes.contentButton}
-          onClick={() => activate(props.tab)}
+          onClick={(event) => {
+            // The span above handles it too; don't fire twice.
+            event.stopPropagation();
+            activate(props.tab);
+          }}
         >
           <div className={clsx(classes.tabTitle, classes.wrapText)}>
             <b>

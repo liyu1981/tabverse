@@ -1,9 +1,10 @@
 /**
  * The summarize-tab control (static markup, AGENTS.md: no browser).
  *
- * Two things are pinned: the presentational view draws a button and shows the
- * busy state, and the container disappears entirely when the browser has no
- * built-in AI, the probe has not answered, or the person switched AI off -
+ * Three things are pinned: the menu names its two outcomes (a new note, append
+ * to the note being edited), the presentational button shows the busy and
+ * disabled states, and the container disappears entirely when the browser has
+ * no built-in AI, the probe has not answered, or the person switched AI off -
  * rather than leaving a button that does nothing.
  */
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
@@ -19,6 +20,7 @@ import type { Tab } from '../../../../data/tabSpace/Tab';
 import {
   SummarizeTabButton,
   SummarizeTabButtonView,
+  SummarizeTabMenu,
 } from '../SummarizeTabButton';
 
 const liveTab = {
@@ -28,7 +30,7 @@ const liveTab = {
   tabSpaceId: 'ts1',
 } as Tab;
 
-const ARIA = 'Summarize this tab into a new note';
+const ARIA = 'Summarize this tab with AI';
 
 beforeEach(() => {
   setAiAvailabilityForTest({ state: 'ready', progress: null });
@@ -40,13 +42,31 @@ afterEach(() => {
   setAiEnabledForTest(null);
 });
 
+describe('SummarizeTabMenu', () => {
+  test('names both outcomes', () => {
+    const markup = renderToStaticMarkup(
+      <SummarizeTabMenu canAppend={true} onSelect={() => undefined} />,
+    );
+    expect(markup).toContain('New note with AI summary');
+    expect(markup).toContain('Append to current note');
+  });
+
+  test('append is disabled when no note is open', () => {
+    const markup = renderToStaticMarkup(
+      <SummarizeTabMenu canAppend={false} onSelect={() => undefined} />,
+    );
+    expect(markup).toContain('bp6-disabled');
+  });
+});
+
 describe('SummarizeTabButtonView', () => {
   test('renders the button', () => {
     const markup = renderToStaticMarkup(
       <SummarizeTabButtonView
         busy={false}
         status="Summarize this tab"
-        onSummarize={() => undefined}
+        canAppend={false}
+        onSelect={() => undefined}
       />,
     );
     expect(markup).toContain(ARIA);
@@ -57,7 +77,8 @@ describe('SummarizeTabButtonView', () => {
       <SummarizeTabButtonView
         busy={true}
         status="Summarizing…"
-        onSummarize={() => undefined}
+        canAppend={false}
+        onSelect={() => undefined}
       />,
     );
     expect(markup).toContain('bp6-loading');
@@ -69,7 +90,8 @@ describe('SummarizeTabButtonView', () => {
         busy={false}
         disabled={true}
         status="This tab is suspended"
-        onSummarize={() => undefined}
+        canAppend={false}
+        onSelect={() => undefined}
       />,
     );
     expect(markup).toContain('disabled');
