@@ -69,6 +69,20 @@
   background-color: global.$color-light-shade;
 }
 
+/*
+ * The tabverse's rail colour, a slim rounded bar at the leading edge of the
+ * row. Stretched to the row's own height so it reads as a marker rather than
+ * an icon; the colour itself is set inline (sidebarColor.ts).
+ */
+.rowColorBar {
+  flex: 0 0 auto;
+  align-self: stretch;
+  width: 4px;
+  min-height: 28px;
+  border-radius: 999px;
+  background-color: global.$sidebar-background-color;
+}
+
 .rowLabel {
   flex: 1;
   min-width: 0;

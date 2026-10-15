@@ -22,14 +22,16 @@ export interface SidebarColor {
 }
 
 export const SIDEBAR_COLORS: SidebarColor[] = [
+  // the default, and the brightness the rest are pulled toward: it is the
+  // rail's original slate, so it is the one colour that does not move
   { hex: '#54617a', name: 'Slate' },
-  { hex: '#3b3f6b', name: 'Indigo' },
-  { hex: '#1f4a52', name: 'Deep teal' },
-  { hex: '#2c4934', name: 'Forest' },
-  { hex: '#5c2b3a', name: 'Wine' },
-  { hex: '#472a55', name: 'Plum' },
-  { hex: '#4a3a2b', name: 'Coffee' },
-  { hex: '#31333c', name: 'Graphite' },
+  { hex: '#494d83', name: 'Indigo' },
+  { hex: '#327885', name: 'Deep teal' },
+  { hex: '#497956', name: 'Forest' },
+  { hex: '#8b4158', name: 'Wine' },
+  { hex: '#724389', name: 'Plum' },
+  { hex: '#81654b', name: 'Coffee' },
+  { hex: '#5c5f70', name: 'Graphite' },
 ];
 
 /** Today's rail colour, and the colour a tabverse gets without a choice. */

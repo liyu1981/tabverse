@@ -56,3 +56,10 @@ test('the tabverse of this window says so, and is not sent anywhere', () => {
   expect(markup).toContain('this window');
   expect(markup).not.toContain('open in 1 window');
 });
+
+test('the row carries the tabverse colour as a bar', () => {
+  const markup = render({ tabSpace: { ...tabSpace(), color: '#724389' } });
+  expect(markup).toContain('background-color:#724389');
+  // decorative: it is not what names the row
+  expect(markup).toContain('aria-hidden="true"');
+});

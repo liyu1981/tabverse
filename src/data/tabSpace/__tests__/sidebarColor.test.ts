@@ -51,7 +51,7 @@ test('every choice says what it is, and the default is one of them', () => {
 });
 
 test('a value that is not ours resolves to the default', () => {
-  expect(resolveSidebarColor('#472a55')).toBe('#472a55');
+  expect(resolveSidebarColor('#724389')).toBe('#724389');
   expect(resolveSidebarColor(undefined)).toBe(DEFAULT_SIDEBAR_COLOR);
   expect(resolveSidebarColor('chartreuse')).toBe(DEFAULT_SIDEBAR_COLOR);
   expect(resolveSidebarColor(42)).toBe(DEFAULT_SIDEBAR_COLOR);

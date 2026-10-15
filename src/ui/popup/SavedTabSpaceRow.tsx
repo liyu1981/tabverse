@@ -3,6 +3,7 @@ import React from 'react';
 
 import { TabSpace } from '../../data/tabSpace/TabSpace';
 import { calendarLabel } from '../../time';
+import { resolveSidebarColor } from '../../data/tabSpace/sidebarColor';
 import classes from './PopupView.module.scss';
 
 export interface ISavedTabSpaceRowProps {
@@ -34,6 +35,14 @@ export function SavedTabSpaceRow(props: ISavedTabSpaceRowProps) {
 
   return (
     <div className={classes.row}>
+      {/* The tabverse's rail colour, as a bar so the list reads at a glance
+          which one this window is showing. Decorative: the name and the
+          "this window" tag are what a screen reader needs. */}
+      <span
+        className={classes.rowColorBar}
+        style={{ backgroundColor: resolveSidebarColor(tabSpace.color) }}
+        aria-hidden={true}
+      />
       <button
         type="button"
         className={classes.rowLabel}

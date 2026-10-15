@@ -231,11 +231,11 @@ test('a tabverse saved before groups existed loads with an empty list', () => {
 
 test('the rail colour survives the save payload and a load', () => {
   let ts = newEmptyTabSpace();
-  ts = updateTabSpace({ color: '#472a55' }, ts);
+  ts = updateTabSpace({ color: '#724389' }, ts);
   const { tabSpaceSavePayload } = convertAndGetTabSpaceSavePayload(ts);
-  expect(tabSpaceSavePayload.color).toEqual('#472a55');
+  expect(tabSpaceSavePayload.color).toEqual('#724389');
   expect(fromSavedDataWithoutTabs(tabSpaceSavePayload).color).toEqual(
-    '#472a55',
+    '#724389',
   );
 });
 

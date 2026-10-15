@@ -23,9 +23,9 @@ const rail = () =>
   );
 
 test('the rail carries the current tabverse colour', () => {
-  tabSpaceStoreApi.updateTabSpace({ color: '#472a55' });
+  tabSpaceStoreApi.updateTabSpace({ color: '#724389' });
   const markup = rail();
-  expect(markup).toContain('--sidebar-color:#472a55');
+  expect(markup).toContain('--sidebar-color:#724389');
   expect(markup).toContain('an entry');
   tabSpaceStoreApi.updateTabSpace({ color: DEFAULT_SIDEBAR_COLOR });
 });

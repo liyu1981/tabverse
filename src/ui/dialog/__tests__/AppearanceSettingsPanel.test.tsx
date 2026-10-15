@@ -44,7 +44,7 @@ test('every palette colour is a swatch, named for its colour', () => {
 });
 
 test('the chosen colour is the one pressed', () => {
-  const markup = render({ color: '#472a55' });
+  const markup = render({ color: '#724389' });
   expect((markup.match(/aria-pressed="true"/g) ?? []).length).toBe(1);
   expect(markup).toContain('aria-label="Plum"');
 });

@@ -29,12 +29,12 @@ test('each new tabverse gets its own id', () => {
 });
 
 test('a new tabverse can carry its rail colour, encoded', () => {
-  const url = tabverseUrl(TabSpaceOp.New, undefined, '#472a55');
+  const url = tabverseUrl(TabSpaceOp.New, undefined, '#724389');
   // the `#` would otherwise start the fragment, so it is percent-encoded and
   // must read back as the colour the opener meant
-  expect(url).toContain('color=%23472a55');
+  expect(url).toContain('color=%23724389');
   const color = new URL(url, 'https://x/').searchParams.get('color');
-  expect(color).toBe('#472a55');
+  expect(color).toBe('#724389');
 });
 
 test('a saved tabverse carries no colour: its own record has it', () => {
