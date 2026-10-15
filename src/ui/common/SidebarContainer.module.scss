@@ -27,7 +27,12 @@ $transition-time: 200ms;
   z-index: 1;
   top: 0;
   left: 0;
-  background-color: global.$color-main-brand;
+  /* `--sidebar-color` is the current tabverse's colour, set by the container;
+     the fallback is the default rail slate for a caller with no store. */
+  background-color: var(
+    --sidebar-color,
+    #{global.$sidebar-background-color}
+  );
   overflow-x: hidden;
   padding: 12px;
   width: var(--sidebar-width);

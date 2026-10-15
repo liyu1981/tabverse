@@ -1,8 +1,11 @@
 import { Button, Icon } from '@blueprintjs/core';
 import React, { createContext, useContext } from 'react';
+import { useStore } from 'effector-react';
 
 import classes from './SidebarContainer.module.scss';
 import clsx from 'clsx';
+import { $tabSpace } from '../../data/tabSpace/store';
+import { resolveSidebarColor } from '../../data/tabSpace/sidebarColor';
 import { useSettingItem } from '../../storage/localSetting';
 
 interface SidebarState {
@@ -55,6 +58,11 @@ export const SidebarContainer = (props: { children?: React.ReactNode }) => {
   const allChildren = React.Children.toArray(props.children);
   const sidebarContent = allChildren[0];
   const contentChildren = allChildren.slice(1);
+  // The rail's colour is the current tabverse's, published as a custom
+  // property so the three rules that paint the rail (the background, the
+  // active entry's two corner cutouts, the bottom bar) all read one value.
+  const tabSpace = useStore($tabSpace);
+  const railColor = resolveSidebarColor(tabSpace.color);
   return (
     <SidebarContext.Provider
       value={{
@@ -65,6 +73,7 @@ export const SidebarContainer = (props: { children?: React.ReactNode }) => {
     >
       <div
         className={clsx(classes.topContainer, collapsed && classes.collapsed)}
+        style={{ '--sidebar-color': railColor } as React.CSSProperties}
       >
         <div className={classes.leftContainer}>
           {/* In the rail there is no room for the chevron: the logo is the way

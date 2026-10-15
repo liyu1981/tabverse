@@ -31,6 +31,7 @@ import type {
   TabGroupHint,
   TabSpace,
 } from '../../../src/data/tabSpace/TabSpace';
+import { resolveSidebarColor } from '../../../src/data/tabSpace/sidebarColor';
 import type { Todo } from '../../../src/data/todo/Todo';
 import type { BundleRow, TabspaceBundle } from './types';
 
@@ -97,6 +98,9 @@ export function toTabSpace(bundle: TabspaceBundle): TabSpace {
   return {
     id: bundle.tabspace.id,
     name: bundle.tabspace.name || '',
+    // The rail colour is not drawn in a read-only console preview, but the
+    // shape is the extension's, so it is read from the payload like the name.
+    color: resolveSidebarColor(bundle.tabspace_data?.color),
     tabs: List(
       [...bundle.tabs]
         .sort((a, b) => a.position - b.position)

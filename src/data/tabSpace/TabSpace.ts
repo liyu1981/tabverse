@@ -14,6 +14,7 @@ import {
 } from '../Base';
 import { omit } from 'lodash';
 
+import { DEFAULT_SIDEBAR_COLOR, resolveSidebarColor } from './sidebarColor';
 import { List } from 'immutable';
 import { produce } from 'immer';
 
@@ -64,6 +65,8 @@ export interface TabGroupHint {
 
 interface TabSpaceCore extends IBase {
   name: string;
+  /** the rail colour while this tabverse is the window's (sidebarColor.ts) */
+  color: string;
   tabs: List<Tab>;
   tabGroups: TabGroupHint[];
 }
@@ -72,6 +75,8 @@ export type TabSpace = TabSpaceCore & LiveTabSpace;
 
 export interface TabSpaceSavePayload extends IBase {
   name: string;
+  /** absent on rows saved before the rail was a choice */
+  color?: string;
   tabIds: string[];
   tabGroups: TabGroupHint[];
 }
@@ -83,6 +88,7 @@ export function newEmptyTabSpace(): TabSpace {
   return {
     ...newEmptyBase(),
     name: '',
+    color: DEFAULT_SIDEBAR_COLOR,
     tabs: List<Tab>(),
     tabGroups: [],
     chromeTabId: -1,
@@ -125,6 +131,9 @@ export function fromSavedDataWithoutTabs(d: TabSpaceSavePayload): TabSpace {
   return {
     ...newEmptyTabSpace(),
     ...omit(d, 'tabIds'),
+    // a colour that is not one of ours (a stale build, a hand-edited row)
+    // paints the default rather than breaking the rail
+    color: resolveSidebarColor(d.color),
     // tabverses saved before groups existed have no field at all
     tabGroups: d.tabGroups ?? [],
   };
@@ -345,6 +354,7 @@ export function convertAndGetTabSpaceSavePayload(targetTabSpace: TabSpace): {
   const tabSpaceSavePayload = {
     ...savedBase,
     name: targetTabSpace.name,
+    color: targetTabSpace.color,
     tabIds: savedTabs.map((tab) => tab.id).toArray(),
     tabGroups: savedTabGroups,
   };

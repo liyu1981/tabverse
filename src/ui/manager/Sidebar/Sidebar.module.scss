@@ -26,7 +26,10 @@
   content: '';
   width: 30px;
   height: 30px;
-  background-color: global.$color-main-brand;
+  /* the rail's own colour, so the corner blends into it whatever the tabverse
+     chose (see SidebarContainer + sidebarColor.ts); the fallback is the
+     default rail slate */
+  background-color: var(--sidebar-color, #{global.$sidebar-background-color});
   position: absolute;
   top: 0px;
   left: 0px;
@@ -38,7 +41,7 @@
   position: absolute;
   width: 30px;
   height: 30px;
-  background-color: global.$color-main-brand;
+  background-color: var(--sidebar-color, #{global.$sidebar-background-color});
   top: calc(100% - 30px);
   left: 0px;
   border-top-right-radius: 30px;

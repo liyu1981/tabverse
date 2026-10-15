@@ -14,9 +14,16 @@ import { sendChromeMessage, TabSpaceMsg } from '../../message/message';
  * opener mints the id for a new tabverse, which is also what makes "open a
  * Tabverse tab" and "keep this window" the same action.
  */
-export function tabverseUrl(op: TabSpaceOp, tabSpaceId?: string): string {
+export function tabverseUrl(
+  op: TabSpaceOp,
+  tabSpaceId?: string,
+  /** the rail colour for a *new* tabverse; a saved one carries its own */
+  color?: string,
+): string {
   const tvid = tabSpaceId ?? getNewId();
-  return `manager.html?op=${op}&tvid=${encodeURIComponent(tvid)}`;
+  const colorPart =
+    color !== undefined ? `&color=${encodeURIComponent(color)}` : '';
+  return `manager.html?op=${op}&tvid=${encodeURIComponent(tvid)}${colorPart}`;
 }
 
 /**

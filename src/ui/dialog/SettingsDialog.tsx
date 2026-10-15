@@ -18,11 +18,12 @@ import React, { useEffect, useState } from 'react';
 
 import { AboutPanel } from './AboutPanel';
 import { AiSettingsPanel } from './AiSettingsPanel';
+import { AppearanceSettingsPanel } from './AppearanceSettingsPanel';
 import { ServerSyncPanel } from './ServerSyncPanel';
 import { SuspendSettingsPanel } from './SuspendSettingsPanel';
 import classes from './SettingsDialog.module.scss';
 
-export type SettingsTab = 'sync' | 'suspend' | 'ai' | 'about';
+export type SettingsTab = 'sync' | 'suspend' | 'look' | 'ai' | 'about';
 
 export interface SettingsBodyProps {
   tab: SettingsTab;
@@ -65,6 +66,15 @@ export function SettingsBody(props: SettingsBodyProps) {
             </span>
           }
           panel={<SuspendSettingsPanel />}
+        />
+        <Tab
+          id="look"
+          title={
+            <span>
+              <Icon icon="tint" /> Look
+            </span>
+          }
+          panel={<AppearanceSettingsPanel />}
         />
         <Tab
           id="ai"

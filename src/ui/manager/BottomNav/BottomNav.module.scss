@@ -1,4 +1,3 @@
-@use 'sass:color';
 @use '../../../global.scss';
 
 .container {
@@ -9,8 +8,14 @@
   width: var(--sidebar-width, 320px);
 }
 
+/* a touch darker than the rail, whatever colour the tabverse chose; the
+   fallback is the default rail slate */
 .navbar {
-  background-color: color.adjust(global.$color-d, $lightness: -5%) !important;
+  background-color: color-mix(
+    in srgb,
+    var(--sidebar-color, #{global.$sidebar-background-color}),
+    black 8%
+  ) !important;
 }
 
 .navbar :global(.bp6-button) {

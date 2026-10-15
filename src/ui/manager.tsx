@@ -23,6 +23,7 @@ import { CountExit } from './common/CountExit';
 import React from 'react';
 import { find } from 'lodash';
 import { getNewId } from '../data/common';
+import { isSidebarColor } from '../data/tabSpace/sidebarColor';
 import { pinTabverseTabFirst } from '../data/tabSpace/chromeUtil';
 import { getQueryParameters } from './common/queryAndHashParameter';
 import { loadTabSpaceByTabSpaceId } from '../data/tabSpace/util';
@@ -55,6 +56,12 @@ async function bootstrap() {
     // rebuilt on every load anyway, so minting one here cannot orphan anything
     // that was not already local-only.
     const tabSpaceId = queryParams.tvid || getNewId();
+    // A new tabverse's rail colour rides in the url (minted by the opener,
+    // `tabverseUrl`); a saved one carries its colour in its own record and
+    // `loadTabSpaceByTabSpaceId` below is what restores it.
+    if (isSidebarColor(queryParams.color)) {
+      tabSpaceStoreApi.updateTabSpace({ color: queryParams.color });
+    }
     await tabSpaceBootstrap(tsChromeTab.id, tsChromeTab.windowId, tabSpaceId);
     if (queryParams.op === TabSpaceOp.LoadSaved) {
       await loadTabSpaceByTabSpaceId(

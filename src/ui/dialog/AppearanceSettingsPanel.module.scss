@@ -1,0 +1,58 @@
+@use '../../global.scss';
+
+/*
+ * The sidebar colour section: the same quiet shape as the suspension and AI
+ * sections - a callout that says why the choices are dark, the swatch row, and
+ * a switch for the next tabverse.
+ */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.hint {
+  margin: 0;
+  font-size: 0.85em;
+  line-height: 1.5;
+}
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid global.$color-light-shade;
+  border-radius: global.$radius-card;
+  min-width: 0;
+}
+
+/*
+ * A swatch is the colour itself: the button's own surface is the value, so no
+ * inner element. The chosen one is ringed in the text colour - a border on the
+ * button would shrink the colour, an outline does not.
+ */
+.swatch {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px rgb(29 25 31 / 25%);
+}
+
+.swatch:hover {
+  transform: scale(1.06);
+}
+
+.swatchChosen {
+  outline: 3px solid global.$color-text;
+  outline-offset: 2px;
+}
+
+.swatch:focus-visible {
+  outline: 3px solid global.$color-main-brand;
+  outline-offset: 2px;
+}

@@ -27,6 +27,7 @@ import {
   setChromeWindowId as tabSetChromeWindowId,
   setId as tabSetId,
 } from '../Tab';
+import { DEFAULT_SIDEBAR_COLOR } from '../sidebarColor';
 import { SPLIT_VIEW_ID_NONE, Tab, newEmptyTab } from '../Tab';
 import { List } from 'immutable';
 
@@ -226,6 +227,31 @@ test('a tabverse saved before groups existed loads with an empty list', () => {
     updatedAt: 2,
   } as any;
   expect(fromSavedDataWithoutTabs(legacy).tabGroups).toEqual([]);
+});
+
+test('the rail colour survives the save payload and a load', () => {
+  let ts = newEmptyTabSpace();
+  ts = updateTabSpace({ color: '#472a55' }, ts);
+  const { tabSpaceSavePayload } = convertAndGetTabSpaceSavePayload(ts);
+  expect(tabSpaceSavePayload.color).toEqual('#472a55');
+  expect(fromSavedDataWithoutTabs(tabSpaceSavePayload).color).toEqual(
+    '#472a55',
+  );
+});
+
+test('a row with no colour, or one that is not ours, loads the default', () => {
+  const bare: any = {
+    id: 'ts-old',
+    name: 'Window-2',
+    tabIds: [],
+    version: 8,
+    createdAt: 1,
+    updatedAt: 2,
+  };
+  expect(fromSavedDataWithoutTabs(bare).color).toEqual(DEFAULT_SIDEBAR_COLOR);
+  expect(
+    fromSavedDataWithoutTabs({ ...bare, color: 'chartreuse' }).color,
+  ).toEqual(DEFAULT_SIDEBAR_COLOR);
 });
 
 /*

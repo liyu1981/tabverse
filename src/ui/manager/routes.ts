@@ -17,5 +17,7 @@ export interface IManagerQueryParams {
   op: string;
   /** the tabverse id, minted when the tab was opened (see tabverseUrl) */
   tvid?: string;
+  /** the rail colour a *new* tabverse was created with (see tabverseUrl) */
+  color?: string;
   route?: string;
 }

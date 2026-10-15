@@ -27,6 +27,8 @@ import {
   restoreSavedTabSpaceUtil,
   tabverseUrl,
 } from '../../data/tabSpace/chromeUtil';
+import { randomSidebarColor } from '../../data/tabSpace/sidebarColor';
+import { loadSidebarRandomOnCreate } from '../../data/tabSpace/sidebarColorSettings';
 import classes from './PopupView.module.scss';
 
 const SEARCH_DEBOUNCE_MS = 200;
@@ -172,16 +174,22 @@ export function PopupView() {
       });
   };
 
-  const createNewTabSpace = () => {
+  const createNewTabSpace = async () => {
+    // The colour is rolled here, where the tabverse is created: the opener is
+    // the only place that knows this is a *new* tabverse (the id is in every
+    // url), and the colour rides in the url so a reload keeps it.
+    const random = await loadSidebarRandomOnCreate();
+    const color = random ? randomSidebarColor() : undefined;
+    const url = tabverseUrl(TabSpaceOp.New, undefined, color);
     if (currentTabSpaceId) {
       setPendingReplace({
-        url: tabverseUrl(TabSpaceOp.New),
+        url,
         title: 'Start a new tabverse in this window?',
         body: `This window already has a tabverse ("${currentTabSpaceName}"). It is saved automatically, so nothing is lost. Continuing closes it here and starts a new tabverse; the tabs in this window become part of it.`,
       });
       return;
     }
-    openUrlInCurrentWindow(tabverseUrl(TabSpaceOp.New));
+    openUrlInCurrentWindow(url);
   };
 
   // An import is a new, independent tabverse: every id in the file is reminted,
@@ -295,7 +303,9 @@ export function PopupView() {
               ? 'Saves the current tabverse and starts a new one in this window'
               : 'Starts a new tabverse in this window'
           }
-          onClick={createNewTabSpace}
+          onClick={() => {
+            void createNewTabSpace();
+          }}
         />
         <Button
           icon="import"
