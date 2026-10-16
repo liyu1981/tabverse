@@ -18,8 +18,13 @@
  * tabverse left (see ManagerView.module.scss).
  */
 import { Button, Icon } from '@blueprintjs/core';
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 
+import {
+  RightPanelMsg,
+  subscribePubSubMessage,
+  unsubscribePubSubMessage,
+} from '../../../message/message';
 import { useSettingItem } from '../../../storage/localSetting';
 import { ChatPanel } from './ChatPanel';
 import { PromptHistoryPanel } from './PromptHistoryPanel';
@@ -126,6 +131,17 @@ export function RightSidePanel() {
     (value) => (isRightPanelView(value) ? value : ''),
     (value) => value,
   );
+
+  // `setView` is rebuilt on every render, so the subscription keeps the latest
+  // one in a ref rather than re-subscribing each time.
+  const setViewRef = useRef(setView);
+  setViewRef.current = setView;
+  useEffect(() => {
+    const token = subscribePubSubMessage(RightPanelMsg.OpenChat, () => {
+      setViewRef.current('chat');
+    });
+    return () => unsubscribePubSubMessage(token);
+  }, []);
 
   return (
     <RightSidePanelShell

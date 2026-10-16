@@ -1,0 +1,53 @@
+@use '../../../global.scss';
+
+/*
+ * The Markdown view: a bounded card whose body scrolls, so the title and the
+ * copy button stay on screen however long the page's Markdown is.
+ */
+.dialog {
+  width: min(92vw, 900px);
+  max-height: min(85vh, 720px);
+  display: flex;
+  flex-direction: column;
+  /* match the app's dialog surface, so the near-white pane reads as a pane */
+  background-color: #fff;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+  color: global.$color-text;
+}
+
+.markdown {
+  margin: 0;
+  padding: 12px;
+  max-height: 60vh;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  line-height: 1.5;
+  color: global.$color-text;
+  /* near-white, and outlined so it still reads as its own surface */
+  background-color: global.$color-c;
+  border: 1px solid global.$color-e;
+  border-radius: global.$radius-card;
+}

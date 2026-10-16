@@ -87,3 +87,84 @@ export function setTabTextExtractorForTest(
 ): void {
   injectedExtractor = extractor;
 }
+
+/** A live tab's rendered markup, plus the base url its links resolve against. */
+export interface TabHtmlContent {
+  html: string;
+  url: string;
+}
+
+/** Reads one tab's markup, or null when it cannot be read. */
+export type TabHtmlExtractor = (
+  chromeTabId: number,
+) => Promise<TabHtmlContent | null>;
+
+let injectedHtmlExtractor: TabHtmlExtractor | null = null;
+
+/**
+ * The function that runs inside the page. Self-contained, like `readPageText`.
+ *
+ * The clone is what keeps this a read: stripping the script/style/template
+ * nodes off the page itself would change the page the person is looking at.
+ * They are dropped because an inline hydration blob (`__NEXT_DATA__`) can dwarf
+ * the prose, and neither Readability nor Turndown has any use for them.
+ */
+function readPageHtml(): TabHtmlContent | null {
+  const root = document.documentElement;
+  if (!root) {
+    return null;
+  }
+  const clone = root.cloneNode(true) as HTMLElement;
+  clone
+    .querySelectorAll('script,style,noscript,template,link')
+    .forEach((node) => {
+      node.remove();
+    });
+  return {
+    html: clone.outerHTML,
+    url: document.baseURI || document.location?.href || '',
+  };
+}
+
+async function defaultHtmlExtractor(
+  chromeTabId: number,
+): Promise<TabHtmlContent | null> {
+  const results = await chrome.scripting.executeScript({
+    target: { tabId: chromeTabId },
+    func: readPageHtml,
+  });
+  const first = results?.[0]?.result as TabHtmlContent | null | undefined;
+  if (!first || typeof first.html !== 'string') {
+    return null;
+  }
+  return {
+    html: first.html,
+    url: typeof first.url === 'string' ? first.url : '',
+  };
+}
+
+/**
+ * The rendered markup of the tab, or null when Chrome will not let us read it
+ * (a `chrome://` page, the Web Store, a page that went away). Never throws.
+ */
+export async function extractTabHtml(
+  chromeTabId: number,
+): Promise<TabHtmlContent | null> {
+  if (chromeTabId <= 0) {
+    return null;
+  }
+  const extractor = injectedHtmlExtractor ?? defaultHtmlExtractor;
+  try {
+    return await extractor(chromeTabId);
+  } catch (err) {
+    logger.log('could not read the tab html', chromeTabId, err);
+    return null;
+  }
+}
+
+/** Test hook: replace the browser with a fixed html extractor. */
+export function setTabHtmlExtractorForTest(
+  extractor: TabHtmlExtractor | null,
+): void {
+  injectedHtmlExtractor = extractor;
+}

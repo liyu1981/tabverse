@@ -43,6 +43,15 @@ export enum SyncMsg {
   ConfigChanged = 'sync_config_changed',
 }
 
+/**
+ * In-process "show this panel" notice. A tab action can send it to bring the
+ * right side panel to the chat, which is otherwise only reachable from the
+ * rail; the payload is unused and exists only for the shared message shape.
+ */
+export enum RightPanelMsg {
+  OpenChat = 'right_panel_open_chat',
+}
+
 export type TabSpaceId = string;
 export type TabId = string;
 export type ChromeTabId = number;
@@ -119,6 +128,11 @@ export function sendPubSubMessage(
 ): void;
 
 export function sendPubSubMessage(
+  type: RightPanelMsg.OpenChat,
+  payload: boolean,
+): void;
+
+export function sendPubSubMessage(
   type: string,
   payload: string[] | boolean,
 ): void {
@@ -137,6 +151,11 @@ export function subscribePubSubMessage(
 
 export function subscribePubSubMessage(
   type: SyncMsg.ConfigChanged,
+  callback: (message: string, data: boolean) => void,
+): string;
+
+export function subscribePubSubMessage(
+  type: RightPanelMsg.OpenChat,
   callback: (message: string, data: boolean) => void,
 ): string;
 
