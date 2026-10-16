@@ -18,6 +18,26 @@
   --tool-content-max-height: 45vh;
 }
 
+/*
+ * Focus mode: the pinned tool takes almost the whole column (90vh) and the
+ * unpinned strip is hidden. It comes after `.pinnedContainer` so its bound wins
+ * over the base 45vh.
+ */
+.pinnedFocused {
+  --tool-content-max-height: 90vh;
+}
+
+.unpinnedHidden {
+  display: none;
+}
+
+/* the pinned tool's own controls: the focus toggle, then unpin */
+.pinnedActions {
+  float: right;
+  display: flex;
+  gap: 2px;
+}
+
 .unpinnedContainer {
   --tool-content-max-height: 35vh;
 }

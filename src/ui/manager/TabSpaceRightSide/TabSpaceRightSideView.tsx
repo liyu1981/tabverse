@@ -154,6 +154,9 @@ export function TabSpaceRightSideView() {
     );
     return restUnpinned[0];
   });
+  // Focus mode: the pinned tool alone, at 90vh, with the unpinned strip hidden.
+  // Transient, not remembered - it is a way of looking, not a choice of tools.
+  const [focus, setFocus] = useState(false);
 
   // A tab action ("send page content to AI chat", `TabContentButton`) asks for
   // the chat. Keep the latest pinned tool in a ref so the one subscription does
@@ -165,6 +168,8 @@ export function TabSpaceRightSideView() {
   useEffect(() => {
     const token = subscribePubSubMessage(ToolTabMsg.OpenChat, () => {
       if (pinnedRef.current !== RightSideModule.CHAT) {
+        // a hidden strip cannot show the chat, so leave focus first
+        setFocus(false);
         setCurrentUnpinned(RightSideModule.CHAT);
       }
     });
@@ -174,6 +179,7 @@ export function TabSpaceRightSideView() {
   const unpinCurrentTool = () => {
     setPinnedSetting(NO_PINNED_TOOL);
     setCurrentUnpinned(pinned);
+    setFocus(false);
   };
 
   const pinCurrentTool = () => {
@@ -191,16 +197,31 @@ export function TabSpaceRightSideView() {
       <div className={classes.container}>
         {pinned !== null ? (
           <div
-            className={`${classes.tabsContainer} ${classes.pinnedContainer}`}
+            className={`${classes.tabsContainer} ${classes.pinnedContainer} ${
+              focus ? classes.pinnedFocused : ''
+            }`}
           >
-            <Button
-              minimal={true}
-              className={classes.floatRightButton}
-              onClick={unpinCurrentTool}
-              title="Unpin current tool"
-            >
-              <Icon icon="unlock" />
-            </Button>
+            <div className={classes.pinnedActions}>
+              <Button
+                minimal={true}
+                onClick={() => setFocus((last) => !last)}
+                title={
+                  focus
+                    ? 'Exit focus on the pinned tool'
+                    : 'Focus on the pinned tool'
+                }
+                aria-pressed={focus}
+              >
+                <Icon icon={focus ? 'minimize' : 'maximize'} />
+              </Button>
+              <Button
+                minimal={true}
+                onClick={unpinCurrentTool}
+                title="Unpin current tool"
+              >
+                <Icon icon="unlock" />
+              </Button>
+            </div>
             <BPTabs
               animate={true}
               renderActiveTabPanelOnly={true}
@@ -221,7 +242,9 @@ export function TabSpaceRightSideView() {
           ''
         )}
         <div
-          className={`${classes.tabsContainer} ${classes.unpinnedContainer}`}
+          className={`${classes.tabsContainer} ${classes.unpinnedContainer} ${
+            focus ? classes.unpinnedHidden : ''
+          }`}
         >
           <Button
             minimal={true}
