@@ -66,7 +66,7 @@ export function setAiSessionFactoryForTest(
 }
 
 /** The download monitor create() gets, if this API shape accepts one. */
-function downloadMonitor(): (monitor: DownloadMonitor) => void {
+export function aiDownloadMonitor(): (monitor: DownloadMonitor) => void {
   return (monitor) => {
     if (!monitor || typeof monitor.addEventListener !== 'function') {
       return;
@@ -86,7 +86,15 @@ function downloadMonitor(): (monitor: DownloadMonitor) => void {
   };
 }
 
-async function defaultFactory(systemPrompt: string): Promise<AiSession> {
+/**
+ * One raw session from the browser, with the availability state moved around it
+ * (a download starts here, readiness is reported here). Shared with the chat
+ * (`ai/chatSession.ts`), which creates sessions the same way but keeps its own
+ * history rather than the cached, logged suggestion sessions.
+ */
+export async function createRawAiSession(
+  options: AiCreateOptions,
+): Promise<AiRawSession> {
   const api = detectAiModelApi();
   if (!api) {
     // the probe should already have said `absent` and hidden the control;
@@ -98,10 +106,16 @@ async function defaultFactory(systemPrompt: string): Promise<AiSession> {
   if (getAiAvailability().state === 'downloadable') {
     noteAiDownloading(null);
   }
-  const options: AiCreateOptions = { systemPrompt };
-  options.monitor = downloadMonitor();
   const raw: AiRawSession = await api.create(options);
   noteAiReady();
+  return raw;
+}
+
+async function defaultFactory(systemPrompt: string): Promise<AiSession> {
+  const raw = await createRawAiSession({
+    systemPrompt,
+    monitor: aiDownloadMonitor(),
+  });
   return {
     prompt: (input, options) => raw.prompt(input, options),
     destroy: () => raw.destroy?.(),

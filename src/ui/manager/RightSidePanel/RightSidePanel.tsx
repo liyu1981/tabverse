@@ -21,19 +21,25 @@ import { Button, Icon } from '@blueprintjs/core';
 import React from 'react';
 
 import { useSettingItem } from '../../../storage/localSetting';
+import { ChatPanel } from './ChatPanel';
 import { PromptHistoryPanel } from './PromptHistoryPanel';
 import { ServerConsoleView } from './ServerConsolePanel';
 import classes from './RightSidePanel.module.scss';
 
-export type RightPanelView = 'ai' | 'server';
+export type RightPanelView = 'chat' | 'ai' | 'server';
 
 /** Remembered across reloads: which panel is open ('' = the rail). */
 const PANEL_SETTING = 'tabverse_right_panel';
 
 const VIEWS = [
+  { id: 'chat', icon: 'comment', label: 'AI chat' },
   { id: 'ai', icon: 'chat', label: 'AI history' },
   { id: 'server', icon: 'cloud-server', label: 'Server console' },
 ] as const;
+
+function isRightPanelView(value: string): value is RightPanelView {
+  return value === 'chat' || value === 'ai' || value === 'server';
+}
 
 export interface RightSidePanelShellProps {
   /** null is the collapsed rail. */
@@ -102,7 +108,13 @@ export function RightSidePanelShell(props: RightSidePanelShellProps) {
         />
       </header>
       <div className={classes.body}>
-        {view === 'server' ? <ServerConsoleView /> : <PromptHistoryPanel />}
+        {view === 'server' ? (
+          <ServerConsoleView />
+        ) : view === 'chat' ? (
+          <ChatPanel />
+        ) : (
+          <PromptHistoryPanel />
+        )}
       </div>
     </aside>
   );
@@ -111,13 +123,13 @@ export function RightSidePanelShell(props: RightSidePanelShellProps) {
 export function RightSidePanel() {
   const [view, setView] = useSettingItem<RightPanelView | ''>(
     PANEL_SETTING,
-    (value) => (value === 'ai' || value === 'server' ? value : ''),
+    (value) => (isRightPanelView(value) ? value : ''),
     (value) => value,
   );
 
   return (
     <RightSidePanelShell
-      view={view === 'ai' || view === 'server' ? view : null}
+      view={view !== '' && isRightPanelView(view) ? view : null}
       onSelectView={setView}
       onCollapse={() => setView('')}
     />

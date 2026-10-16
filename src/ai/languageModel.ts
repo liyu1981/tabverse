@@ -33,15 +33,39 @@ export interface AiPromptOptions {
    * every user of this has a fallback parser.
    */
   responseConstraint?: object;
+  /** Stop a prompt (or a stream) in flight, where the shape supports it. */
+  signal?: AbortSignal;
+}
+
+/** One turn handed to `create()`, so a session can start with a conversation. */
+export interface AiInitialPrompt {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
 }
 
 /** What the model session looks like, normalized to what we call. */
 export interface AiRawSession {
   prompt(input: string, options?: AiPromptOptions): Promise<string>;
+  /**
+   * Chunk by chunk, where the shape has it. The chunks have been *cumulative*
+   * (the whole reply so far) on every build seen so far; a shape that sends
+   * deltas is handled by comparing against what has been read.
+   */
+  promptStreaming?(
+    input: string,
+    options?: AiPromptOptions,
+  ): ReadableStream<string>;
   /** Some builds never expose it; destroying is best effort. */
   destroy?(): void;
-  /** Input token quota of the session, when the API reports one. */
+  /**
+   * The context the session is using, and its window, across the two namings
+   * the API has had (`inputUsage`/`inputQuota` and `contextUsage`/`contextWindow`).
+   * All four are optional: a build that does not report them shows no stats.
+   */
+  inputUsage?: number;
   inputQuota?: number;
+  contextUsage?: number;
+  contextWindow?: number;
 }
 
 /** The availability answer both API shapes are mapped onto. */
@@ -52,7 +76,9 @@ export type ModelAvailability =
   | 'available';
 
 export interface AiCreateOptions {
-  systemPrompt: string;
+  systemPrompt?: string;
+  /** Previous turns, so a session can start mid-conversation (the chat). */
+  initialPrompts?: AiInitialPrompt[];
   /** Download progress, if this shape of `create()` supports a monitor. */
   monitor?: (monitor: DownloadMonitor) => void;
 }

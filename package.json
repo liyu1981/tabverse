@@ -75,6 +75,8 @@
     "pubsub-js": "^1.9.5",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "replace-in-file": "^9.0.0",
     "sass": "^1.105.0",
     "simplebar-react": "^3.3.2",

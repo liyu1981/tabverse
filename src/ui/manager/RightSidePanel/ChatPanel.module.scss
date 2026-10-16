@@ -1,0 +1,399 @@
+@use '../../../global.scss';
+
+/*
+ * The AI chat. The panel's body is a flex column with no scroll of its own
+ * (`RightSidePanel.module.scss`), so the view is the column: the context bar
+ * stays put, the messages scroll, and the composer sits at the bottom. That is
+ * the shape a chat has everywhere, and it is why this view is the one that
+ * wants the panel's full height.
+ */
+.view {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.center {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 0;
+  text-align: center;
+}
+
+/* The context window: a thin bar and its numbers, quiet enough to always show */
+.stats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 2px 10px;
+  font-size: 0.78em;
+  color: global.$color-light-accent;
+}
+
+.statsLabel {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+
+.statsValue {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.contextBar {
+  flex: 0 1 140px;
+  width: 140px;
+  height: 6px;
+  border-radius: 999px;
+  background-color: global.$color-light-shade;
+  overflow: hidden;
+}
+
+.contextFill {
+  height: 100%;
+  border-radius: 999px;
+  background-color: global.$color-main-brand;
+  transition: width 200ms ease-out;
+}
+
+.messages {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 2px 12px;
+}
+
+.empty {
+  margin: auto;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: global.$color-light-accent;
+  font-size: 0.9em;
+  text-align: center;
+}
+
+.emptyHint {
+  margin: 0;
+  font-size: 0.9em;
+}
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.rowUser {
+  justify-content: flex-end;
+}
+
+/* the assistant's mark, the same lightbulb the other AI controls use */
+.avatar {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background-color: global.$color-light-shade;
+  color: global.$color-main-brand;
+}
+
+.bubble {
+  min-width: 0;
+  max-width: 88%;
+  padding: 8px 10px;
+  border-radius: 14px;
+  font-size: 0.9em;
+}
+
+.bubbleUser {
+  background-color: global.$color-b;
+  border-bottom-right-radius: 4px;
+}
+
+.bubbleAssistant {
+  background-color: global.$color-light-shade;
+  border-bottom-left-radius: 4px;
+}
+
+.bubbleError {
+  background-color: #fbeae9;
+}
+
+.text {
+  margin: 0;
+  font-family: inherit;
+  font-size: 1em;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  flex: 1 1 auto;
+  font-size: 0.75em;
+  color: global.$color-light-accent;
+  font-variant-numeric: tabular-nums;
+}
+
+/* the answer's own row: what it cost, and what can be done with it */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  min-height: 22px;
+}
+
+.action {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: global.$color-light-accent;
+  cursor: pointer;
+}
+
+.action:hover:not(:disabled) {
+  background-color: rgb(29 25 31 / 8%);
+  color: global.$color-text;
+}
+
+.action:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.action:focus-visible {
+  outline: 2px solid global.$color-main-brand;
+}
+
+/*
+ * The answer as markdown. react-markdown emits plain elements, so the styling
+ * is all here: the bubble is the frame, and these keep a heading small and a
+ * code block dark so an answer never looks like the page changed.
+ */
+.markdown {
+  font-size: 1em;
+  overflow-wrap: anywhere;
+}
+
+.markdown > :first-child {
+  margin-top: 0;
+}
+
+.markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.markdown p {
+  margin: 0 0 8px;
+}
+
+.markdown ul,
+.markdown ol {
+  margin: 0 0 8px;
+  padding-left: 20px;
+}
+
+.markdown li {
+  margin: 2px 0;
+}
+
+.markdown h1,
+.markdown h2,
+.markdown h3,
+.markdown h4,
+.markdown h5,
+.markdown h6 {
+  margin: 10px 0 6px;
+  font-size: 1em;
+  font-weight: 700;
+}
+
+.markdown a {
+  color: global.$color-main-brand;
+}
+
+.markdown code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.88em;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background-color: rgb(29 25 31 / 8%);
+}
+
+.markdown pre {
+  margin: 0 0 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  overflow-x: auto;
+  background-color: global.$color-dark-shade;
+  color: global.$color-on-brand;
+}
+
+.markdown pre code {
+  padding: 0;
+  background: none;
+  color: inherit;
+}
+
+.markdown blockquote {
+  margin: 0 0 8px;
+  padding-left: 10px;
+  border-left: 3px solid global.$color-e;
+  color: global.$color-dark-accent;
+}
+
+.markdown hr {
+  margin: 10px 0;
+  border: 0;
+  border-top: 1px solid global.$color-e;
+}
+
+.markdown table {
+  margin: 0 0 8px;
+  border-collapse: collapse;
+  font-size: 0.9em;
+}
+
+.markdown th,
+.markdown td {
+  padding: 4px 8px;
+  border: 1px solid global.$color-e;
+  text-align: left;
+}
+
+.markdown img {
+  max-width: 100%;
+}
+
+.errorText {
+  color: #cd4246;
+}
+
+.thinking {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-left: 32px;
+  font-size: 0.8em;
+  color: global.$color-light-accent;
+}
+
+/*
+ * The compaction note: a divider with the summary folded away, because it is
+ * context the person may want to check but did not write.
+ */
+.compact {
+  margin: 2px 0;
+  border: 1px dashed global.$color-e;
+  border-radius: 10px;
+  background-color: rgb(240 241 242 / 60%);
+  font-size: 0.82em;
+  color: global.$color-light-accent;
+}
+
+.compactSummary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.compactSummary::-webkit-details-marker {
+  display: none;
+}
+
+.compactBody {
+  padding: 0 10px 8px;
+  color: global.$color-text;
+}
+
+.error {
+  margin: 0 0 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background-color: #fbeae9;
+  color: #cd4246;
+  font-size: 0.85em;
+}
+
+/*
+ * The composer: a card that grows with the draft, the send/stop control in its
+ * bottom row. The textarea is sized in js (a fixed number of lines would clip a
+ * growing draft or leave a gap).
+ */
+.composer {
+  flex: 0 0 auto;
+  border: 1px solid global.$color-e;
+  border-radius: global.$radius-card;
+  padding: 6px 8px 4px;
+  background-color: white;
+  transition:
+    border-color 120ms ease-out,
+    box-shadow 120ms ease-out;
+}
+
+.composer:focus-within {
+  border-color: global.$color-main-brand;
+  box-shadow: 0 0 0 2px rgb(84 97 122 / 15%);
+}
+
+.input {
+  display: block;
+  width: 100%;
+  /* Chrome 140 sizes the box to its content, so the draft grows the composer
+     without a measuring effect; the max keeps a long paste from taking over */
+  field-sizing: content;
+  max-height: 180px;
+  min-height: 22px;
+  resize: none;
+  border: 0;
+  outline: none;
+  background: none;
+  padding: 2px;
+  font: inherit;
+  font-size: 0.9em;
+  color: inherit;
+}
+
+.composerRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-top: 2px;
+}
+
+.hint {
+  font-size: 0.72em;
+  color: global.$color-light-accent;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}

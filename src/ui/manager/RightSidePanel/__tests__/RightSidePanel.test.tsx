@@ -28,10 +28,18 @@ const render = (
 describe('the collapsed rail', () => {
   test('offers one button per view, and no panel', () => {
     const markup = render({ view: null });
+    expect(markup).toContain('Open the AI chat');
     expect(markup).toContain('Open the AI history');
     expect(markup).toContain('Open the Server console');
     expect(markup).not.toContain('<aside');
     expect(markup).not.toContain('<iframe');
+  });
+
+  test('the AI chat opens its own body, separate from the history', () => {
+    const markup = render({ view: 'chat' });
+    expect(markup).toContain('AI chat');
+    // the history's copy is not there: the chat is a different view
+    expect(markup).not.toContain('Nothing has been asked');
   });
 });
 
