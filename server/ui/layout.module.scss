@@ -3,6 +3,18 @@
 // account view *is* the console, and an operator's powers are a fourth tab
 // rather than a different application).
 
+/*
+ * The page frame - brand bar, operator hint, read-only bar - as one sticky
+ * column. It sticks as a unit so its parts never overlap each other, and it
+ * sits below the overlay layer (z-index 20) so a Blueprint drawer covers it
+ * rather than being covered by it.
+ */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
 .topbar {
   display: flex;
   align-items: center;
@@ -10,9 +22,6 @@
   gap: 16px;
   padding: 10px 18px;
   background: var(--brand-bar);
-  position: sticky;
-  top: 0;
-  z-index: 20;
 }
 
 .brand {
@@ -79,9 +88,6 @@
   font-weight: 600;
   font-size: 13px;
   border-bottom: 1px solid #e6d3a0;
-  position: sticky;
-  top: 0;
-  z-index: 30;
 }
 
 .assumeDot {

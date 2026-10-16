@@ -74,9 +74,16 @@ export function App() {
 
   return (
     <>
-      <TopBar />
-      <OperatorHint />
-      <AssumeBar />
+      {/* The frame that never changes, as one sticky unit: the brand bar, the
+          operator hint and the read-only bar. Keeping them in one stacking
+          context is what keeps them from overlapping each other on scroll, and
+          putting the unit below the overlay layer is what keeps the notice from
+          painting over the tabverse drawer (whose overlay is z-index 20). */}
+      <div className={classes.header}>
+        <TopBar />
+        <OperatorHint />
+        <AssumeBar />
+      </div>
       {showPair ? <PairView request={pairRequest} /> : null}
       {!showPair && status === 'signed-in' && pending ? (
         <PendingRegistrationView />
