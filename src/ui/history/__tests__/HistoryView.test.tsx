@@ -169,11 +169,13 @@ test('the grouped view is not the paged list wearing headers', () => {
   expect(html).not.toContain('bp6-icon-chevron-right');
 });
 
-test('the flat view is still the paged list, with no headers on it', () => {
+test('the flat view is one list, with no headers on it', () => {
   const rows = Array.from({ length: 25 }, (_, i) => onSite(i, 'a.example.com'));
   const html = entries({ entries: rows, grouped: false });
-  expect((html.match(/<li>/g) ?? []).length).toBe(10);
-  expect(html).toContain('1/3');
+  // The list draws every row it is given: paging is the view's job now, and
+  // its pager is a footer outside this list, so no control appears here.
+  expect((html.match(/<li>/g) ?? []).length).toBe(25);
+  expect(html).not.toContain('1/3');
   // every row is in one list, with no site header above it (the header is what
   // has to be looked for, not the word: the rows print their own url)
   expect((html.match(/<ul[ >]/g) ?? []).length).toBe(1);

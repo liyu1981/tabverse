@@ -9,6 +9,42 @@
   margin-bottom: 50px;
 }
 
+/*
+ * Every tool's content is bounded, not just the chat: the pinned tool at the
+ * top gets 45vh, the unpinned strip at the bottom 35vh. The bound travels as a
+ * custom property so a view with its own scroll (the chat) can match it.
+ */
+.pinnedContainer {
+  --tool-content-max-height: 45vh;
+}
+
+.unpinnedContainer {
+  --tool-content-max-height: 35vh;
+}
+
+.pinnedContainer :global(.bp6-tab-panel),
+.unpinnedContainer :global(.bp6-tab-panel) {
+  max-height: var(--tool-content-max-height);
+  /* the panel is the frame: it bounds the height and never scrolls itself, so
+     a tool can keep its header fixed and scroll only its content */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/*
+ * The loader wraps every tool in one plain div between the panel and the tool's
+ * own root. It has to pass the column down, or the tool's fixed-header layout
+ * has no height to work against.
+ */
+.pinnedContainer :global(.bp6-tab-panel) > div,
+.unpinnedContainer :global(.bp6-tab-panel) > div {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 .card {
   padding: 8px 12px;
   width: 100%;

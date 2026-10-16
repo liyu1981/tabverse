@@ -49,7 +49,7 @@ import { addNoteToTabSpace, newSummaryNote } from '../../../data/note/util';
 import { markdownToPlainText } from '../../../data/note/markdownText';
 import { convertTabToMarkdown } from '../../../data/tabSpace/pageMarkdown';
 import { extractTabText } from '../../../data/tabSpace/tabText';
-import { RightPanelMsg, sendPubSubMessage } from '../../../message/message';
+import { ToolTabMsg, sendPubSubMessage } from '../../../message/message';
 import { $selectedNoteId, getNoteEditor } from '../../notebook/selectedNote';
 import type { Tab } from '../../../data/tabSpace/Tab';
 import { logger } from '../../../global';
@@ -269,7 +269,7 @@ export function TabContentButton(props: TabContentButtonProps) {
           // A draft, not a sent turn: the chat opens with the page in the
           // composer, so the person adds the question they actually have.
           setChatDraft(markdown);
-          sendPubSubMessage(RightPanelMsg.OpenChat, true);
+          sendPubSubMessage(ToolTabMsg.OpenChat, true);
           setStatus('Put the page content in the AI chat composer.');
           return;
         }

@@ -52,17 +52,7 @@ export function NotebookView() {
   return (
     <ErrorBoundary>
       <div className={classes.container}>
-        {allNotes.length <= 0 ? (
-          <div className={classes.noticeContainer}>
-            No notes found! You can create new note with New Note button.
-          </div>
-        ) : currentNotes.length <= 0 ? (
-          <div className={classes.noticeContainer}>
-            No note matches the filter.
-          </div>
-        ) : (
-          ''
-        )}
+        {/* the toolbar is fixed; the notices and the notes scroll under it */}
         <div className={classes.noteToolContainer}>
           <div>
             <Button icon="draw" minimal={true} onClick={newNote}>
@@ -80,7 +70,18 @@ export function NotebookView() {
             />
           </div>
         </div>
-        {renderNotes()}
+        <div className={classes.notesContainer}>
+          {allNotes.length <= 0 ? (
+            <div className={classes.noticeContainer}>
+              No notes found! You can create new note with New Note button.
+            </div>
+          ) : currentNotes.length <= 0 ? (
+            <div className={classes.noticeContainer}>
+              No note matches the filter.
+            </div>
+          ) : null}
+          {renderNotes()}
+        </div>
       </div>
     </ErrorBoundary>
   );

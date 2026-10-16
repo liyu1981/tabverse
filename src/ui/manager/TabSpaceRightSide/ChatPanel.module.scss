@@ -1,17 +1,23 @@
 @use '../../../global.scss';
 
 /*
- * The AI chat. The panel's body is a flex column with no scroll of its own
- * (`RightSidePanel.module.scss`), so the view is the column: the context bar
- * stays put, the messages scroll, and the composer sits at the bottom. That is
- * the shape a chat has everywhere, and it is why this view is the one that
- * wants the panel's full height.
+ * The AI chat. The view is the column: the context bar stays put, the messages
+ * scroll, and the composer sits at the bottom. That is the shape a chat has
+ * everywhere; in the tool column it wants the height left below the tool tabs.
  */
 .view {
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
+  /* The tool column bounds its panels (35vh at the bottom, 45vh pinned at the
+     top; `TabSpaceRightSideView.module.scss`). Match that bound rather than
+     pick one, so the messages scroll inside it and the composer stays put. */
+  max-height: var(--tool-content-max-height, 45vh);
+  /* a near-white card, the same surface the Todo and Note tools draw */
+  padding: 10px 12px;
+  background-color: #fff;
+  border-radius: global.$radius-card;
 }
 
 .center {
@@ -23,6 +29,10 @@
   gap: 12px;
   min-height: 0;
   text-align: center;
+  /* the same near-white card as `.view`, so an empty chat is a surface too */
+  padding: 16px;
+  background-color: #fff;
+  border-radius: global.$radius-card;
 }
 
 /* The context window: a thin bar and its numbers, quiet enough to always show */

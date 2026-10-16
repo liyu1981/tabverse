@@ -14,36 +14,33 @@
  * tools column. Keeping them together in one rail also means one place for
  * "which panel is open", remembered as a window-local setting.
  *
+ * The AI chat is *not* here: it is about one tabverse's work, so it is one of
+ * those tool tabs (`TabSpaceRightSideView`). This panel is what stays put
+ * across a route change.
+ *
  * The panel is a column of the page, not an overlay: opening it pushes the
  * tabverse left (see ManagerView.module.scss).
  */
 import { Button, Icon } from '@blueprintjs/core';
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 
-import {
-  RightPanelMsg,
-  subscribePubSubMessage,
-  unsubscribePubSubMessage,
-} from '../../../message/message';
 import { useSettingItem } from '../../../storage/localSetting';
-import { ChatPanel } from './ChatPanel';
 import { PromptHistoryPanel } from './PromptHistoryPanel';
 import { ServerConsoleView } from './ServerConsolePanel';
 import classes from './RightSidePanel.module.scss';
 
-export type RightPanelView = 'chat' | 'ai' | 'server';
+export type RightPanelView = 'ai' | 'server';
 
 /** Remembered across reloads: which panel is open ('' = the rail). */
 const PANEL_SETTING = 'tabverse_right_panel';
 
 const VIEWS = [
-  { id: 'chat', icon: 'comment', label: 'AI chat' },
   { id: 'ai', icon: 'chat', label: 'AI history' },
   { id: 'server', icon: 'cloud-server', label: 'Server console' },
 ] as const;
 
 function isRightPanelView(value: string): value is RightPanelView {
-  return value === 'chat' || value === 'ai' || value === 'server';
+  return value === 'ai' || value === 'server';
 }
 
 export interface RightSidePanelShellProps {
@@ -113,13 +110,7 @@ export function RightSidePanelShell(props: RightSidePanelShellProps) {
         />
       </header>
       <div className={classes.body}>
-        {view === 'server' ? (
-          <ServerConsoleView />
-        ) : view === 'chat' ? (
-          <ChatPanel />
-        ) : (
-          <PromptHistoryPanel />
-        )}
+        {view === 'server' ? <ServerConsoleView /> : <PromptHistoryPanel />}
       </div>
     </aside>
   );
@@ -131,17 +122,6 @@ export function RightSidePanel() {
     (value) => (isRightPanelView(value) ? value : ''),
     (value) => value,
   );
-
-  // `setView` is rebuilt on every render, so the subscription keeps the latest
-  // one in a ref rather than re-subscribing each time.
-  const setViewRef = useRef(setView);
-  setViewRef.current = setView;
-  useEffect(() => {
-    const token = subscribePubSubMessage(RightPanelMsg.OpenChat, () => {
-      setViewRef.current('chat');
-    });
-    return () => unsubscribePubSubMessage(token);
-  }, []);
 
   return (
     <RightSidePanelShell

@@ -1,7 +1,7 @@
 import { $allTodo, todoStoreApi } from '../../data/todo/store';
 import React, { useState } from 'react';
 import { Todo, setCompleted } from '../../data/todo/Todo';
-import { saveCurrentTodos } from '../../data/todo/util';
+import { saveCurrentTodosNow } from '../../data/todo/util';
 import { newEmptyTodo, setContent } from '../../data/todo/Todo';
 
 import classes from './TodoView.module.scss';
@@ -104,12 +104,12 @@ export function TodoView(_props: TodoViewProps) {
 
   const changeTodo = (id: string, t: Todo) => {
     todoStoreApi.updateTodo({ tid: id, changes: t });
-    saveCurrentTodos();
+    void saveCurrentTodosNow();
   };
 
   const removeTodo = (id: string) => {
     todoStoreApi.removeTodo(id);
-    saveCurrentTodos();
+    void saveCurrentTodosNow();
   };
 
   const matchingTodos = filterByText(
@@ -170,6 +170,9 @@ export function TodoView(_props: TodoViewProps) {
           if (event.keyCode === RETURN_KEY) {
             const t = setContent(currentInputValue, newEmptyTodo());
             todoStoreApi.addTodo(t);
+            // immediately, so a tool switch before the debounce cannot reload
+            // the store from the database and drop the new todo
+            void saveCurrentTodosNow();
             setCurrentInputValue(null);
           }
         }}
@@ -214,6 +217,7 @@ export function TodoView(_props: TodoViewProps) {
           className={classes.clearCompleted}
           onClick={() => {
             todoStoreApi.clearCompleted();
+            void saveCurrentTodosNow();
           }}
         >
           Clear completed

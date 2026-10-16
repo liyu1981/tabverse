@@ -11,9 +11,9 @@ summarize-only menu into a **page-actions** menu:
 
 1. **View page content as Markdown** - reads the page, converts it, and opens
    a dialog showing the Markdown with a **Copy** button. Needs no AI.
-2. **Send page content to AI chat** - reads the page, converts it, opens the
-   right side panel on the chat and puts the Markdown in the composer, so the
-   person adds the question they actually have. Needs AI.
+2. **Send page content to AI chat** - reads the page, converts it, brings the
+   tabverse's **AI Chat tool tab** forward and puts the Markdown in the
+   composer, so the person adds the question they actually have. Needs AI.
 3. **New note with AI summary** - reads the page, converts it, then summarizes
    the *Markdown* (not the old `innerText`) into a new note.
 4. **Append to current note with AI summary** - the same summary, proposed to
@@ -117,8 +117,9 @@ pure function that runs under `vitest` in a node environment.
 | `src/data/tabSpace/pageMarkdown.worker.ts` | new: the worker entry, a thin shell around `htmlToMarkdown` |
 | `src/data/tabSpace/pageMarkdown.ts` | new: `convertTabToMarkdown`, the per-run worker, the timeout, the injectable extractor/runner |
 | `src/data/tabSpace/tabText.ts` | add `extractTabHtml` (clone, strip, serialize, base url) and its test hook, next to the existing `extractTabText` |
-| `src/message/message.ts` | add `RightPanelMsg.OpenChat` and its overloads |
-| `src/ui/manager/RightSidePanel/RightSidePanel.tsx` | subscribe to `RightPanelMsg.OpenChat` and show the chat |
+| `src/message/message.ts` | add `ToolTabMsg.OpenChat` and its overloads |
+| `src/ui/manager/TabSpaceRightSide/TabSpaceRightSideView.tsx` | subscribe to `ToolTabMsg.OpenChat` and bring the chat tool tab forward; the chat itself lives here now |
+| `src/ui/manager/RightSidePanel/RightSidePanel.tsx` | the chat is removed from the panel's rail; it keeps the AI history and the server console |
 | `src/ui/manager/TabSpace/TabContentButton.tsx` (+ `.module.scss`) | renamed from `SummarizeTabButton`: the four-item menu and the container that runs them |
 | `src/ui/manager/TabSpace/MarkdownViewDialog.tsx` (+ `.module.scss`) | new: the Markdown view - a body (the Markdown and a Copy button) split from the `Dialog`, so the body is checkable statically |
 | `src/ui/manager/TabSpace/TabSpaceListView.tsx` | the tab's action slot uses `TabContentButton` |
@@ -165,8 +166,7 @@ pure function that runs under `vitest` in a node environment.
 - A "copy straight from the menu" action; copying lives in the view dialog.
 - A "new note with the full page Markdown" outcome; the page goes to the
   clipboard or the chat, and the note carries the model's summary.
-- Sending the Markdown to the chat as an already-sent turn.
-- Inlining or rewriting images; Turndown keeps their url.
+- Sending the Markdown to the chat as an already-sent turn.- Inlining or rewriting images; Turndown keeps their url.
 - Reading `<iframe>` and shadow-DOM content (neither is in `outerHTML`).
 - Per-site or user-provided extraction rules.
 - A cap on the serialized markup; a very large page is transferred whole.

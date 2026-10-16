@@ -128,18 +128,20 @@ export function BookmarkView() {
               ariaLabel="Filter these bookmarks"
             />
           </div>
-          {filteredBookmarks.length <= 0 ? (
-            <div className={classes.noticeContainer}>
-              No bookmark matches the filter.
-            </div>
-          ) : (
-            <div>
-              {renderCurrentBookmarkItems()}
-              <div className={classes.pageControlContainer}>
-                {renderPageControl()}
+          <div className={classes.listScroll}>
+            {filteredBookmarks.length <= 0 ? (
+              <div className={classes.noticeContainer}>
+                No bookmark matches the filter.
               </div>
+            ) : (
+              renderCurrentBookmarkItems()
+            )}
+          </div>
+          {filteredBookmarks.length > BOOKMARK_PAGE_LIMIT ? (
+            <div className={classes.pageControlContainer}>
+              {renderPageControl()}
             </div>
-          )}
+          ) : null}
         </div>
       )}
     </ErrorBoundary>

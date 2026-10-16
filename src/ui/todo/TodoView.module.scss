@@ -19,6 +19,18 @@
   display: none;
 }
 
+/*
+ * The tool's root: the filter, then the card. It fills the panel and is a
+ * column, so the card can keep its own header and footer fixed while the list
+ * between them scrolls.
+ */
+.todoRoot {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 .todoapp {
   background: #fff;
   position: relative;
@@ -28,11 +40,21 @@
     Arial,
     sans-serif;
   border-radius: global.$radius-card;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* the new-todo box, fixed above the scrolling list */
+.todoapp .header {
+  flex: none;
 }
 
 /* the filter sits above the card, so it needs its own spacing below */
 .filterWrapper {
   margin-bottom: 8px;
+  flex: none;
 }
 
 /*
@@ -93,6 +115,10 @@
   position: relative;
   z-index: 2;
   border-top: 1px solid #e6e6e6;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .todoapp .toggleAll {
@@ -135,6 +161,9 @@
   margin: 0;
   padding: 0;
   list-style: none;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .todoapp .todoList li {
@@ -267,6 +296,7 @@
   text-align: center;
   font-size: 15px;
   border-top: 1px solid #e6e6e6;
+  flex: none;
 }
 
 .todoapp .footer:before {

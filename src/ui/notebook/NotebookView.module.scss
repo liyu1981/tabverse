@@ -2,13 +2,26 @@
 
 .container {
   padding-left: 4px;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
+/* the New Note / filter row, fixed above the scrolling note list */
 .noteToolContainer {
   display: flex;
   align-items: center;
   height: 50px;
   justify-content: space-between;
+  flex: none;
+}
+
+/* the notes (and the empty/filter notices) scroll under the fixed toolbar */
+.notesContainer {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .filterContainer {

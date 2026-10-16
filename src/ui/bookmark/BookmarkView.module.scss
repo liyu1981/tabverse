@@ -5,6 +5,10 @@
   position: relative;
   color: #111111;
   border-radius: global.$radius-card;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .listContainer {
@@ -15,6 +19,14 @@
 
 .filterWrapper {
   padding: 12px 12px 8px;
+  flex: none;
+}
+
+/* the rows (and the page control, and any notice) scroll under the filter */
+.listScroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .listItemView {
@@ -46,6 +58,9 @@
   border-radius: global.$radius-card;
 }
 
+/* the pager is a footer: outside the scroll, pinned under the rows */
 .pageControlContainer {
   text-align: center;
+  flex: none;
+  padding: 6px 0;
 }

@@ -6,6 +6,9 @@
  * console and the AI history live here, not in the tabverse tools), a chosen
  * view opens in the panel with its own title and body, the header can switch
  * between the two without closing first, and every state can collapse back.
+ *
+ * The AI chat is not here - it is a tabverse tool tab now
+ * (`TabSpaceRightSideView`), so this rail must not offer it.
  */
 import { describe, expect, test } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -28,18 +31,12 @@ const render = (
 describe('the collapsed rail', () => {
   test('offers one button per view, and no panel', () => {
     const markup = render({ view: null });
-    expect(markup).toContain('Open the AI chat');
     expect(markup).toContain('Open the AI history');
     expect(markup).toContain('Open the Server console');
+    // the chat is a tabverse tool tab, not a panel view
+    expect(markup).not.toContain('Open the AI chat');
     expect(markup).not.toContain('<aside');
     expect(markup).not.toContain('<iframe');
-  });
-
-  test('the AI chat opens its own body, separate from the history', () => {
-    const markup = render({ view: 'chat' });
-    expect(markup).toContain('AI chat');
-    // the history's copy is not there: the chat is a different view
-    expect(markup).not.toContain('Nothing has been asked');
   });
 });
 

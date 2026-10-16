@@ -44,12 +44,12 @@ export enum SyncMsg {
 }
 
 /**
- * In-process "show this panel" notice. A tab action can send it to bring the
- * right side panel to the chat, which is otherwise only reachable from the
- * rail; the payload is unused and exists only for the shared message shape.
+ * In-process "show this tool tab" notice. A tab action can send it to bring the
+ * tabverse's tool column to the chat, which is otherwise only reachable from
+ * its tab; the payload is unused and exists only for the shared message shape.
  */
-export enum RightPanelMsg {
-  OpenChat = 'right_panel_open_chat',
+export enum ToolTabMsg {
+  OpenChat = 'tool_tab_open_chat',
 }
 
 export type TabSpaceId = string;
@@ -128,7 +128,7 @@ export function sendPubSubMessage(
 ): void;
 
 export function sendPubSubMessage(
-  type: RightPanelMsg.OpenChat,
+  type: ToolTabMsg.OpenChat,
   payload: boolean,
 ): void;
 
@@ -155,7 +155,7 @@ export function subscribePubSubMessage(
 ): string;
 
 export function subscribePubSubMessage(
-  type: RightPanelMsg.OpenChat,
+  type: ToolTabMsg.OpenChat,
   callback: (message: string, data: boolean) => void,
 ): string;
 

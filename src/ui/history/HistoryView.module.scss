@@ -5,8 +5,13 @@
   color: #111111;
   border-radius: global.$radius-card;
   padding: 8px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
+/* the count row is fixed above the search box and the scrolling list */
 .header {
   display: flex;
   align-items: center;
@@ -14,6 +19,7 @@
   padding: 0 12px 8px 12px;
   color: #666666;
   font-size: 12px;
+  flex: none;
 }
 
 .headerActions {
@@ -39,6 +45,14 @@
   align-items: center;
   gap: 8px;
   padding: 0 12px 8px 12px;
+  flex: none;
+}
+
+/* the entries scroll under the fixed count row and search box */
+.entriesContainer {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .toolbar > :global(.bp6-input-group) {
@@ -180,7 +194,9 @@
   border-radius: global.$radius-card;
 }
 
+/* the pager is a footer: outside the scroll, pinned under the rows */
 .pageControlContainer {
   text-align: center;
   padding: 4px 0 8px 0;
+  flex: none;
 }

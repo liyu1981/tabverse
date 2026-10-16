@@ -56,11 +56,15 @@ export const saveCurrentAllTodo = debounce(
   DEFAULT_SAVE_DEBOUNCE,
 );
 
-export const saveCurrentTodos = () => {
-  // a tabverse is born saved (its id is minted when the tab is opened), so
-  // there is no "not saved yet" state to fall back to
-  saveCurrentAllTodo();
-};
+/**
+ * Saves now, not after the debounce.
+ *
+ * Switching tools unmounts the tool, and the loader on the way back re-reads
+ * the store from the database - so a change the debounce has not written yet is
+ * gone when the person returns. Adding a todo, or clearing the completed ones,
+ * must reach the database before that can happen.
+ */
+export const saveCurrentTodosNow = () => saveCurrentAllTodoImpl();
 
 export async function queryAllTodo(
   tabSpaceId: string,

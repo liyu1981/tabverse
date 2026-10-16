@@ -129,27 +129,21 @@ export interface HistoryEntriesProps {
 }
 
 /**
- * The rows themselves: a flat list paged newest first, or the same entries
- * under one header per site.
+ * The rows themselves: the flat list, or the same entries under one header per
+ * site.
  *
  * Exported for this file's tests, because this repo cannot press a switch (no
  * jsdom, AGENTS.md) and a grouped view nobody can render is a grouped view
  * nobody has looked at.
  *
- * The pager belongs to the flat list only. It pages rows, and a page that ends
- * in the middle of a site's rows would print that site's header on both pages -
- * which is the same answer twice, in a card whose whole job is to be read. The
- * grouped view is how a person sees what they were reading where, so it draws
- * all of it (a tabverse keeps up to 999 entries, `adr/0007`, which is what the
- * flat list pages in the first place) and the box above it is how a person
- * narrows that down.
+ * The list is presentational and owns no paging: the flat view's page is sliced
+ * by the caller (`HistoryView`), because the pager is a fixed footer outside the
+ * rows' scroll, not the last row in it. The grouped view is how a person sees
+ * what they were reading where, so it draws all of it (a tabverse keeps up to
+ * 999 entries, `adr/0007`, which is what the flat list pages in the first
+ * place) and the box above it is how a person narrows that down.
  */
 export function HistoryEntries(props: HistoryEntriesProps) {
-  const [getCurrentPageItems, renderPageControl] = usePageControl<ClosedTab>(
-    props.entries,
-    HISTORY_PAGE_LIMIT,
-  );
-
   const item = (closedTab: ClosedTab) => (
     <HistoryItem
       key={closedTab.id}
@@ -177,14 +171,7 @@ export function HistoryEntries(props: HistoryEntriesProps) {
     );
   }
 
-  return (
-    <div>
-      <ul className={classes.listContainer}>
-        {getCurrentPageItems().map(item)}
-      </ul>
-      <div className={classes.pageControlContainer}>{renderPageControl()}</div>
-    </div>
-  );
+  return <ul className={classes.listContainer}>{props.entries.map(item)}</ul>;
 }
 
 export function HistoryView() {
@@ -252,6 +239,14 @@ export function HistoryView() {
   // step with the first
   const matched = matchHistoryEntries(entries, searchText);
 
+  // The flat list is paged here, not inside `HistoryEntries`: the pager is a
+  // fixed footer outside the rows' scroll, so it cannot be the last row in it.
+  // The grouped view draws all of it and gets no pager.
+  const [getFlatPageItems, renderPageControl] = usePageControl<ClosedTab>(
+    matched,
+    HISTORY_PAGE_LIMIT,
+  );
+
   const confirmClearAll = (
     <ButtonGroup>
       <Button
@@ -311,7 +306,7 @@ export function HistoryView() {
             here, ready to be reopened or saved as a bookmark.
           </div>
         ) : (
-          <div>
+          <>
             <HistoryToolbar
               value={searchText}
               onChange={setSearchText}
@@ -320,21 +315,28 @@ export function HistoryView() {
               grouped={groupedByDay}
               onToggleGrouped={() => setGrouped(!groupedByDay)}
             />
-            {matched.length <= 0 ? (
-              <div className={classes.noticeContainer}>
-                Nothing in the history matches "{searchText.trim()}".
+            <div className={classes.entriesContainer}>
+              {matched.length <= 0 ? (
+                <div className={classes.noticeContainer}>
+                  Nothing in the history matches "{searchText.trim()}".
+                </div>
+              ) : (
+                <HistoryEntries
+                  entries={groupedByDay ? matched : getFlatPageItems()}
+                  grouped={groupedByDay}
+                  isBookmarked={isBookmarked}
+                  restore={restore}
+                  saveAsBookmark={saveAsBookmark}
+                  remove={remove}
+                />
+              )}
+            </div>
+            {!groupedByDay && matched.length > HISTORY_PAGE_LIMIT ? (
+              <div className={classes.pageControlContainer}>
+                {renderPageControl()}
               </div>
-            ) : (
-              <HistoryEntries
-                entries={matched}
-                grouped={groupedByDay}
-                isBookmarked={isBookmarked}
-                restore={restore}
-                saveAsBookmark={saveAsBookmark}
-                remove={remove}
-              />
-            )}
-          </div>
+            ) : null}
+          </>
         )}
       </div>
     </ErrorBoundary>

@@ -3,9 +3,11 @@
  * suggestions use, kept as its own history (see `data/aiChat`) and drawn like a
  * chat rather than a record - the question and the answer, streaming in.
  *
- * A view of the right side panel, next to the AI history it deliberately does
- * not write to. The panel is the right home: it is about the tooling around a
- * tabverse, it is not per tabverse, and a conversation wants the width.
+ * A tabverse tool tab, alongside Todo/Note/Bookmark/History. It used to be a
+ * view of the right side panel; it moved because a page action ("send page
+ * content to AI chat") belongs where a person looks for a tabverse's tools.
+ * Its history is still the extension's one conversation (`data/aiChat`), not
+ * per tabverse.
  *
  * Answers are rendered as markdown (`react-markdown`), which is safe by
  * construction: it builds React elements, never sets HTML, renders no raw HTML,
