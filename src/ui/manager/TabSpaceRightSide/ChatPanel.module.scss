@@ -354,6 +354,95 @@
 }
 
 /*
+ * The page attached to a user turn: a folded block above the question. The
+ * question stays the bubble's text; the page is material the person can open.
+ */
+.contextBlock {
+  margin: 0 0 8px;
+  border: 1px solid rgb(29 25 31 / 14%);
+  border-radius: 10px;
+  background-color: rgb(255 255 255 / 55%);
+  font-size: 0.82em;
+  overflow: hidden;
+}
+
+.contextSummary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  cursor: pointer;
+  list-style: none;
+  color: inherit;
+}
+
+.contextSummary::-webkit-details-marker {
+  display: none;
+}
+
+.contextLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contextText {
+  margin: 0;
+  padding: 0 8px 8px;
+  max-height: 30vh;
+  overflow: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85em;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/*
+ * The page attached to the next question: a chip in the composer, with the
+ * question typed under it. The chip is removable - attaching is a choice.
+ */
+.contextChip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  padding: 3px 4px 3px 8px;
+  border-radius: 999px;
+  background-color: global.$color-light-shade;
+  color: global.$color-text;
+  font-size: 0.8em;
+}
+
+.contextChipLabel {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contextChipRemove {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: global.$color-light-accent;
+  cursor: pointer;
+}
+
+.contextChipRemove:hover {
+  background-color: rgb(29 25 31 / 8%);
+  color: global.$color-text;
+}
+
+/*
  * The composer: a card that grows with the draft, the send/stop control in its
  * bottom row. The textarea is sized in js (a fixed number of lines would clip a
  * growing draft or leave a gap).

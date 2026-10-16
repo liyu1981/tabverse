@@ -8,6 +8,7 @@ import {
   chatInitialPrompts,
   isChatMessage,
   newChatMessage,
+  promptTextFor,
   summaryTranscript,
 } from '../AiChat';
 
@@ -18,6 +19,47 @@ test('a new message carries its role, text and a fresh id', () => {
   expect(message.at).toBe(123);
   expect(message.id.length).toBeGreaterThan(0);
   expect(newChatMessage('user', 'x').id).not.toBe(message.id);
+});
+
+test('a user turn with an attached page assembles a data-labelled prompt', () => {
+  const message = newChatMessage('user', 'what is this?', 1, {
+    title: 'A Page',
+    url: 'https://example.com/a',
+    markdown: '# Heading\n\nbody',
+  });
+  const prompt = promptTextFor(message);
+  expect(prompt).toContain('DATA');
+  expect(prompt).toContain('Page title: A Page');
+  expect(prompt).toContain('Page url: https://example.com/a');
+  expect(prompt).toContain('# Heading');
+  // the question comes last, after the block
+  expect(prompt.trimEnd().endsWith('what is this?')).toBe(true);
+});
+
+test('a turn with no attached page is its own text', () => {
+  expect(promptTextFor(newChatMessage('user', 'hi'))).toBe('hi');
+  expect(promptTextFor(newChatMessage('assistant', 'hi'))).toBe('hi');
+});
+
+test('seeding rebuilds an attached page into the prompt', () => {
+  const message = newChatMessage('user', 'q', 1, {
+    title: 'T',
+    markdown: 'body',
+  });
+  expect(chatInitialPrompts([message])).toEqual([
+    { role: 'user', content: promptTextFor(message) },
+  ]);
+});
+
+test('a message with a malformed attached page is dropped', () => {
+  const withContext = newChatMessage('user', 'q', 1, {
+    title: 'T',
+    markdown: 'body',
+  });
+  expect(isChatMessage(withContext)).toBe(true);
+  expect(isChatMessage({ ...withContext, context: { title: 'T' } })).toBe(
+    false,
+  );
 });
 
 test('seeding keeps the tail and drops empty and failed turns', () => {

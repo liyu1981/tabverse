@@ -30,12 +30,15 @@ import {
   type ChatMessage,
   chatInitialPrompts,
   newChatMessage,
+  promptTextFor,
   summaryTranscript,
 } from './AiChat';
 import {
+  $chatContext,
   $chatLoaded,
   $chatMessages,
   chatMessagesApi,
+  setChatContext,
   setChatDraft,
   setChatError,
   setChatLoaded,
@@ -146,7 +149,7 @@ async function answerQuestion(
             history,
           });
         }
-        const result = await session.send(question.content, {
+        const result = await session.send(promptTextFor(question), {
           signal: abort.signal,
           onDelta: (_delta, full) => {
             chatMessagesApi.patch({
@@ -210,8 +213,16 @@ export async function sendChat(text: string): Promise<void> {
     return;
   }
   const history = chatInitialPrompts($chatMessages.getState());
+  // the attached page rides on the message, then stops being a draft
+  const context = $chatContext.getState();
   setChatDraft('');
-  const question = newChatMessage('user', input);
+  setChatContext(null);
+  const question = newChatMessage(
+    'user',
+    input,
+    Date.now(),
+    context ?? undefined,
+  );
   chatMessagesApi.add(question);
   await answerQuestion(question, history);
 }
@@ -259,6 +270,7 @@ export async function clearChat(): Promise<void> {
   stopChat();
   session = null;
   chatMessagesApi.clear();
+  setChatContext(null);
   setChatUsage({ used: null, total: null });
   setChatError(null);
   await clearStoredChat();

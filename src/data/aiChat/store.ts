@@ -7,7 +7,7 @@
 import { createApi, createEvent, createStore } from 'effector';
 
 import type { ChatUsage } from '../../ai/chatSession';
-import type { ChatMessage } from './AiChat';
+import type { ChatContext, ChatMessage } from './AiChat';
 
 export type ChatStatus = 'idle' | 'streaming';
 
@@ -17,6 +17,15 @@ export const $chatUsage = createStore<ChatUsage>({ used: null, total: null });
 export const $chatError = createStore<string | null>(null);
 export const $chatDraft = createStore<string>('');
 export const $chatLoaded = createStore<boolean>(false);
+
+/**
+ * The page waiting to be attached to the next question, or null.
+ *
+ * It is a store rather than a field on the draft because it is not text: the
+ * composer shows it as its own removable chip, and `sendChat` reads it, puts it
+ * on the user message and clears it.
+ */
+export const $chatContext = createStore<ChatContext | null>(null);
 
 export const chatMessagesApi = createApi($chatMessages, {
   replace: (_last, messages: ChatMessage[]) => messages,
@@ -46,3 +55,6 @@ $chatDraft.on(setChatDraft, (_last, draft) => draft);
 
 export const setChatLoaded = createEvent<boolean>();
 $chatLoaded.on(setChatLoaded, (_last, loaded) => loaded);
+
+export const setChatContext = createEvent<ChatContext | null>();
+$chatContext.on(setChatContext, (_last, context) => context);

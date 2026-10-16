@@ -44,7 +44,7 @@ import {
   summaryNoteName,
 } from '../../../ai/summarize';
 import { ensureAiSession, evictAiSession } from '../../../ai/session';
-import { setChatDraft } from '../../../data/aiChat/store';
+import { setChatContext } from '../../../data/aiChat/store';
 import { addNoteToTabSpace, newSummaryNote } from '../../../data/note/util';
 import { markdownToPlainText } from '../../../data/note/markdownText';
 import { convertTabToMarkdown } from '../../../data/tabSpace/pageMarkdown';
@@ -266,11 +266,16 @@ export function TabContentButton(props: TabContentButtonProps) {
             setStatus(UNREADABLE_STATUS);
             return;
           }
-          // A draft, not a sent turn: the chat opens with the page in the
-          // composer, so the person adds the question they actually have.
-          setChatDraft(markdown);
+          // Attach the page as the question's context, not as the composer's
+          // text: the chat opens with a chip and the person types their own
+          // question. `sendChat` puts the page and the question together.
+          setChatContext({
+            title: tab.title,
+            url: tab.url,
+            markdown,
+          });
           sendPubSubMessage(ToolTabMsg.OpenChat, true);
-          setStatus('Put the page content in the AI chat composer.');
+          setStatus('Attached the page to the AI chat.');
           return;
         }
         let current = getAiAvailability();
@@ -298,7 +303,7 @@ export function TabContentButton(props: TabContentButtonProps) {
         setBusy(false);
       }
     },
-    [readAsMarkdown, summarize, tab.suspended],
+    [readAsMarkdown, summarize, tab.suspended, tab.title, tab.url],
   );
 
   const suspended = tab.suspended === true;

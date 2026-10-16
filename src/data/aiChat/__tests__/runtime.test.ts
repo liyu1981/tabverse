@@ -32,12 +32,14 @@ import {
   stopChat,
 } from '../runtime';
 import {
+  $chatContext,
   $chatDraft,
   $chatError,
   $chatMessages,
   $chatStatus,
   $chatUsage,
   chatMessagesApi,
+  setChatContext,
   setChatDraft,
   setChatError,
   setChatLoaded,
@@ -78,6 +80,7 @@ function resetStores(): void {
   setChatUsage({ used: null, total: null });
   setChatError(null);
   setChatDraft('');
+  setChatContext(null);
   resetChatRuntimeForTest();
 }
 
@@ -113,6 +116,28 @@ test('a turn stores the question and the answer, and the answer is filled in', a
   expect($chatDraft.getState()).toBe('');
   // the turn is written down, so a reload keeps it
   await expect(loadStoredChat()).resolves.toHaveLength(2);
+});
+
+test('an attached page rides on the question, and the model is given it', async () => {
+  const send = vi.fn(async (_input: string) => result());
+  setChatSessionFactoryForTest(async () => fakeSession({ send }));
+  setChatContext({
+    title: 'A Page',
+    url: 'https://example.com',
+    markdown: '# Heading',
+  });
+  await sendChat('what is this?');
+
+  // the question the person typed is what the bubble stores
+  const question = $chatMessages.getState()[0];
+  expect(question.content).toBe('what is this?');
+  expect(question.context?.title).toBe('A Page');
+  // ...and the model is handed the page and the question, together
+  const sent = send.mock.calls[0][0];
+  expect(sent).toContain('# Heading');
+  expect(sent).toContain('what is this?');
+  // the attachment is spent, not left for the next question
+  expect($chatContext.getState()).toBeNull();
 });
 
 test('the answer is patched in as it streams', async () => {

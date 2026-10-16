@@ -38,14 +38,16 @@ import {
   subscribeAiEnabled,
 } from '../../../ai/aiSettings';
 import type { ChatUsage } from '../../../ai/chatSession';
-import type { ChatMessage } from '../../../data/aiChat/AiChat';
+import type { ChatContext, ChatMessage } from '../../../data/aiChat/AiChat';
 import {
+  $chatContext,
   $chatDraft,
   $chatError,
   $chatLoaded,
   $chatMessages,
   $chatStatus,
   $chatUsage,
+  setChatContext,
   setChatDraft,
 } from '../../../data/aiChat/store';
 import {
@@ -192,7 +194,24 @@ function ChatBubble(props: ChatBubbleProps) {
         {failed ? (
           <span className={classes.errorText}>{message.error}</span>
         ) : isUser ? (
-          <pre className={classes.text}>{message.content}</pre>
+          <>
+            {/* the page the question is about, folded away: the question stays
+                the bubble's text, the context is material to open */}
+            {message.context ? (
+              <details className={classes.contextBlock}>
+                <summary className={classes.contextSummary}>
+                  <Icon icon="document" size={12} />
+                  <span className={classes.contextLabel}>
+                    {message.context.title || 'Attached page'}
+                  </span>
+                </summary>
+                <pre className={classes.contextText}>
+                  {message.context.markdown}
+                </pre>
+              </details>
+            ) : null}
+            <pre className={classes.text}>{message.content}</pre>
+          </>
         ) : pending ? (
           <pre className={classes.text}>…</pre>
         ) : (
@@ -311,9 +330,12 @@ function ChatMessages(props: ChatMessagesProps) {
 
 interface ChatComposerProps {
   draft: string;
+  /** The page attached to the next question, shown as a removable chip. */
+  context: ChatContext | null;
   streaming: boolean;
   canClear: boolean;
   onDraftChange: (value: string) => void;
+  onRemoveContext: () => void;
   onSend: () => void;
   onStop: () => void;
   onClear: () => void;
@@ -330,6 +352,26 @@ function ChatComposer(props: ChatComposerProps) {
         props.onSend();
       }}
     >
+      {props.context ? (
+        <div className={classes.contextChip}>
+          <Icon icon="document" size={12} />
+          <span
+            className={classes.contextChipLabel}
+            title={props.context.title}
+          >
+            {props.context.title || 'Attached page'}
+          </span>
+          <button
+            type="button"
+            className={classes.contextChipRemove}
+            aria-label="Remove the attached page"
+            title="Remove the attached page"
+            onClick={props.onRemoveContext}
+          >
+            <Icon icon="cross" size={12} />
+          </button>
+        </div>
+      ) : null}
       <textarea
         className={classes.input}
         value={draft}
@@ -387,6 +429,8 @@ function ChatComposer(props: ChatComposerProps) {
 export interface ChatViewProps {
   messages: ChatMessage[];
   draft: string;
+  /** The page attached to the next question, if any. */
+  context: ChatContext | null;
   streaming: boolean;
   usage: ChatUsage;
   error: string | null;
@@ -395,6 +439,7 @@ export interface ChatViewProps {
   enabled: boolean | null;
   loaded: boolean;
   onDraftChange: (value: string) => void;
+  onRemoveContext: () => void;
   onSend: () => void;
   onStop: () => void;
   onClear: () => void;
@@ -454,9 +499,11 @@ export function ChatView(props: ChatViewProps) {
       ) : null}
       <ChatComposer
         draft={props.draft}
+        context={props.context}
         streaming={props.streaming}
         canClear={messages.length > 0}
         onDraftChange={props.onDraftChange}
+        onRemoveContext={props.onRemoveContext}
         onSend={props.onSend}
         onStop={props.onStop}
         onClear={props.onClear}
@@ -468,6 +515,7 @@ export function ChatView(props: ChatViewProps) {
 export function ChatPanel() {
   const messages = useStore($chatMessages);
   const draft = useStore($chatDraft);
+  const context = useStore($chatContext);
   const status = useStore($chatStatus);
   const usage = useStore($chatUsage);
   const error = useStore($chatError);
@@ -492,6 +540,9 @@ export function ChatPanel() {
   const onDraftChange = useCallback((value: string) => {
     setChatDraft(value);
   }, []);
+  const onRemoveContext = useCallback(() => {
+    setChatContext(null);
+  }, []);
   const onSend = useCallback(() => {
     void sendChat($chatDraft.getState());
   }, []);
@@ -514,6 +565,7 @@ export function ChatPanel() {
     <ChatView
       messages={messages}
       draft={draft}
+      context={context}
       streaming={status === 'streaming'}
       usage={usage}
       error={error}
@@ -522,6 +574,7 @@ export function ChatPanel() {
       enabled={enabled}
       loaded={loaded}
       onDraftChange={onDraftChange}
+      onRemoveContext={onRemoveContext}
       onSend={onSend}
       onStop={onStop}
       onClear={onClear}

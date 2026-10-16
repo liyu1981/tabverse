@@ -19,6 +19,7 @@ const view = (over: Partial<React.ComponentProps<typeof ChatView>> = {}) =>
     <ChatView
       messages={[]}
       draft=""
+      context={null}
       streaming={false}
       usage={{ used: null, total: null }}
       error={null}
@@ -27,6 +28,7 @@ const view = (over: Partial<React.ComponentProps<typeof ChatView>> = {}) =>
       enabled={true}
       loaded={true}
       onDraftChange={() => undefined}
+      onRemoveContext={() => undefined}
       onSend={() => undefined}
       onStop={() => undefined}
       onClear={() => undefined}
@@ -78,6 +80,33 @@ test('a question and an answer are drawn as two turns', () => {
   expect(markup).toContain('the answer');
   expect(markup).toContain('30.0 tok/s');
   expect(markup).toContain('100 ms');
+});
+
+test('a question with an attached page keeps the question and folds the page', () => {
+  const markup = view({
+    messages: [
+      newChatMessage('user', 'what is this page?', 1, {
+        title: 'A page about tabs',
+        url: 'https://example.com/tabs',
+        markdown: '# Heading\n\nthe body',
+      }),
+    ],
+  });
+  expect(markup).toContain('what is this page?');
+  // the page is a folded block, not text in the question
+  expect(markup).toContain('<details');
+  expect(markup).toContain('A page about tabs');
+  expect(markup).toContain('the body');
+});
+
+test('a pending attachment is a removable chip in the composer', () => {
+  const markup = view({
+    context: { title: 'A page about tabs', markdown: '# Heading' },
+  });
+  expect(markup).toContain('A page about tabs');
+  expect(markup).toContain('Remove the attached page');
+  // the page is not dumped into the box
+  expect(markup).not.toContain('># Heading<');
 });
 
 test('an answer is rendered as markdown, not as its source', () => {
