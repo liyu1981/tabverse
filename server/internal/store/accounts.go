@@ -850,21 +850,3 @@ func (s *Store) retireIdentitiesTx(ctx context.Context, tx *sql.Tx, userID strin
 	}
 	return nil
 }
-
-// SubjectForAccount is the identity subject a session carries for an account
-// under a given provider - the other half of AccountIDForIdentity, and what an
-// assumed identity has to be minted with: a session id that does not resolve
-// back to the account is a session that does not work.
-func (s *Store) SubjectForAccount(ctx context.Context, userID, provider string) (string, bool, error) {
-	var subject string
-	err := s.db.QueryRowContext(ctx,
-		`SELECT subject FROM identities WHERE user_id = ? AND provider = ?`,
-		userID, provider).Scan(&subject)
-	if errors.Is(err, sql.ErrNoRows) {
-		return "", false, nil
-	}
-	if err != nil {
-		return "", false, err
-	}
-	return subject, true, nil
-}

@@ -776,13 +776,17 @@ func (s *Service) SetSenderOverride(fn func(address, text string) error) {
 // is a real session rather than a server-side flag: if the cookie is lost, the
 // assumed identity is lost with it, which is the right failure direction.
 func (s *Service) Assume(w http.ResponseWriter, accountID, actorID string, until time.Time) error {
-	// The claim has to carry the account's *identity subject*, not its row id: a
-	// session id that does not resolve back to the account is a session that
-	// does not work, and the resolver goes through the identities table.
-	subject, ok, err := s.store.SubjectForAccount(context.Background(), accountID, ProviderEmail)
+	// The claim has to carry one of the account's *identity subjects*, not its
+	// row id: a session id that does not resolve back to the account is a
+	// session that does not work, and the resolver goes through the identities
+	// table. An account may hold several identities, and on a social-only
+	// deployment it holds no email one at all - so the email provider is a
+	// preference, never a requirement.
+	identities, err := s.store.IdentitiesFor(context.Background(), accountID)
 	if err != nil {
 		return err
 	}
+	identity, ok := identityForAssume(identities)
 	if !ok {
 		return store.ErrNotFound
 	}
@@ -795,7 +799,7 @@ func (s *Service) Assume(w http.ResponseWriter, accountID, actorID string, until
 			ExpiresAt: jwt.NewNumericDate(until),
 		},
 		User: &token.User{
-			ID:       ProviderEmail + "_" + subject,
+			ID:       identity.Provider + "_" + identity.Subject,
 			Name:     accountID,
 			Audience: testAudienceForClaims,
 			Attributes: map[string]any{
@@ -834,6 +838,22 @@ func (s *Service) Assume(w http.ResponseWriter, accountID, actorID string, until
 
 // assumeCookieName is the cookie an assumed identity travels in.
 const assumeCookieName = "tv_assume"
+
+// identityForAssume picks which of an account's identities an assumed session
+// travels as. Any is correct - the resolver maps provider + subject back to the
+// account - so this only prefers the email provider, the identity a passwordless
+// deployment has, and otherwise takes the oldest one.
+func identityForAssume(identities []store.Identity) (store.Identity, bool) {
+	if len(identities) == 0 {
+		return store.Identity{}, false
+	}
+	for _, identity := range identities {
+		if identity.Provider == ProviderEmail {
+			return identity, true
+		}
+	}
+	return identities[0], true
+}
 
 // AssumedAccountID resolves the assumed identity from its cookie, refusing an
 // expired or malformed one.

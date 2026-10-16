@@ -608,6 +608,41 @@ func TestImpersonationIsReadOnlyAndAudited(t *testing.T) {
 	}
 }
 
+// A social-only deployment holds no email identity at all, so an assumed
+// session has to be minted from whatever identity the account does have;
+// looking up the email provider unconditionally is a 404 for every account on
+// such a build (the official one advertises Google only).
+func TestAnOperatorCanImpersonateASocialAccount(t *testing.T) {
+	ts, s := newAccountServer(t)
+	ctx := context.Background()
+
+	root := signInAs(t, ts, s, "root@example.com")
+	rootID, _ := root.do(t, http.MethodGet, "/console/api/v1/console/me").body["user_id"].(string)
+	if err := s.store.SetRole(ctx, rootID, store.RoleAdmin); err != nil {
+		t.Fatalf("promote: %v", err)
+	}
+	root = signInAs(t, ts, s, "root@example.com")
+
+	// A person whose only login is Google.
+	carolID, _, err := s.store.UpsertIdentity(ctx, "google", "google-sub-carol",
+		"carol@example.com", "Carol", true, store.RegistrationPolicy{})
+	if err != nil {
+		t.Fatalf("create a social account: %v", err)
+	}
+
+	r := root.do(t, http.MethodPost, "/console/api/v1/admin/users/"+carolID+"/impersonate")
+	r.mustStatus(t, http.StatusOK)
+	if r.body["assumed"] != carolID || r.body["as"] != "Carol" {
+		t.Fatalf("the social account should be assumed: %s", r.raw)
+	}
+	// The assumed session resolves back to Carol, not to nobody.
+	r = root.do(t, http.MethodGet, "/console/api/v1/console/impersonation")
+	r.mustStatus(t, http.StatusOK)
+	if r.body["assuming"] != true || r.body["user_id"] != carolID {
+		t.Fatalf("the assumed session does not resolve to the social account: %s", r.raw)
+	}
+}
+
 func TestAnOperatorCannotImpersonateAnotherOperator(t *testing.T) {
 	ts, s := newAccountServer(t)
 	ctx := context.Background()
