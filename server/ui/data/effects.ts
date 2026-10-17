@@ -20,6 +20,7 @@ import type {
   Impersonation,
   Invite,
   Me,
+  MembershipDetail,
   MembershipList,
   MembershipSettings,
   MembershipView,
@@ -179,6 +180,13 @@ export const renewSelfMembershipFx = createEffect<
   void,
   { membership: MembershipView }
 >(() => api.renewMembership());
+
+/** The account on screen's own lease and ledger: the Membership tab. Resolved
+ *  from the session, so while an operator is looking through an account it is
+ *  that account's membership, not the operator's. */
+export const loadSelfMembershipFx = createEffect<void, MembershipDetail>(() =>
+  api.getSelfMembership(),
+);
 
 export const grantCreditsFx = createEffect<
   { userId: string; delta: number },

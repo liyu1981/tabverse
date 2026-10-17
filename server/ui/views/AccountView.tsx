@@ -20,9 +20,10 @@ import {
 import type { AccountTab } from '../data/stores/accounts';
 import { $isAssumed } from '../data/stores/session';
 import { $me } from '../data/stores/session';
+import type { MembershipView } from '../data/types';
 import { PromptDialog, TypedConfirmDialog } from '../components/Dialogs';
 import { CredentialsPanel } from './CredentialsPanel';
-import { MembershipCard } from './MembershipCard';
+import { MembershipTab } from './MembershipTab';
 import { PairCodePanel } from './PairCodePanel';
 import { SearchPanel } from './SearchPanel';
 import { StoredDataPanel } from './StoredDataPanel';
@@ -31,6 +32,7 @@ import classes from '../layout.module.scss';
 const TABS: { id: AccountTab; label: string }[] = [
   { id: 'pair', label: 'Pair Code' },
   { id: 'credentials', label: 'Devices & Tokens' },
+  { id: 'membership', label: 'Membership' },
   { id: 'data', label: 'Stored data' },
   { id: 'search', label: 'Search' },
 ];
@@ -75,6 +77,13 @@ export function AccountView() {
     (user?.name || user?.id || 'Accounts') +
     (assumed && user ? ' (impersonated by admin)' : '');
 
+  // The membership tab is part of the account only when the server has the
+  // system on; a self-hosted build keeps the four it always had.
+  const membershipOn = !!me?.membership?.enabled;
+  const tabs = TABS.filter(
+    (entry) => entry.id !== 'membership' || membershipOn,
+  );
+
   const notes: Record<AccountTab, string> = {
     pair:
       account?.devices && account.devices.length
@@ -83,6 +92,8 @@ export function AccountView() {
           ? 'none yet'
           : '',
     credentials: account?.devices ? credentialsNote(account, showArchived) : '',
+    membership:
+      !assumed && me?.membership?.enabled ? membershipNote(me.membership) : '',
     data: account?.stats ? `${account.stats.live} records` : '',
     search: 'full text',
   };
@@ -133,11 +144,9 @@ export function AccountView() {
         </div>
       ) : null}
 
-      <MembershipCard />
-
       <div className={classes.tabbed}>
         <nav className={classes.rail} aria-label="Account sections">
-          {TABS.map((entry) => {
+          {tabs.map((entry) => {
             const active = tab === entry.id;
             return (
               <button
@@ -159,6 +168,9 @@ export function AccountView() {
           {!account ? <Spinner size={24} /> : null}
           {account && tab === 'pair' ? <PairCodePanel /> : null}
           {account && tab === 'credentials' ? <CredentialsPanel /> : null}
+          {account && tab === 'membership' && membershipOn ? (
+            <MembershipTab key={user?.id ?? ''} />
+          ) : null}
           {account && tab === 'data' ? <StoredDataPanel /> : null}
           {account && tab === 'search' ? <SearchPanel /> : null}
         </div>
@@ -233,6 +245,13 @@ function credentialsNote(
   const { devices, tokens } = visibleCredentials(account, showArchived);
   const live = tokens.filter((tok) => !tok.revoked).length;
   return `${devices.length} paired` + (live ? ` · ${live} live` : '');
+}
+
+/** The rail's note for the membership tab: the one number that fits. */
+function membershipNote(m: MembershipView): string {
+  if (m.status === 'unlimited') return 'unlimited';
+  if (m.status === 'active') return `${m.days_left}d left`;
+  return m.status;
 }
 
 /** An owner action: hidden rather than offered-and-refused while an operator is

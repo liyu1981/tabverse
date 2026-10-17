@@ -9,15 +9,26 @@ import { createEvent, createStore } from 'effector';
 import {
   loadMembershipSettingsFx,
   loadMembershipsFx,
+  loadSelfMembershipFx,
   setMembershipSettingsFx,
 } from '../effects';
-import type { MembershipSettings, MembershipSummary } from '../types';
+import type {
+  MembershipDetail,
+  MembershipSettings,
+  MembershipSummary,
+} from '../types';
 
 export const setMembershipQuery = createEvent<string>();
 
 export const $membershipQuery = createStore('').on(
   setMembershipQuery,
   (_, query) => query,
+);
+
+/** The account on screen's own lease and ledger, for the Membership tab. */
+export const $selfMembership = createStore<MembershipDetail | null>(null).on(
+  loadSelfMembershipFx.doneData,
+  (_, detail) => detail,
 );
 
 export const $memberships = createStore<MembershipSummary[]>([]).on(
