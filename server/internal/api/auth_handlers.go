@@ -129,6 +129,15 @@ func (s *Server) writeDevice(w http.ResponseWriter, r *http.Request, userID, dev
 	if deviceName == "" {
 		deviceName = "unnamed device"
 	}
+	// A brand-new account (bootstrap) has no lease yet; enrolling it here keeps
+	// pairing and the worker from disagreeing about what a fresh account is.
+	if err := s.membership.GrantTrial(r.Context(), userID); err != nil {
+		writeErr(w, http.StatusInternalServerError, "internal", err.Error())
+		return
+	}
+	if !s.requireSyncMembership(w, r, userID) {
+		return
+	}
 	device, err := s.store.CreateDevice(r.Context(), newID("dev_"), userID, deviceName)
 	if err != nil {
 		writeErr(w, http.StatusInternalServerError, "internal", err.Error())

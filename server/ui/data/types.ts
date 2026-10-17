@@ -101,6 +101,89 @@ export interface Me {
    * the code and offers to request one.
    */
   invite_required?: boolean;
+  /**
+   * Whether the membership system is on at all (adr/0032). Off means every
+   * account is unlimited and none of the membership controls appear.
+   */
+  membership_enabled?: boolean;
+  /** The signed-in account's lease and credits, when the system is on. */
+  membership?: MembershipView;
+}
+
+// ---- membership (adr/0032) -------------------------------------------------
+
+/**
+ * A lease computed from `expires_at`, never stored: `active` while the lease is
+ * good, `expired` during the retention window (read-only console), `closable`
+ * once it has passed, and `unlimited` when no lease applies.
+ */
+export type MembershipStatus = 'unlimited' | 'active' | 'expired' | 'closable';
+
+export interface MembershipView {
+  enabled: boolean;
+  status: MembershipStatus;
+  /** The account may look and download, but not write. */
+  read_only: boolean;
+  unlimited: boolean;
+  /** Unix ms; 0 when the lease was never opened. */
+  expires_at: Millis;
+  credits: number;
+  period_days: number;
+  period_credits: number;
+  retention_days: number;
+  /** Unix ms the account would be closed at, 0 when it does not apply. */
+  retention_until: Millis;
+  days_left: number;
+  /** Days until the account closes, during the expired window. */
+  days_until_close: number;
+  can_export: boolean;
+}
+
+/** One append-only movement of credits. */
+export interface MembershipLedgerEntry {
+  id: number;
+  user_id: string;
+  delta: number;
+  balance: number;
+  reason: string;
+  actor_user_id?: string;
+  at: Millis;
+  detail?: string;
+}
+
+/** A directory row: the account plus its lease and balance. */
+export interface MembershipSummary {
+  user_id: string;
+  name: string;
+  email: string;
+  role: Role;
+  expires_at: Millis;
+  credits: number;
+  unlimited: boolean;
+  trial_granted_at: Millis;
+  expired_at: Millis;
+  status: MembershipStatus;
+  read_only: boolean;
+}
+
+export interface MembershipList {
+  memberships: MembershipSummary[];
+  enabled: boolean;
+}
+
+export interface MembershipDetail {
+  membership: MembershipView;
+  ledger: MembershipLedgerEntry[];
+}
+
+/** `GET/PUT /console/api/v1/admin/settings/membership`. */
+export interface MembershipSettings {
+  enabled: boolean;
+  period_days: number;
+  period_credits: number;
+  trial_credits: number;
+  retention_days: number;
+  auto_purge: boolean;
 }
 
 /** `GET /console/api/v1/console/me` while a session has no account yet. */

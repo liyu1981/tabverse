@@ -248,6 +248,46 @@ func (s *Store) migrate(ctx context.Context) error {
 			n       INTEGER NOT NULL DEFAULT 0,
 			PRIMARY KEY (user_id, entity)
 		)`,
+		// --- membership (adr/0032) ---
+		// One row per account: the lease that credits fund. Status is computed
+		// from expires_at, so there is no status column to drift.
+		`CREATE TABLE IF NOT EXISTS memberships (
+			user_id             TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+			expires_at          INTEGER NOT NULL DEFAULT 0,
+			credits             INTEGER NOT NULL DEFAULT 0,
+			unlimited           INTEGER NOT NULL DEFAULT 0,
+			created_at          INTEGER NOT NULL,
+			updated_at          INTEGER NOT NULL,
+			last_renewed_at     INTEGER NOT NULL DEFAULT 0,
+			trial_granted_at    INTEGER NOT NULL DEFAULT 0,
+			expired_at          INTEGER NOT NULL DEFAULT 0,
+			expired_notified_at INTEGER NOT NULL DEFAULT 0,
+			purge_warned_at     INTEGER NOT NULL DEFAULT 0
+		)`,
+		// The worker's scan for "renew or expire" and for "closable". The
+		// partial index excludes the exempt rows, which never need either.
+		`CREATE INDEX IF NOT EXISTS memberships_expiry ON memberships(expires_at) WHERE unlimited = 0`,
+		// Append-only: the ledger is authoritative, memberships.credits is its
+		// cache, and both move in one transaction.
+		`CREATE TABLE IF NOT EXISTS membership_ledger (
+			id            INTEGER PRIMARY KEY AUTOINCREMENT,
+			user_id       TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+			delta         INTEGER NOT NULL,
+			balance       INTEGER NOT NULL,
+			reason        TEXT NOT NULL,
+			actor_user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+			at            INTEGER NOT NULL,
+			detail        TEXT
+		)`,
+		`CREATE INDEX IF NOT EXISTS membership_ledger_user ON membership_ledger(user_id, at DESC)`,
+		// General runtime settings an operator may change without a restart. The
+		// membership master switch is its first key.
+		`CREATE TABLE IF NOT EXISTS server_settings (
+			name       TEXT PRIMARY KEY,
+			value      TEXT NOT NULL,
+			updated_at INTEGER NOT NULL,
+			updated_by TEXT REFERENCES users(id) ON DELETE SET NULL
+		)`,
 	}
 
 	tx, err := s.db.BeginTx(ctx, nil)

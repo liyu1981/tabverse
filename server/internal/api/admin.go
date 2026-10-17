@@ -69,8 +69,12 @@ func (s *Server) consoleCredential(next http.HandlerFunc, operatorOnly bool) htt
 			return
 		}
 		// A signed-in person may act on their own account, so a session is
-		// enough to be here; resolveScope decides which account.
+		// enough to be here; resolveScope decides which account. An expired
+		// membership turns the session read-only before the handler sees it.
 		if s.signedIn(r) && (!operatorOnly || s.isOperator(r)) {
+			if s.readOnlyRefusal(w, r) {
+				return
+			}
 			next(w, r)
 			return
 		}

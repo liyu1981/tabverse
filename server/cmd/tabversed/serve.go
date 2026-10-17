@@ -116,6 +116,11 @@ func serve(args []string) error {
 	// Server side retention (chrome session snapshots).
 	go retention.Run(ctx, st, h, cfg.RetentionDays, logger)
 
+	// The membership lifecycle (adr/0032): renew leases from credits, expire,
+	// notify and close accounts past the retention window. A no-op when the
+	// master switch is off.
+	go srv.RunMembership(ctx)
+
 	// The cross-user counter cache (ADR 0026): content writes mark an account
 	// dirty, this recomputes it off the request path.
 	go counters.Run(ctx, st, time.Minute, 15, logger)

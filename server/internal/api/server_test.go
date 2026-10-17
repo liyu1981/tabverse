@@ -30,6 +30,13 @@ func newTestServer(t *testing.T) (*httptest.Server, *Server) {
 		SyncBatchLimit: 100,
 		SearchLimit:    50,
 		Version:        "test",
+		// The membership defaults config.Load would set, so a hand-built Config
+		// behaves like a deployment (adr/0032).
+		MembershipPeriodDays:    30,
+		MembershipPeriodCredits: 30,
+		MembershipTrialCredits:  30,
+		MembershipRetentionDays: 90,
+		MembershipAutoPurge:     true,
 	}
 	st, err := store.Open(cfg.DBPath)
 	if err != nil {

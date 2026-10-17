@@ -610,6 +610,13 @@ func (s *Service) Register(ctx context.Context, pending PendingRegistration, ema
 	if _, err := s.promoteIfFirstOperator(ctx, userID, email); err != nil {
 		s.log.Warn("operator bootstrap failed", "err", err)
 	}
+	// The membership trial is the single onboarding grant (adr/0032). It is
+	// idempotent (stamped once per account), so a retried registration cannot
+	// double it, and a failure here must not fail the registration.
+	if _, err := s.store.GrantTrial(ctx, userID, s.cfg.MembershipTrialCredits,
+		s.cfg.MembershipPeriodCredits, s.cfg.MembershipPeriod().Milliseconds()); err != nil {
+		s.log.Warn("cannot grant the membership trial", "user", userID, "err", err)
+	}
 	return userID, nil
 }
 

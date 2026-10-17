@@ -74,6 +74,17 @@ const (
 	// operator approved or rejected.
 	AuditRegistrationRequestInvited  = "registration_request_invited"
 	AuditRegistrationRequestRejected = "registration_request_rejected"
+	// Membership (adr/0032). The lease, the credits that fund it, and what a
+	// person did with their own data while it lasted.
+	AuditMembershipGrant     = "membership_grant"
+	AuditMembershipPeriod    = "membership_period"
+	AuditMembershipExtend    = "membership_extend"
+	AuditMembershipUnlimited = "membership_unlimited"
+	AuditMembershipExpired   = "membership_expired"
+	AuditMembershipRenewed   = "membership_renewed"
+	AuditMembershipClosed    = "membership_closed"
+	AuditMembershipSettings  = "membership_settings_changed"
+	AuditDataExported        = "data_exported"
 )
 
 // Email token purposes.

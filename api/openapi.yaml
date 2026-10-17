@@ -941,6 +941,229 @@ paths:
         '403': { description: operator only }
         '404': { $ref: '#/components/responses/NotFound' }
 
+  /console/api/v1/console/membership:
+    get:
+      tags: [console]
+      summary: The signed-in account's lease and credit ledger
+      description: |
+        The membership system (adr/0032). A lease is valid while
+        `now < expires_at`; a `period_days` lease costs `period_credits`
+        credits, and a lapsed lease keeps the account read only for the
+        retention window before it is closed. When the master switch is off
+        every account is `unlimited`.
+      responses:
+        '200':
+          description: the account's membership and recent ledger
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  membership: { $ref: '#/components/schemas/MembershipView' }
+                  ledger:
+                    type: array
+                    items: { $ref: '#/components/schemas/MembershipLedgerEntry' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /console/api/v1/console/membership/renew:
+    post:
+      tags: [console]
+      summary: Spend credits to open a period now
+      description: |
+        One of the few mutations an expired account is still allowed, because
+        it is the way back. Refused with `insufficient_credits` when the
+        balance cannot pay.
+      responses:
+        '200':
+          description: the new lease
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  membership: { $ref: '#/components/schemas/MembershipView' }
+                  expires_at: { type: integer, description: unix ms }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '402':
+          description: not enough credits
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MembershipExpiredError' }
+
+  /console/api/v1/console/export:
+    get:
+      tags: [console]
+      summary: Download the account's own records as NDJSON
+      description: |
+        One JSON object per line: a manifest first, then one line per live
+        record. Available at any status, so an expired account can always take
+        a copy before the retention window closes. Audited as `data_exported`.
+      responses:
+        '200':
+          description: the account's records
+          content:
+            application/x-ndjson:
+              schema: { type: string }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /console/api/v1/admin/memberships:
+    get:
+      tags: [admin]
+      summary: Every account's membership, for the operator directory
+      parameters:
+        - { name: q, in: query, schema: { type: string } }
+      responses:
+        '200':
+          description: the directory
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  enabled: { type: boolean, description: the master switch }
+                  memberships:
+                    type: array
+                    items: { $ref: '#/components/schemas/MembershipSummary' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { description: operator only }
+
+  /console/api/v1/admin/users/{user_id}/membership:
+    parameters: [{ $ref: '#/components/parameters/userId' }]
+    get:
+      tags: [admin]
+      summary: One account's membership and ledger
+      responses:
+        '200':
+          description: the account's membership
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  membership: { $ref: '#/components/schemas/MembershipView' }
+                  ledger:
+                    type: array
+                    items: { $ref: '#/components/schemas/MembershipLedgerEntry' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { description: operator only }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /console/api/v1/admin/users/{user_id}/membership/credits:
+    parameters: [{ $ref: '#/components/parameters/userId' }]
+    post:
+      tags: [admin]
+      summary: Grant or deduct credits
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [delta]
+              properties:
+                delta: { type: integer, description: positive grants, negative deducts }
+                reason: { type: string, enum: [grant, adjustment, refund, purchase] }
+                detail: { type: string }
+      responses:
+        '200': { description: the updated membership }
+        '400': { description: the balance cannot go below zero }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { description: operator only }
+
+  /console/api/v1/admin/users/{user_id}/membership/extend:
+    parameters: [{ $ref: '#/components/parameters/userId' }]
+    post:
+      tags: [admin]
+      summary: Extend or set the lease
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                periods: { type: integer, minimum: 1 }
+                until: { type: integer, description: unix ms absolute lease end }
+                use_credits: { type: boolean, default: false }
+      responses:
+        '200': { description: the updated membership }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '402': { description: not enough credits when use_credits is set }
+        '403': { description: operator only }
+
+  /console/api/v1/admin/users/{user_id}/membership/unlimited:
+    parameters: [{ $ref: '#/components/parameters/userId' }]
+    post:
+      tags: [admin]
+      summary: Mark an account unlimited (or remove it)
+      responses:
+        '200': { description: the updated membership }
+        '403': { description: operator only, or the configured root }
+
+  /console/api/v1/admin/users/{user_id}/membership/reset:
+    parameters: [{ $ref: '#/components/parameters/userId' }]
+    post:
+      tags: [admin]
+      summary: Clear the lifecycle stamps and reopen a period
+      description: Never re-grants the one trial.
+      responses:
+        '200': { description: the updated membership }
+        '403': { description: operator only }
+
+  /console/api/v1/admin/users/{user_id}/membership/close:
+    parameters: [{ $ref: '#/components/parameters/userId' }]
+    post:
+      tags: [admin]
+      summary: Close an account now, without waiting for retention
+      parameters:
+        - { name: dry_run, in: query, schema: { type: string, enum: ['1'] } }
+      responses:
+        '204': { description: the account and its content are gone }
+        '403': { description: operator only, or the configured root }
+
+  /console/api/v1/admin/users/{user_id}/membership/ledger:
+    parameters: [{ $ref: '#/components/parameters/userId' }]
+    get:
+      tags: [admin]
+      summary: The append-only credit ledger
+      responses:
+        '200':
+          description: newest first
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ledger:
+                    type: array
+                    items: { $ref: '#/components/schemas/MembershipLedgerEntry' }
+
+  /console/api/v1/admin/settings/membership:
+    get:
+      tags: [admin]
+      summary: The membership master switch and effective prices
+      responses:
+        '200':
+          description: the settings
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MembershipSettings' }
+    put:
+      tags: [admin]
+      summary: Flip the master switch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [enabled]
+              properties:
+                enabled: { type: boolean }
+      responses:
+        '200': { description: the settings after the change }
+        '403': { description: operator only }
+
 components:
   securitySchemes:
     bearerToken:
@@ -964,6 +1187,81 @@ components:
       description: the account the admin acts on
 
   schemas:
+    MembershipStatus:
+      type: string
+      description: |
+        Computed from the lease, never stored: `unlimited` when no lease
+        applies, `active` while it is good, `expired` during the read-only
+        retention window, and `closable` once that window has passed.
+      enum: [unlimited, active, expired, closable]
+
+    MembershipView:
+      type: object
+      properties:
+        enabled: { type: boolean }
+        status: { $ref: '#/components/schemas/MembershipStatus' }
+        read_only: { type: boolean, description: the account may look and download, not write }
+        unlimited: { type: boolean }
+        expires_at: { type: integer, description: unix ms; 0 when never opened }
+        credits: { type: integer }
+        period_days: { type: integer }
+        period_credits: { type: integer }
+        retention_days: { type: integer }
+        retention_until: { type: integer, description: unix ms; 0 when it does not apply }
+        days_left: { type: integer }
+        days_until_close: { type: integer }
+        can_export: { type: boolean }
+
+    MembershipLedgerEntry:
+      type: object
+      properties:
+        id: { type: integer }
+        user_id: { type: string }
+        delta: { type: integer }
+        balance: { type: integer }
+        reason: { type: string }
+        actor_user_id: { type: string }
+        at: { type: integer, description: unix ms }
+        detail: { type: string }
+
+    MembershipSummary:
+      type: object
+      properties:
+        user_id: { type: string }
+        name: { type: string }
+        email: { type: string }
+        role: { type: string, enum: [user, admin] }
+        expires_at: { type: integer, description: unix ms }
+        credits: { type: integer }
+        unlimited: { type: boolean }
+        trial_granted_at: { type: integer, description: unix ms }
+        expired_at: { type: integer, description: unix ms }
+        status: { $ref: '#/components/schemas/MembershipStatus' }
+        read_only: { type: boolean }
+
+    MembershipSettings:
+      type: object
+      properties:
+        enabled: { type: boolean }
+        period_days: { type: integer }
+        period_credits: { type: integer }
+        trial_credits: { type: integer }
+        retention_days: { type: integer }
+        auto_purge: { type: boolean }
+
+    MembershipExpiredError:
+      type: object
+      description: |
+        A paired device (and every mutating console route of an expired
+        account) is refused with `402 Payment Required` and this body, so the
+        extension can tell "pay" from "re-pair" without parsing prose.
+      properties:
+        error: { type: string, enum: [membership_expired, insufficient_credits] }
+        message: { type: string }
+        status: { $ref: '#/components/schemas/MembershipStatus' }
+        expires_at: { type: integer }
+        retention_until: { type: integer }
+
     RegistrationInvite:
       type: object
       description: |

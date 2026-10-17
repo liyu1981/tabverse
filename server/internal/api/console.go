@@ -60,6 +60,9 @@ func (s *Server) handleConsoleMe(w http.ResponseWriter, r *http.Request) {
 			// documentation or only the redirect page, and the bar shows its
 			// "tabverse" link back on that answer (adr/0024).
 			"docs": webui.HasDocs(),
+			// Whether the membership system is on at all; the sign-in page does
+			// not need more than this before there is an account.
+			"membership_enabled": s.membership.Enabled(),
 		}
 		// A valid session whose subject has no account: the person authenticated
 		// with a provider, but the account is a separate step now. The console
@@ -107,6 +110,11 @@ func (s *Server) handleConsoleMe(w http.ResponseWriter, r *http.Request) {
 		role = store.RoleUser
 	}
 	operator := s.operatorExists(r)
+	memView, err := s.membershipView(r.Context(), acc)
+	if err != nil {
+		writeStoreErr(w, err)
+		return
+	}
 	writeJSON(w, http.StatusOK, map[string]any{
 		"signed_in":          true,
 		"user_id":            acc.ID,
@@ -137,6 +145,9 @@ func (s *Server) handleConsoleMe(w http.ResponseWriter, r *http.Request) {
 		// nobody has claimed the role yet. The server can only fix that on the
 		// next start, so the console says so rather than pretending.
 		"awaiting_operator": s.awaitingOperator(r, acc),
+		// The membership card (adr/0032): status, lease, credits and the
+		// read-only flag the page keys its write controls off.
+		"membership": memView,
 	})
 }
 

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
@@ -15,6 +16,7 @@ import (
 	"github.com/liyu1981/tabverse/server/internal/auth"
 	"github.com/liyu1981/tabverse/server/internal/config"
 	"github.com/liyu1981/tabverse/server/internal/hub"
+	"github.com/liyu1981/tabverse/server/internal/membership"
 	"github.com/liyu1981/tabverse/server/internal/store"
 	"github.com/liyu1981/tabverse/server/internal/webui"
 )
@@ -38,6 +40,9 @@ type Server struct {
 	// which is exactly the state that used to exist, and the one that had to be
 	// checked in every middleware.
 	accounts *accounts.Service
+	// membership is the credit-funded lease (adr/0032). It is never nil either:
+	// with the master switch off it answers "unlimited" for everybody.
+	membership *membership.Service
 	// signinThrottle bounds the one endpoint a stranger can reach that has an
 	// effect in the world: asking for a sign-in link creates an account and
 	// sends mail. Two limits, because either one alone is half the answer - a
@@ -57,8 +62,15 @@ func New(cfg config.Config, st *store.Store, h *hub.Hub, logger *slog.Logger) (*
 	if err != nil {
 		return nil, fmt.Errorf("account layer: %w", err)
 	}
+	mem, err := membership.New(cfg, st, logger)
+	if err != nil {
+		return nil, fmt.Errorf("membership layer: %w", err)
+	}
+	// The account layer owns the mail sender, so it is the notifier for expiry
+	// and closing notices.
+	mem.SetNotifier(svc)
 	return &Server{
-		cfg: cfg, store: st, hub: h, logger: logger, accounts: svc,
+		cfg: cfg, store: st, hub: h, logger: logger, accounts: svc, membership: mem,
 		signinByAddress: newThrottle(5, time.Hour),
 		signinByIP:      newThrottle(20, time.Hour),
 	}, nil
@@ -71,6 +83,12 @@ const (
 	accountsSessionCookie = "tv_session"
 	accountsCSRFHeader    = "X-XSRF-Token"
 )
+
+// RunMembership runs the membership lifecycle worker until ctx is cancelled.
+// It is started from serve.go beside retention and the counter worker.
+func (s *Server) RunMembership(ctx context.Context) {
+	s.membership.Run(ctx, s.hub)
+}
 
 // Handler builds the route table. Route patterns use the Go 1.22+ method
 // aware syntax on purpose: no router dependency, no magic.
@@ -141,6 +159,20 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /console/api/v1/admin/registration-requests/{user_id}/invite", s.adminOnly(s.handleAdminInviteRegistrationRequest))
 	mux.HandleFunc("DELETE /console/api/v1/admin/registration-requests/{user_id}", s.adminOnly(s.handleAdminDeleteRegistrationRequest))
 
+	// Membership (adr/0032): the operator views and manages every account's
+	// lease, and flips the master switch. Operator-only, because granting
+	// credits is granting access.
+	mux.HandleFunc("GET /console/api/v1/admin/memberships", s.adminOnly(s.handleAdminListMemberships))
+	mux.HandleFunc("GET /console/api/v1/admin/users/{user_id}/membership", s.adminOnly(s.handleAdminGetMembership))
+	mux.HandleFunc("POST /console/api/v1/admin/users/{user_id}/membership/credits", s.adminOnly(s.handleAdminGrantCredits))
+	mux.HandleFunc("POST /console/api/v1/admin/users/{user_id}/membership/extend", s.adminOnly(s.handleAdminExtendMembership))
+	mux.HandleFunc("POST /console/api/v1/admin/users/{user_id}/membership/unlimited", s.adminOnly(s.handleAdminSetUnlimited))
+	mux.HandleFunc("POST /console/api/v1/admin/users/{user_id}/membership/reset", s.adminOnly(s.handleAdminResetMembership))
+	mux.HandleFunc("POST /console/api/v1/admin/users/{user_id}/membership/close", s.adminOnly(s.handleAdminCloseMembership))
+	mux.HandleFunc("GET /console/api/v1/admin/users/{user_id}/membership/ledger", s.adminOnly(s.handleAdminMembershipLedger))
+	mux.HandleFunc("GET /console/api/v1/admin/settings/membership", s.adminOnly(s.handleAdminGetMembershipSettings))
+	mux.HandleFunc("PUT /console/api/v1/admin/settings/membership", s.adminOnly(s.handleAdminSetMembershipSettings))
+
 	// The library's login routes, mounted where the console expects them.
 	{
 		mux.Handle("/auth/", http.StripPrefix("/auth", s.accounts.Handlers()))
@@ -169,6 +201,13 @@ func (s *Server) Handler() http.Handler {
 		// the session; the account-wide admin route below is the operator view of
 		// somebody else.
 		mux.HandleFunc("GET /console/api/v1/console/search", s.admin(s.handleConsoleSearch))
+		// Membership of the signed-in account (adr/0032): the console card, the
+		// self-service renewal, and the data download. All resolve the account
+		// from the session; an expired account may still read them, renew, and
+		// export (see readOnlyRefusal).
+		mux.HandleFunc("GET /console/api/v1/console/membership", s.admin(s.handleConsoleMembership))
+		mux.HandleFunc("POST /console/api/v1/console/membership/renew", s.admin(s.handleConsoleRenew))
+		mux.HandleFunc("GET /console/api/v1/console/export", s.admin(s.handleConsoleExport))
 		// Pairing a browser extension from the console's own page (the official
 		// server wizard, adr/0020). It takes the console credential - a session
 		// for one's own account - and nothing else: no invite, no operator. The
@@ -224,6 +263,12 @@ func (s *Server) auth(next http.HandlerFunc) http.HandlerFunc {
 				return
 			}
 			writeErr(w, http.StatusInternalServerError, "internal", err.Error())
+			return
+		}
+		// The membership lease gates the whole system for a paired device. The
+		// read is live, so this takes effect at the expiry instant, not on the
+		// worker's next pass.
+		if !s.requireSyncMembership(w, r, userID) {
 			return
 		}
 		// Record device activity for the console. Best effort: a failed

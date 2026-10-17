@@ -37,6 +37,9 @@ func (s *Server) handleStream(w http.ResponseWriter, r *http.Request) {
 	if err := s.store.TouchToken(r.Context(), hash); err != nil {
 		s.logger.Debug("token touch failed", "err", err)
 	}
+	if !s.requireSyncMembership(w, r, userID) {
+		return
+	}
 
 	opts := &websocket.AcceptOptions{CompressionMode: websocket.CompressionDisabled}
 	if len(s.cfg.WSOrigins) > 0 {

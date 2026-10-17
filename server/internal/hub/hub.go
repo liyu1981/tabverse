@@ -84,6 +84,21 @@ func (h *Hub) Count(userID string) int {
 	return len(h.subs[userID])
 }
 
+// CloseUser closes every connection of a user. The membership expiry pass calls
+// it so a stream does not outlive the lease: a request-time check cannot reach a
+// connection that is already open. It reuses close(), so it is idempotent.
+func (h *Hub) CloseUser(userID string) {
+	h.mu.RLock()
+	conns := make([]*Conn, 0, len(h.subs[userID]))
+	for c := range h.subs[userID] {
+		conns = append(conns, c)
+	}
+	h.mu.RUnlock()
+	for _, c := range conns {
+		c.close()
+	}
+}
+
 func (h *Hub) detach(userID string, c *Conn) {
 	h.mu.Lock()
 	defer h.mu.Unlock()

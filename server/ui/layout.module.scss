@@ -219,6 +219,32 @@
   flex-wrap: wrap;
 }
 
+/* The membership card (adr/0032): a quiet panel above the account tabs that
+   only appears when the server has the system on. */
+.membershipCard {
+  border: 1px solid rgb(0 0 0 / 12%);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+
+.membershipHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.membershipHead h3 {
+  margin: 0 0 2px;
+}
+
+.membershipNotice {
+  margin: 10px 0 0;
+  color: #8a6d3b;
+}
+
 // Narrow: the rail goes horizontal above the panel, so the console still works
 // in a half-width window without a second layout to maintain.
 @media (max-width: 760px) {

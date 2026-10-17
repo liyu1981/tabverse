@@ -197,6 +197,12 @@ git-ignored, because it holds the auth secret and the provider secret - and
 | `TABVERSED_ADMIN_EMAIL`      | _(unset)_           | whose first registration becomes the operator (ADR 0013) |
 | `TABVERSED_REGISTRATION_REQUIRES_INVITE` | `false` | new accounts are created only for an address an operator invited. Login and registration are two steps (ADR 0029): a login with no invitation lands on the register page, which requires an invitation code - or lets the person request one, creating a pending request the operator can approve. The admin address is always exempt, so the operator can register first |
 | `TABVERSED_EMAIL_REGISTRATION` | `true` (official build: `false`) | the passwordless email sign-in and registration path; off means social logins only |
+| `TABVERSED_MEMBERSHIP_ENABLED` | `false` (official build: `true`) | seed of the membership master switch (ADR 0032). Off means every account is unlimited; an operator can flip the runtime value in the console, which is what is actually read |
+| `TABVERSED_MEMBERSHIP_PERIOD_DAYS` | `30` | length of one membership lease |
+| `TABVERSED_MEMBERSHIP_PERIOD_CREDITS` | `30` | credits one period costs (one credit is one day) |
+| `TABVERSED_MEMBERSHIP_TRIAL_CREDITS` | `30` | the single onboarding grant, once per account |
+| `TABVERSED_MEMBERSHIP_RETENTION_DAYS` | `90` | how long an expired account and its data are kept, read only, before closing |
+| `TABVERSED_MEMBERSHIP_AUTO_PURGE` | `true` | close expired accounts automatically once the retention window ends; off leaves them for an operator |
 | `TABVERSED_SESSION_TTL`      | `24h`                | how long one console sign-in lasts; `0` = no bound (ADR 0021) |
 | `TABVERSED_SESSION_COOKIE_TTL` | _(same as the session)_ | how long the browser keeps the cookie; defaults to `TABVERSED_SESSION_TTL` so the credential never outlives the session |
 | `TABVERSED_REQUIRE_HTTPS`    | `false`              | refuse to start when the console is served over plain http on a non-loopback `TABVERSED_PUBLIC_URL` (ADR 0021); off by default so a LAN deployment is not broken |
@@ -311,6 +317,28 @@ address - and it is two steps (ADR 0029): a provider login with no account
 lands on the **Create your account** page, which records the address and the
 user agreement. The accounts sidebar is gone - it was a second copy of the
 directory for an operator and a single useless row for a person.
+
+### Membership (ADR 0032)
+
+Off by default on a self-hosted build, on in the `officialserver` flavour, and
+toggleable at runtime by an operator in the console's **Membership** tab. With
+it off, every account is unlimited and none of this is visible.
+
+A membership is a **30-day lease funded by credits** (one credit is one day by
+default, so a period costs 30). An account gets a single onboarding trial, once
+and never again. An operator can grant or deduct credits, extend a lease, mark an
+account **unlimited**, or close it now; every movement is in an append-only
+ledger, and every action is audited.
+
+When a lease lapses, **syncing stops immediately** - the check reads the lease
+on every request, so it does not wait for a sweep - and the account becomes a
+**read-only console**: it can sign in, look at its own data, and download it as
+NDJSON from `/console/api/v1/console/export`, but every write (including pairing a new
+device) is refused with `402 membership_expired`. The account and its data are
+kept for `TABVERSED_MEMBERSHIP_RETENTION_DAYS` (90 by default); reminders go out
+before it closes, and then the account is deleted. Operators and the account
+whose address is `TABVERSED_ADMIN_EMAIL` are always unlimited and are never
+closed, so a mis-set switch cannot lock the deployment out.
 
 ### Signing in
 

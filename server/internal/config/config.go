@@ -135,6 +135,26 @@ type Config struct {
 	// It is the whole bootstrap: there is no secret to lose, no token to
 	// rotate, and once an operator exists it grants nothing.
 	AdminEmail string
+
+	// --- membership (adr/0032) ---
+	// MembershipEnabled is the master switch, and only the *seed*: the runtime
+	// truth is server_settings.membership_enabled, which an operator toggles in
+	// the console. With it off every account is unlimited and nothing below
+	// applies.
+	MembershipEnabled bool
+	// MembershipPeriodDays is the length of one lease, 30 by default.
+	MembershipPeriodDays int
+	// MembershipPeriodCredits is what one period costs. The default makes one
+	// credit one day.
+	MembershipPeriodCredits int64
+	// MembershipTrialCredits is the single onboarding grant, once per account.
+	MembershipTrialCredits int64
+	// MembershipRetentionDays is how long an expired account and its data are
+	// kept before closing.
+	MembershipRetentionDays int
+	// MembershipAutoPurge closes an account automatically once the retention
+	// window has passed. Off leaves it to an operator.
+	MembershipAutoPurge bool
 }
 
 // SocialProviders lists the social logins the console may offer, which is the
@@ -199,6 +219,20 @@ func GetenvInt(name string, fallback int) (int, error) {
 		return fallback, nil
 	}
 	n, err := strconv.Atoi(v)
+	if err != nil {
+		return 0, fmt.Errorf("%s: %w", name, err)
+	}
+	return n, nil
+}
+
+// GetenvInt64 is GetenvInt for values that are measured in credits or bytes
+// rather than counted in memory.
+func GetenvInt64(name string, fallback int64) (int64, error) {
+	v := os.Getenv(name)
+	if v == "" {
+		return fallback, nil
+	}
+	n, err := strconv.ParseInt(v, 10, 64)
 	if err != nil {
 		return 0, fmt.Errorf("%s: %w", name, err)
 	}
@@ -308,6 +342,35 @@ func Load(version string) (Config, error) {
 	if cfg.RegistrationRequiresInvite, err = GetenvBool("TABVERSED_REGISTRATION_REQUIRES_INVITE", false); err != nil {
 		return Config{}, err
 	}
+
+	// --- membership (adr/0032) ---
+	if cfg.MembershipEnabled, err = GetenvBool("TABVERSED_MEMBERSHIP_ENABLED", defaultMembershipEnabled); err != nil {
+		return Config{}, err
+	}
+	if cfg.MembershipPeriodDays, err = GetenvInt("TABVERSED_MEMBERSHIP_PERIOD_DAYS", 30); err != nil {
+		return Config{}, err
+	}
+	if cfg.MembershipPeriodCredits, err = GetenvInt64("TABVERSED_MEMBERSHIP_PERIOD_CREDITS", 30); err != nil {
+		return Config{}, err
+	}
+	if cfg.MembershipTrialCredits, err = GetenvInt64("TABVERSED_MEMBERSHIP_TRIAL_CREDITS", 30); err != nil {
+		return Config{}, err
+	}
+	if cfg.MembershipRetentionDays, err = GetenvInt("TABVERSED_MEMBERSHIP_RETENTION_DAYS", 90); err != nil {
+		return Config{}, err
+	}
+	if cfg.MembershipAutoPurge, err = GetenvBool("TABVERSED_MEMBERSHIP_AUTO_PURGE", true); err != nil {
+		return Config{}, err
+	}
+	if cfg.MembershipPeriodDays <= 0 {
+		return Config{}, fmt.Errorf("TABVERSED_MEMBERSHIP_PERIOD_DAYS must be positive")
+	}
+	if cfg.MembershipPeriodCredits < 0 || cfg.MembershipTrialCredits < 0 {
+		return Config{}, fmt.Errorf("membership credit amounts must not be negative")
+	}
+	if cfg.MembershipRetentionDays < 0 {
+		return Config{}, fmt.Errorf("TABVERSED_MEMBERSHIP_RETENTION_DAYS must not be negative")
+	}
 	// The variable is positive ("email registration on") while the field is
 	// negative, so that the struct's zero value is the common case.
 	if emailRegistration, err := GetenvBool("TABVERSED_EMAIL_REGISTRATION", defaultEmailRegistration); err != nil {
@@ -361,6 +424,16 @@ func Load(version string) (Config, error) {
 // RetentionWindow is the age after which entity records are pruned.
 func (c Config) RetentionWindow() time.Duration {
 	return time.Duration(c.RetentionDays) * 24 * time.Hour
+}
+
+// MembershipPeriod is the length of one membership lease.
+func (c Config) MembershipPeriod() time.Duration {
+	return time.Duration(c.MembershipPeriodDays) * 24 * time.Hour
+}
+
+// MembershipRetention is how long an expired account is kept before closing.
+func (c Config) MembershipRetention() time.Duration {
+	return time.Duration(c.MembershipRetentionDays) * 24 * time.Hour
 }
 
 // Exposed reports whether the server listens on something other than a

@@ -20,6 +20,10 @@ import type {
   Impersonation,
   Invite,
   Me,
+  MembershipDetail,
+  MembershipList,
+  MembershipSettings,
+  MembershipView,
   RecordPage,
   RegistrationInvite,
   RegistrationInviteResult,
@@ -66,6 +70,11 @@ export class ApiError extends Error {
   /** The server refused on a precondition and said what is missing (409). */
   get isConflict(): boolean {
     return this.status === 409;
+  }
+
+  /** The membership lease has lapsed (402 + membership_expired). */
+  get isMembershipExpired(): boolean {
+    return this.status === 402 && this.code === 'membership_expired';
   }
 }
 
@@ -169,6 +178,26 @@ export interface ConsoleApi {
   listRegistrationRequests(): Promise<UserSummary[]>;
   inviteRegistrationRequest(userId: string): Promise<RegistrationInviteResult>;
   deleteRegistrationRequest(userId: string): Promise<void>;
+  // ---- membership (adr/0032) ----
+  /** The signed-in account's own lease and ledger. */
+  getSelfMembership(): Promise<MembershipDetail>;
+  /** Spend credits to open a period now. */
+  renewMembership(): Promise<{ membership: MembershipView }>;
+  /** The account's own NDJSON export; a plain anchor downloads it. */
+  selfExportUrl(): string;
+  listMemberships(query?: string): Promise<MembershipList>;
+  getMembership(userId: string): Promise<MembershipDetail>;
+  grantCredits(userId: string, delta: number, reason?: string): Promise<void>;
+  extendMembership(
+    userId: string,
+    periods: number,
+    useCredits?: boolean,
+  ): Promise<void>;
+  setMembershipUnlimited(userId: string, unlimited: boolean): Promise<void>;
+  resetMembership(userId: string, grantPeriod?: boolean): Promise<void>;
+  closeMembership(userId: string): Promise<void>;
+  getMembershipSettings(): Promise<MembershipSettings>;
+  setMembershipSettings(enabled: boolean): Promise<MembershipSettings>;
 }
 
 export function createConsoleApi(fetchFn: FetchLike = fetch): ConsoleApi {
@@ -475,6 +504,60 @@ export function createConsoleApi(fetchFn: FetchLike = fetch): ConsoleApi {
       call(
         'DELETE',
         `/console/api/v1/admin/registration-requests/${encodeURIComponent(userId)}`,
+      ),
+
+    // ---- membership (adr/0032) ----
+    getSelfMembership: () =>
+      call<MembershipDetail>('GET', '/console/api/v1/console/membership'),
+
+    renewMembership: () =>
+      call<{ membership: MembershipView }>(
+        'POST',
+        '/console/api/v1/console/membership/renew',
+      ),
+
+    selfExportUrl: () => '/console/api/v1/console/export',
+
+    listMemberships: (queryText?: string) =>
+      call<MembershipList>(
+        'GET',
+        '/console/api/v1/admin/memberships' + query({ q: queryText }),
+      ),
+
+    getMembership: (userId: string) =>
+      call<MembershipDetail>('GET', userPath(userId, '/membership')),
+
+    grantCredits: (userId: string, delta: number, reason = 'adjustment') =>
+      call('POST', userPath(userId, '/membership/credits'), { delta, reason }),
+
+    extendMembership: (userId: string, periods: number, useCredits = false) =>
+      call('POST', userPath(userId, '/membership/extend'), {
+        periods,
+        use_credits: useCredits,
+      }),
+
+    setMembershipUnlimited: (userId: string, unlimited: boolean) =>
+      call('POST', userPath(userId, '/membership/unlimited'), { unlimited }),
+
+    resetMembership: (userId: string, grantPeriod = false) =>
+      call('POST', userPath(userId, '/membership/reset'), {
+        grant_period: grantPeriod,
+      }),
+
+    closeMembership: (userId: string) =>
+      call('POST', userPath(userId, '/membership/close')),
+
+    getMembershipSettings: () =>
+      call<MembershipSettings>(
+        'GET',
+        '/console/api/v1/admin/settings/membership',
+      ),
+
+    setMembershipSettings: (enabled: boolean) =>
+      call<MembershipSettings>(
+        'PUT',
+        '/console/api/v1/admin/settings/membership',
+        { enabled },
       ),
   };
 }

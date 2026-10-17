@@ -2,13 +2,15 @@ import React, { useState } from 'react';
 import clsx from 'clsx';
 
 import { AdminPanel } from './AdminPanel';
+import { MembershipPanel } from './MembershipPanel';
 import { RegistrationInvitesPanel } from './RegistrationInvitesPanel';
 import classes from '../layout.module.scss';
 
-type AdminTab = 'accounts' | 'invites';
+type AdminTab = 'accounts' | 'membership' | 'invites';
 
 const TABS: { id: AdminTab; label: string }[] = [
   { id: 'accounts', label: 'Accounts' },
+  { id: 'membership', label: 'Membership' },
   { id: 'invites', label: 'Registration invites' },
 ];
 
@@ -55,6 +57,7 @@ export function AdminView() {
 
         <div className={classes.panels}>
           {tab === 'accounts' ? <AdminPanel /> : null}
+          {tab === 'membership' ? <MembershipPanel /> : null}
           {tab === 'invites' ? <RegistrationInvitesPanel /> : null}
         </div>
       </div>

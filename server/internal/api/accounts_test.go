@@ -44,6 +44,11 @@ func newServerWithConfig(t *testing.T, adminEmail string) (*httptest.Server, *Se
 		Version: "test", AdminEmail: adminEmail,
 		PublicURL:     "http://127.0.0.1:8223",
 		SecureCookies: false, LinkByEmail: true, RequireEmailVerification: true,
+		MembershipPeriodDays:    30,
+		MembershipPeriodCredits: 30,
+		MembershipTrialCredits:  30,
+		MembershipRetentionDays: 90,
+		MembershipAutoPurge:     true,
 	}
 	st, err := store.Open(cfg.DBPath)
 	if err != nil {

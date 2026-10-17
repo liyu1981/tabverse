@@ -25,6 +25,17 @@ export function dateOf(
   return `${new Date(ms).toLocaleString()} (${ago(ms, now)})`;
 }
 
+/** "in 3d", "in 5h", "ended" - the future-facing twin of `ago`, for a lease
+ *  or a retention window that has not elapsed yet. */
+export function until(ms: number | undefined | null, now = Date.now()): string {
+  if (!ms) return '—';
+  const secs = (ms - now) / 1000;
+  if (secs <= 0) return 'ended';
+  if (secs < 3600) return `in ${Math.ceil(secs / 60)}m`;
+  if (secs < 86400) return `in ${Math.ceil(secs / 3600)}h`;
+  return `in ${Math.ceil(secs / 86400)}d`;
+}
+
 /** An RFC3339 string as the accounts handlers marshal it, read as a date. */
 export function agoIso(iso: string | undefined, now = Date.now()): string {
   if (!iso) return 'never';

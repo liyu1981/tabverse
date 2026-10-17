@@ -19,8 +19,10 @@ import {
 } from '../data/stores/accounts';
 import type { AccountTab } from '../data/stores/accounts';
 import { $isAssumed } from '../data/stores/session';
+import { $me } from '../data/stores/session';
 import { PromptDialog, TypedConfirmDialog } from '../components/Dialogs';
 import { CredentialsPanel } from './CredentialsPanel';
+import { MembershipCard } from './MembershipCard';
 import { PairCodePanel } from './PairCodePanel';
 import { SearchPanel } from './SearchPanel';
 import { StoredDataPanel } from './StoredDataPanel';
@@ -43,12 +45,17 @@ const TABS: { id: AccountTab; label: string }[] = [
  * what is behind a tab without opening it.
  */
 export function AccountView() {
-  const { account, tab, showArchived, assumed } = useUnit({
+  const { account, tab, showArchived, assumed, me } = useUnit({
     account: $account,
     tab: $tab,
     showArchived: $credentialsArchived,
     assumed: $isAssumed,
+    me: $me,
   });
+  // An expired membership makes the console read-only (adr/0032): the server
+  // refuses the writes, and the page hides the controls rather than offering
+  // an action it knows will fail.
+  const readOnly = !!me?.membership?.read_only;
   const [renaming, setRenaming] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [revoking, setRevoking] = useState(false);
@@ -93,11 +100,14 @@ export function AccountView() {
           </div>
           <div className={classes.viewActions}>
             {user.role === 'admin' ? <Tag minimal={true}>operator</Tag> : null}
-            <OwnerButton hidden={assumed} onClick={() => setRenaming(true)}>
+            <OwnerButton
+              hidden={assumed || readOnly}
+              onClick={() => setRenaming(true)}
+            >
               Rename
             </OwnerButton>
             <OwnerButton
-              hidden={assumed}
+              hidden={assumed || readOnly}
               intent="danger"
               icon="trash"
               onClick={() => setDeleting(true)}
@@ -122,6 +132,8 @@ export function AccountView() {
           </div>
         </div>
       ) : null}
+
+      <MembershipCard />
 
       <div className={classes.tabbed}>
         <nav className={classes.rail} aria-label="Account sections">

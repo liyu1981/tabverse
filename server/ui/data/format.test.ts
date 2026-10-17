@@ -8,6 +8,7 @@ import {
   jsonSize,
   plural,
   prettyPayload,
+  until,
 } from './format';
 
 const NOW = Date.parse('2026-10-02T12:00:00Z');
@@ -65,4 +66,12 @@ test('a count knows its own singular', () => {
   expect(plural(1, 'tabverse')).toBe('tabverse');
   expect(plural(0, 'tabverse')).toBe('tabverses');
   expect(plural(2, 'record')).toBe('records');
+});
+
+test('a future instant reads as time left, and a past one as ended', () => {
+  expect(until(NOW + 45 * 60_000, NOW)).toBe('in 45m');
+  expect(until(NOW + 5 * 3_600_000, NOW)).toBe('in 5h');
+  expect(until(NOW + 3 * 86_400_000, NOW)).toBe('in 3d');
+  expect(until(NOW - 1, NOW)).toBe('ended');
+  expect(until(0, NOW)).toBe('—');
 });

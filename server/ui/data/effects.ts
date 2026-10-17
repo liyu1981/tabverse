@@ -20,6 +20,9 @@ import type {
   Impersonation,
   Invite,
   Me,
+  MembershipList,
+  MembershipSettings,
+  MembershipView,
   RecordPage,
   ServerConfig,
   TabspaceBundle,
@@ -159,3 +162,55 @@ export const deleteTabspaceFx = createEffect<
   { userId: string; tabspaceId: string },
   void
 >(({ userId, tabspaceId }) => api.deleteTabspace(userId, tabspaceId));
+
+// ---- membership (adr/0032) -------------------------------------------------
+
+export const loadMembershipsFx = createEffect<
+  string | undefined,
+  MembershipList
+>((queryText) => api.listMemberships(queryText));
+
+export const loadMembershipDetailFx = createEffect<
+  string,
+  Awaited<ReturnType<typeof api.getMembership>>
+>((userId) => api.getMembership(userId));
+
+export const renewSelfMembershipFx = createEffect<
+  void,
+  { membership: MembershipView }
+>(() => api.renewMembership());
+
+export const grantCreditsFx = createEffect<
+  { userId: string; delta: number },
+  void
+>(({ userId, delta }) => api.grantCredits(userId, delta));
+
+export const extendMembershipFx = createEffect<
+  { userId: string; periods: number; useCredits: boolean },
+  void
+>(({ userId, periods, useCredits }) =>
+  api.extendMembership(userId, periods, useCredits),
+);
+
+export const setMembershipUnlimitedFx = createEffect<
+  { userId: string; unlimited: boolean },
+  void
+>(({ userId, unlimited }) => api.setMembershipUnlimited(userId, unlimited));
+
+export const resetMembershipFx = createEffect<
+  { userId: string; grantPeriod: boolean },
+  void
+>(({ userId, grantPeriod }) => api.resetMembership(userId, grantPeriod));
+
+export const closeMembershipFx = createEffect<string, void>((userId) =>
+  api.closeMembership(userId),
+);
+
+export const loadMembershipSettingsFx = createEffect<void, MembershipSettings>(
+  () => api.getMembershipSettings(),
+);
+
+export const setMembershipSettingsFx = createEffect<
+  boolean,
+  MembershipSettings
+>((enabled) => api.setMembershipSettings(enabled));
