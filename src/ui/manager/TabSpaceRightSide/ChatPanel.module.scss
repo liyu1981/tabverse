@@ -45,6 +45,15 @@
   color: global.$color-light-accent;
 }
 
+/*
+ * The conversation's clear control, at the left of the context row. It clears
+ * the whole conversation, so it lives with the chat's own stats and not in the
+ * composer, whose control clears only what is being composed.
+ */
+.clearConversation {
+  flex: 0 0 auto;
+}
+
 .statsLabel {
   text-transform: uppercase;
   letter-spacing: 0.06em;

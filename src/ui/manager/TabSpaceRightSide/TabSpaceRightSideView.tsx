@@ -38,6 +38,12 @@ enum RightSideModule {
  */
 const PINNED_TOOL_SETTING = 'tabverse_pinned_tool';
 
+/**
+ * Window-local: which unpinned tool is selected, remembered the same way. The
+ * strip's selection is as much a part of "where I was" as the pin.
+ */
+const UNPINNED_TOOL_SETTING = 'tabverse_unpinned_tool';
+
 /** The stored value for "nothing is pinned", distinct from "never set". */
 const NO_PINNED_TOOL = 'none';
 
@@ -66,6 +72,11 @@ export function TabSpaceRightSideView() {
     (value) => value,
   );
   const pinned = pinnedFromSetting(pinnedSetting);
+  const [unpinnedSetting, setUnpinnedSetting] = useSettingItem<string>(
+    UNPINNED_TOOL_SETTING,
+    (value) => value,
+    (value) => value,
+  );
 
   const rightSideModules = useMemo(() => {
     const todoLoader = async () => {
@@ -148,12 +159,14 @@ export function TabSpaceRightSideView() {
     };
   }, [tabSpace.id]);
 
-  const [currentUnpinned, setCurrentUnpinned] = useState<string>(() => {
-    const restUnpinned = Object.keys(rightSideModules).filter(
-      (k) => k !== pinned,
-    );
-    return restUnpinned[0];
-  });
+  // The remembered unpinned tool, in window-local storage like the pin, so a
+  // reload lands on the tool that was last looked at. A stored key that is no
+  // longer a tool, or is the pinned one, falls back to the first unpinned tool.
+  const unpinned = Object.keys(rightSideModules).filter((k) => k !== pinned);
+  const currentUnpinned =
+    unpinnedSetting && unpinned.includes(unpinnedSetting)
+      ? unpinnedSetting
+      : unpinned[0];
   // Focus mode: the pinned tool alone, at 90vh, with the unpinned strip hidden.
   // Transient, not remembered - it is a way of looking, not a choice of tools.
   const [focus, setFocus] = useState(false);
@@ -165,12 +178,16 @@ export function TabSpaceRightSideView() {
   // selection pointing at a tab that is not in that strip.
   const pinnedRef = useRef(pinned);
   pinnedRef.current = pinned;
+  // `setUnpinnedSetting` is rebuilt on every render (`useSettingItem`), so the
+  // subscription reads the latest one through a ref rather than re-subscribing.
+  const setUnpinnedSettingRef = useRef(setUnpinnedSetting);
+  setUnpinnedSettingRef.current = setUnpinnedSetting;
   useEffect(() => {
     const token = subscribePubSubMessage(ToolTabMsg.OpenChat, () => {
       if (pinnedRef.current !== RightSideModule.CHAT) {
         // a hidden strip cannot show the chat, so leave focus first
         setFocus(false);
-        setCurrentUnpinned(RightSideModule.CHAT);
+        setUnpinnedSettingRef.current(RightSideModule.CHAT);
       }
     });
     return () => unsubscribePubSubMessage(token);
@@ -178,7 +195,7 @@ export function TabSpaceRightSideView() {
 
   const unpinCurrentTool = () => {
     setPinnedSetting(NO_PINNED_TOOL);
-    setCurrentUnpinned(pinned);
+    setUnpinnedSetting(pinned);
     setFocus(false);
   };
 
@@ -187,10 +204,8 @@ export function TabSpaceRightSideView() {
     const restUnpinned = Object.keys(rightSideModules).filter(
       (k) => k !== currentUnpinned,
     );
-    setCurrentUnpinned(restUnpinned[0]);
+    setUnpinnedSetting(restUnpinned[0]);
   };
-
-  const unpinned = Object.keys(rightSideModules).filter((k) => k !== pinned);
 
   return (
     <ErrorBoundary>
@@ -257,7 +272,7 @@ export function TabSpaceRightSideView() {
           <BPTabs
             animate={true}
             renderActiveTabPanelOnly={true}
-            onChange={(newTabId: string) => setCurrentUnpinned(newTabId)}
+            onChange={(newTabId: string) => setUnpinnedSetting(newTabId)}
             selectedTabId={currentUnpinned}
             className={classes.bpTabs}
           >

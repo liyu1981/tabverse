@@ -175,10 +175,25 @@ test('while streaming the composer offers Stop, not Send', () => {
 describe('the context window', () => {
   test('reports the numbers the browser gave', () => {
     const markup = renderToStaticMarkup(
-      <ChatStats usage={{ used: 40, total: 100 }} />,
+      <ChatStats
+        usage={{ used: 40, total: 100 }}
+        canClear={false}
+        onClear={() => undefined}
+      />,
     );
     expect(markup).toContain('40 / 100 tokens');
     expect(markup).toContain('progressbar');
+  });
+
+  test('the conversation is cleared from the top bar', () => {
+    const markup = renderToStaticMarkup(
+      <ChatStats
+        usage={{ used: 40, total: 100 }}
+        canClear={true}
+        onClear={() => undefined}
+      />,
+    );
+    expect(markup).toContain('Clear conversation');
   });
 
   test('a browser that reports nothing says so rather than showing 0/0', () => {
@@ -186,4 +201,17 @@ describe('the context window', () => {
       'does not report',
     );
   });
+});
+
+test('the composer clears what is being composed, not the conversation', () => {
+  // a typed question and an attached page are both input
+  expect(view({ draft: 'half a question' })).toContain('Clear input');
+  expect(view({ context: { title: 'A page', markdown: '# x' } })).toContain(
+    'Clear input',
+  );
+  // nothing typed and nothing attached: no control to press, and no
+  // conversation control here either
+  const empty = view();
+  expect(empty).not.toContain('Clear input');
+  expect(empty).not.toContain('Clear conversation');
 });

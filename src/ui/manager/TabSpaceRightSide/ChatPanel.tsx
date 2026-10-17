@@ -96,13 +96,32 @@ function contextPercent(usage: ChatUsage): number {
   return Math.min(100, Math.round((usage.used / usage.total) * 100));
 }
 
-/** The context window, as a bar and its numbers. */
-export function ChatStats(props: { usage: ChatUsage }) {
+/**
+ * The chat's top bar: the conversation's clear control, then the context window
+ * as a bar and its numbers. The clear button lives here, away from the composer,
+ * because it clears the whole conversation - the composer's own control clears
+ * only what is being typed.
+ */
+export function ChatStats(props: {
+  usage: ChatUsage;
+  canClear: boolean;
+  onClear: () => void;
+}) {
   const { usage } = props;
   const percent = contextPercent(usage);
   const known = usage.used !== null && usage.total !== null;
   return (
     <div className={classes.stats}>
+      {props.canClear ? (
+        <Button
+          className={classes.clearConversation}
+          minimal={true}
+          small={true}
+          icon="trash"
+          text="Clear conversation"
+          onClick={props.onClear}
+        />
+      ) : null}
       <span className={classes.statsLabel}>Context</span>
       <div
         className={classes.contextBar}
@@ -333,12 +352,12 @@ interface ChatComposerProps {
   /** The page attached to the next question, shown as a removable chip. */
   context: ChatContext | null;
   streaming: boolean;
-  canClear: boolean;
   onDraftChange: (value: string) => void;
   onRemoveContext: () => void;
+  /** Clears everything being composed: the draft and the attached page. */
+  onClearInput: () => void;
   onSend: () => void;
   onStop: () => void;
-  onClear: () => void;
 }
 
 function ChatComposer(props: ChatComposerProps) {
@@ -391,14 +410,15 @@ function ChatComposer(props: ChatComposerProps) {
           Enter sends · Shift+Enter makes a new line
         </span>
         <span className={classes.spacer} />
-        {props.canClear ? (
+        {draft.trim().length > 0 || props.context ? (
           <Button
             minimal={true}
             small={true}
-            icon="trash"
-            aria-label="Clear the conversation"
-            title="Clear the conversation"
-            onClick={props.onClear}
+            icon="cross"
+            text="Clear input"
+            aria-label="Clear the input"
+            title="Clear the input"
+            onClick={props.onClearInput}
           />
         ) : null}
         {streaming ? (
@@ -483,7 +503,11 @@ export function ChatView(props: ChatViewProps) {
 
   return (
     <div className={classes.view}>
-      <ChatStats usage={usage} />
+      <ChatStats
+        usage={usage}
+        canClear={messages.length > 0}
+        onClear={props.onClear}
+      />
       <ChatMessages
         messages={messages}
         streaming={props.streaming}
@@ -501,12 +525,14 @@ export function ChatView(props: ChatViewProps) {
         draft={props.draft}
         context={props.context}
         streaming={props.streaming}
-        canClear={messages.length > 0}
         onDraftChange={props.onDraftChange}
         onRemoveContext={props.onRemoveContext}
+        onClearInput={() => {
+          props.onDraftChange('');
+          props.onRemoveContext();
+        }}
         onSend={props.onSend}
         onStop={props.onStop}
-        onClear={props.onClear}
       />
     </div>
   );
