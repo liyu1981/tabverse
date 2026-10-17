@@ -10,14 +10,21 @@
  * one number to change and the sticky header a single stacking context. The
  * side rules match the brand bar, so the container reads as the page and the
  * margin either side as its surround, and it is at least the viewport tall so
- * that surround runs the full height.
+ * that surround runs the full height. The rules are drawn only once there is
+ * surround to separate it from - below 1920px the container *is* the viewport,
+ * and a rule at each screen edge would just be a stray line.
  */
 .shell {
   max-width: 1920px;
   min-height: 100vh;
   margin: 0 auto;
-  border-left: 1px solid var(--brand-bar);
-  border-right: 1px solid var(--brand-bar);
+}
+
+@media (min-width: 1921px) {
+  .shell {
+    border-left: 1px solid var(--brand-bar);
+    border-right: 1px solid var(--brand-bar);
+  }
 }
 
 /*
