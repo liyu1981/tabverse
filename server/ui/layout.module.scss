@@ -4,6 +4,17 @@
 // rather than a different application).
 
 /*
+ * The console's width. It is one centred container capped at 1920px, so on a
+ * very wide display the bars and tables do not stretch edge to edge; the body
+ * background shows either side. Wrapping the whole app (not each region) keeps
+ * one number to change and the sticky header a single stacking context.
+ */
+.shell {
+  max-width: 1920px;
+  margin: 0 auto;
+}
+
+/*
  * The page frame - brand bar, operator hint, read-only bar - as one sticky
  * column. It sticks as a unit so its parts never overlap each other, and it
  * sits below the overlay layer (z-index 20) so a Blueprint drawer covers it

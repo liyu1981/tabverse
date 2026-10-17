@@ -73,7 +73,9 @@ export function App() {
   const signedIn = status === 'signed-in' && !pending;
 
   return (
-    <>
+    // The console is bounded and centred, so a very wide window does not
+    // stretch the tables and bars across the whole screen (max 1920px).
+    <div className={classes.shell}>
       {/* The frame that never changes, as one sticky unit: the brand bar, the
           operator hint and the read-only bar. Keeping them in one stacking
           context is what keeps them from overlapping each other on scroll, and
@@ -100,7 +102,7 @@ export function App() {
           console, not to a tab, and it survives the tab it was opened from. */}
       {!showPair && signedIn && !onAdmin ? <TabverseDrawer /> : null}
       <Toasts />
-    </>
+    </div>
   );
 }
 
