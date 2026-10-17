@@ -29,5 +29,12 @@ many of how many match.
 
 ## Summarize a tab into a note
 
-Where Chrome ships its built-in model, a live tab can be summarized into a new
-note in one action - see [On-device AI](../advanced-usage/ai).
+Where Chrome ships its built-in model, the lightbulb on a live tab row offers
+**New note with AI summary** - the page's article is summarized into a new note
+in this tabverse - and **Append to current note with AI summary**, which
+proposes the same summary in the note you are editing, for you to review before
+it is written. The summary is built from the page's Markdown, so it reads the
+article rather than the page's navigation and footers.
+
+See [On-device AI](../advanced-usage/ai) for the page actions (including
+**View page content as Markdown** and **Send page content to AI chat**).

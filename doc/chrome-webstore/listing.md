@@ -19,11 +19,12 @@ All requested permissions below exist to serve that one purpose.
 |---|---|
 | `tabs` | Read tab URLs/titles to save a tab group; detect and focus the Tabverse manager tab; restore tabs. Without it the extension cannot know what it is saving. |
 | `activeTab` | Capture a screenshot of the active tab when the user saves it. |
+| `scripting` | Run one small function in a page the user clicked, **on demand**, to read that page's rendered content for the page actions (view as Markdown, summarize into a note, attach to the AI chat). There is **no content script** and nothing runs on page load. |
 | `storage` | Persist sync configuration, the sync cursor and the offline mutation queue (`chrome.storage.local`); `chrome.storage.session` for shared state. Required for the optional sync feature. |
 | `unlimitedStorage` | Local IndexedDB cache of saved tab groups grows unbounded; the default 10 MB quota is far too small for a tab archive. |
 | `idle` | Run the local database audit when the browser is idle instead of while the user is working. |
 | `alarms` | Schedule the optional periodic sync and background work; service workers are killed by Chrome, so `setTimeout` cannot be relied on. |
-| `host_permissions: <all_urls>` | Read page favicons and capture screenshots of arbitrary pages the user is saving. No page content is read or injected; there are **no content scripts**. |
+| `host_permissions: <all_urls>` | Read page favicons and capture screenshots of arbitrary pages the user is saving, and - **only when the user clicks a tab's page-actions lightbulb** - read that page's rendered content for the page actions. No content script is injected; page reading is a one-off `chrome.scripting.executeScript` on the tab that was clicked. |
 | `externally_connectable: https://tabversed.liyu1981.xyz/*` | Lets Tabverse's **own** server's pairing page hand this extension its device token when the user approves a one-click connection (ADR 0020). No other origin can send it a message; a token is accepted only when it answers a pairing *this device started* (message type, sender origin, single-use nonce) and it is never rendered by the page. |
 
 ## Data collection & use disclosures
@@ -35,6 +36,13 @@ Consistent with `adr/0002-privacy-posture.md`:
   server has accounts enabled, the *web console* can be signed into with a
   single-use email link or a configured social provider; the extension itself
   never signs in and never holds a password or a session cookie.
+- **A page's content is read only when the user asks, and never leaves the
+  device.** The page-actions lightbulb (view as Markdown, summarize into a note,
+  attach to the AI chat) reads the clicked tab's rendered content on demand and
+  hands it to Chrome's built-in model in the same browser. Nothing is read in
+  the background, nothing is read from a page the user did not click, and no
+  page content is sent to us or to any server. A summary the user keeps is an
+  ordinary note, which syncs only if the user has sync on.
 - **Email address, only if the operator enabled console accounts.** It is used
   to send the sign-in link, stored on the user's own server, never sent
   elsewhere. Without accounts the extension collects no email address at all.

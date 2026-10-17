@@ -22,13 +22,21 @@ fully without an account or a network connection.
 
 **On-device AI**
 
-Where Chrome ships its built-in AI model, Tabverse can suggest a name for a
-tab collection. That feature runs entirely on this device: the tab titles
-and sites of the current collection are handed to the model inside the
-browser and are never sent anywhere - not to us, not to a third party. The
-model itself is downloaded once by Chrome when you first use the feature;
+Where Chrome ships its built-in AI model, Tabverse can suggest a name for a tab
+collection, summarize a page into a note, and hold a chat about a page you
+attach. These run entirely on this device: the text is handed to the model
+inside the browser and is never sent anywhere - not to us, not to a third party.
+The model itself is downloaded once by Chrome when you first use a feature;
 Tabverse makes no network request of its own for it, and without Chrome's
-built-in model the feature simply does not appear.
+built-in model the AI features simply do not appear.
+
+Reading a page is always something you ask for. When you use the page-actions
+lightbulb on a live tab - to view the page as Markdown, to summarize it into a
+note, or to attach it to the AI chat - Tabverse reads that tab's rendered
+content on demand and turns it into the note, the dialog or the chat context.
+Nothing is read in the background, nothing is read from a page you did not
+click, and the page's content is never synced. A summary you keep is an ordinary
+note, and syncs like any other note if you have sync on.
 
 **Optional server sync**
 

@@ -42,11 +42,13 @@ source and load it unpacked; the
 
 - **Tabverses** - one Chrome window is one workspace. Name it, save it, and
   restore it later with all its tabs. → [Tabverses](./basic-usage/tabverses)
-- **Todo, Note, Bookmark and History tools** attached to the tabverse, each
-  saved and restored with it.
+- **Todo, Note, Bookmark, History and AI Chat tools** attached to the tabverse,
+  each saved and restored with it. Pin one to the top, focus it, and the layout
+  is remembered.
 - **One search** across tabs, history, notes, todos and bookmarks.
-- **On-device AI** that can summarize a tab into a note or suggest a name for a
-  tab collection, where Chrome ships its built-in model.
+- **On-device AI** that can chat about a page you attach, summarize a page into
+  a note, or suggest a name for a tab collection, where Chrome ships its
+  built-in model - and a page-to-Markdown viewer that needs no model at all.
 - **Optional server sync**, so the same workspace is on every browser you use,
   with a server you run yourself.
 

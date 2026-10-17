@@ -35,9 +35,10 @@ A window holds at most one tabverse at a time.
   are drawn as one block, and each row has its own buttons (pin, suspend,
   bookmark, close). The icons at the top right are the AI name suggestion,
   **Save & close** and **Export**.
-- **3 - Tools**: [Todo](./todo), [Note](./note), [Bookmark](./bookmark) and
-  [History](./history) for this tabverse. One tool can be pinned to the top; the
-  rest move into the scrolling list below it.
+- **3 - Tools**: [Todo](./todo), [Note](./note), [Bookmark](./bookmark),
+  [History](./history) and - where Chrome ships its built-in model - **AI Chat**,
+  for this tabverse. One tool can be pinned to the top; the rest move into the
+  strip below it. See [Tools](#tools).
 - **4 - Sync / Settings**: the bottom-left buttons. **Sync** opens the sync
   settings; **Settings** opens the dialog with Sync, Tabs (tab suspension), AI
   and About.
@@ -49,6 +50,22 @@ A window holds at most one tabverse at a time.
 Everything is saved as you work: tab events (open, close, move, pin) and tool
 edits are written to this browser's database immediately. There is no "save"
 button to remember.
+
+## Tools
+
+The tools column holds the tabverse's own tools: [Todo](./todo),
+[Note](./note), [Bookmark](./bookmark), [History](./history), and - where
+Chrome's built-in model is available - [AI Chat](../advanced-usage/ai#ai-chat).
+
+- **Pin** a tool to keep it at the top of the column while the others sit in the
+  strip below; **unpin** returns it to the strip.
+- **Focus** a pinned tool (the button to the left of unpin) to hide the strip
+  and give the tool the column; press it again to bring the strip back.
+- The pinned tool and the tool selected in the strip are **remembered**, so a
+  reload puts you back where you were.
+- A tool's own header stays put while its rows scroll - the filter in Todo and
+  Note and Bookmark, the count and search in History, the context bar in the
+  chat - and Todo's footer stays put too.
 
 ## Save & close
 

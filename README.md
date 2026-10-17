@@ -14,8 +14,12 @@ down and pick up again. When a piece of work is done - or you just need a break
 
 - **Tabverses.** A tabverse is one window's work: its tabs and tab groups, saved
   under a name and restored later.
-- **The things that go with it.** Notes, todos, bookmarks and the tabs you
-  closed hang off the tabverse instead of being lost in a scratch tab.
+- **The things that go with it.** Notes, todos, bookmarks, an AI chat, and
+  the tabs you closed hang off the tabverse instead of being lost in a scratch
+  tab. Pin a tool to the top, focus it, and the layout is remembered.
+- **On-device AI.** Where Chrome ships its built-in model: chat about a page you
+  attach, summarize a page into a note, suggest a name - all on this device. A
+  page can also be viewed as Markdown and copied without any model at all.
 - **Omni search.** Find a tab, note or bookmark across every tabverse you have.
 - **Local first.** Everything lives in your browser profile, in IndexedDB. No
   account, no network, no telemetry.

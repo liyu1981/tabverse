@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.10.2">
 <title data-rh="true">Tabverse</title><meta data-rh="true" property="og:title" content="Tabverse"><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://liyu1981.github.io/tabverse/privacy"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docusaurus_tag" content="default"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docsearch:docusaurus_tag" content="default"><meta data-rh="true" name="description" content="Privacy Policy"><meta data-rh="true" property="og:description" content="Privacy Policy"><link data-rh="true" rel="icon" href="/tabverse/img/icon19.png"><link data-rh="true" rel="canonical" href="https://liyu1981.github.io/tabverse/privacy"><link data-rh="true" rel="alternate" href="https://liyu1981.github.io/tabverse/privacy" hreflang="en"><link data-rh="true" rel="alternate" href="https://liyu1981.github.io/tabverse/privacy" hreflang="x-default"><link rel="stylesheet" href="/tabverse/assets/css/styles.bbfd2aaa.css">
-<script src="/tabverse/assets/js/runtime~main.1de1488b.js" defer="defer"></script>
+<script src="/tabverse/assets/js/runtime~main.5a7a165b.js" defer="defer"></script>
 <script src="/tabverse/assets/js/main.c2129bc0.js" defer="defer"></script>
 </head>
 <body>
@@ -27,13 +27,20 @@ information with anyone except as described in this Privacy Policy.</p>
 database). By default nothing is transmitted anywhere, and the app works
 fully without an account or a network connection.</p>
 <p><strong>On-device AI</strong></p>
-<p>Where Chrome ships its built-in AI model, Tabverse can suggest a name for a
-tab collection. That feature runs entirely on this device: the tab titles
-and sites of the current collection are handed to the model inside the
-browser and are never sent anywhere - not to us, not to a third party. The
-model itself is downloaded once by Chrome when you first use the feature;
+<p>Where Chrome ships its built-in AI model, Tabverse can suggest a name for a tab
+collection, summarize a page into a note, and hold a chat about a page you
+attach. These run entirely on this device: the text is handed to the model
+inside the browser and is never sent anywhere - not to us, not to a third party.
+The model itself is downloaded once by Chrome when you first use a feature;
 Tabverse makes no network request of its own for it, and without Chrome&#x27;s
-built-in model the feature simply does not appear.</p>
+built-in model the AI features simply do not appear.</p>
+<p>Reading a page is always something you ask for. When you use the page-actions
+lightbulb on a live tab - to view the page as Markdown, to summarize it into a
+note, or to attach it to the AI chat - Tabverse reads that tab&#x27;s rendered
+content on demand and turns it into the note, the dialog or the chat context.
+Nothing is read in the background, nothing is read from a page you did not
+click, and the page&#x27;s content is never synced. A summary you keep is an ordinary
+note, and syncs like any other note if you have sync on.</p>
 <p><strong>Optional server sync</strong></p>
 <p>You can choose to pair your browser with your own sync server (an open source
 Go program called <code>tabversed</code>). Only when you do this: setting up the
