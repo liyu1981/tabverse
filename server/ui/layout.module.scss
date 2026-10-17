@@ -7,11 +7,17 @@
  * The console's width. It is one centred container capped at 1920px, so on a
  * very wide display the bars and tables do not stretch edge to edge; the body
  * background shows either side. Wrapping the whole app (not each region) keeps
- * one number to change and the sticky header a single stacking context.
+ * one number to change and the sticky header a single stacking context. The
+ * side rules match the brand bar, so the container reads as the page and the
+ * margin either side as its surround, and it is at least the viewport tall so
+ * that surround runs the full height.
  */
 .shell {
   max-width: 1920px;
+  min-height: 100vh;
   margin: 0 auto;
+  border-left: 1px solid var(--brand-bar);
+  border-right: 1px solid var(--brand-bar);
 }
 
 /*
