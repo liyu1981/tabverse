@@ -1,0 +1,60 @@
+@use '../../global.scss';
+
+/* The duplicate-advisor section, the same quiet shape as the tab suspension
+   one: a callout, the switch, and a single number row. */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.hint {
+  margin: 0;
+  font-size: 0.85em;
+  line-height: 1.5;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 12px;
+  border: 1px solid global.$color-light-shade;
+  border-radius: global.$radius-card;
+  min-width: 0;
+}
+
+.label {
+  font-size: 0.85em;
+  color: global.$color-light-accent;
+}
+
+.control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.minutes {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.minutes :global(.bp6-input-group) {
+  min-width: 0;
+}
+
+.minutes :global(.bp6-input-group) > :global(.bp6-input) {
+  width: 60px;
+  min-width: 0;
+}
+
+.unit {
+  flex: 0 0 auto;
+  font-size: 0.85em;
+  color: global.$color-light-accent;
+}

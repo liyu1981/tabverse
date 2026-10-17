@@ -1,6 +1,7 @@
 import * as PubSub from 'pubsub-js';
 
 import { logger } from '../global';
+import type { DedupReport } from '../data/tabSpace/dedup';
 
 /** Payload of TabSpaceDBMsg.Changed / BackgroundMsg.LocalTablesChanged. */
 export interface ILocalTablesChangedPayload {
@@ -52,6 +53,26 @@ export enum ToolTabMsg {
   OpenChat = 'tool_tab_open_chat',
 }
 
+/**
+ * Duplicate-tab advisor (adr/0033). The page asks the worker for the last
+ * report and asks it to act; the worker pushes a fresh report when a scan
+ * changes it. All of it is advisor-only: nothing is closed until `Apply`.
+ */
+export enum DedupMsg {
+  /** page -> worker; the answer is the stored `DedupReport | null`. */
+  RequestReport = 'dedup_request_report',
+  /** page -> worker; payload is the report fingerprint the person reviewed. */
+  Apply = 'dedup_apply',
+  /** page -> worker; payload is the fingerprint to stop asking about. */
+  Ignore = 'dedup_ignore',
+  /** page -> worker; payload is a `duplicateKey` to never offer again. */
+  AlwaysIgnore = 'dedup_always_ignore',
+  /** page -> worker; reopen what the last apply closed. */
+  Undo = 'dedup_undo',
+  /** worker -> pages; payload is the fresh `DedupReport`. */
+  ReportChanged = 'dedup_report_changed',
+}
+
 export type TabSpaceId = string;
 export type TabId = string;
 export type ChromeTabId = number;
@@ -84,6 +105,11 @@ export async function sendChromeMessage(msgPayload: {
 }): Promise<any>;
 
 export async function sendChromeMessage(msgPayload: {
+  type: DedupMsg;
+  payload: DedupReport | string | NotNeed;
+}): Promise<any>;
+
+export async function sendChromeMessage(msgPayload: {
   type: string;
   payload:
     | TabSpaceId
@@ -91,7 +117,9 @@ export async function sendChromeMessage(msgPayload: {
     | ChromeTabId
     | AuditLogs
     | ILocalTablesChangedPayload
+    | DedupReport
     | boolean
+    | string
     | NotNeed;
 }): Promise<any> {
   const result = await new Promise((resolve, _reject) => {

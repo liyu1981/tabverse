@@ -27,6 +27,7 @@ import {
 } from '../../../data/bookmark/Bookmark';
 
 import { CapabilityWarning } from './CapabilityWarning';
+import { DedupAdvisorNotice } from './DedupAdvisorNotice';
 import { SuggestNameButton } from './SuggestNameButton';
 import { ActiveTabSearch } from './ActiveTabSearch';
 import { ErrorBoundary } from '../../common/ErrorBoundary';
@@ -407,6 +408,7 @@ export function TabSpaceListView() {
     <div className={classes.container}>
       {tabSpaceHeaderView}
       <CapabilityWarning />
+      <DedupAdvisorNotice />
       <div className={classes.tabEntriesContainer}>{tabEntries}</div>
       {isFiltering && matchedTabs.length <= 0 ? (
         <div className={classes.noMatchNotice}>

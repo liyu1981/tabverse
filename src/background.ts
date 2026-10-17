@@ -16,6 +16,10 @@ import { BackgroundMsg, sendChromeMessage } from './message/message';
 import { forgetPreview } from './data/tabSpace/tabPreviewStore';
 import { describeReap, reapPreviews } from './data/tabSpace/previewReaper';
 import {
+  handleDedupMessage,
+  startDedupScanner,
+} from './data/tabSpace/dedupScan';
+import {
   describeSuspension,
   suspendInactiveTabs,
 } from './data/tabSpace/suspender';
@@ -212,3 +216,16 @@ function startTabSuspender(): void {
       .catch((err) => logger.error('the tab suspend sweep failed', err));
   });
 }
+
+// The duplicate-tab advisor (adr/0033): a periodic scan, a scan once per
+// browser run, and a debounced scan on tab events. It only reads and reports -
+// tabs are closed by an explicit Apply - so it is safe to leave on.
+logger.info('start duplicate advisor...');
+startDedupScanner();
+
+// The page half of the advisor talks to this worker over runtime messages.
+// `handleDedupMessage` returns true only for its own messages, so anything else
+// falls through to whatever else is listening.
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) =>
+  handleDedupMessage(message, sendResponse),
+);

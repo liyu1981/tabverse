@@ -1,0 +1,86 @@
+@use '../../../global.scss';
+
+.container {
+  padding: 8px 0 0;
+}
+
+.callout {
+  width: 100%;
+  font-size: 0.9em;
+  padding: 8px 12px;
+}
+
+/*
+ * Blueprint parks the callout's own icon out of the flow at `top: 18px`, tuned
+ * for its 16px padding. This bar has 8px, so the icon sits below the text it
+ * belongs beside; -0.5rem puts it back on the text's line.
+ */
+.callout > :global(.bp6-icon:first-child) {
+  margin-top: -0.5rem;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.summary {
+  flex: 1;
+  min-width: 0;
+}
+
+.windowTag {
+  font-size: 0.75em;
+  margin-left: 6px;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+/* the details live in the flow, under the bar, not over the tab list */
+.list {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid global.$color-e;
+}
+
+.group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.groupMain {
+  flex: 1;
+  min-width: 0;
+}
+
+.groupUrl {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.groupNote {
+  color: global.$color-a;
+  margin-top: 1px;
+}
+
+.groupProtected {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: global.$color-a;
+  margin-top: 1px;
+}

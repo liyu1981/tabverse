@@ -2,6 +2,7 @@ import {
   AuditLogs,
   BackgroundMsg,
   ChromeTabId,
+  DedupMsg,
   ILocalTablesChangedPayload,
   SyncMsg,
   TabSpaceDBMsg,
@@ -9,6 +10,7 @@ import {
 } from './message';
 
 import { logger } from '../global';
+import { receiveDedupReport } from '../data/tabSpace/dedupMessages';
 import { sendPubSubMessage } from './message';
 
 const handlers = {};
@@ -92,6 +94,20 @@ handlers[BackgroundMsg.SyncActivityChanged] = function (
   // re-publish locally so this page's sync icon reacts
   logger.log('chromeMessage got:', BackgroundMsg.SyncActivityChanged);
   sendPubSubMessage(SyncMsg.Activity, message.payload === true);
+  sendResponse && sendResponse();
+};
+
+// The worker finished a dedup scan (adr/0033): the notice draws the new report.
+handlers[DedupMsg.ReportChanged] = function (
+  message: {
+    type: DedupMsg.ReportChanged;
+    payload: unknown;
+  },
+  _sender: chrome.runtime.MessageSender,
+  sendResponse: (response?: any) => void,
+) {
+  logger.log('chromeMessage got:', DedupMsg.ReportChanged);
+  receiveDedupReport(message.payload ?? null);
   sendResponse && sendResponse();
 };
 
