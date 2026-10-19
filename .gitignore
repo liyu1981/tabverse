@@ -43,3 +43,8 @@ server/.env
 # timestamped .env.bak.<stamp> when one is already there. They hold the same
 # secrets, so they are never committed either.
 *.bak*
+
+# The `oj` build tool's own cache. A tool artifact, never committed - and
+# because biome reads this file, ignoring it here is also what keeps its
+# malformed JSON cache lines out of `format:check` and `lint:check`.
+.oj-cache/

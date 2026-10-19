@@ -82,10 +82,12 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         input,
         output: {
-          // the manifest points at background.js, everything else lives in
-          // assets/ next to the html pages that reference it
-          entryFileNames: (chunk) =>
-            chunk.name === 'background' ? 'background.js' : 'assets/[name].js',
+          // Every entry - the background service worker included - lives in
+          // assets/, which the manifest and the html pages point at. It is a
+          // pattern string rather than a function on purpose: the config may be
+          // serialized by a tool that cannot run a function (`oj`), and a
+          // dropped function silently misnames the service worker (adr/0003).
+          entryFileNames: 'assets/[name].js',
           chunkFileNames: 'assets/[name]-[hash].js',
           assetFileNames: 'assets/[name]-[hash][extname]',
         },

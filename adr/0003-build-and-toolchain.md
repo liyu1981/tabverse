@@ -18,13 +18,15 @@ top of it; CI that actually runs.
 `@crxjs/vite-plugin` and not WXT. The config is ~90 lines and does three
 things a extension build needs: four HTML inputs (popup/manager always,
 `icon`/`devdata` only in development builds so dev tools never ship), a
-`background.ts` entry with `entryFileNames: background.js`, and a plugin that
+`background.ts` entry named by `entryFileNames: 'assets/[name].js'` (a pattern
+string, not a function, so a tool that serializes the config - `oj` - cannot run
+it and misname the service worker), and a plugin that
 emits `dist/manifest.json` with the version taken from `package.json`.
 Hand written over a plugin because the output is predictable without a
 browser to verify against. Build time went from 32 s to 1.7 s.
 
 **Service worker: `type: "module"`.** Rolldown code-splits shared modules, so
-`background.js` imports its siblings as ESM. The old `backgroundWrapper.js`
+`assets/background.js` imports its siblings as ESM. The old `backgroundWrapper.js`
 `importScripts` shim is deleted.
 
 **`dist/` is fully generated** and gitignored; static assets live in `public/`
