@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { Button, Dialog, DialogBody } from '@blueprintjs/core';
 import React, { useCallback, useMemo, useState } from 'react';
 
@@ -166,7 +167,7 @@ export function NoteReviewDialog(props: NoteReviewDialogProps) {
     <Dialog
       isOpen={true}
       onClose={() => undefined}
-      title="Review changes"
+      title={t('noteReviewTitle')}
       icon="comparison"
       className={classes.dialog}
       canEscapeKeyClose={false}
@@ -271,7 +272,7 @@ export function NoteReviewBody(props: NoteReviewDialogProps) {
             ) : null}
           </>
         ) : (
-          <span className="muted">No changes</span>
+          <span className="muted">{t('noteNoChanges')}</span>
         )}
       </div>
 
@@ -308,7 +309,7 @@ export function NoteReviewBody(props: NoteReviewDialogProps) {
             )}
           </div>
         ) : (
-          <div className={classes.empty}>No changes</div>
+          <div className={classes.empty}>{t('noteNoChanges')}</div>
         )}
       </div>
 
@@ -317,7 +318,7 @@ export function NoteReviewBody(props: NoteReviewDialogProps) {
           Applying replaces the note body; nothing is saved to the server here.
         </span>
         <div className={classes.footerActions}>
-          <Button onClick={() => onClose(before)}>Reject all</Button>
+          <Button onClick={() => onClose(before)}>{t('noteRejectAll')}</Button>
           <Button
             intent="primary"
             onClick={() => onClose(effective)}
@@ -361,7 +362,7 @@ function LineView(props: {
             value={row.rightText}
             rows={1}
             spellCheck={false}
-            aria-label="Edit added line"
+            aria-label={t('noteEditAddedLine')}
             onChange={(event) =>
               onEdit(
                 row.changeId as string,
@@ -382,8 +383,8 @@ function LineView(props: {
             minimal={true}
             className={classes.toggle}
             icon={reverted ? 'undo' : 'cross'}
-            title={reverted ? 'Keep this change' : 'Revert this change'}
-            aria-label={reverted ? 'Keep this change' : 'Revert this change'}
+            title={reverted ? t('noteKeepChange') : t('noteRevertChange')}
+            aria-label={reverted ? t('noteKeepChange') : t('noteRevertChange')}
             onClick={() => onToggle(row.changeId as string)}
           />
         ) : null}

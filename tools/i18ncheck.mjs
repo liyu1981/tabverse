@@ -31,7 +31,9 @@ const KEY_NAME = /^[a-zA-Z0-9_@]+$/;
 /** The substitutions a message uses, as a sorted list: `1`, `2`, `NAME`. */
 function substitutionsOf(message) {
   const found = new Set();
-  for (const match of message.matchAll(/\$(\d+)|\$([A-Za-z][A-Za-z0-9_]*)\$/g)) {
+  for (const match of message.matchAll(
+    /\$(\d+)|\$([A-Za-z][A-Za-z0-9_]*)\$/g,
+  )) {
     found.add(match[1] ?? match[2]);
   }
   return [...found].sort();

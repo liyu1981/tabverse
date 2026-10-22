@@ -22,6 +22,7 @@
  *   list; no selection, no auto-submit, and the reply was already sanitized
  *   by `naming.ts` before it became a candidate.
  */
+import { t } from '../../../i18n';
 import { Button, Popover } from '@blueprintjs/core';
 import React, {
   useCallback,
@@ -92,8 +93,8 @@ export function SuggestNamePopoverContent(
       <div className={classes.content}>
         <p className={classes.hint}>
           {availability.state === 'downloadable'
-            ? 'Preparing the on-device model…'
-            : 'Suggesting names…'}
+            ? t('suggestPreparing')
+            : t('suggestSuggesting')}
         </p>
       </div>
     );
@@ -154,7 +155,7 @@ export function SuggestNamePopoverContent(
 
   return (
     <div className={classes.content}>
-      <p className={classes.hint}>Pick a name for this tabverse.</p>
+      <p className={classes.hint}>{t('suggestPickHint')}</p>
     </div>
   );
 }
@@ -208,12 +209,12 @@ export function SuggestNameButton(props: SuggestNameButtonProps) {
         current = await probeAiAvailability();
       }
       if (current.state === 'absent') {
-        setNote('This browser has no built-in AI.');
+        setNote(t('suggestNoAiBrowser'));
         return;
       }
       if (tabs.length <= 0) {
         // a tabverse with no tabs is an empty offer, not an error (D6)
-        setNote('This tabverse has no tabs to name yet.');
+        setNote(t('suggestNoTabs'));
         return;
       }
       const session = await ensureAiSession(NAMING_SYSTEM_PROMPT);
@@ -221,7 +222,7 @@ export function SuggestNameButton(props: SuggestNameButtonProps) {
       if (names.length > 0) {
         setCandidates(names);
       } else {
-        setNote('No names came back - try again.');
+        setNote(t('suggestNoNames'));
       }
     } catch (err) {
       logger.log('name suggestion failed', err);
@@ -229,8 +230,8 @@ export function SuggestNameButton(props: SuggestNameButtonProps) {
       evictAiSession(NAMING_SYSTEM_PROMPT);
       setNote(
         getAiAvailability().state === 'absent'
-          ? 'This browser has no built-in AI.'
-          : 'Could not reach the on-device model - try again.',
+          ? t('suggestNoAiBrowser')
+          : t('suggestCannotReach'),
       );
     } finally {
       runningRef.current = false;
@@ -289,7 +290,7 @@ export function SuggestNameButton(props: SuggestNameButtonProps) {
     >
       <Button
         className="tv-icon-button"
-        aria-label="Suggest a name for this tabverse"
+        aria-label={t('suggestAria')}
         icon="lightbulb"
         minimal={true}
         loading={busy}

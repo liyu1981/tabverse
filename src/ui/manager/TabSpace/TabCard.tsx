@@ -1,3 +1,4 @@
+import { t } from '../../../i18n';
 import {
   Button,
   ButtonGroup,
@@ -103,12 +104,12 @@ function TabBookmarkBtn({
   return isBookmarked ? (
     <div></div>
   ) : (
-    <Tooltip content="Save this tab as a bookmark" placement="bottom">
+    <Tooltip content={t('tabCardSaveBookmark')} placement="bottom">
       <Button
         className="tv-icon-button"
         icon="bookmark"
         minimal={true}
-        aria-label="Save this tab as a bookmark"
+        aria-label={t('tabCardSaveBookmark')}
         onClick={() => {
           onBookmark(tab);
         }}
@@ -199,10 +200,7 @@ export function TabCard(props: ITabCardProps) {
               />
             </b>
             {props.tab.pinned ? (
-              <Tooltip
-                content="This tab is pinned in Chrome"
-                placement="bottom"
-              >
+              <Tooltip content={t('tabCardPinnedInChrome')} placement="bottom">
                 <Tag
                   minimal={true}
                   icon="pin"
@@ -241,8 +239,8 @@ export function TabCard(props: ITabCardProps) {
                 placement="bottom"
                 content={
                   props.isWhitelisted === true
-                    ? 'This tab is never suspended; click to allow it'
-                    : 'Never suspend this tab'
+                    ? t('tabCardWhitelisted')
+                    : t('tabCardNeverSuspend')
                 }
               >
                 <Button
@@ -255,8 +253,8 @@ export function TabCard(props: ITabCardProps) {
                   }
                   aria-label={
                     props.isWhitelisted === true
-                      ? 'Allow this tab to be suspended'
-                      : 'Never suspend this tab'
+                      ? t('tabCardAllowSuspend')
+                      : t('tabCardNeverSuspend')
                   }
                   onClick={() => {
                     props.onToggleWhitelist?.(props.tab);
@@ -273,12 +271,12 @@ export function TabCard(props: ITabCardProps) {
                 onBookmark={props.onBookmark}
               />
             )}
-            <Tooltip content="Close this tab" placement="bottom">
+            <Tooltip content={t('tabCardClose')} placement="bottom">
               <Button
                 className="tv-icon-button"
                 icon="cross"
                 minimal={true}
-                aria-label="Close this tab"
+                aria-label={t('tabCardClose')}
                 onClick={() => {
                   closeTab(props.tab);
                 }}

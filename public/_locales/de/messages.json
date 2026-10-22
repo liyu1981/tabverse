@@ -1,0 +1,1079 @@
+{
+  "extName": {
+    "message": "Tabverse"
+  },
+  "extDescription": {
+    "message": "Tabverse ist eine bewusst eigenwillige Art, Tabs zu verwalten."
+  },
+  "extActionTitle": {
+    "message": "Tabverse"
+  },
+  "popupCurrentTabverseFallback": {
+    "message": "das aktuelle Tabverse"
+  },
+  "popupReplaceNewTitle": {
+    "message": "Hier ein neues Tabverse starten?"
+  },
+  "popupReplaceNewBody": {
+    "message": "Dieses Fenster hat bereits ein Tabverse (\"$1\"). Es wird automatisch gespeichert, also geht nichts verloren. Weiter schließt es hier und startet ein neues Tabverse; die Tabs dieses Fensters werden ein Teil davon."
+  },
+  "popupAddToWindowTitle": {
+    "message": "Dieses Tabverse hierher hinzufügen?"
+  },
+  "popupAddToWindowBody": {
+    "message": "Dieses Fenster hat bereits ein Tabverse (\"$1\"). Es wird automatisch gespeichert, also geht nichts verloren. Weiter macht \"$2\" zum Tabverse dieses Fensters und öffnet dessen $3 Tabs hier: die hier bereits offenen Tabs bleiben, und die davon bereits hier geöffneten werden wiederverwendet."
+  },
+  "popupImportedOk": {
+    "message": "\"$1\" importiert"
+  },
+  "popupImportFailed": {
+    "message": "Diese Datei ist kein Tabverse-Export."
+  },
+  "popupLoading": {
+    "message": "Wird geladen…"
+  },
+  "popupNothingSaved": {
+    "message": "Noch kein Tabverse gespeichert. Jedes Fenster, das Sie mit Tabverse offen lassen, wird zu einem und erscheint dann hier."
+  },
+  "popupNothingFound": {
+    "message": "Nichts gefunden. Versuchen Sie es mit weniger Wörtern oder einem Wort aus einem Tab-Titel."
+  },
+  "popupNothingRecent": {
+    "message": "Nichts Neues. Öffnen Sie ein Tabverse in einem Fenster, dann erscheint es hier."
+  },
+  "popupSavedCount": {
+    "message": "$1 gespeichert"
+  },
+  "popupNewTabverse": {
+    "message": "Neues Tabverse"
+  },
+  "popupNewTabverseTitleWhenOpen": {
+    "message": "Speichert das aktuelle Tabverse und startet hier ein neues"
+  },
+  "popupNewTabverseTitle": {
+    "message": "Startet hier ein neues Tabverse"
+  },
+  "popupImport": {
+    "message": "Importieren"
+  },
+  "popupImportTitle": {
+    "message": "Importiert eine .tabverse-Datei als neues Tabverse"
+  },
+  "popupSearchPlaceholder": {
+    "message": "gespeicherte Tabverses durchsuchen…"
+  },
+  "popupResultOne": {
+    "message": "$1 Treffer"
+  },
+  "popupResultMany": {
+    "message": "$1 Treffer"
+  },
+  "popupRecent": {
+    "message": "Zuletzt"
+  },
+  "popupSearchedOnServer": {
+    "message": "auf dem Synchronisierungsserver gesucht"
+  },
+  "popupSearchedOnDevice": {
+    "message": "auf diesem Gerät gesucht"
+  },
+  "popupNotDownloadedOne": {
+    "message": "$1 Treffer noch nicht heruntergeladen"
+  },
+  "popupNotDownloadedMany": {
+    "message": "$1 Treffer noch nicht heruntergeladen"
+  },
+  "popupConfirmReplace": {
+    "message": "Ersetzen"
+  },
+  "commonCancel": {
+    "message": "Abbrechen"
+  },
+  "popupRowGoTo": {
+    "message": "Zu diesem Tabverse"
+  },
+  "popupRowAddToWindow": {
+    "message": "Hierher hinzufügen"
+  },
+  "commonTabCountOne": {
+    "message": "$1 Tab"
+  },
+  "commonTabCountMany": {
+    "message": "$1 Tabs"
+  },
+  "popupThisWindow": {
+    "message": "dieses Fenster"
+  },
+  "popupOpenInWindowOne": {
+    "message": "in $1 Fenster geöffnet"
+  },
+  "popupOpenInWindowMany": {
+    "message": "in $1 Fenstern geöffnet"
+  },
+  "popupGoToWindowOfTabverse": {
+    "message": "Zum Fenster dieses Tabverses"
+  },
+  "popupOpenInNewWindow": {
+    "message": "In Einem Neuen Fenster Öffnen"
+  },
+  "commonLoading": {
+    "message": "Wird geladen..."
+  },
+  "commonSomethingWentWrong": {
+    "message": "Etwas ist schiefgelaufen."
+  },
+  "commonFilterCount": {
+    "message": "$1 von $2"
+  },
+  "commonFilterTotal": {
+    "message": "$1"
+  },
+  "commonFilterPlaceholder": {
+    "message": "filtern…"
+  },
+  "commonClearFilter": {
+    "message": "Filter zurücksetzen"
+  },
+  "commonCollapseSidebar": {
+    "message": "Seitenleiste auf Symbole einklappen"
+  },
+  "commonCollapseSidebarAria": {
+    "message": "Seitenleiste einklappen"
+  },
+  "commonExpandSidebar": {
+    "message": "Seitenleiste ausklappen"
+  },
+  "commonPreviousPage": {
+    "message": "Vorherige Seite"
+  },
+  "commonNextPage": {
+    "message": "Nächste Seite"
+  },
+  "commonPageIndicator": {
+    "message": "$1/$2"
+  },
+  "commonRemoveAria": {
+    "message": "Entfernen"
+  },
+  "searchTermsAria": {
+    "message": "Suchbegriffe"
+  },
+  "aboutTagline": {
+    "message": "Eine Bewusst Eigenwillige Art, Tabs Zu Verwalten"
+  },
+  "aboutCreatedIn": {
+    "message": "Erstellt in Sydney"
+  },
+  "aboutWebsite": {
+    "message": "Webseite"
+  },
+  "aboutGithub": {
+    "message": "Github"
+  },
+  "settingsTitle": {
+    "message": "Einstellungen"
+  },
+  "settingsTabSync": {
+    "message": "Synchronisieren"
+  },
+  "settingsTabTabs": {
+    "message": "Tabs"
+  },
+  "settingsTabDuplicates": {
+    "message": "Duplikate"
+  },
+  "settingsTabLook": {
+    "message": "Darstellung"
+  },
+  "settingsTabAi": {
+    "message": "KI"
+  },
+  "settingsTabAbout": {
+    "message": "Über"
+  },
+  "commonReading": {
+    "message": "Wird gelesen…"
+  },
+  "suspendOffSummary": {
+    "message": "Das Anhalten ist aus. Kein Tab wird entladen."
+  },
+  "suspendOnSummary": {
+    "message": "Tabs, die $1 Minuten unberührt bleiben, werden entladen; ein erneutes Öffnen lädt die Seite neu."
+  },
+  "suspendCalloutTitle": {
+    "message": "Inaktive Tabs anhalten"
+  },
+  "suspendHint": {
+    "message": "Ein angehaltener Tab wird aus dem Speicher entladen, bleibt aber in der Tab-Leiste. Ein erneutes Öffnen lädt die Seite neu; nichts wird geschlossen. Tabverse hält nur Tabs in einem Fenster an, in dem ein Tabverse offen ist, und nie eines, das Sie auf der Whitelist haben, angeheftet haben oder gerade hören."
+  },
+  "suspendSwitchLabel": {
+    "message": "Inaktive Tabs anhalten"
+  },
+  "suspendAfterLabel": {
+    "message": "Anhalten nach"
+  },
+  "commonMinutes": {
+    "message": "Minuten"
+  },
+  "appearanceCalloutTitle": {
+    "message": "Farbe der Seitenleiste"
+  },
+  "appearanceHint": {
+    "message": "Die Schiene trägt nahezu weiße Glyphen - das Logo, die Bildunterschrift, die Symbole in der unteren Leiste -, also sind alle Auswahlmöglichkeiten hier dunkel. Die Farbe gehört dem Tabverse dieses Fensters: Sie folgt dem Fenster und reist mit dem Tabverse."
+  },
+  "appearanceRandomLabel": {
+    "message": "Für ein neues Tabverse eine Zufallsfarbe verwenden"
+  },
+  "appearanceRandomOn": {
+    "message": "Ein neues Tabverse würfelt eine Farbe aus dieser Palette."
+  },
+  "appearanceRandomOff": {
+    "message": "Ein neues Tabverse startet mit der Standardfarbe."
+  },
+  "dedupOffSummary": {
+    "message": "Der Duplikat-Berater ist aus. Es wird nichts geprüft."
+  },
+  "dedupOnSummary": {
+    "message": "Offene Tabs werden alle $1 Minuten geprüft; Duplikate werden zum Entfernen angeboten, nie von selbst geschlossen."
+  },
+  "dedupCalloutTitle": {
+    "message": "Doppelte Tabs"
+  },
+  "dedupHint": {
+    "message": "Der Berater schaut nur. Findet er zwei offene Tabs auf derselben Seite in einem Fenster mit einem Tabverse, zeigt die Tab-Liste einen Hinweis, in dem Sie die überzähligen schließen oder ignorieren können. Er schließt nie von selbst einen Tab und nie einen angehefteten oder abspielenden."
+  },
+  "dedupSwitchLabel": {
+    "message": "Doppelte Tabs finden"
+  },
+  "dedupCheckEveryLabel": {
+    "message": "Prüfen alle"
+  },
+  "moveFoundNothing": {
+    "message": "Nichts gefunden, falsche Suche?"
+  },
+  "moveCandidateInfo": {
+    "message": "erstellt: $1, gespeichert: $2"
+  },
+  "moveNoTargetToast": {
+    "message": "Ohne Auswahl eines Ziel-Tabverses können keine Tabs verschoben werden!"
+  },
+  "moveMovingToastOne": {
+    "message": "$1 Tab wird nach $2 verschoben"
+  },
+  "moveMovingToastMany": {
+    "message": "$1 Tabs werden nach $2 verschoben"
+  },
+  "moveMovedToastOne": {
+    "message": "$1 Tab nach $2 verschoben"
+  },
+  "moveMovedToastMany": {
+    "message": "$1 Tabs nach $2 verschoben"
+  },
+  "moveDialogTitle": {
+    "message": "Ausgewählte Tabs In Ein Anderes Tabverse Verschieben"
+  },
+  "moveSearchPlaceholder": {
+    "message": "Stichwörter eingeben,  dann ↵ Enter zum Suchen..."
+  },
+  "moveCloseAfterMove": {
+    "message": "Ausgewählte Tabs nach dem Verschieben schließen"
+  },
+  "moveMoveButton": {
+    "message": "Verschieben"
+  },
+  "aiChecking": {
+    "message": "Wird geprüft…"
+  },
+  "aiSupportAbsent": {
+    "message": "In diesem Browser nicht verfügbar"
+  },
+  "aiSupportAvailable": {
+    "message": "Auf diesem Gerät verfügbar"
+  },
+  "aiCouldNotCheck": {
+    "message": "Konnte nicht geprüft werden"
+  },
+  "aiModelAbsent": {
+    "message": "Nicht verfügbar"
+  },
+  "aiModelNotInstalled": {
+    "message": "Noch nicht installiert"
+  },
+  "aiInstallingPercent": {
+    "message": "Wird installiert… $1%"
+  },
+  "aiInstalling": {
+    "message": "Wird installiert…"
+  },
+  "aiModelReady": {
+    "message": "Installiert und bereit"
+  },
+  "aiCalloutTitle": {
+    "message": "Chromes eingebaute KI"
+  },
+  "aiCalloutHint": {
+    "message": "Die folgenden Funktionen laufen auf dem Modell, das Chrome selbst mitbringt (Gemma Nano), auf diesem Gerät. Was Sie ihnen geben, wird dem Modell im Browser übergeben und nie irgendwohin gesendet; kein Server, kein Konto, nichts zu konfigurieren."
+  },
+  "aiWhereTitle": {
+    "message": "Wo Sie es finden"
+  },
+  "aiFeatureNameTabverse": {
+    "message": "Ein Tabverse benennen"
+  },
+  "aiFeatureNameTabverseWhere": {
+    "message": "Öffnen Sie ein Tabverse; die Glühbirne sitzt neben seinem Namen oben und schlägt drei Namen zur Auswahl vor."
+  },
+  "aiFeatureSummarizeTab": {
+    "message": "Einen Tab zusammenfassen"
+  },
+  "aiFeatureSummarizeTabWhere": {
+    "message": "In einem offenen Tabverse sitzt die Glühbirne rechts von jeder aktiven Tab-Zeile und macht aus dieser Seite eine neue Notiz."
+  },
+  "aiSwitchLabel": {
+    "message": "Das lokale Modell verwenden"
+  },
+  "aiDeviceSupportLabel": {
+    "message": "Geräteunterstützung"
+  },
+  "aiLocalModelLabel": {
+    "message": "Lokales Modell"
+  },
+  "aiOfferedLabel": {
+    "message": "Angeboten"
+  },
+  "aiOfferedOn": {
+    "message": "KI-Funktionen werden angeboten"
+  },
+  "aiOfferedOff": {
+    "message": "Aus"
+  },
+  "aiDownloadButton": {
+    "message": "Modell jetzt herunterladen"
+  },
+  "aiDownloadTitle": {
+    "message": "Wird einmal auf diesem Gerät heruntergeladen; das Modell stammt von Chrome und liegt nicht der Erweiterung bei"
+  },
+  "aiDownloadingNote": {
+    "message": "Chrome lädt das Modell herunter; diese Seite zeigt den Fortschritt."
+  },
+  "aiCheckAgainButton": {
+    "message": "Erneut prüfen"
+  },
+  "syncLabelOfficial": {
+    "message": "Tabverse-Official-Server"
+  },
+  "syncLabelCustom": {
+    "message": "eigener Server (Kopplungscode)"
+  },
+  "syncNotConnected": {
+    "message": "Nicht verbunden: Tabverse läuft völlig lokal, bis Sie es mit Ihrem eigenen Synchronisierungsserver koppeln."
+  },
+  "syncConnectedTo": {
+    "message": "Verbunden mit $1"
+  },
+  "syncFailedTo": {
+    "message": "Fehlgeschlagen: $1"
+  },
+  "syncWizardOpened": {
+    "message": "Ein Tabverse-Fenster wurde geöffnet. Melden Sie sich dort an und erlauben Sie dieses Gerät; das Token kommt von selbst zurück."
+  },
+  "syncBothRequired": {
+    "message": "Server-URL und Kopplungscode werden beide benötigt."
+  },
+  "syncPairedNoUpload": {
+    "message": "Mit $1 gekoppelt. Ihre vorhandenen Daten bleiben auf diesem Gerät; neue und geänderte Tabverses synchronisieren ab sofort."
+  },
+  "syncPairedUploadSkipped": {
+    "message": "Mit $1 gekoppelt, aber der Upload wurde übersprungen: Die Synchronisierung ist nicht eingerichtet. Verwenden Sie „Lokale Daten hochladen“, um es erneut zu versuchen."
+  },
+  "syncPairedUploading": {
+    "message": "Mit $1 gekoppelt. Die Daten dieses Geräts werden hochgeladen..."
+  },
+  "syncPairedUploadDoneNoStale": {
+    "message": "Mit $1 gekoppelt. $2 von $3 lokalen Einträgen hochgeladen."
+  },
+  "syncPairedUploadDoneStale": {
+    "message": "Mit $1 gekoppelt. $2 von $3 lokalen Einträgen hochgeladen; $4 waren auf dem Server bereits neuer."
+  },
+  "syncPairedUploadFailed": {
+    "message": "Mit $1 gekoppelt, aber der Upload ist fehlgeschlagen: $2. Ihre Daten sind noch auf diesem Gerät; verwenden Sie „Lokale Daten hochladen“, um es erneut zu versuchen."
+  },
+  "syncNotConfigured": {
+    "message": "Die Synchronisierung ist nicht eingerichtet."
+  },
+  "syncSyncedNoStale": {
+    "message": "Synchronisiert: $1 gesendet, $2 empfangen"
+  },
+  "syncSyncedStale": {
+    "message": "Synchronisiert: $1 gesendet, $2 empfangen, $3 Konflikt(e) gelöst"
+  },
+  "syncSyncFailed": {
+    "message": "Synchronisierung fehlgeschlagen: $1"
+  },
+  "syncUnknownError": {
+    "message": "unbekannter Fehler"
+  },
+  "syncUploadingNow": {
+    "message": "Die Daten dieses Geräts werden hochgeladen..."
+  },
+  "syncUploadDoneNoStale": {
+    "message": "$1 von $2 lokalen Einträgen hochgeladen."
+  },
+  "syncUploadDoneStale": {
+    "message": "$1 von $2 lokalen Einträgen hochgeladen; $3 waren auf dem Server bereits neuer."
+  },
+  "syncDisconnected": {
+    "message": "Getrennt. Ihre Daten bleiben auf diesem Gerät."
+  },
+  "syncPairCalloutTitle": {
+    "message": "Diesen Browser koppeln"
+  },
+  "syncPairHint1": {
+    "message": "Betreiben Sie Ihren eigenen "
+  },
+  "syncPairHint2": {
+    "message": "-Server, legen Sie darauf ein Konto an und erzeugen Sie einen Einmal-Kopplungscode mit"
+  },
+  "syncPairHint3": {
+    "message": " und fügen Sie ihn unten ein."
+  },
+  "syncServerUrlLabel": {
+    "message": "Server-URL"
+  },
+  "syncServerUrlPlaceholder": {
+    "message": "https://sync.example.com"
+  },
+  "syncPairingCodeLabel": {
+    "message": "Kopplungscode"
+  },
+  "syncPairingCodePlaceholder": {
+    "message": "XXXX-XXXX-XXXX-XXXX"
+  },
+  "syncDeviceNameLabel": {
+    "message": "Gerätename"
+  },
+  "syncDeviceNamePlaceholder": {
+    "message": "chrome"
+  },
+  "syncUploadLocalLabel": {
+    "message": "Auch die bereits auf diesem Gerät vorhandenen Daten hochladen"
+  },
+  "syncUploadHintCount": {
+    "message": "Dieses Gerät enthält $1 Einträge ($2 Tabverses, $3 Tabs). Sie werden einmal hochgeladen, wenn Sie sich verbinden."
+  },
+  "syncUploadHintStays": {
+    "message": "Ihre vorhandenen Daten bleiben auf diesem Gerät. Neue und geänderte Tabverses synchronisieren ab sofort trotzdem."
+  },
+  "syncUploadHintNothing": {
+    "message": "Auf diesem Gerät ist noch nichts gespeichert, also gibt es nichts hochzuladen."
+  },
+  "syncPairUploadButton": {
+    "message": "Koppeln und lokale Daten hochladen"
+  },
+  "syncPairConnectButton": {
+    "message": "Koppeln und verbinden"
+  },
+  "syncWaitingTitle": {
+    "message": "Warte auf das Tabverse-Fenster"
+  },
+  "syncWaitingHint1": {
+    "message": "Ein Fenster wurde geöffnet unter "
+  },
+  "syncWaitingHint2": {
+    "message": ". Melden Sie sich dort an, benennen Sie dieses Gerät und erlauben Sie es - das Token kommt von selbst zurück, und dieser Dialog folgt."
+  },
+  "syncOfficialHint1": {
+    "message": "Der Server, den Tabverse selbst betreibt. Melden Sie sich mit Ihrer Adresse (oder Google) an, benennen Sie dieses Gerät und genehmigen Sie es - kein Kopiercode."
+  },
+  "syncOfficialHint2": {
+    "message": " - die Dokumentation liegt dort, die Konsole unter "
+  },
+  "syncConnectOfficialButton": {
+    "message": "Mit Tabverse verbinden"
+  },
+  "syncOwnServerHint1": {
+    "message": "Betreiben Sie Ihren eigenen "
+  },
+  "syncOwnServerHint2": {
+    "message": "-Server? Wählen Sie "
+  },
+  "syncOwnServerHint3": {
+    "message": " - der braucht einen Kopplungscode."
+  },
+  "syncCustomServerMode": {
+    "message": "Eigener Server"
+  },
+  "syncDeviceLabel": {
+    "message": "Gerät: "
+  },
+  "syncAccountLabel": {
+    "message": "Konto: "
+  },
+  "syncUnknown": {
+    "message": "unbekannt"
+  },
+  "syncSyncingAria": {
+    "message": "Wird synchronisiert"
+  },
+  "syncNotSyncedYet": {
+    "message": "Noch nicht synchronisiert"
+  },
+  "syncLastSyncLabel": {
+    "message": "Letzte Synchronisierung: "
+  },
+  "syncNowButton": {
+    "message": "Jetzt synchronisieren"
+  },
+  "syncUploadLocalButton": {
+    "message": "Lokale Daten hochladen"
+  },
+  "syncUploadLocalTitle": {
+    "message": "Sendet alles, was auf diesem Gerät gespeichert ist, an die Server. Beim Einrichten tut er das für Sie, sofern Sie das Häkchen nicht entfernen - also ist das hier für später: Daten, die offline entstanden sind, oder ein zweiter Versuch nach einem fehlgeschlagenen Upload."
+  },
+  "syncDisconnectButton": {
+    "message": "Trennen"
+  },
+  "syncNotSetUpTitle": {
+    "message": "Noch nicht eingerichtet"
+  },
+  "syncNotSetUpHint": {
+    "message": "Tabverse läuft völlig lokal, bis die Synchronisierung eingerichtet ist: nichts verlässt dieses Gerät."
+  },
+  "syncSetUpButton": {
+    "message": "Synchronisierung einrichten"
+  },
+  "syncTabStatus": {
+    "message": "Status"
+  },
+  "syncTabSetup": {
+    "message": "Einrichtung"
+  },
+  "syncConnectedToSetup1": {
+    "message": "Verbunden mit "
+  },
+  "syncConnectedToSetup2": {
+    "message": " ($1). Eine erneute Verbindung ersetzt diese Einrichtung."
+  },
+  "syncOfficialModeTitle": {
+    "message": "Bei tabversed.liyu1981.xyz anmelden und dieses Gerät erlauben"
+  },
+  "syncCustomModeTitle": {
+    "message": "Ein tabversed-Server, den Sie selbst betreiben, per Kopplungscode verbunden"
+  },
+  "syncUploadingProgress": {
+    "message": "$1 von $2 Einträgen werden hochgeladen..."
+  },
+  "sidebarCurrentTabverse": {
+    "message": "Aktuelles Tabverse"
+  },
+  "sidebarSavedTabverses": {
+    "message": "Gespeicherte Tabverses"
+  },
+  "sidebarOmniSearch": {
+    "message": "Globale Suche"
+  },
+  "sidebarMyWebTools": {
+    "message": "Meine WebTools"
+  },
+  "sidebarOtherTabverses": {
+    "message": "Andere Tabverses"
+  },
+  "previewReading": {
+    "message": "wird gelesen…"
+  },
+  "previewNoTabs": {
+    "message": "In diesem Fenster sind keine Tabs offen."
+  },
+  "previewMore": {
+    "message": "+$1 mehr"
+  },
+  "bottomNavSyncing": {
+    "message": "Wird synchronisiert…"
+  },
+  "sidebarSavedCountSuffix": {
+    "message": "Tabverses gespeichert"
+  },
+  "sidebarLoadedCountSuffix": {
+    "message": "davon geladen"
+  },
+  "sidebarSortBy": {
+    "message": "sortieren nach"
+  },
+  "sidebarSortCreated": {
+    "message": "Erstellungszeit"
+  },
+  "sidebarSortSaved": {
+    "message": "Speicherzeit"
+  },
+  "rightPanelAiHistory": {
+    "message": "KI-Verlauf"
+  },
+  "rightPanelServerConsole": {
+    "message": "Server-Konsole"
+  },
+  "rightPanelOpenThe": {
+    "message": "$1 öffnen"
+  },
+  "rightPanelShowThe": {
+    "message": "$1 anzeigen"
+  },
+  "rightPanelCollapseAria": {
+    "message": "Rechtes Panel einklappen"
+  },
+  "rightPanelCollapse": {
+    "message": "Einklappen"
+  },
+  "consoleReadingSetup": {
+    "message": "Die Synchronisierungseinrichtung wird gelesen…"
+  },
+  "consoleReadError": {
+    "message": "Die Synchronisierungseinrichtung konnte nicht gelesen werden. Schließen und öffnen Sie dieses Panel erneut."
+  },
+  "consoleUnpaired": {
+    "message": "Noch mit keinem Server gekoppelt. Koppeln Sie einen über die Synchronisierungs-Schaltfläche in der unteren Leiste, dann zeigt dieses Panel seine Konsole."
+  },
+  "consoleOpenInTab": {
+    "message": "In einem Tab öffnen"
+  },
+  "consoleOpenInTabTitle": {
+    "message": "Öffnet die Konsole als eigenen Tab, wo Ihre Anmeldung immer gilt"
+  },
+  "consoleSignedOutNote": {
+    "message": "Falls die Konsole hier als abgemeldet erscheint, nutzen Sie „$1“: Das Sitzungs-Cookie gehört dem Browser, und ein Frame ist eine andere Site."
+  },
+  "consoleFrameTitle": {
+    "message": "Synchronisierungs-Server-Konsole"
+  },
+  "timeToday": {
+    "message": "Heute"
+  },
+  "timeTomorrow": {
+    "message": "Morgen"
+  },
+  "timeYesterday": {
+    "message": "Gestern"
+  },
+  "timeLastWeekday": {
+    "message": "Letzte$1"
+  },
+  "timeCalendarAt": {
+    "message": "$1 um $2"
+  },
+  "bookmarkOpenInCurrent": {
+    "message": "In Aktuellem Tabverse Öffnen"
+  },
+  "bookmarkDeleteIt": {
+    "message": "Löschen"
+  },
+  "bookmarkFilterPlaceholder": {
+    "message": "diese Lesezeichen filtern…"
+  },
+  "bookmarkFilterAria": {
+    "message": "Diese Lesezeichen filtern"
+  },
+  "notePlaceholder": {
+    "message": "Schreiben Sie hier Ihre Notizen ..."
+  },
+  "capabilityHideDetails": {
+    "message": "Details ausblenden"
+  },
+  "capabilityShowMissing": {
+    "message": "Ansehen, was fehlt"
+  },
+  "markdownCopied": {
+    "message": "Kopiert"
+  },
+  "markdownCopy": {
+    "message": "Markdown kopieren"
+  },
+  "markdownDialogTitle": {
+    "message": "Seiteninhalt als Markdown"
+  },
+  "webtoolTitle": {
+    "message": "Meine Webtool-Galerie"
+  },
+  "activeTabSearchClearAria": {
+    "message": "Tab-Filter zurücksetzen"
+  },
+  "activeTabSearchAria": {
+    "message": "Die Tabs dieses Tabverses durchsuchen"
+  },
+  "suggestPreparing": {
+    "message": "Das lokale Modell wird vorbereitet…"
+  },
+  "suggestSuggesting": {
+    "message": "Namen werden vorgeschlagen…"
+  },
+  "suggestNoAiBrowser": {
+    "message": "Dieser Browser hat keine eingebaute KI."
+  },
+  "suggestNoTabs": {
+    "message": "Dieses Tabverse hat noch keine Tabs zum Benennen."
+  },
+  "suggestNoNames": {
+    "message": "Es kamen keine Namen zurück - versuchen Sie es erneut."
+  },
+  "suggestCannotReach": {
+    "message": "Das lokale Modell war nicht erreichbar - versuchen Sie es erneut."
+  },
+  "suggestAria": {
+    "message": "Für dieses Tabverse einen Namen vorschlagen"
+  },
+  "tabListWorkingOn": {
+    "message": "$1 Tabs werden bearbeitet"
+  },
+  "tabListSelectedOne": {
+    "message": "$1 Tab ausgewählt"
+  },
+  "tabListSelectedMany": {
+    "message": "$1 Tabs ausgewählt"
+  },
+  "tabListSaveCloseAria": {
+    "message": "Dieses Tabverse speichern und schließen"
+  },
+  "tabListExportAria": {
+    "message": "Dieses Tabverse als .tabverse-Datei exportieren"
+  },
+  "historySearchPlaceholder": {
+    "message": "diese geschlossenen Tabs durchsuchen"
+  },
+  "historyClearSearch": {
+    "message": "Suche zurücksetzen (Esc)"
+  },
+  "historyClearSearchAria": {
+    "message": "Chronik-Suche zurücksetzen"
+  },
+  "historySearchAria": {
+    "message": "Die geschlossenen Tabs durchsuchen"
+  },
+  "historyGrouped": {
+    "message": "Nach Seite gruppiert"
+  },
+  "historyGroupBy": {
+    "message": "Nach Seite gruppieren"
+  },
+  "historyGroupAria": {
+    "message": "Die geschlossenen Tabs nach Seite gruppieren"
+  },
+  "historyReopen": {
+    "message": "In Aktuellem Tabverse Wiederöffnen"
+  },
+  "historyAlreadyBookmarked": {
+    "message": "Diese Seite ist bereits ein Lesezeichen"
+  },
+  "historySaveAsBookmark": {
+    "message": "Als Lesezeichen Sichern (entfernt es von hier)"
+  },
+  "historyForgetIt": {
+    "message": "Vergessen"
+  },
+  "historyAlreadyBookmarkedToast": {
+    "message": "Diese Seite ist bereits ein Lesezeichen."
+  },
+  "historySavedToast": {
+    "message": "Als Lesezeichen gesichert."
+  },
+  "historyClearedToast": {
+    "message": "Chronik der geschlossenen Tabs geleert."
+  },
+  "historyReopenLast": {
+    "message": "Den Zuletzt Geschlossenen Tab Wiederöffnen"
+  },
+  "historyClearWhole": {
+    "message": "Die Ganze Chronik Leeren"
+  },
+  "todoEditHint": {
+    "message": "Doppelklick oder Enter zum Bearbeiten"
+  },
+  "todoDeleteAria": {
+    "message": "Aufgabe löschen"
+  },
+  "todoMarkAll": {
+    "message": "Alle als erledigt markieren"
+  },
+  "todoPlaceholder": {
+    "message": "Was ist zu tun?"
+  },
+  "todoFilterPlaceholder": {
+    "message": "diese Aufgaben filtern…"
+  },
+  "todoFilterAria": {
+    "message": "Diese Aufgaben filtern"
+  },
+  "omniPlaceholder": {
+    "message": "Tabs, Chronik, Notizen, Aufgaben, Lesezeichen durchsuchen"
+  },
+  "omniTypeToSearch": {
+    "message": "Tippen Sie, um Ihre synchronisierten Tabverses zu durchsuchen"
+  },
+  "omniKindTabverses": {
+    "message": "Tabverses"
+  },
+  "omniKindTabs": {
+    "message": "Tabs"
+  },
+  "omniKindHistory": {
+    "message": "Chronik"
+  },
+  "omniKindNotes": {
+    "message": "Notizen"
+  },
+  "omniKindTodos": {
+    "message": "Aufgaben"
+  },
+  "omniKindBookmarks": {
+    "message": "Lesezeichen"
+  },
+  "omniKindSessions": {
+    "message": "Sitzungen"
+  },
+  "savedDetailSwitch": {
+    "message": "Zum Fenster dieses Tabverses wechseln"
+  },
+  "savedDetailLoadNewWindow": {
+    "message": "Alle Tabs in ein neues Fenster laden"
+  },
+  "savedDetailLoadThisWindow": {
+    "message": "Hierher laden: die bereits offenen Tabs bleiben, und die in diesem Tabverse fehlenden werden daneben geöffnet"
+  },
+  "focusExit": {
+    "message": "Fokusmodus für das angeheftete Werkzeug beenden"
+  },
+  "focusEnter": {
+    "message": "Auf das angeheftete Werkzeug fokussieren"
+  },
+  "toolUnpin": {
+    "message": "Aktuelles Werkzeug lösen"
+  },
+  "toolPin": {
+    "message": "Aktuelles Werkzeug anheften"
+  },
+  "reviseNoRevision": {
+    "message": "Es kam keine Überarbeitung zurück - versuchen Sie es erneut."
+  },
+  "reviseInstructionAria": {
+    "message": "Anweisung für die Überarbeitung"
+  },
+  "reviseAria": {
+    "message": "Diese Notiz mit KI überarbeiten"
+  },
+  "reviseTitle": {
+    "message": "Diese Notiz mit KI überarbeiten"
+  },
+  "dedupNeverAgain": {
+    "message": "Diese URL nicht mehr vorschlagen"
+  },
+  "dedupFound": {
+    "message": "Doppelte Tabs gefunden"
+  },
+  "dedupReviewDuplicates": {
+    "message": "Duplikate prüfen"
+  },
+  "dedupHide": {
+    "message": "Ausblenden"
+  },
+  "dedupReview": {
+    "message": "Prüfen"
+  },
+  "editorH1": {
+    "message": "H1"
+  },
+  "editorH2": {
+    "message": "H2"
+  },
+  "editorH3": {
+    "message": "H3"
+  },
+  "editorBlockquote": {
+    "message": "Zitat"
+  },
+  "editorUnorderedList": {
+    "message": "Aufzählung"
+  },
+  "editorOrderedList": {
+    "message": "Nummerierte Liste"
+  },
+  "editorCodeBlock": {
+    "message": "Codeblock"
+  },
+  "editorBold": {
+    "message": "Fett"
+  },
+  "editorItalic": {
+    "message": "Kursiv"
+  },
+  "editorUnderline": {
+    "message": "Unterstrichen"
+  },
+  "editorMonospace": {
+    "message": "Breit"
+  },
+  "editorStrikethrough": {
+    "message": "Durchgestrichen"
+  },
+  "pcbReadyStatus": {
+    "message": "Seitenaktionen für diesen Tab"
+  },
+  "pcbSuspendedStatus": {
+    "message": "Dieser Tab ist angehalten - öffnen Sie ihn zum Nachladen und versuchen Sie es erneut"
+  },
+  "pcbUnreadableStatus": {
+    "message": "Diese Seite konnte nicht als Markdown gelesen werden."
+  },
+  "pcbViewMarkdown": {
+    "message": "Seiteninhalt als Markdown ansehen"
+  },
+  "pcbSendToChat": {
+    "message": "Seiteninhalt an den KI-Chat senden"
+  },
+  "pcbNewNote": {
+    "message": "Neue Notiz mit KI-Zusammenfassung"
+  },
+  "pcbAppendNote": {
+    "message": "An aktuelle Notiz anhängen mit KI-Zusammenfassung"
+  },
+  "pcbAria": {
+    "message": "Seitenaktionen für diesen Tab"
+  },
+  "pcbCannotRead": {
+    "message": "Dieser Tab konnte nicht gelesen werden."
+  },
+  "pcbNoSummary": {
+    "message": "Es kam keine Zusammenfassung zurück - versuchen Sie es erneut."
+  },
+  "pcbNoNoteSelected": {
+    "message": "Es ist keine Notiz zum Anhängen ausgewählt."
+  },
+  "pcbNoteAdded": {
+    "message": "Eine Notiz wurde zu diesem Tabverse hinzugefügt."
+  },
+  "pcbAttached": {
+    "message": "Die Seite wurde dem KI-Chat angehängt."
+  },
+  "tabCardSaveBookmark": {
+    "message": "Diesen Tab als Lesezeichen sichern"
+  },
+  "tabCardPinnedInChrome": {
+    "message": "Dieser Tab ist in Chrome angeheftet"
+  },
+  "tabCardWhitelisted": {
+    "message": "Dieser Tab wird nie angehalten; klicken, um das Anhalten zu erlauben"
+  },
+  "tabCardNeverSuspend": {
+    "message": "Diesen Tab nie anhalten"
+  },
+  "tabCardAllowSuspend": {
+    "message": "Anhalten dieses Tabs erlauben"
+  },
+  "tabCardClose": {
+    "message": "Diesen Tab schließen"
+  },
+  "noteReviewTitle": {
+    "message": "Änderungen prüfen"
+  },
+  "noteRejectAll": {
+    "message": "Alles ablehnen"
+  },
+  "noteEditAddedLine": {
+    "message": "Hinzugefügte Zeile bearbeiten"
+  },
+  "noteKeepChange": {
+    "message": "Diese Änderung behalten"
+  },
+  "noteRevertChange": {
+    "message": "Diese Änderung zurücknehmen"
+  },
+  "chatNoContextWindow": {
+    "message": "Dieser Browser nennt kein Kontextfenster."
+  },
+  "chatClearConversation": {
+    "message": "Unterhaltung leeren"
+  },
+  "chatContextWindowAria": {
+    "message": "Verwendetes Kontextfenster"
+  },
+  "chatCopyAnswer": {
+    "message": "Antwort kopieren"
+  },
+  "chatRegenerate": {
+    "message": "Antwort neu erzeugen"
+  },
+  "chatAttachedPage": {
+    "message": "Angehängte Seite"
+  },
+  "chatCompactedNotice": {
+    "message": "Ältere Unterhaltung wurde zusammengefasst, um ins Kontextfenster zu passen"
+  },
+  "chatRemoveContext": {
+    "message": "Angehängte Seite entfernen"
+  },
+  "chatPlaceholder": {
+    "message": "Fragen Sie das lokale Modell…"
+  },
+  "chatMessageAria": {
+    "message": "Nachricht"
+  },
+  "chatClearInput": {
+    "message": "Eingabe leeren"
+  },
+  "chatClearInputLabel": {
+    "message": "Die Eingabe leeren"
+  },
+  "chatEnterHint": {
+    "message": "Enter sendet · Umschalt+Enter macht einen Zeilenumbruch"
+  },
+  "chatNoModelTitle": {
+    "message": "Kein lokales Modell"
+  },
+  "chatNoModelBody": {
+    "message": "Dieser Browser bietet Chromes eingebaute KI nicht, also hat der Chat nichts, worauf er laufen könnte. Die übrigen KI-Funktionen fehlen hier aus demselben Grund."
+  },
+  "chatModelOffTitle": {
+    "message": "Das lokale Modell ist aus"
+  },
+  "chatModelOffBody": {
+    "message": "Schalten Sie es unter Einstellungen → KI wieder ein, um den Chat zu nutzen."
+  },
+  "omniNothingMatched": {
+    "message": "Keine Treffer."
+  },
+  "omniKindsAria": {
+    "message": "Arten von Suchergebnissen"
+  },
+  "dedupRemoved": {
+    "message": "Doppelte Tabs entfernt."
+  },
+  "suggestPickHint": {
+    "message": "Wählen Sie einen Namen für dieses Tabverse."
+  },
+  "reviseSayHint": {
+    "message": "Sagen Sie, was mit dieser Notiz geschehen soll"
+  },
+  "searchContainsAllOf": {
+    "message": "enthält alle"
+  },
+  "managerOtherPage": {
+    "message": "Eine weitere Tabverse-Verwaltungsseite gefunden!"
+  },
+  "activeTabClearFilter": {
+    "message": "Filter zurücksetzen (Esc)"
+  },
+  "groupSplitView": {
+    "message": "geteilte Ansicht"
+  },
+  "tabListSaveClose": {
+    "message": "Speichern und schließen"
+  },
+  "tabListExport": {
+    "message": "Als .tabverse-Datei exportieren"
+  },
+  "noteNoChanges": {
+    "message": "Keine Änderungen"
+  },
+  "noteFilterPlaceholder": {
+    "message": "diese Notizen filtern…"
+  },
+  "noteFilterAria": {
+    "message": "Diese Notizen filtern"
+  }
+}

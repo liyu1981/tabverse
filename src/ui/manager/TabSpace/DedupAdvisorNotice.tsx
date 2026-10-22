@@ -11,6 +11,7 @@
  * (ADR 0018): collapsed, expanded, protected-only, busy, and the post-apply
  * undo line. The container wires the effector store and the messages.
  */
+import { t } from '../../../i18n';
 import { Button, Callout, Icon, Intent, Tag } from '@blueprintjs/core';
 import React, { useEffect, useState } from 'react';
 import { useUnit } from 'effector-react';
@@ -79,7 +80,7 @@ function GroupRow(props: {
         small={true}
         minimal={true}
         disabled={props.busy}
-        title="Never offer this URL again"
+        title={t('dedupNeverAgain')}
         onClick={() => props.onAlwaysIgnore(group.key)}
       >
         Always ignore
@@ -111,7 +112,7 @@ export function DedupAdvisorNoticeShell(props: DedupAdvisorNoticeProps) {
           <span className={classes.summary}>
             {closers > 0
               ? `${closers} duplicate tab${closers === 1 ? '' : 's'} found`
-              : 'Duplicate tabs found'}
+              : t('dedupFound')}
             <Tag minimal={true} className={classes.windowTag}>
               this window
             </Tag>
@@ -132,9 +133,13 @@ export function DedupAdvisorNoticeShell(props: DedupAdvisorNoticeProps) {
               minimal={true}
               onClick={() => setExpanded((was) => !was)}
               aria-expanded={expanded}
-              title={expanded ? 'Hide the details' : 'Review the duplicates'}
+              title={
+                expanded
+                  ? t('capabilityHideDetails')
+                  : t('dedupReviewDuplicates')
+              }
             >
-              {expanded ? 'Hide' : 'Review'}
+              {expanded ? t('dedupHide') : t('dedupReview')}
             </Button>
             <Button
               small={true}
@@ -169,7 +174,7 @@ export function DedupUndoNotice(props: DedupUndoNoticeProps) {
     <div className={classes.container}>
       <Callout icon="tick" className={classes.callout}>
         <div className={classes.header}>
-          <span className={classes.summary}>Duplicate tabs removed.</span>
+          <span className={classes.summary}>{t('dedupRemoved')}</span>
           <div className={classes.headerActions}>
             <Button
               small={true}

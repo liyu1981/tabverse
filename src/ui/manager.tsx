@@ -1,6 +1,7 @@
 // Vendor styles first: everything below (manager.scss, css modules) has to
 // come after them in the emitted stylesheet. Vite bundles these instead of
 // the old copycss.sh -> dist/static + <link> dance.
+import { t } from '../i18n';
 import 'normalize.css';
 import '@blueprintjs/core/lib/css/blueprint.css';
 import '@blueprintjs/icons/lib/css/blueprint-icons.css';
@@ -40,9 +41,7 @@ async function bootstrap() {
   );
   if (tsChromeTab && tsChromeTab.id !== thisChromeTab.id) {
     renderPage({
-      pageComponent: (
-        <CountExit message={'Found another Tabverse Manager page!'} />
-      ),
+      pageComponent: <CountExit message={t('managerOtherPage')} />,
     });
   } else {
     const queryParams = getQueryParameters();

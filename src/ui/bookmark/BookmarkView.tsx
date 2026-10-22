@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { $allBookmark, bookmarkStoreApi } from '../../data/bookmark/store';
 import { Button, ButtonGroup, EditableText } from '@blueprintjs/core';
 import React, { useState } from 'react';
@@ -56,7 +57,7 @@ const BookmarkItem = (props: IBookmarkItem) => {
           <ButtonGroup>
             <Button
               icon="document-share"
-              title="Open In Current Tabverse"
+              title={t('bookmarkOpenInCurrent')}
               minimal={true}
               onClick={() => {
                 chrome.tabs.create({
@@ -67,7 +68,7 @@ const BookmarkItem = (props: IBookmarkItem) => {
             />
             <Button
               icon="trash"
-              title="Delete It"
+              title={t('bookmarkDeleteIt')}
               minimal={true}
               onClick={() => {
                 bookmarkStoreApi.removeBookmark(props.bookmark.id);
@@ -122,10 +123,10 @@ export function BookmarkView() {
             <ListFilter
               value={filterText}
               onChange={setFilterText}
-              placeholder="filter these bookmarks…"
+              placeholder={t('bookmarkFilterPlaceholder')}
               count={filteredBookmarks.length}
               total={allBookmarks.length}
-              ariaLabel="Filter these bookmarks"
+              ariaLabel={t('bookmarkFilterAria')}
             />
           </div>
           <div className={classes.listScroll}>

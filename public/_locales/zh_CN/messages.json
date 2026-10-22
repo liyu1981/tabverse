@@ -1,0 +1,1079 @@
+{
+  "extName": {
+    "message": "Tabverse"
+  },
+  "extDescription": {
+    "message": "Tabverse 是一款理念鲜明的标签页管理工具。"
+  },
+  "extActionTitle": {
+    "message": "Tabverse"
+  },
+  "popupCurrentTabverseFallback": {
+    "message": "当前 Tabverse"
+  },
+  "popupReplaceNewTitle": {
+    "message": "在此窗口中开始新的 Tabverse？"
+  },
+  "popupReplaceNewBody": {
+    "message": "此窗口已经有一个 Tabverse（\"$1\"）。它会自动保存，因此不会丢失任何内容。继续将在这里关闭它并开始新的 Tabverse；此窗口中的标签页会成为新 Tabverse 的一部分。"
+  },
+  "popupAddToWindowTitle": {
+    "message": "将此 Tabverse 添加到当前窗口？"
+  },
+  "popupAddToWindowBody": {
+    "message": "此窗口已经有一个 Tabverse（\"$1\"）。它会自动保存，因此不会丢失任何内容。继续将使 \"$2\" 成为当前窗口的 Tabverse，并在这里打开它的 $3 个标签页：此窗口中已打开的标签页保持不变，而该 Tabverse 中已在此处打开的标签页会被复用。"
+  },
+  "popupImportedOk": {
+    "message": "已导入 \"$1\""
+  },
+  "popupImportFailed": {
+    "message": "该文件不是 Tabverse 导出文件。"
+  },
+  "popupLoading": {
+    "message": "加载中…"
+  },
+  "popupNothingSaved": {
+    "message": "还没有保存任何 Tabverse。你用 Tabverse 保留的每个窗口都会成为一个 Tabverse，并随后显示在这里。"
+  },
+  "popupNothingFound": {
+    "message": "未找到任何内容。试试更少的关键词，或用标签页标题里的词语。"
+  },
+  "popupNothingRecent": {
+    "message": "没有最近的内容。在某个窗口中打开一个 Tabverse，它就会显示在这里。"
+  },
+  "popupSavedCount": {
+    "message": "已保存 $1 个"
+  },
+  "popupNewTabverse": {
+    "message": "新建 Tabverse"
+  },
+  "popupNewTabverseTitleWhenOpen": {
+    "message": "保存当前 Tabverse 并在此窗口中开始新的"
+  },
+  "popupNewTabverseTitle": {
+    "message": "在此窗口中开始新的 Tabverse"
+  },
+  "popupImport": {
+    "message": "导入"
+  },
+  "popupImportTitle": {
+    "message": "将 .tabverse 文件导入为新的 Tabverse"
+  },
+  "popupSearchPlaceholder": {
+    "message": "搜索已保存的 Tabverse…"
+  },
+  "popupResultOne": {
+    "message": "$1 个结果"
+  },
+  "popupResultMany": {
+    "message": "$1 个结果"
+  },
+  "popupRecent": {
+    "message": "最近"
+  },
+  "popupSearchedOnServer": {
+    "message": "在同步服务器上搜索"
+  },
+  "popupSearchedOnDevice": {
+    "message": "在本设备上搜索"
+  },
+  "popupNotDownloadedOne": {
+    "message": "$1 个匹配项尚未下载"
+  },
+  "popupNotDownloadedMany": {
+    "message": "$1 个匹配项尚未下载"
+  },
+  "popupConfirmReplace": {
+    "message": "替换"
+  },
+  "commonCancel": {
+    "message": "取消"
+  },
+  "popupRowGoTo": {
+    "message": "前往此 Tabverse"
+  },
+  "popupRowAddToWindow": {
+    "message": "添加到当前窗口"
+  },
+  "commonTabCountOne": {
+    "message": "$1 个标签页"
+  },
+  "commonTabCountMany": {
+    "message": "$1 个标签页"
+  },
+  "popupThisWindow": {
+    "message": "当前窗口"
+  },
+  "popupOpenInWindowOne": {
+    "message": "已在 $1 个窗口中打开"
+  },
+  "popupOpenInWindowMany": {
+    "message": "已在 $1 个窗口中打开"
+  },
+  "popupGoToWindowOfTabverse": {
+    "message": "前往此 Tabverse 所在的窗口"
+  },
+  "popupOpenInNewWindow": {
+    "message": "在新窗口中打开"
+  },
+  "commonLoading": {
+    "message": "加载中..."
+  },
+  "commonSomethingWentWrong": {
+    "message": "出了点问题。"
+  },
+  "commonFilterCount": {
+    "message": "$1 / $2"
+  },
+  "commonFilterTotal": {
+    "message": "$1"
+  },
+  "commonFilterPlaceholder": {
+    "message": "筛选…"
+  },
+  "commonClearFilter": {
+    "message": "清除筛选"
+  },
+  "commonCollapseSidebar": {
+    "message": "将侧边栏折叠为图标"
+  },
+  "commonCollapseSidebarAria": {
+    "message": "折叠侧边栏"
+  },
+  "commonExpandSidebar": {
+    "message": "展开侧边栏"
+  },
+  "commonPreviousPage": {
+    "message": "上一页"
+  },
+  "commonNextPage": {
+    "message": "下一页"
+  },
+  "commonPageIndicator": {
+    "message": "$1/$2"
+  },
+  "commonRemoveAria": {
+    "message": "移除"
+  },
+  "searchTermsAria": {
+    "message": "搜索关键词"
+  },
+  "aboutTagline": {
+    "message": "专为标签页管理而生"
+  },
+  "aboutCreatedIn": {
+    "message": "创建于悉尼"
+  },
+  "aboutWebsite": {
+    "message": "网站"
+  },
+  "aboutGithub": {
+    "message": "GitHub"
+  },
+  "settingsTitle": {
+    "message": "设置"
+  },
+  "settingsTabSync": {
+    "message": "同步"
+  },
+  "settingsTabTabs": {
+    "message": "标签页"
+  },
+  "settingsTabDuplicates": {
+    "message": "重复项"
+  },
+  "settingsTabLook": {
+    "message": "外观"
+  },
+  "settingsTabAi": {
+    "message": "AI"
+  },
+  "settingsTabAbout": {
+    "message": "关于"
+  },
+  "commonReading": {
+    "message": "读取中…"
+  },
+  "suspendOffSummary": {
+    "message": "挂起已关闭。不会卸载任何标签页。"
+  },
+  "suspendOnSummary": {
+    "message": "超过 $1 分钟无人操作的标签页会被卸载；打开时会重新加载。"
+  },
+  "suspendCalloutTitle": {
+    "message": "挂起不活跃的标签页"
+  },
+  "suspendHint": {
+    "message": "被挂起的标签页会从内存中卸载，但仍保留在标签栏中。再次打开会重新加载页面；不会关闭任何内容。Tabverse 只会挂起已打开 Tabverse 的窗口中的标签页，且绝不会挂起你加入白名单、置顶或正在聆听的标签页。"
+  },
+  "suspendSwitchLabel": {
+    "message": "挂起不活跃的标签页"
+  },
+  "suspendAfterLabel": {
+    "message": "挂起时机"
+  },
+  "commonMinutes": {
+    "message": "分钟"
+  },
+  "appearanceCalloutTitle": {
+    "message": "侧边栏颜色"
+  },
+  "appearanceHint": {
+    "message": "侧边栏轨道承载着接近白色的图形（标志、说明文字以及底栏中的图标），因此这里的选项都是深色。该颜色属于当前窗口的 Tabverse：它跟随窗口，并随 Tabverse 一起移动。"
+  },
+  "appearanceRandomLabel": {
+    "message": "为新 Tabverse 使用随机颜色"
+  },
+  "appearanceRandomOn": {
+    "message": "新的 Tabverse 会从该调色板中随机选取一种颜色。"
+  },
+  "appearanceRandomOff": {
+    "message": "新的 Tabverse 使用默认颜色。"
+  },
+  "dedupOffSummary": {
+    "message": "重复项顾问已关闭。不会检查任何标签页。"
+  },
+  "dedupOnSummary": {
+    "message": "每 $1 分钟检查一次打开的标签页；发现重复项时会提议移除，但绝不会自动关闭。"
+  },
+  "dedupCalloutTitle": {
+    "message": "重复标签页"
+  },
+  "dedupHint": {
+    "message": "该顾问只做查看。当它在已打开 Tabverse 的窗口中发现两个指向同一页面的标签页时，标签列表会显示一条通知，你可以在那里关闭多余的标签页或将其忽略。它绝不会自行关闭标签页，也绝不会触及已置顶或正在播放音频的标签页。"
+  },
+  "dedupSwitchLabel": {
+    "message": "查找重复标签页"
+  },
+  "dedupCheckEveryLabel": {
+    "message": "检查间隔"
+  },
+  "moveFoundNothing": {
+    "message": "未找到任何内容，关键词不对？"
+  },
+  "moveCandidateInfo": {
+    "message": "创建于：$1，保存于：$2"
+  },
+  "moveNoTargetToast": {
+    "message": "未选择目标 Tabverse，无法移动标签页！"
+  },
+  "moveMovingToastOne": {
+    "message": "正在将 $1 个标签页移动到 $2"
+  },
+  "moveMovingToastMany": {
+    "message": "正在将 $1 个标签页移动到 $2"
+  },
+  "moveMovedToastOne": {
+    "message": "已将 $1 个标签页移动到 $2"
+  },
+  "moveMovedToastMany": {
+    "message": "已将 $1 个标签页移动到 $2"
+  },
+  "moveDialogTitle": {
+    "message": "将所选标签页移动到其他 Tabverse"
+  },
+  "moveSearchPlaceholder": {
+    "message": "输入关键词，然后按 ↵ 回车搜索..."
+  },
+  "moveCloseAfterMove": {
+    "message": "移动后关闭所选标签页"
+  },
+  "moveMoveButton": {
+    "message": "移动"
+  },
+  "aiChecking": {
+    "message": "检查中…"
+  },
+  "aiSupportAbsent": {
+    "message": "此浏览器中不可用"
+  },
+  "aiSupportAvailable": {
+    "message": "此设备上可用"
+  },
+  "aiCouldNotCheck": {
+    "message": "无法检查"
+  },
+  "aiModelAbsent": {
+    "message": "不可用"
+  },
+  "aiModelNotInstalled": {
+    "message": "尚未安装"
+  },
+  "aiInstallingPercent": {
+    "message": "安装中… $1%"
+  },
+  "aiInstalling": {
+    "message": "安装中…"
+  },
+  "aiModelReady": {
+    "message": "已安装并就绪"
+  },
+  "aiCalloutTitle": {
+    "message": "Chrome 内置 AI"
+  },
+  "aiCalloutHint": {
+    "message": "下面的功能运行在 Chrome 自带的模型（Gemma Nano）上，在本设备执行。你提供给它们的内容会在浏览器内部交给模型，绝不会发送到任何地方；没有服务器，没有账户，无需任何配置。"
+  },
+  "aiWhereTitle": {
+    "message": "在哪里找到它"
+  },
+  "aiFeatureNameTabverse": {
+    "message": "为 Tabverse 命名"
+  },
+  "aiFeatureNameTabverseWhere": {
+    "message": "打开一个 Tabverse；灯泡在顶部它名称的旁边，会给出三个候选名称供你选择。"
+  },
+  "aiFeatureSummarizeTab": {
+    "message": "总结标签页"
+  },
+  "aiFeatureSummarizeTabWhere": {
+    "message": "在已打开的 Tabverse 中，灯泡位于每个活动标签页行的右侧，它会把该页面变成一条新笔记。"
+  },
+  "aiSwitchLabel": {
+    "message": "使用本地模型"
+  },
+  "aiDeviceSupportLabel": {
+    "message": "设备支持"
+  },
+  "aiLocalModelLabel": {
+    "message": "本地模型"
+  },
+  "aiOfferedLabel": {
+    "message": "是否提供"
+  },
+  "aiOfferedOn": {
+    "message": "已提供 AI 功能"
+  },
+  "aiOfferedOff": {
+    "message": "关闭"
+  },
+  "aiDownloadButton": {
+    "message": "立即下载模型"
+  },
+  "aiDownloadTitle": {
+    "message": "只需在此设备下载一次；模型由 Chrome 提供，不随扩展一起分发"
+  },
+  "aiDownloadingNote": {
+    "message": "Chrome 正在下载模型；本页面会显示进度。"
+  },
+  "aiCheckAgainButton": {
+    "message": "重新检查"
+  },
+  "syncLabelOfficial": {
+    "message": "Tabverse 官方服务器"
+  },
+  "syncLabelCustom": {
+    "message": "你自己的服务器（配对码）"
+  },
+  "syncNotConnected": {
+    "message": "未连接：Tabverse 完全在本地运行，直到你与自己的同步服务器配对为止。"
+  },
+  "syncConnectedTo": {
+    "message": "已连接到 $1"
+  },
+  "syncFailedTo": {
+    "message": "失败：$1"
+  },
+  "syncWizardOpened": {
+    "message": "已打开 Tabverse 窗口。请在那里登录并允许此设备；令牌会自动传回。"
+  },
+  "syncBothRequired": {
+    "message": "服务器 URL 和配对码都是必需的。"
+  },
+  "syncPairedNoUpload": {
+    "message": "已与 $1 配对。你现有的数据仍保留在本设备上；此后新的和更改过的 Tabverse 会进行同步。"
+  },
+  "syncPairedUploadSkipped": {
+    "message": "已与 $1 配对，但跳过了上传：同步尚未配置。请使用「上传本地数据」重试。"
+  },
+  "syncPairedUploading": {
+    "message": "已与 $1 配对。正在上传本设备上的数据..."
+  },
+  "syncPairedUploadDoneNoStale": {
+    "message": "已与 $1 配对。已上传 $3 条本地记录中的 $2 条。"
+  },
+  "syncPairedUploadDoneStale": {
+    "message": "已与 $1 配对。已上传 $3 条本地记录中的 $2 条；另有 $4 条在服务器上已是更新版本。"
+  },
+  "syncPairedUploadFailed": {
+    "message": "已与 $1 配对，但上传失败：$2。你的数据仍在本设备上；请使用「上传本地数据」重试。"
+  },
+  "syncNotConfigured": {
+    "message": "同步尚未配置。"
+  },
+  "syncSyncedNoStale": {
+    "message": "已同步：推送 $1，拉取 $2"
+  },
+  "syncSyncedStale": {
+    "message": "已同步：推送 $1，拉取 $2，解决了 $3 个冲突"
+  },
+  "syncSyncFailed": {
+    "message": "同步失败：$1"
+  },
+  "syncUnknownError": {
+    "message": "未知错误"
+  },
+  "syncUploadingNow": {
+    "message": "正在上传本设备上的数据..."
+  },
+  "syncUploadDoneNoStale": {
+    "message": "已上传 $2 条本地记录中的 $1 条。"
+  },
+  "syncUploadDoneStale": {
+    "message": "已上传 $2 条本地记录中的 $1 条；另有 $3 条在服务器上已是更新版本。"
+  },
+  "syncDisconnected": {
+    "message": "已断开连接。你的数据仍保留在本设备上。"
+  },
+  "syncPairCalloutTitle": {
+    "message": "配对此浏览器"
+  },
+  "syncPairHint1": {
+    "message": "运行你自己的 "
+  },
+  "syncPairHint2": {
+    "message": " 服务器，在其上创建账户，然后生成一次性配对码，配对码由 "
+  },
+  "syncPairHint3": {
+    "message": " 返回，再粘贴到下方。"
+  },
+  "syncServerUrlLabel": {
+    "message": "服务器 URL"
+  },
+  "syncServerUrlPlaceholder": {
+    "message": "https://sync.example.com"
+  },
+  "syncPairingCodeLabel": {
+    "message": "配对码"
+  },
+  "syncPairingCodePlaceholder": {
+    "message": "XXXX-XXXX-XXXX-XXXX"
+  },
+  "syncDeviceNameLabel": {
+    "message": "设备名称"
+  },
+  "syncDeviceNamePlaceholder": {
+    "message": "chrome"
+  },
+  "syncUploadLocalLabel": {
+    "message": "同时上传本设备上已有的数据"
+  },
+  "syncUploadHintCount": {
+    "message": "本设备存有 $1 条记录（$2 个 Tabverse，$3 个标签页）。连接时会一次性发送到服务器。"
+  },
+  "syncUploadHintStays": {
+    "message": "你现有的数据仍保留在本设备上。此后新的和更改过的 Tabverse 仍会同步。"
+  },
+  "syncUploadHintNothing": {
+    "message": "本设备尚无任何存储内容，因此没有可上传的数据。"
+  },
+  "syncPairUploadButton": {
+    "message": "配对并上传本地数据"
+  },
+  "syncPairConnectButton": {
+    "message": "配对并连接"
+  },
+  "syncWaitingTitle": {
+    "message": "正在等待 Tabverse 窗口"
+  },
+  "syncWaitingHint1": {
+    "message": "已在 "
+  },
+  "syncWaitingHint2": {
+    "message": " 打开一个窗口。请在那里登录，为该设备命名并允许它——令牌会自动传回，本对话框会自动跟进。"
+  },
+  "syncOfficialHint1": {
+    "message": "Tabverse 自己运行的服务器。用你的邮箱（或 Google）登录，为该设备命名并批准它——无需复制任何代码。"
+  },
+  "syncOfficialHint2": {
+    "message": " ——文档在这里，控制台位于 "
+  },
+  "syncConnectOfficialButton": {
+    "message": "使用 Tabverse 连接"
+  },
+  "syncOwnServerHint1": {
+    "message": "你在运行自己的 "
+  },
+  "syncOwnServerHint2": {
+    "message": " 服务器？请选择 "
+  },
+  "syncOwnServerHint3": {
+    "message": " ——它使用配对码。"
+  },
+  "syncCustomServerMode": {
+    "message": "自定义服务器"
+  },
+  "syncDeviceLabel": {
+    "message": "设备："
+  },
+  "syncAccountLabel": {
+    "message": "账户："
+  },
+  "syncUnknown": {
+    "message": "未知"
+  },
+  "syncSyncingAria": {
+    "message": "同步中"
+  },
+  "syncNotSyncedYet": {
+    "message": "尚未同步"
+  },
+  "syncLastSyncLabel": {
+    "message": "上次同步："
+  },
+  "syncNowButton": {
+    "message": "立即同步"
+  },
+  "syncUploadLocalButton": {
+    "message": "上传本地数据"
+  },
+  "syncUploadLocalTitle": {
+    "message": "将本设备上存储的所有内容发送到服务器。配置时除非你取消勾选，否则会自动执行；本按钮用于之后的情况：断开连接期间产生的数据，或上传失败后的重试。"
+  },
+  "syncDisconnectButton": {
+    "message": "断开连接"
+  },
+  "syncNotSetUpTitle": {
+    "message": "尚未配置"
+  },
+  "syncNotSetUpHint": {
+    "message": "在配置同步之前，Tabverse 完全在本地运行：没有任何内容离开本设备。"
+  },
+  "syncSetUpButton": {
+    "message": "配置同步"
+  },
+  "syncTabStatus": {
+    "message": "状态"
+  },
+  "syncTabSetup": {
+    "message": "配置"
+  },
+  "syncConnectedToSetup1": {
+    "message": "已连接到 "
+  },
+  "syncConnectedToSetup2": {
+    "message": "（$1）。重新连接会替换当前配置。"
+  },
+  "syncOfficialModeTitle": {
+    "message": "在 tabversed.liyu1981.xyz 登录并允许此设备"
+  },
+  "syncCustomModeTitle": {
+    "message": "你自己运行的 tabversed 服务器，通过配对码连接"
+  },
+  "syncUploadingProgress": {
+    "message": "正在上传 $2 条记录中的 $1 条..."
+  },
+  "sidebarCurrentTabverse": {
+    "message": "当前 Tabverse"
+  },
+  "sidebarSavedTabverses": {
+    "message": "已保存的 Tabverse"
+  },
+  "sidebarOmniSearch": {
+    "message": "全局搜索"
+  },
+  "sidebarMyWebTools": {
+    "message": "我的 WebTools"
+  },
+  "sidebarOtherTabverses": {
+    "message": "其他 Tabverse"
+  },
+  "previewReading": {
+    "message": "读取中…"
+  },
+  "previewNoTabs": {
+    "message": "此窗口中没有打开的标签页。"
+  },
+  "previewMore": {
+    "message": "还有 +$1 个"
+  },
+  "bottomNavSyncing": {
+    "message": "同步中…"
+  },
+  "sidebarSavedCountSuffix": {
+    "message": "个 Tabverse 已保存"
+  },
+  "sidebarLoadedCountSuffix": {
+    "message": "其中已加载"
+  },
+  "sidebarSortBy": {
+    "message": "排序方式"
+  },
+  "sidebarSortCreated": {
+    "message": "创建时间"
+  },
+  "sidebarSortSaved": {
+    "message": "保存时间"
+  },
+  "rightPanelAiHistory": {
+    "message": "AI 历史"
+  },
+  "rightPanelServerConsole": {
+    "message": "服务器控制台"
+  },
+  "rightPanelOpenThe": {
+    "message": "打开$1"
+  },
+  "rightPanelShowThe": {
+    "message": "显示$1"
+  },
+  "rightPanelCollapseAria": {
+    "message": "折叠右侧面板"
+  },
+  "rightPanelCollapse": {
+    "message": "折叠"
+  },
+  "consoleReadingSetup": {
+    "message": "正在读取同步配置…"
+  },
+  "consoleReadError": {
+    "message": "无法读取同步配置。请关闭并重新打开此面板重试。"
+  },
+  "consoleUnpaired": {
+    "message": "尚未与服务器配对。通过底栏的同步按钮配对后，此面板会显示其控制台。"
+  },
+  "consoleOpenInTab": {
+    "message": "在标签页中打开"
+  },
+  "consoleOpenInTabTitle": {
+    "message": "将控制台作为独立标签页打开，在那里你的登录状态始终有效"
+  },
+  "consoleSignedOutNote": {
+    "message": "如果控制台在这里显示为未登录，请使用「$1」：会话 cookie 属于浏览器，而内嵌框架属于不同的站点。"
+  },
+  "consoleFrameTitle": {
+    "message": "同步服务器控制台"
+  },
+  "timeToday": {
+    "message": "今天"
+  },
+  "timeTomorrow": {
+    "message": "明天"
+  },
+  "timeYesterday": {
+    "message": "昨天"
+  },
+  "timeLastWeekday": {
+    "message": "上周$1"
+  },
+  "timeCalendarAt": {
+    "message": "$1 $2"
+  },
+  "bookmarkOpenInCurrent": {
+    "message": "在当前 Tabverse 中打开"
+  },
+  "bookmarkDeleteIt": {
+    "message": "删除它"
+  },
+  "bookmarkFilterPlaceholder": {
+    "message": "筛选这些书签…"
+  },
+  "bookmarkFilterAria": {
+    "message": "筛选这些书签"
+  },
+  "notePlaceholder": {
+    "message": "在此写下你的笔记 ..."
+  },
+  "capabilityHideDetails": {
+    "message": "隐藏详情"
+  },
+  "capabilityShowMissing": {
+    "message": "查看缺少的内容"
+  },
+  "markdownCopied": {
+    "message": "已复制"
+  },
+  "markdownCopy": {
+    "message": "复制 Markdown"
+  },
+  "markdownDialogTitle": {
+    "message": "页面内容（Markdown）"
+  },
+  "webtoolTitle": {
+    "message": "我的网页工具集"
+  },
+  "activeTabSearchClearAria": {
+    "message": "清除标签页筛选"
+  },
+  "activeTabSearchAria": {
+    "message": "搜索此 Tabverse 的标签页"
+  },
+  "suggestPreparing": {
+    "message": "正在准备本地模型…"
+  },
+  "suggestSuggesting": {
+    "message": "正在生成名称建议…"
+  },
+  "suggestNoAiBrowser": {
+    "message": "此浏览器没有内置 AI。"
+  },
+  "suggestNoTabs": {
+    "message": "此 Tabverse 还没有可命名的标签页。"
+  },
+  "suggestNoNames": {
+    "message": "没有返回任何名称——请重试。"
+  },
+  "suggestCannotReach": {
+    "message": "无法连接本地模型——请重试。"
+  },
+  "suggestAria": {
+    "message": "为此 Tabverse 建议名称"
+  },
+  "tabListWorkingOn": {
+    "message": "正在处理 $1 个标签页"
+  },
+  "tabListSelectedOne": {
+    "message": "已选择 $1 个标签页"
+  },
+  "tabListSelectedMany": {
+    "message": "已选择 $1 个标签页"
+  },
+  "tabListSaveCloseAria": {
+    "message": "保存并关闭此 Tabverse"
+  },
+  "tabListExportAria": {
+    "message": "将此 Tabverse 导出为 .tabverse 文件"
+  },
+  "historySearchPlaceholder": {
+    "message": "搜索这些已关闭的标签页"
+  },
+  "historyClearSearch": {
+    "message": "清除搜索 (Esc)"
+  },
+  "historyClearSearchAria": {
+    "message": "清除历史搜索"
+  },
+  "historySearchAria": {
+    "message": "搜索已关闭的标签页"
+  },
+  "historyGrouped": {
+    "message": "按网站分组"
+  },
+  "historyGroupBy": {
+    "message": "按网站分组"
+  },
+  "historyGroupAria": {
+    "message": "按网站对已关闭的标签页分组"
+  },
+  "historyReopen": {
+    "message": "在当前 Tabverse 中重新打开"
+  },
+  "historyAlreadyBookmarked": {
+    "message": "此页面已在书签中"
+  },
+  "historySaveAsBookmark": {
+    "message": "保存为书签（并从此处移除）"
+  },
+  "historyForgetIt": {
+    "message": "忘掉它"
+  },
+  "historyAlreadyBookmarkedToast": {
+    "message": "此页面已在书签中。"
+  },
+  "historySavedToast": {
+    "message": "已保存为书签。"
+  },
+  "historyClearedToast": {
+    "message": "已清除已关闭标签页历史。"
+  },
+  "historyReopenLast": {
+    "message": "重新打开最近关闭的标签页"
+  },
+  "historyClearWhole": {
+    "message": "清除全部历史"
+  },
+  "todoEditHint": {
+    "message": "双击或按回车键进行编辑"
+  },
+  "todoDeleteAria": {
+    "message": "删除待办事项"
+  },
+  "todoMarkAll": {
+    "message": "全部标记为已完成"
+  },
+  "todoPlaceholder": {
+    "message": "需要做些什么？"
+  },
+  "todoFilterPlaceholder": {
+    "message": "筛选这些待办事项…"
+  },
+  "todoFilterAria": {
+    "message": "筛选这些待办事项"
+  },
+  "omniPlaceholder": {
+    "message": "搜索标签页、历史、笔记、待办、书签"
+  },
+  "omniTypeToSearch": {
+    "message": "输入以搜索你已同步的 Tabverse"
+  },
+  "omniKindTabverses": {
+    "message": "Tabverse"
+  },
+  "omniKindTabs": {
+    "message": "标签页"
+  },
+  "omniKindHistory": {
+    "message": "历史"
+  },
+  "omniKindNotes": {
+    "message": "笔记"
+  },
+  "omniKindTodos": {
+    "message": "待办"
+  },
+  "omniKindBookmarks": {
+    "message": "书签"
+  },
+  "omniKindSessions": {
+    "message": "会话"
+  },
+  "savedDetailSwitch": {
+    "message": "切换到此 Tabverse 的窗口"
+  },
+  "savedDetailLoadNewWindow": {
+    "message": "将所有标签页加载到新窗口"
+  },
+  "savedDetailLoadThisWindow": {
+    "message": "加载到当前窗口：它已打开的标签页会保留，而该 Tabverse 自身缺少的标签页会在旁边打开"
+  },
+  "focusExit": {
+    "message": "退出置顶工具的专注模式"
+  },
+  "focusEnter": {
+    "message": "专注置顶工具"
+  },
+  "toolUnpin": {
+    "message": "取消置顶当前工具"
+  },
+  "toolPin": {
+    "message": "置顶当前工具"
+  },
+  "reviseNoRevision": {
+    "message": "没有返回任何修改——请重试。"
+  },
+  "reviseInstructionAria": {
+    "message": "修改指令"
+  },
+  "reviseAria": {
+    "message": "用 AI 修改此笔记"
+  },
+  "reviseTitle": {
+    "message": "用 AI 修改此笔记"
+  },
+  "dedupNeverAgain": {
+    "message": "不再提示此 URL"
+  },
+  "dedupFound": {
+    "message": "发现重复标签页"
+  },
+  "dedupReviewDuplicates": {
+    "message": "查看重复项"
+  },
+  "dedupHide": {
+    "message": "隐藏"
+  },
+  "dedupReview": {
+    "message": "查看"
+  },
+  "editorH1": {
+    "message": "H1"
+  },
+  "editorH2": {
+    "message": "H2"
+  },
+  "editorH3": {
+    "message": "H3"
+  },
+  "editorBlockquote": {
+    "message": "引用"
+  },
+  "editorUnorderedList": {
+    "message": "无序列表"
+  },
+  "editorOrderedList": {
+    "message": "有序列表"
+  },
+  "editorCodeBlock": {
+    "message": "代码块"
+  },
+  "editorBold": {
+    "message": "粗体"
+  },
+  "editorItalic": {
+    "message": "斜体"
+  },
+  "editorUnderline": {
+    "message": "下划线"
+  },
+  "editorMonospace": {
+    "message": "等宽字体"
+  },
+  "editorStrikethrough": {
+    "message": "删除线"
+  },
+  "pcbReadyStatus": {
+    "message": "此标签页的页面操作"
+  },
+  "pcbSuspendedStatus": {
+    "message": "此标签页已被挂起——请先打开加载它，然后重试"
+  },
+  "pcbUnreadableStatus": {
+    "message": "无法将此页面读取为 Markdown。"
+  },
+  "pcbViewMarkdown": {
+    "message": "查看页面内容（Markdown）"
+  },
+  "pcbSendToChat": {
+    "message": "将页面内容发送到 AI 聊天"
+  },
+  "pcbNewNote": {
+    "message": "用 AI 摘要新建笔记"
+  },
+  "pcbAppendNote": {
+    "message": "用 AI 摘要追加到当前笔记"
+  },
+  "pcbAria": {
+    "message": "此标签页的页面操作"
+  },
+  "pcbCannotRead": {
+    "message": "无法读取此标签页。"
+  },
+  "pcbNoSummary": {
+    "message": "没有返回任何摘要——请重试。"
+  },
+  "pcbNoNoteSelected": {
+    "message": "未选择要追加到的笔记。"
+  },
+  "pcbNoteAdded": {
+    "message": "已为此 Tabverse 添加一条笔记。"
+  },
+  "pcbAttached": {
+    "message": "已将页面附加到 AI 聊天。"
+  },
+  "tabCardSaveBookmark": {
+    "message": "将此标签页保存为书签"
+  },
+  "tabCardPinnedInChrome": {
+    "message": "此标签页已在 Chrome 中置顶"
+  },
+  "tabCardWhitelisted": {
+    "message": "此标签页永远不会被挂起；点击以允许挂起"
+  },
+  "tabCardNeverSuspend": {
+    "message": "永不挂起此标签页"
+  },
+  "tabCardAllowSuspend": {
+    "message": "允许挂起此标签页"
+  },
+  "tabCardClose": {
+    "message": "关闭此标签页"
+  },
+  "noteReviewTitle": {
+    "message": "审阅修改"
+  },
+  "noteRejectAll": {
+    "message": "全部拒绝"
+  },
+  "noteEditAddedLine": {
+    "message": "编辑新增行"
+  },
+  "noteKeepChange": {
+    "message": "保留此修改"
+  },
+  "noteRevertChange": {
+    "message": "撤销此修改"
+  },
+  "chatNoContextWindow": {
+    "message": "此浏览器未报告上下文窗口大小。"
+  },
+  "chatClearConversation": {
+    "message": "清除对话"
+  },
+  "chatContextWindowAria": {
+    "message": "已用上下文窗口"
+  },
+  "chatCopyAnswer": {
+    "message": "复制回答"
+  },
+  "chatRegenerate": {
+    "message": "重新生成回答"
+  },
+  "chatAttachedPage": {
+    "message": "附加的页面"
+  },
+  "chatCompactedNotice": {
+    "message": "早期对话已压缩以适应上下文"
+  },
+  "chatRemoveContext": {
+    "message": "移除附加的页面"
+  },
+  "chatPlaceholder": {
+    "message": "向本地模型提问…"
+  },
+  "chatMessageAria": {
+    "message": "消息"
+  },
+  "chatClearInput": {
+    "message": "清除输入"
+  },
+  "chatClearInputLabel": {
+    "message": "清除输入内容"
+  },
+  "chatEnterHint": {
+    "message": "回车发送 · Shift+回车换行"
+  },
+  "chatNoModelTitle": {
+    "message": "没有本地模型"
+  },
+  "chatNoModelBody": {
+    "message": "此浏览器不提供 Chrome 内置 AI，因此聊天没有可运行的模型。其他 AI 功能在这里同样缺失。"
+  },
+  "chatModelOffTitle": {
+    "message": "本地模型已关闭"
+  },
+  "chatModelOffBody": {
+    "message": "前往「设置 → AI」重新开启即可使用聊天。"
+  },
+  "omniNothingMatched": {
+    "message": "没有匹配项。"
+  },
+  "omniKindsAria": {
+    "message": "搜索结果类别"
+  },
+  "dedupRemoved": {
+    "message": "已移除重复标签页。"
+  },
+  "suggestPickHint": {
+    "message": "为此 Tabverse 选择一个名称。"
+  },
+  "reviseSayHint": {
+    "message": "说明要如何处理这条笔记"
+  },
+  "searchContainsAllOf": {
+    "message": "包含全部"
+  },
+  "managerOtherPage": {
+    "message": "发现另一个 Tabverse 管理器页面！"
+  },
+  "activeTabClearFilter": {
+    "message": "清除筛选 (Esc)"
+  },
+  "groupSplitView": {
+    "message": "分屏视图"
+  },
+  "tabListSaveClose": {
+    "message": "保存并关闭"
+  },
+  "tabListExport": {
+    "message": "导出为 .tabverse 文件"
+  },
+  "noteNoChanges": {
+    "message": "没有修改"
+  },
+  "noteFilterPlaceholder": {
+    "message": "筛选这些笔记…"
+  },
+  "noteFilterAria": {
+    "message": "筛选这些笔记"
+  }
+}

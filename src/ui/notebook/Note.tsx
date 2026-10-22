@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { Button, Collapse, EditableText, Icon } from '@blueprintjs/core';
 import clsx from 'clsx';
 import React, { useCallback, useRef, useState } from 'react';
@@ -137,7 +138,7 @@ export const NoteView = (props: INoteViewProps) => {
           onFocus={selectThis}
           onApply={updateCurrentNote}
           onBlur={updateCurrentNote}
-          placeholder="Write your notes here ..."
+          placeholder={t('notePlaceholder')}
         />
       </Collapse>
     </div>

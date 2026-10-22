@@ -129,7 +129,7 @@ export function AndQueryView(props: AndQueryViewProps) {
           scopeMap={scopeMap}
           onChangeScope={onChangeScope}
         />
-        <span>contains all of</span>
+        <span>{t('searchContainsAllOf')}</span>
         <TermsView values={andQuery.terms} onRemoveTerm={onRemoveTerm} />
         <TermPlusView
           onFocusBackToInput={onFocusBackToInput}

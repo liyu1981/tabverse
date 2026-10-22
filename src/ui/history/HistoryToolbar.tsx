@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { Button, InputGroup } from '@blueprintjs/core';
 import React from 'react';
 import clsx from 'clsx';
@@ -58,7 +59,7 @@ export function HistoryToolbar(props: HistoryToolbarProps) {
       <InputGroup
         inputRef={props.inputRef}
         leftIcon="search"
-        placeholder="search these closed tabs"
+        placeholder={t('historySearchPlaceholder')}
         value={props.value}
         onValueChange={props.onChange}
         onKeyDown={onKeyDown}
@@ -75,22 +76,22 @@ export function HistoryToolbar(props: HistoryToolbarProps) {
               icon="cross"
               minimal={true}
               small={true}
-              title="Clear the search (Esc)"
-              aria-label="Clear the history search"
+              title={t('historyClearSearch')}
+              aria-label={t('historyClearSearchAria')}
               onClick={() => props.onChange('')}
             />
           </div>
         }
-        aria-label="Search the closed tabs"
+        aria-label={t('historySearchAria')}
         fill={true}
       />
       <Button
         icon="group-objects"
         active={props.grouped}
         minimal={true}
-        title={props.grouped ? 'Grouped by site' : 'Group by site'}
+        title={props.grouped ? t('historyGrouped') : t('historyGroupBy')}
+        aria-label={t('historyGroupAria')}
         aria-pressed={props.grouped}
-        aria-label="Group the closed tabs by site"
         onClick={props.onToggleGrouped}
       />
     </div>

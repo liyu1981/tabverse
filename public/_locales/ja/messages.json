@@ -1,0 +1,1079 @@
+{
+  "extName": {
+    "message": "Tabverse"
+  },
+  "extDescription": {
+    "message": "Tabverse は、タブ管理にこだわりを持ったブラウザ拡張機能です。"
+  },
+  "extActionTitle": {
+    "message": "Tabverse"
+  },
+  "popupCurrentTabverseFallback": {
+    "message": "現在の Tabverse"
+  },
+  "popupReplaceNewTitle": {
+    "message": "このウィンドウで新しい Tabverse を開始しますか？"
+  },
+  "popupReplaceNewBody": {
+    "message": "このウィンドウには既に Tabverse があります（\"$1\"）。自動的に保存されるため、失われるものはありません。続行するとここでの Tabverse を閉じ、新しい Tabverse を開始します。このウィンドウのタブはその一部になります。"
+  },
+  "popupAddToWindowTitle": {
+    "message": "この Tabverse をこのウィンドウに追加しますか？"
+  },
+  "popupAddToWindowBody": {
+    "message": "このウィンドウには既に Tabverse があります（\"$1\"）。自動的に保存されるため、失われるものはありません。続行すると「$2」をこのウィンドウの Tabverse にし、その $3 個のタブをここで開きます。このウィンドウで既に開いているタブはそのまま残り、その Tabverse のうち既にここで開いているものは再利用されます。"
+  },
+  "popupImportedOk": {
+    "message": "読み込みました：\"$1\""
+  },
+  "popupImportFailed": {
+    "message": "このファイルは Tabverse のエクスポートではありません。"
+  },
+  "popupLoading": {
+    "message": "読み込み中…"
+  },
+  "popupNothingSaved": {
+    "message": "まだ保存された Tabverse はありません。Tabverse で保ったウィンドウはどれも Tabverse になり、後でここに表示されます。"
+  },
+  "popupNothingFound": {
+    "message": "見つかりませんでした。語数を減らすか、タブのタイトルにある言葉を試してください。"
+  },
+  "popupNothingRecent": {
+    "message": "最近の項目はありません。ウィンドウで Tabverse を開くとここに表示されます。"
+  },
+  "popupSavedCount": {
+    "message": "$1 件を保存済み"
+  },
+  "popupNewTabverse": {
+    "message": "新しい Tabverse"
+  },
+  "popupNewTabverseTitleWhenOpen": {
+    "message": "現在の Tabverse を保存し、このウィンドウで新しいものを開始します"
+  },
+  "popupNewTabverseTitle": {
+    "message": "このウィンドウで新しい Tabverse を開始します"
+  },
+  "popupImport": {
+    "message": "読み込む"
+  },
+  "popupImportTitle": {
+    "message": ".tabverse ファイルを新しい Tabverse として読み込みます"
+  },
+  "popupSearchPlaceholder": {
+    "message": "保存済みの Tabverse を検索…"
+  },
+  "popupResultOne": {
+    "message": "$1 件の結果"
+  },
+  "popupResultMany": {
+    "message": "$1 件の結果"
+  },
+  "popupRecent": {
+    "message": "最近"
+  },
+  "popupSearchedOnServer": {
+    "message": "同期サーバーで検索"
+  },
+  "popupSearchedOnDevice": {
+    "message": "この端末で検索"
+  },
+  "popupNotDownloadedOne": {
+    "message": "$1 件はまだダウンロードされていません"
+  },
+  "popupNotDownloadedMany": {
+    "message": "$1 件はまだダウンロードされていません"
+  },
+  "popupConfirmReplace": {
+    "message": "置き換える"
+  },
+  "commonCancel": {
+    "message": "キャンセル"
+  },
+  "popupRowGoTo": {
+    "message": "この Tabverse へ移動"
+  },
+  "popupRowAddToWindow": {
+    "message": "このウィンドウに追加"
+  },
+  "commonTabCountOne": {
+    "message": "$1 個のタブ"
+  },
+  "commonTabCountMany": {
+    "message": "$1 個のタブ"
+  },
+  "popupThisWindow": {
+    "message": "このウィンドウ"
+  },
+  "popupOpenInWindowOne": {
+    "message": "$1 個のウィンドウで開いています"
+  },
+  "popupOpenInWindowMany": {
+    "message": "$1 個のウィンドウで開いています"
+  },
+  "popupGoToWindowOfTabverse": {
+    "message": "この Tabverse のウィンドウへ移動"
+  },
+  "popupOpenInNewWindow": {
+    "message": "新しいウィンドウで開く"
+  },
+  "commonLoading": {
+    "message": "読み込み中..."
+  },
+  "commonSomethingWentWrong": {
+    "message": "問題が発生しました。"
+  },
+  "commonFilterCount": {
+    "message": "$1 / $2"
+  },
+  "commonFilterTotal": {
+    "message": "$1"
+  },
+  "commonFilterPlaceholder": {
+    "message": "絞り込む…"
+  },
+  "commonClearFilter": {
+    "message": "絞り込みを解除"
+  },
+  "commonCollapseSidebar": {
+    "message": "サイドバーをアイコンに折りたたむ"
+  },
+  "commonCollapseSidebarAria": {
+    "message": "サイドバーを折りたたむ"
+  },
+  "commonExpandSidebar": {
+    "message": "サイドバーを展開する"
+  },
+  "commonPreviousPage": {
+    "message": "前のページ"
+  },
+  "commonNextPage": {
+    "message": "次のページ"
+  },
+  "commonPageIndicator": {
+    "message": "$1/$2"
+  },
+  "commonRemoveAria": {
+    "message": "削除"
+  },
+  "searchTermsAria": {
+    "message": "検索語"
+  },
+  "aboutTagline": {
+    "message": "タブ管理にこだわる"
+  },
+  "aboutCreatedIn": {
+    "message": "シドニーで作成"
+  },
+  "aboutWebsite": {
+    "message": "ウェブサイト"
+  },
+  "aboutGithub": {
+    "message": "Github"
+  },
+  "settingsTitle": {
+    "message": "設定"
+  },
+  "settingsTabSync": {
+    "message": "同期"
+  },
+  "settingsTabTabs": {
+    "message": "タブ"
+  },
+  "settingsTabDuplicates": {
+    "message": "重複"
+  },
+  "settingsTabLook": {
+    "message": "外観"
+  },
+  "settingsTabAi": {
+    "message": "AI"
+  },
+  "settingsTabAbout": {
+    "message": "この機能について"
+  },
+  "commonReading": {
+    "message": "読み取り中…"
+  },
+  "suspendOffSummary": {
+    "message": "一時停止はオフです。タブは unload されません。"
+  },
+  "suspendOnSummary": {
+    "message": "$1 分間操作がないタブは unload され、開き直すと再読み込みされます。"
+  },
+  "suspendCalloutTitle": {
+    "message": "未使用のタブを一時停止する"
+  },
+  "suspendHint": {
+    "message": "一時停止したタブはメモリから unload されますが、タブバーには残ったままです。開き直すとページを再読み込みし、何も閉じられることはありません。Tabverse は Tabverse が開いているウィンドウのタブだけを一時停止し、ホワイトリスト登録済み・固定中・再生中のタブには絶対にかかりません。"
+  },
+  "suspendSwitchLabel": {
+    "message": "未使用のタブを一時停止する"
+  },
+  "suspendAfterLabel": {
+    "message": "一時停止までの時間"
+  },
+  "commonMinutes": {
+    "message": "分"
+  },
+  "appearanceCalloutTitle": {
+    "message": "サイドバーの色"
+  },
+  "appearanceHint": {
+    "message": "サイドバーはほぼ白いグリフ（ロゴ、説明文、下部バーのアイコン）を表示するため、ここにある選択肢はすべて暗色です。色はこのウィンドウの Tabverse のもので、ウィンドウに従い、Tabverse と一緒に移動します。"
+  },
+  "appearanceRandomLabel": {
+    "message": "新しい Tabverse にランダムな色を使う"
+  },
+  "appearanceRandomOn": {
+    "message": "新しい Tabverse はこのパレットから色をランダムに選びます。"
+  },
+  "appearanceRandomOff": {
+    "message": "新しい Tabverse は既定の色で始まります。"
+  },
+  "dedupOffSummary": {
+    "message": "重複アドバイザーはオフです。タブの確認は行われません。"
+  },
+  "dedupOnSummary": {
+    "message": "開いているタブを $1 分ごとに確認し、重複があれば削除を提案しますが、自動で閉じることはありません。"
+  },
+  "dedupCalloutTitle": {
+    "message": "重複したタブ"
+  },
+  "dedupHint": {
+    "message": "アドバイザーは見るだけです。Tabverse が開いているウィンドウで、同じページを開いているタブが 2 つ見つかると、タブ一覧にお知らせが表示され、余分なタブを閉じるか無視できます。自らタブを閉じることはなく、固定済みのタブや音声を再生中のタブにも触れません。"
+  },
+  "dedupSwitchLabel": {
+    "message": "重複したタブを探す"
+  },
+  "dedupCheckEveryLabel": {
+    "message": "確認間隔"
+  },
+  "moveFoundNothing": {
+    "message": "何も見つかりませんでした。検索語が違いますか？"
+  },
+  "moveCandidateInfo": {
+    "message": "作成：$1、保存：$2"
+  },
+  "moveNoTargetToast": {
+    "message": "移動先の Tabverse を選ばずにタブを移動することはできません！"
+  },
+  "moveMovingToastOne": {
+    "message": "$1 個のタブを $2 へ移動しています"
+  },
+  "moveMovingToastMany": {
+    "message": "$1 個のタブを $2 へ移動しています"
+  },
+  "moveMovedToastOne": {
+    "message": "$1 個のタブを $2 へ移動しました"
+  },
+  "moveMovedToastMany": {
+    "message": "$1 個のタブを $2 へ移動しました"
+  },
+  "moveDialogTitle": {
+    "message": "選択したタブを別の Tabverse へ移動"
+  },
+  "moveSearchPlaceholder": {
+    "message": "キーワードを入力し、↵ Enter で検索..."
+  },
+  "moveCloseAfterMove": {
+    "message": "移動後に選択したタブを閉じる"
+  },
+  "moveMoveButton": {
+    "message": "移動"
+  },
+  "aiChecking": {
+    "message": "確認中…"
+  },
+  "aiSupportAbsent": {
+    "message": "このブラウザでは利用できません"
+  },
+  "aiSupportAvailable": {
+    "message": "この端末で利用できます"
+  },
+  "aiCouldNotCheck": {
+    "message": "確認できませんでした"
+  },
+  "aiModelAbsent": {
+    "message": "利用できません"
+  },
+  "aiModelNotInstalled": {
+    "message": "まだインストールされていません"
+  },
+  "aiInstallingPercent": {
+    "message": "インストール中… $1%"
+  },
+  "aiInstalling": {
+    "message": "インストール中…"
+  },
+  "aiModelReady": {
+    "message": "インストール済みで利用可能"
+  },
+  "aiCalloutTitle": {
+    "message": "Chrome 標組み込みの AI"
+  },
+  "aiCalloutHint": {
+    "message": "以下の機能は、Chrome 自身が同梱するモデル（Gemma Nano）をこの端末上で実行します。渡す内容はブラウザ内でのみモデルへ渡され、どこにも送信されません。サーバーもアカウントも設定も不要です。"
+  },
+  "aiWhereTitle": {
+    "message": "見つけかた"
+  },
+  "aiFeatureNameTabverse": {
+    "message": "Tabverse に名前をつける"
+  },
+  "aiFeatureNameTabverseWhere": {
+    "message": "Tabverse を開くと、名前の横の電球が候補を 3 つ提案します。"
+  },
+  "aiFeatureSummarizeTab": {
+    "message": "タブを要約する"
+  },
+  "aiFeatureSummarizeTabWhere": {
+    "message": "開いている Tabverse では、電球は有効なタブ行の右側にあり、そのページを新しいノートに変えます。"
+  },
+  "aiSwitchLabel": {
+    "message": "オンデバイスモデルを使う"
+  },
+  "aiDeviceSupportLabel": {
+    "message": "端末の対応"
+  },
+  "aiLocalModelLabel": {
+    "message": "ローカルモデル"
+  },
+  "aiOfferedLabel": {
+    "message": "提供状況"
+  },
+  "aiOfferedOn": {
+    "message": "AI 機能は提供されています"
+  },
+  "aiOfferedOff": {
+    "message": "オフ"
+  },
+  "aiDownloadButton": {
+    "message": "今すぐモデルをダウンロード"
+  },
+  "aiDownloadTitle": {
+    "message": "この端末で一度だけダウンロードされます。モデルは Chrome 自身のもので、拡張機能には同梱されていません"
+  },
+  "aiDownloadingNote": {
+    "message": "Chrome がモデルをダウンロードしています。このページが進捗を表示します。"
+  },
+  "aiCheckAgainButton": {
+    "message": "再確認"
+  },
+  "syncLabelOfficial": {
+    "message": "Tabverse 公式サーバー"
+  },
+  "syncLabelCustom": {
+    "message": "自分のサーバー（ペアリングコード）"
+  },
+  "syncNotConnected": {
+    "message": "未接続：Tabverse は、独自の同期サーバーとペアリングするまで完全にローカルで動作します。"
+  },
+  "syncConnectedTo": {
+    "message": "$1 に接続しました"
+  },
+  "syncFailedTo": {
+    "message": "失敗：$1"
+  },
+  "syncWizardOpened": {
+    "message": "Tabverse のウィンドウが開きました。そこでサインインし、この端末を許可してください。トークンは自動的に戻ります。"
+  },
+  "syncBothRequired": {
+    "message": "サーバーの URL とペアリングコードの両方が必要です。"
+  },
+  "syncPairedNoUpload": {
+    "message": "$1 とペアリングしました。既存のデータはこの端末に留まり、新規および変更された Tabverse はこれから同期されます。"
+  },
+  "syncPairedUploadSkipped": {
+    "message": "$1 とペアリングしましたが、アップロードはスキップされました。同期が未設定のためです。「ローカルデータをアップロード」で再試行してください。"
+  },
+  "syncPairedUploading": {
+    "message": "$1 とペアリングしました。この端末のデータをアップロードしています..."
+  },
+  "syncPairedUploadDoneNoStale": {
+    "message": "$1 とペアリングしました。ローカル $3 件のうち $2 件をアップロードしました。"
+  },
+  "syncPairedUploadDoneStale": {
+    "message": "$1 とペアリングしました。ローカル $3 件のうち $2 件をアップロードしました。$4 件はサーバー側の方が新しい状態でした。"
+  },
+  "syncPairedUploadFailed": {
+    "message": "$1 とペアリングしましたが、アップロードに失敗しました：$2。データはまだこの端末にあります。「ローカルデータをアップロード」で再試行してください。"
+  },
+  "syncNotConfigured": {
+    "message": "同期が未設定です。"
+  },
+  "syncSyncedNoStale": {
+    "message": "同期しました：送信 $1、受信 $2"
+  },
+  "syncSyncedStale": {
+    "message": "同期しました：送信 $1、受信 $2、競合 $3 件を解決"
+  },
+  "syncSyncFailed": {
+    "message": "同期に失敗しました：$1"
+  },
+  "syncUnknownError": {
+    "message": "不明なエラー"
+  },
+  "syncUploadingNow": {
+    "message": "この端末のデータをアップロードしています..."
+  },
+  "syncUploadDoneNoStale": {
+    "message": "ローカル $2 件のうち $1 件をアップロードしました。"
+  },
+  "syncUploadDoneStale": {
+    "message": "ローカル $2 件のうち $1 件をアップロードしました。$3 件はサーバー側の方が新しい状態でした。"
+  },
+  "syncDisconnected": {
+    "message": "切断しました。データはこの端末に留まります。"
+  },
+  "syncPairCalloutTitle": {
+    "message": "このブラウザをペアリング"
+  },
+  "syncPairHint1": {
+    "message": "独自の "
+  },
+  "syncPairHint2": {
+    "message": " サーバーを起動し、アカウントを作成してから、次でワンタイムのペアリングコードを発行します："
+  },
+  "syncPairHint3": {
+    "message": " を下に貼り付けてください。"
+  },
+  "syncServerUrlLabel": {
+    "message": "サーバーの URL"
+  },
+  "syncServerUrlPlaceholder": {
+    "message": "https://sync.example.com"
+  },
+  "syncPairingCodeLabel": {
+    "message": "ペアリングコード"
+  },
+  "syncPairingCodePlaceholder": {
+    "message": "XXXX-XXXX-XXXX-XXXX"
+  },
+  "syncDeviceNameLabel": {
+    "message": "端末名"
+  },
+  "syncDeviceNamePlaceholder": {
+    "message": "chrome"
+  },
+  "syncUploadLocalLabel": {
+    "message": "この端末にあるデータも一緒にアップロードする"
+  },
+  "syncUploadHintCount": {
+    "message": "この端末には $1 件のレコード（Tabverse $2 個、タブ $3 個）があります。接続時に一度だけサーバーへ送信されます。"
+  },
+  "syncUploadHintStays": {
+    "message": "既存のデータはこの端末に留まります。新規および変更された Tabverse はこれからも同期されます。"
+  },
+  "syncUploadHintNothing": {
+    "message": "この端末にはまだ何も保存されていないため、アップロードするものはありません。"
+  },
+  "syncPairUploadButton": {
+    "message": "ペアリングしてローカルデータをアップロード"
+  },
+  "syncPairConnectButton": {
+    "message": "ペアリングして接続"
+  },
+  "syncWaitingTitle": {
+    "message": "Tabverse のウィンドウを待っています"
+  },
+  "syncWaitingHint1": {
+    "message": "次のURL "
+  },
+  "syncWaitingHint2": {
+    "message": "でウィンドウが開きました。そこでサインインし、この端末に名前を付けて許可してください。トークンは自動的に戻り、このダイアログも追随します。"
+  },
+  "syncOfficialHint1": {
+    "message": "Tabverse 自身が運用するサーバーです。メールアドレス（または Google）でサインインし、この端末に名前を付けて承認してください。コピーするコードはありません。"
+  },
+  "syncOfficialHint2": {
+    "message": " にドキュメントがあります。コンソールは "
+  },
+  "syncConnectOfficialButton": {
+    "message": "Tabverse で接続"
+  },
+  "syncOwnServerHint1": {
+    "message": "独自の "
+  },
+  "syncOwnServerHint2": {
+    "message": " サーバーを運用していますか？ "
+  },
+  "syncOwnServerHint3": {
+    "message": " を選んでください。ペアリングコードを使います。"
+  },
+  "syncCustomServerMode": {
+    "message": "カスタムサーバー"
+  },
+  "syncDeviceLabel": {
+    "message": "端末："
+  },
+  "syncAccountLabel": {
+    "message": "アカウント："
+  },
+  "syncUnknown": {
+    "message": "不明"
+  },
+  "syncSyncingAria": {
+    "message": "同期中"
+  },
+  "syncNotSyncedYet": {
+    "message": "まだ同期していません"
+  },
+  "syncLastSyncLabel": {
+    "message": "最終同期："
+  },
+  "syncNowButton": {
+    "message": "今すぐ同期"
+  },
+  "syncUploadLocalButton": {
+    "message": "ローカルデータをアップロード"
+  },
+  "syncUploadLocalTitle": {
+    "message": "この端末に保存されたすべてをサーバーへ送ります。設定時はチェックを外さない限り自動で行われるため、これは後で使うためのボタンです：切断中に作られたデータ、または失敗したアップロードの再試行に。"
+  },
+  "syncDisconnectButton": {
+    "message": "切断"
+  },
+  "syncNotSetUpTitle": {
+    "message": "まだ設定されていません"
+  },
+  "syncNotSetUpHint": {
+    "message": "同期を設定するまで Tabverse は完全にローカルで動作します。この端末から何も出ません。"
+  },
+  "syncSetUpButton": {
+    "message": "同期を設定"
+  },
+  "syncTabStatus": {
+    "message": "状態"
+  },
+  "syncTabSetup": {
+    "message": "設定"
+  },
+  "syncConnectedToSetup1": {
+    "message": "接続先 "
+  },
+  "syncConnectedToSetup2": {
+    "message": "（$1）に接続しています。再接続するとこの設定は置き換わります。"
+  },
+  "syncOfficialModeTitle": {
+    "message": "tabversed.liyu1981.xyz でサインインし、この端末を許可"
+  },
+  "syncCustomModeTitle": {
+    "message": "自分で運用する tabversed サーバーに、コードでペアリング"
+  },
+  "syncUploadingProgress": {
+    "message": "$2 件中 $1 件をアップロードしています..."
+  },
+  "sidebarCurrentTabverse": {
+    "message": "現在の Tabverse"
+  },
+  "sidebarSavedTabverses": {
+    "message": "保存済み Tabverse"
+  },
+  "sidebarOmniSearch": {
+    "message": "全体検索"
+  },
+  "sidebarMyWebTools": {
+    "message": "マイ WebTools"
+  },
+  "sidebarOtherTabverses": {
+    "message": "他の Tabverse"
+  },
+  "previewReading": {
+    "message": "読み取り中…"
+  },
+  "previewNoTabs": {
+    "message": "このウィンドウには開いているタブがありません。"
+  },
+  "previewMore": {
+    "message": "他 +$1 個"
+  },
+  "bottomNavSyncing": {
+    "message": "同期中…"
+  },
+  "sidebarSavedCountSuffix": {
+    "message": "個の Tabverse を保存済み"
+  },
+  "sidebarLoadedCountSuffix": {
+    "message": "個を読み込み中"
+  },
+  "sidebarSortBy": {
+    "message": "並び替え"
+  },
+  "sidebarSortCreated": {
+    "message": "作成日時"
+  },
+  "sidebarSortSaved": {
+    "message": "保存日時"
+  },
+  "rightPanelAiHistory": {
+    "message": "AI 履歴"
+  },
+  "rightPanelServerConsole": {
+    "message": "サーバーコンソール"
+  },
+  "rightPanelOpenThe": {
+    "message": "$1 を開く"
+  },
+  "rightPanelShowThe": {
+    "message": "$1 を表示"
+  },
+  "rightPanelCollapseAria": {
+    "message": "右パネルを折りたたむ"
+  },
+  "rightPanelCollapse": {
+    "message": "折りたたむ"
+  },
+  "consoleReadingSetup": {
+    "message": "同期設定を読み取り中…"
+  },
+  "consoleReadError": {
+    "message": "同期設定を読み取れませんでした。このパネルを閉じて開き直してください。"
+  },
+  "consoleUnpaired": {
+    "message": "まだサーバーとペアリングしていません。下部バーの同期ボタンからペアリングすると、このパネルにそのコンソールが表示されます。"
+  },
+  "consoleOpenInTab": {
+    "message": "タブで開く"
+  },
+  "consoleOpenInTabTitle": {
+    "message": "コンソールを独立したタブとして開きます。そこではサインインが常に有効です"
+  },
+  "consoleSignedOutNote": {
+    "message": "ここでのコンソールがログアウト状態に見える場合は「$1」を使ってください。セッション Cookie はブラウザのもので、フレームは別のサイトになります。"
+  },
+  "consoleFrameTitle": {
+    "message": "同期サーバーのコンソール"
+  },
+  "timeToday": {
+    "message": "今日"
+  },
+  "timeTomorrow": {
+    "message": "明日"
+  },
+  "timeYesterday": {
+    "message": "昨日"
+  },
+  "timeLastWeekday": {
+    "message": "先週の$1"
+  },
+  "timeCalendarAt": {
+    "message": "$1 $2"
+  },
+  "bookmarkOpenInCurrent": {
+    "message": "現在の Tabverse で開く"
+  },
+  "bookmarkDeleteIt": {
+    "message": "削除する"
+  },
+  "bookmarkFilterPlaceholder": {
+    "message": "このブックマークを絞り込む…"
+  },
+  "bookmarkFilterAria": {
+    "message": "このブックマークを絞り込む"
+  },
+  "notePlaceholder": {
+    "message": "ここにメモを書いてください ..."
+  },
+  "capabilityHideDetails": {
+    "message": "詳細を隠す"
+  },
+  "capabilityShowMissing": {
+    "message": "不足しているものを確認"
+  },
+  "markdownCopied": {
+    "message": "コピーしました"
+  },
+  "markdownCopy": {
+    "message": "Markdown をコピー"
+  },
+  "markdownDialogTitle": {
+    "message": "ページ内容（Markdown）"
+  },
+  "webtoolTitle": {
+    "message": "マイ ウェブツールギャラリー"
+  },
+  "activeTabSearchClearAria": {
+    "message": "タブの絞り込みを解除"
+  },
+  "activeTabSearchAria": {
+    "message": "この Tabverse のタブを検索"
+  },
+  "suggestPreparing": {
+    "message": "オンデバイスモデルを準備しています…"
+  },
+  "suggestSuggesting": {
+    "message": "名前を提案しています…"
+  },
+  "suggestNoAiBrowser": {
+    "message": "このブラウザには組み込み AI がありません。"
+  },
+  "suggestNoTabs": {
+    "message": "この Tabverse にはまだ名前を付けるタブがありません。"
+  },
+  "suggestNoNames": {
+    "message": "名前が返ってきませんでした。もう一度お試しください。"
+  },
+  "suggestCannotReach": {
+    "message": "オンデバイスモデルに到達できませんでした。もう一度お試しください。"
+  },
+  "suggestAria": {
+    "message": "この Tabverse の名前を提案"
+  },
+  "tabListWorkingOn": {
+    "message": "$1 個のタブを処理中"
+  },
+  "tabListSelectedOne": {
+    "message": "$1 個のタブを選択中"
+  },
+  "tabListSelectedMany": {
+    "message": "$1 個のタブを選択中"
+  },
+  "tabListSaveCloseAria": {
+    "message": "この Tabverse を保存して閉じる"
+  },
+  "tabListExportAria": {
+    "message": "この Tabverse を .tabverse ファイルにエクスポート"
+  },
+  "historySearchPlaceholder": {
+    "message": "この履歴のタブを検索"
+  },
+  "historyClearSearch": {
+    "message": "検索をクリア (Esc)"
+  },
+  "historyClearSearchAria": {
+    "message": "履歴の検索をクリア"
+  },
+  "historySearchAria": {
+    "message": "終了したタブを検索"
+  },
+  "historyGrouped": {
+    "message": "サイト別にグループ化済み"
+  },
+  "historyGroupBy": {
+    "message": "サイト別にグループ化"
+  },
+  "historyGroupAria": {
+    "message": "終了したタブをサイト別にグループ化"
+  },
+  "historyReopen": {
+    "message": "現在の Tabverse で開き直す"
+  },
+  "historyAlreadyBookmarked": {
+    "message": "このページは既にブックマーク済みです"
+  },
+  "historySaveAsBookmark": {
+    "message": "ブックマークとして保存（ここから削除されます）"
+  },
+  "historyForgetIt": {
+    "message": "履歴から消す"
+  },
+  "historyAlreadyBookmarkedToast": {
+    "message": "このページは既にブックマーク済みです。"
+  },
+  "historySavedToast": {
+    "message": "ブックマークとして保存しました。"
+  },
+  "historyClearedToast": {
+    "message": "終了タブの履歴をクリアしました。"
+  },
+  "historyReopenLast": {
+    "message": "最後に終了したタブを開き直す"
+  },
+  "historyClearWhole": {
+    "message": "履歴をすべてクリア"
+  },
+  "todoEditHint": {
+    "message": "ダブルクリック、または Enter で編集"
+  },
+  "todoDeleteAria": {
+    "message": "タスクを削除"
+  },
+  "todoMarkAll": {
+    "message": "すべて完了としてマーク"
+  },
+  "todoPlaceholder": {
+    "message": "何をしますか？"
+  },
+  "todoFilterPlaceholder": {
+    "message": "このタスクを絞り込む…"
+  },
+  "todoFilterAria": {
+    "message": "このタスクを絞り込む"
+  },
+  "omniPlaceholder": {
+    "message": "タブ、履歴、ノート、タスク、ブックマークを検索"
+  },
+  "omniTypeToSearch": {
+    "message": "入力して同期済みの Tabverse を検索"
+  },
+  "omniKindTabverses": {
+    "message": "Tabverse"
+  },
+  "omniKindTabs": {
+    "message": "タブ"
+  },
+  "omniKindHistory": {
+    "message": "履歴"
+  },
+  "omniKindNotes": {
+    "message": "ノート"
+  },
+  "omniKindTodos": {
+    "message": "タスク"
+  },
+  "omniKindBookmarks": {
+    "message": "ブックマーク"
+  },
+  "omniKindSessions": {
+    "message": "セッション"
+  },
+  "savedDetailSwitch": {
+    "message": "この Tabverse のウィンドウへ移動"
+  },
+  "savedDetailLoadNewWindow": {
+    "message": "すべてのタブを新しいウィンドウに読み込む"
+  },
+  "savedDetailLoadThisWindow": {
+    "message": "このウィンドウに読み込む：既に開いているタブは残り、この Tabverse 本体に不足しているタブは横に開きます"
+  },
+  "focusExit": {
+    "message": "固定ツールの集中表示を終了"
+  },
+  "focusEnter": {
+    "message": "固定したツールに集中表示"
+  },
+  "toolUnpin": {
+    "message": "現在のツールの固定を解除"
+  },
+  "toolPin": {
+    "message": "現在のツールを固定"
+  },
+  "reviseNoRevision": {
+    "message": "改訂内容が返ってきませんでした。もう一度お試しください。"
+  },
+  "reviseInstructionAria": {
+    "message": "改訂の指示"
+  },
+  "reviseAria": {
+    "message": "AI でこのノートを改訂"
+  },
+  "reviseTitle": {
+    "message": "AI でこのノートを改訂"
+  },
+  "dedupNeverAgain": {
+    "message": "この URL を二度と提案しない"
+  },
+  "dedupFound": {
+    "message": "重複したタブが見つかりました"
+  },
+  "dedupReviewDuplicates": {
+    "message": "重複を確認"
+  },
+  "dedupHide": {
+    "message": "隠す"
+  },
+  "dedupReview": {
+    "message": "確認"
+  },
+  "editorH1": {
+    "message": "H1"
+  },
+  "editorH2": {
+    "message": "H2"
+  },
+  "editorH3": {
+    "message": "H3"
+  },
+  "editorBlockquote": {
+    "message": "引用"
+  },
+  "editorUnorderedList": {
+    "message": "箇条書き"
+  },
+  "editorOrderedList": {
+    "message": "番号付きリスト"
+  },
+  "editorCodeBlock": {
+    "message": "コードブロック"
+  },
+  "editorBold": {
+    "message": "太字"
+  },
+  "editorItalic": {
+    "message": "斜体"
+  },
+  "editorUnderline": {
+    "message": "下線"
+  },
+  "editorMonospace": {
+    "message": "等幅"
+  },
+  "editorStrikethrough": {
+    "message": "打ち消し線"
+  },
+  "pcbReadyStatus": {
+    "message": "このタブのページアクション"
+  },
+  "pcbSuspendedStatus": {
+    "message": "このタブは一時停止中です。開いて読み込んでから、もう一度お試しください"
+  },
+  "pcbUnreadableStatus": {
+    "message": "このページを Markdown として読み取れませんでした。"
+  },
+  "pcbViewMarkdown": {
+    "message": "ページ内容を Markdown で見る"
+  },
+  "pcbSendToChat": {
+    "message": "ページ内容を AI チャットへ送る"
+  },
+  "pcbNewNote": {
+    "message": "AI 要約で新規ノート"
+  },
+  "pcbAppendNote": {
+    "message": "AI 要約で現在のノートに追記"
+  },
+  "pcbAria": {
+    "message": "このタブのページアクション"
+  },
+  "pcbCannotRead": {
+    "message": "このタブを読み取れませんでした。"
+  },
+  "pcbNoSummary": {
+    "message": "要約が返ってきませんでした。もう一度お試しください。"
+  },
+  "pcbNoNoteSelected": {
+    "message": "追記先のノートが選択されていません。"
+  },
+  "pcbNoteAdded": {
+    "message": "この Tabverse にノートを追加しました。"
+  },
+  "pcbAttached": {
+    "message": "ページを AI チャットに添付しました。"
+  },
+  "tabCardSaveBookmark": {
+    "message": "このタブをブックマークとして保存"
+  },
+  "tabCardPinnedInChrome": {
+    "message": "このタブは Chrome で固定されています"
+  },
+  "tabCardWhitelisted": {
+    "message": "このタブは一時停止されません。クリックで停止を許可します"
+  },
+  "tabCardNeverSuspend": {
+    "message": "このタブを一時停止しない"
+  },
+  "tabCardAllowSuspend": {
+    "message": "このタブの一時停止を許可"
+  },
+  "tabCardClose": {
+    "message": "このタブを閉じる"
+  },
+  "noteReviewTitle": {
+    "message": "変更を確認"
+  },
+  "noteRejectAll": {
+    "message": "すべて却下"
+  },
+  "noteEditAddedLine": {
+    "message": "追加された行を編集"
+  },
+  "noteKeepChange": {
+    "message": "この変更を維持"
+  },
+  "noteRevertChange": {
+    "message": "この変更を取り消す"
+  },
+  "chatNoContextWindow": {
+    "message": "このブラウザはコンテキストウィンドウを報告しません。"
+  },
+  "chatClearConversation": {
+    "message": "会話をクリア"
+  },
+  "chatContextWindowAria": {
+    "message": "使用したコンテキストウィンドウ"
+  },
+  "chatCopyAnswer": {
+    "message": "回答をコピー"
+  },
+  "chatRegenerate": {
+    "message": "回答を再生成"
+  },
+  "chatAttachedPage": {
+    "message": "添付ページ"
+  },
+  "chatCompactedNotice": {
+    "message": "コンテキストに収めるため、以前の会話を要約しました"
+  },
+  "chatRemoveContext": {
+    "message": "添付したページを外す"
+  },
+  "chatPlaceholder": {
+    "message": "オンデバイスモデルに質問…"
+  },
+  "chatMessageAria": {
+    "message": "メッセージ"
+  },
+  "chatClearInput": {
+    "message": "入力をクリア"
+  },
+  "chatClearInputLabel": {
+    "message": "入力内容をクリア"
+  },
+  "chatEnterHint": {
+    "message": "Enter で送信 · Shift+Enter で改行"
+  },
+  "chatNoModelTitle": {
+    "message": "オンデバイスモデルがありません"
+  },
+  "chatNoModelBody": {
+    "message": "このブラウザは Chrome 組み込み AI を提供していないため、チャットを動かすものがありません。他の AI 機能も同じ理由で利用できません。"
+  },
+  "chatModelOffTitle": {
+    "message": "オンデバイスモデルはオフです"
+  },
+  "chatModelOffBody": {
+    "message": "設定 → AI で再度オンにするとチャットを使えます。"
+  },
+  "omniNothingMatched": {
+    "message": "一致するものがありません。"
+  },
+  "omniKindsAria": {
+    "message": "検索結果の種類"
+  },
+  "dedupRemoved": {
+    "message": "重複したタブを削除しました。"
+  },
+  "suggestPickHint": {
+    "message": "この Tabverse の名前を選んでください。"
+  },
+  "reviseSayHint": {
+    "message": "このノートの扱いを指示してください"
+  },
+  "searchContainsAllOf": {
+    "message": "すべて含む"
+  },
+  "managerOtherPage": {
+    "message": "別の Tabverse マネージャーページが見つかりました！"
+  },
+  "activeTabClearFilter": {
+    "message": "絞り込みを解除 (Esc)"
+  },
+  "groupSplitView": {
+    "message": "分割表示"
+  },
+  "tabListSaveClose": {
+    "message": "保存して閉じる"
+  },
+  "tabListExport": {
+    "message": ".tabverse ファイルとしてエクスポート"
+  },
+  "noteNoChanges": {
+    "message": "変更はありません"
+  },
+  "noteFilterPlaceholder": {
+    "message": "このノートを絞り込む…"
+  },
+  "noteFilterAria": {
+    "message": "このノートを絞り込む"
+  }
+}

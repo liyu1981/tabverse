@@ -1,3 +1,4 @@
+import { t } from '../../../i18n';
 import { $allBookmark, bookmarkStoreApi } from '../../../data/bookmark/store';
 import { $tabSpace, $tabSpacePreviewCache } from '../../../data/tabSpace/store';
 import {
@@ -335,20 +336,20 @@ export function TabSpaceListView() {
       </div>
       <div className={classes.titleButtons}>
         <SuggestNameButton tabs={nameTabs} onApply={applySuggestedName} />
-        <Tooltip content="Save and close" placement="bottom">
+        <Tooltip content={t('tabListSaveClose')} placement="bottom">
           <Button
             className="tv-icon-button"
-            aria-label="Save and close this tabverse"
+            aria-label={t('tabListSaveCloseAria')}
             icon="floppy-disk"
             minimal={true}
             loading={isClosing}
             onClick={() => void saveAndClose()}
           />
         </Tooltip>
-        <Tooltip content="Export as .tabverse file" placement="bottom">
+        <Tooltip content={t('tabListExport')} placement="bottom">
           <Button
             className="tv-icon-button"
-            aria-label="Export this tabverse to a .tabverse file"
+            aria-label={t('tabListExportAria')}
             icon="export"
             minimal={true}
             onClick={() => void exportCurrentTabverse()}
@@ -362,14 +363,19 @@ export function TabSpaceListView() {
     <div className={classes.toolbarContainer}>
       <div className={classes.toolbarLeftContainer}>
         <div>
-          <span>{`Working on ${tabSpace.tabs.size} tabs`}</span>
+          <span>{t('tabListWorkingOn', [String(tabSpace.tabs.size)])}</span>
         </div>
       </div>
       {selectedTabs.size > 0 ? (
         <div className={classes.toolbarMiddleContainer}>
-          <span className={classes.selectedTabsToolbarInfo}>{`Selected ${
-            selectedTabs.size
-          } ${selectedTabs.size > 1 ? 'tabs' : 'tab'}`}</span>
+          <span className={classes.selectedTabsToolbarInfo}>
+            {t(
+              selectedTabs.size > 1
+                ? 'tabListSelectedMany'
+                : 'tabListSelectedOne',
+              [String(selectedTabs.size)],
+            )}
+          </span>
           <SelectedTabToolControl
             className={classes.selectedTabsToolbarToolControl}
             onClick={(currentTool) => {

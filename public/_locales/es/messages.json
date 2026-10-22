@@ -1,0 +1,1079 @@
+{
+  "extName": {
+    "message": "Tabverse"
+  },
+  "extDescription": {
+    "message": "Tabverse es una manera decidida de gestionar pestañas."
+  },
+  "extActionTitle": {
+    "message": "Tabverse"
+  },
+  "popupCurrentTabverseFallback": {
+    "message": "el Tabverse actual"
+  },
+  "popupReplaceNewTitle": {
+    "message": "¿Iniciar un Tabverse nuevo en esta ventana?"
+  },
+  "popupReplaceNewBody": {
+    "message": "Esta ventana ya tiene un Tabverse (\"$1\"). Se guarda automáticamente, así que no se pierde nada. Continuar lo cierra aquí e inicia un Tabverse nuevo; las pestañas de esta ventana pasan a formar parte de él."
+  },
+  "popupAddToWindowTitle": {
+    "message": "¿Agregar este Tabverse a esta ventana?"
+  },
+  "popupAddToWindowBody": {
+    "message": "Esta ventana ya tiene un Tabverse (\"$1\"). Se guarda automáticamente, así que no se pierde nada. Continuar hace de \"$2\" el Tabverse de esta ventana y abre sus $3 pestañas aquí: las pestañas ya abiertas en esta ventana se quedan, y las de ese Tabverse ya abiertas aquí se reutilizan."
+  },
+  "popupImportedOk": {
+    "message": "Importado \"$1\""
+  },
+  "popupImportFailed": {
+    "message": "Ese archivo no es una exportación de Tabverse."
+  },
+  "popupLoading": {
+    "message": "Cargando…"
+  },
+  "popupNothingSaved": {
+    "message": "Aún no hay ningún Tabverse guardado. Cada ventana que conservas con Tabverse se convierte en uno, y aparece aquí después."
+  },
+  "popupNothingFound": {
+    "message": "No se encontró nada. Prueba con menos palabras, o con una del título de una pestaña."
+  },
+  "popupNothingRecent": {
+    "message": "Nada reciente. Abre un Tabverse en una ventana y aparecerá aquí."
+  },
+  "popupSavedCount": {
+    "message": "$1 guardados"
+  },
+  "popupNewTabverse": {
+    "message": "Tabverse nuevo"
+  },
+  "popupNewTabverseTitleWhenOpen": {
+    "message": "Guarda el Tabverse actual e inicia uno nuevo en esta ventana"
+  },
+  "popupNewTabverseTitle": {
+    "message": "Inicia un Tabverse nuevo en esta ventana"
+  },
+  "popupImport": {
+    "message": "Importar"
+  },
+  "popupImportTitle": {
+    "message": "Importa un archivo .tabverse como un Tabverse nuevo"
+  },
+  "popupSearchPlaceholder": {
+    "message": "buscar Tabverses guardados…"
+  },
+  "popupResultOne": {
+    "message": "$1 resultado"
+  },
+  "popupResultMany": {
+    "message": "$1 resultados"
+  },
+  "popupRecent": {
+    "message": "Recientes"
+  },
+  "popupSearchedOnServer": {
+    "message": "buscado en el servidor de sincronización"
+  },
+  "popupSearchedOnDevice": {
+    "message": "buscado en este dispositivo"
+  },
+  "popupNotDownloadedOne": {
+    "message": "$1 resultado aún sin descargar"
+  },
+  "popupNotDownloadedMany": {
+    "message": "$1 resultados aún sin descargar"
+  },
+  "popupConfirmReplace": {
+    "message": "Reemplazar"
+  },
+  "commonCancel": {
+    "message": "Cancelar"
+  },
+  "popupRowGoTo": {
+    "message": "Ir a este Tabverse"
+  },
+  "popupRowAddToWindow": {
+    "message": "Agregar a esta ventana"
+  },
+  "commonTabCountOne": {
+    "message": "$1 pestaña"
+  },
+  "commonTabCountMany": {
+    "message": "$1 pestañas"
+  },
+  "popupThisWindow": {
+    "message": "esta ventana"
+  },
+  "popupOpenInWindowOne": {
+    "message": "abierto en $1 ventana"
+  },
+  "popupOpenInWindowMany": {
+    "message": "abierto en $1 ventanas"
+  },
+  "popupGoToWindowOfTabverse": {
+    "message": "Ir a la ventana de este Tabverse"
+  },
+  "popupOpenInNewWindow": {
+    "message": "Abrir En Una Ventana Nueva"
+  },
+  "commonLoading": {
+    "message": "Cargando..."
+  },
+  "commonSomethingWentWrong": {
+    "message": "Algo salió mal."
+  },
+  "commonFilterCount": {
+    "message": "$1 de $2"
+  },
+  "commonFilterTotal": {
+    "message": "$1"
+  },
+  "commonFilterPlaceholder": {
+    "message": "filtrar…"
+  },
+  "commonClearFilter": {
+    "message": "Borrar el filtro"
+  },
+  "commonCollapseSidebar": {
+    "message": "Contraer la barra lateral a iconos"
+  },
+  "commonCollapseSidebarAria": {
+    "message": "Contraer la barra lateral"
+  },
+  "commonExpandSidebar": {
+    "message": "Expandir la barra lateral"
+  },
+  "commonPreviousPage": {
+    "message": "Página anterior"
+  },
+  "commonNextPage": {
+    "message": "Página siguiente"
+  },
+  "commonPageIndicator": {
+    "message": "$1/$2"
+  },
+  "commonRemoveAria": {
+    "message": "Quitar"
+  },
+  "searchTermsAria": {
+    "message": "Términos de búsqueda"
+  },
+  "aboutTagline": {
+    "message": "Una Manera Decidida De Gestionar Pestañas"
+  },
+  "aboutCreatedIn": {
+    "message": "Creado en Sídney"
+  },
+  "aboutWebsite": {
+    "message": "Sitio web"
+  },
+  "aboutGithub": {
+    "message": "Github"
+  },
+  "settingsTitle": {
+    "message": "Ajustes"
+  },
+  "settingsTabSync": {
+    "message": "Sincronización"
+  },
+  "settingsTabTabs": {
+    "message": "Pestañas"
+  },
+  "settingsTabDuplicates": {
+    "message": "Duplicados"
+  },
+  "settingsTabLook": {
+    "message": "Apariencia"
+  },
+  "settingsTabAi": {
+    "message": "IA"
+  },
+  "settingsTabAbout": {
+    "message": "Acerca de"
+  },
+  "commonReading": {
+    "message": "Leyendo…"
+  },
+  "suspendOffSummary": {
+    "message": "La suspensión está desactivada. No se descarga ninguna pestaña."
+  },
+  "suspendOnSummary": {
+    "message": "Las pestañas con más de $1 minutos de inactividad se descargan; abrirla de nuevo recarga la página."
+  },
+  "suspendCalloutTitle": {
+    "message": "Suspender pestañas inactivas"
+  },
+  "suspendHint": {
+    "message": "Una pestaña suspendida se descarga de la memoria pero sigue en la barra de pestañas. Abirla de nuevo recarga la página; no se cierra nada. Tabverse solo suspende pestañas de una ventana donde hay un Tabverse abierto, y nunca una que tengas en la lista blanca, fijada o a la que estés escuchando."
+  },
+  "suspendSwitchLabel": {
+    "message": "Suspender pestañas inactivas"
+  },
+  "suspendAfterLabel": {
+    "message": "Suspender después de"
+  },
+  "commonMinutes": {
+    "message": "minutos"
+  },
+  "appearanceCalloutTitle": {
+    "message": "Color de la barra lateral"
+  },
+  "appearanceHint": {
+    "message": "El carril lleva glifos casi blancos - el logo, el texto, los iconos de la barra inferior - así que las opciones aquí son todas oscuras. El color pertenece al Tabverse de esta ventana: lo sigue y viaja con el Tabverse."
+  },
+  "appearanceRandomLabel": {
+    "message": "Usar un color aleatorio para un Tabverse nuevo"
+  },
+  "appearanceRandomOn": {
+    "message": "Un Tabverse nuevo saca un color de esta paleta."
+  },
+  "appearanceRandomOff": {
+    "message": "Un Tabverse nuevo empieza con el color predeterminado."
+  },
+  "dedupOffSummary": {
+    "message": "El asesor de duplicados está desactivado. No se revisa ninguna pestaña."
+  },
+  "dedupOnSummary": {
+    "message": "Las pestañas abiertas se comprueban cada $1 minutos; los duplicados se ofrecen para quitarlos, nunca se cierran solos."
+  },
+  "dedupCalloutTitle": {
+    "message": "Pestañas duplicadas"
+  },
+  "dedupHint": {
+    "message": "El asesor solo mira. Cuando encuentra dos pestañas abiertas en la misma página en una ventana con un Tabverse, la lista de pestañas muestra un aviso donde puedes cerrar las de más o ignorarlas. Nunca cierra una pestaña por su cuenta, y nunca toca una fijada o que está reproduciendo audio."
+  },
+  "dedupSwitchLabel": {
+    "message": "Buscar pestañas duplicadas"
+  },
+  "dedupCheckEveryLabel": {
+    "message": "Comprobar cada"
+  },
+  "moveFoundNothing": {
+    "message": "No se encontró nada, ¿búsqueda errónea?"
+  },
+  "moveCandidateInfo": {
+    "message": "creado: $1, guardado: $2"
+  },
+  "moveNoTargetToast": {
+    "message": "¡No se pueden mover pestañas sin elegir un Tabverse de destino!"
+  },
+  "moveMovingToastOne": {
+    "message": "moviendo $1 pestaña a $2"
+  },
+  "moveMovingToastMany": {
+    "message": "moviendo $1 pestañas a $2"
+  },
+  "moveMovedToastOne": {
+    "message": "$1 pestaña movida a $2"
+  },
+  "moveMovedToastMany": {
+    "message": "$1 pestañas movidas a $2"
+  },
+  "moveDialogTitle": {
+    "message": "Mover Las Pestañas Seleccionadas A Otro Tabverse"
+  },
+  "moveSearchPlaceholder": {
+    "message": "escribe palabras clave,  luego ↵ enter para buscar..."
+  },
+  "moveCloseAfterMove": {
+    "message": "Cerrar las pestañas seleccionadas después de moverlas"
+  },
+  "moveMoveButton": {
+    "message": "Mover"
+  },
+  "aiChecking": {
+    "message": "Comprobando…"
+  },
+  "aiSupportAbsent": {
+    "message": "No disponible en este navegador"
+  },
+  "aiSupportAvailable": {
+    "message": "Disponible en este dispositivo"
+  },
+  "aiCouldNotCheck": {
+    "message": "No se pudo comprobar"
+  },
+  "aiModelAbsent": {
+    "message": "No disponible"
+  },
+  "aiModelNotInstalled": {
+    "message": "Aún sin instalar"
+  },
+  "aiInstallingPercent": {
+    "message": "Instalando… $1%"
+  },
+  "aiInstalling": {
+    "message": "Instalando…"
+  },
+  "aiModelReady": {
+    "message": "Instalado y listo"
+  },
+  "aiCalloutTitle": {
+    "message": "La IA integrada de Chrome"
+  },
+  "aiCalloutHint": {
+    "message": "Las funciones siguientes usan el modelo que Chrome trae de fábrica (Gemma Nano), en este dispositivo. Lo que les indiques se entrega al modelo dentro del navegador y nunca se envía a ningún sitio; sin servidor, sin cuenta, nada que configurar."
+  },
+  "aiWhereTitle": {
+    "message": "Dónde encontrarla"
+  },
+  "aiFeatureNameTabverse": {
+    "message": "Nombrar un Tabverse"
+  },
+  "aiFeatureNameTabverseWhere": {
+    "message": "Abre un Tabverse; la bombilla queda junto a su nombre arriba, y sugiere tres nombres para elegir."
+  },
+  "aiFeatureSummarizeTab": {
+    "message": "Resumir una pestaña"
+  },
+  "aiFeatureSummarizeTabWhere": {
+    "message": "En un Tabverse abierto, la bombilla está a la derecha de cada fila de pestaña activa, y convierte esa página en una nota nueva."
+  },
+  "aiSwitchLabel": {
+    "message": "Usar el modelo del dispositivo"
+  },
+  "aiDeviceSupportLabel": {
+    "message": "Compatibilidad del dispositivo"
+  },
+  "aiLocalModelLabel": {
+    "message": "Modelo local"
+  },
+  "aiOfferedLabel": {
+    "message": "Ofrecido"
+  },
+  "aiOfferedOn": {
+    "message": "Las funciones de IA se ofrecen"
+  },
+  "aiOfferedOff": {
+    "message": "Desactivado"
+  },
+  "aiDownloadButton": {
+    "message": "Descargar el modelo ahora"
+  },
+  "aiDownloadTitle": {
+    "message": "Se descarga una vez, en este dispositivo; el modelo es de Chrome y no viene con la extensión"
+  },
+  "aiDownloadingNote": {
+    "message": "Chrome está descargando el modelo; esta página sigue el progreso."
+  },
+  "aiCheckAgainButton": {
+    "message": "Comprobar de nuevo"
+  },
+  "syncLabelOfficial": {
+    "message": "Servidor oficial de Tabverse"
+  },
+  "syncLabelCustom": {
+    "message": "tu propio servidor (código de emparejamiento)"
+  },
+  "syncNotConnected": {
+    "message": "Sin conectar: Tabverse funciona totalmente local hasta que lo emparejes con tu propio servidor de sincronización."
+  },
+  "syncConnectedTo": {
+    "message": "Conectado a $1"
+  },
+  "syncFailedTo": {
+    "message": "Falló: $1"
+  },
+  "syncWizardOpened": {
+    "message": "Se abrió una ventana de Tabverse. Inicia sesión ahí y permite este dispositivo; el token vuelve solo."
+  },
+  "syncBothRequired": {
+    "message": "La URL del servidor y el código de emparejamiento son obligatorios."
+  },
+  "syncPairedNoUpload": {
+    "message": "Emparejado con $1. Tus datos existentes siguen en este dispositivo; los Tabverses nuevos y modificados se sincronizan a partir de ahora."
+  },
+  "syncPairedUploadSkipped": {
+    "message": "Emparejado con $1, pero se omitió el envío: la sincronización no está configurada. Usa «Enviar datos locales» para reintentarlo."
+  },
+  "syncPairedUploading": {
+    "message": "Emparejado con $1. Enviando los datos de este dispositivo..."
+  },
+  "syncPairedUploadDoneNoStale": {
+    "message": "Emparejado con $1. Se enviaron $2 de $3 registros locales."
+  },
+  "syncPairedUploadDoneStale": {
+    "message": "Emparejado con $1. Se enviaron $2 de $3 registros locales; $4 ya estaban más recientes en el servidor."
+  },
+  "syncPairedUploadFailed": {
+    "message": "Emparejado con $1, pero el envío falló: $2. Tus datos siguen en este dispositivo; usa «Enviar datos locales» para reintentarlo."
+  },
+  "syncNotConfigured": {
+    "message": "La sincronización no está configurada."
+  },
+  "syncSyncedNoStale": {
+    "message": "Sincronizado: $1 enviados, $2 recibidos"
+  },
+  "syncSyncedStale": {
+    "message": "Sincronizado: $1 enviados, $2 recibidos, $3 conflicto(s) resuelto(s)"
+  },
+  "syncSyncFailed": {
+    "message": "La sincronización falló: $1"
+  },
+  "syncUnknownError": {
+    "message": "error desconocido"
+  },
+  "syncUploadingNow": {
+    "message": "Enviando los datos de este dispositivo..."
+  },
+  "syncUploadDoneNoStale": {
+    "message": "Se enviaron $1 de $2 registros locales."
+  },
+  "syncUploadDoneStale": {
+    "message": "Se enviaron $1 de $2 registros locales; $3 ya estaban más recientes en el servidor."
+  },
+  "syncDisconnected": {
+    "message": "Desconectado. Tus datos siguen en este dispositivo."
+  },
+  "syncPairCalloutTitle": {
+    "message": "Emparejar este navegador"
+  },
+  "syncPairHint1": {
+    "message": "Ejecuta tu propio servidor "
+  },
+  "syncPairHint2": {
+    "message": ", crea una cuenta en él y genera un código de emparejamiento de un solo uso con"
+  },
+  "syncPairHint3": {
+    "message": " y pégalo abajo."
+  },
+  "syncServerUrlLabel": {
+    "message": "URL del servidor"
+  },
+  "syncServerUrlPlaceholder": {
+    "message": "https://sync.example.com"
+  },
+  "syncPairingCodeLabel": {
+    "message": "Código de emparejamiento"
+  },
+  "syncPairingCodePlaceholder": {
+    "message": "XXXX-XXXX-XXXX-XXXX"
+  },
+  "syncDeviceNameLabel": {
+    "message": "Nombre del dispositivo"
+  },
+  "syncDeviceNamePlaceholder": {
+    "message": "chrome"
+  },
+  "syncUploadLocalLabel": {
+    "message": "Enviar también los datos que ya están en este dispositivo"
+  },
+  "syncUploadHintCount": {
+    "message": "Este dispositivo tiene $1 registros ($2 Tabverses, $3 pestañas). Se envían al servidor una vez, al conectar."
+  },
+  "syncUploadHintStays": {
+    "message": "Tus datos existentes siguen en este dispositivo. Los Tabverses nuevos y modificados se siguen sincronizando desde ahora."
+  },
+  "syncUploadHintNothing": {
+    "message": "Aún no hay nada guardado en este dispositivo, así que no hay nada que enviar."
+  },
+  "syncPairUploadButton": {
+    "message": "Emparejar y enviar los datos locales"
+  },
+  "syncPairConnectButton": {
+    "message": "Emparejar y conectar"
+  },
+  "syncWaitingTitle": {
+    "message": "Esperando la ventana de Tabverse"
+  },
+  "syncWaitingHint1": {
+    "message": "Se abrió una ventana en "
+  },
+  "syncWaitingHint2": {
+    "message": ". Inicia sesión ahí, ponle nombre a este dispositivo y permítelo - el token vuelve solo, y este diálogo hace seguimiento."
+  },
+  "syncOfficialHint1": {
+    "message": "El servidor que Tabverse ejecuta él mismo. Inicia sesión con tu correo (o Google), ponle nombre a este dispositivo y apruébalo - no hay código que copiar."
+  },
+  "syncOfficialHint2": {
+    "message": " - la documentación está ahí, la consola en "
+  },
+  "syncConnectOfficialButton": {
+    "message": "Conectar con Tabverse"
+  },
+  "syncOwnServerHint1": {
+    "message": "¿Ejecutas tu propio servidor "
+  },
+  "syncOwnServerHint2": {
+    "message": "? Elige "
+  },
+  "syncOwnServerHint3": {
+    "message": " - usa un código de emparejamiento."
+  },
+  "syncCustomServerMode": {
+    "message": "Servidor personalizado"
+  },
+  "syncDeviceLabel": {
+    "message": "Dispositivo: "
+  },
+  "syncAccountLabel": {
+    "message": "Cuenta: "
+  },
+  "syncUnknown": {
+    "message": "desconocido"
+  },
+  "syncSyncingAria": {
+    "message": "Sincronizando"
+  },
+  "syncNotSyncedYet": {
+    "message": "Aún sin sincronizar"
+  },
+  "syncLastSyncLabel": {
+    "message": "Última sincronización: "
+  },
+  "syncNowButton": {
+    "message": "Sincronizar ahora"
+  },
+  "syncUploadLocalButton": {
+    "message": "Enviar datos locales"
+  },
+  "syncUploadLocalTitle": {
+    "message": "Manda todo lo guardado en este dispositivo al servidor. La configuración lo hace por ti salvo que desmarques la casilla, así que esto es para más tarde: datos creados sin conexión, o un reintento tras un envío fallido."
+  },
+  "syncDisconnectButton": {
+    "message": "Desconectar"
+  },
+  "syncNotSetUpTitle": {
+    "message": "Aún sin configurar"
+  },
+  "syncNotSetUpHint": {
+    "message": "Tabverse funciona totalmente local hasta que se configure la sincronización: nada sale de este dispositivo."
+  },
+  "syncSetUpButton": {
+    "message": "Configurar la sincronización"
+  },
+  "syncTabStatus": {
+    "message": "Estado"
+  },
+  "syncTabSetup": {
+    "message": "Configuración"
+  },
+  "syncConnectedToSetup1": {
+    "message": "Conectado a "
+  },
+  "syncConnectedToSetup2": {
+    "message": " ($1). Conectar de nuevo reemplaza esta configuración."
+  },
+  "syncOfficialModeTitle": {
+    "message": "Inicia sesión en tabversed.liyu1981.xyz y permite este dispositivo"
+  },
+  "syncCustomModeTitle": {
+    "message": "Un servidor tabversed que tú mismo ejecutas, emparejado con un código"
+  },
+  "syncUploadingProgress": {
+    "message": "Enviando $1 de $2 registros..."
+  },
+  "sidebarCurrentTabverse": {
+    "message": "Tabverse Actual"
+  },
+  "sidebarSavedTabverses": {
+    "message": "Tabverses Guardados"
+  },
+  "sidebarOmniSearch": {
+    "message": "Búsqueda Global"
+  },
+  "sidebarMyWebTools": {
+    "message": "Mis WebTools"
+  },
+  "sidebarOtherTabverses": {
+    "message": "Otros Tabverses"
+  },
+  "previewReading": {
+    "message": "leyendo…"
+  },
+  "previewNoTabs": {
+    "message": "No hay pestañas abiertas en esta ventana."
+  },
+  "previewMore": {
+    "message": "+$1 más"
+  },
+  "bottomNavSyncing": {
+    "message": "Sincronizando…"
+  },
+  "sidebarSavedCountSuffix": {
+    "message": "Tabverses guardados"
+  },
+  "sidebarLoadedCountSuffix": {
+    "message": "de ellos cargados"
+  },
+  "sidebarSortBy": {
+    "message": "ordenar por"
+  },
+  "sidebarSortCreated": {
+    "message": "Hora De Creación"
+  },
+  "sidebarSortSaved": {
+    "message": "Hora De Guardado"
+  },
+  "rightPanelAiHistory": {
+    "message": "Historial de IA"
+  },
+  "rightPanelServerConsole": {
+    "message": "Consola del servidor"
+  },
+  "rightPanelOpenThe": {
+    "message": "Abrir $1"
+  },
+  "rightPanelShowThe": {
+    "message": "Mostrar $1"
+  },
+  "rightPanelCollapseAria": {
+    "message": "Contraer el panel derecho"
+  },
+  "rightPanelCollapse": {
+    "message": "Contraer"
+  },
+  "consoleReadingSetup": {
+    "message": "Leyendo la configuración de sincronización…"
+  },
+  "consoleReadError": {
+    "message": "No se pudo leer la configuración de sincronización. Cierra y vuelve a abrir este panel para reintentarlo."
+  },
+  "consoleUnpaired": {
+    "message": "Todavía sin emparejar con un servidor. Empareja uno desde el botón de sincronización de la barra inferior y este panel muestra su consola."
+  },
+  "consoleOpenInTab": {
+    "message": "Abrir en una pestaña"
+  },
+  "consoleOpenInTabTitle": {
+    "message": "Abre la consola en su propia pestaña, donde tu sesión siempre vale"
+  },
+  "consoleSignedOutNote": {
+    "message": "Si la consola parece cerrar sesión aquí, usa «$1»: la cookie de sesión es del navegador, y un frame es un sitio distinto."
+  },
+  "consoleFrameTitle": {
+    "message": "Consola del servidor de sincronización"
+  },
+  "timeToday": {
+    "message": "Hoy"
+  },
+  "timeTomorrow": {
+    "message": "Mañana"
+  },
+  "timeYesterday": {
+    "message": "Ayer"
+  },
+  "timeLastWeekday": {
+    "message": "Último $1"
+  },
+  "timeCalendarAt": {
+    "message": "$1, $2"
+  },
+  "bookmarkOpenInCurrent": {
+    "message": "Abrir En El Tabverse Actual"
+  },
+  "bookmarkDeleteIt": {
+    "message": "Eliminarlo"
+  },
+  "bookmarkFilterPlaceholder": {
+    "message": "filtrar estos marcadores…"
+  },
+  "bookmarkFilterAria": {
+    "message": "Filtrar estos marcadores"
+  },
+  "notePlaceholder": {
+    "message": "Escribe tus notas aquí ..."
+  },
+  "capabilityHideDetails": {
+    "message": "Ocultar los detalles"
+  },
+  "capabilityShowMissing": {
+    "message": "Ver lo que falta"
+  },
+  "markdownCopied": {
+    "message": "Copiado"
+  },
+  "markdownCopy": {
+    "message": "Copiar Markdown"
+  },
+  "markdownDialogTitle": {
+    "message": "Contenido de la página como Markdown"
+  },
+  "webtoolTitle": {
+    "message": "Mi galería de herramientas web"
+  },
+  "activeTabSearchClearAria": {
+    "message": "Borrar el filtro de pestañas"
+  },
+  "activeTabSearchAria": {
+    "message": "Buscar las pestañas de este Tabverse"
+  },
+  "suggestPreparing": {
+    "message": "Preparando el modelo del dispositivo…"
+  },
+  "suggestSuggesting": {
+    "message": "Sugiriendo nombres…"
+  },
+  "suggestNoAiBrowser": {
+    "message": "Este navegador no tiene IA integrada."
+  },
+  "suggestNoTabs": {
+    "message": "Este Tabverse aún no tiene pestañas que nombrar."
+  },
+  "suggestNoNames": {
+    "message": "No volvió ningún nombre - inténtalo de nuevo."
+  },
+  "suggestCannotReach": {
+    "message": "No se pudo alcanzar el modelo del dispositivo - inténtalo de nuevo."
+  },
+  "suggestAria": {
+    "message": "Sugerir un nombre para este Tabverse"
+  },
+  "tabListWorkingOn": {
+    "message": "Trabajando en $1 pestañas"
+  },
+  "tabListSelectedOne": {
+    "message": "$1 pestaña seleccionada"
+  },
+  "tabListSelectedMany": {
+    "message": "$1 pestañas seleccionadas"
+  },
+  "tabListSaveCloseAria": {
+    "message": "Guardar y cerrar este Tabverse"
+  },
+  "tabListExportAria": {
+    "message": "Exportar este Tabverse a un archivo .tabverse"
+  },
+  "historySearchPlaceholder": {
+    "message": "buscar estas pestañas cerradas"
+  },
+  "historyClearSearch": {
+    "message": "Borrar la búsqueda (Esc)"
+  },
+  "historyClearSearchAria": {
+    "message": "Borrar la búsqueda del historial"
+  },
+  "historySearchAria": {
+    "message": "Buscar las pestañas cerradas"
+  },
+  "historyGrouped": {
+    "message": "Agrupado por sitio"
+  },
+  "historyGroupBy": {
+    "message": "Agrupar por sitio"
+  },
+  "historyGroupAria": {
+    "message": "Agrupar las pestañas cerradas por sitio"
+  },
+  "historyReopen": {
+    "message": "Reabrir En El Tabverse Actual"
+  },
+  "historyAlreadyBookmarked": {
+    "message": "Esta página ya está en marcadores"
+  },
+  "historySaveAsBookmark": {
+    "message": "Guardar Como Marcador (lo quita de aquí)"
+  },
+  "historyForgetIt": {
+    "message": "Olvidarla"
+  },
+  "historyAlreadyBookmarkedToast": {
+    "message": "Esta página ya está en marcadores."
+  },
+  "historySavedToast": {
+    "message": "Guardado como marcador."
+  },
+  "historyClearedToast": {
+    "message": "Historial de pestañas cerradas borrado."
+  },
+  "historyReopenLast": {
+    "message": "Reabrir La Última Pestaña Cerrada"
+  },
+  "historyClearWhole": {
+    "message": "Borrar Todo El Historial"
+  },
+  "todoEditHint": {
+    "message": "Doble clic, o pulsa Enter, para editar"
+  },
+  "todoDeleteAria": {
+    "message": "Eliminar tarea"
+  },
+  "todoMarkAll": {
+    "message": "Marcar todas como completadas"
+  },
+  "todoPlaceholder": {
+    "message": "¿Qué hay que hacer?"
+  },
+  "todoFilterPlaceholder": {
+    "message": "filtrar estas tareas…"
+  },
+  "todoFilterAria": {
+    "message": "Filtrar estas tareas"
+  },
+  "omniPlaceholder": {
+    "message": "buscar pestañas, historial, notas, tareas, marcadores"
+  },
+  "omniTypeToSearch": {
+    "message": "Escribe para buscar tus Tabverses sincronizados"
+  },
+  "omniKindTabverses": {
+    "message": "Tabverses"
+  },
+  "omniKindTabs": {
+    "message": "Pestañas"
+  },
+  "omniKindHistory": {
+    "message": "Historial"
+  },
+  "omniKindNotes": {
+    "message": "Notas"
+  },
+  "omniKindTodos": {
+    "message": "Tareas"
+  },
+  "omniKindBookmarks": {
+    "message": "Marcadores"
+  },
+  "omniKindSessions": {
+    "message": "Sesiones"
+  },
+  "savedDetailSwitch": {
+    "message": "Ir a la ventana de este Tabverse"
+  },
+  "savedDetailLoadNewWindow": {
+    "message": "Cargar todas las pestañas en una ventana nueva"
+  },
+  "savedDetailLoadThisWindow": {
+    "message": "Cargar en esta ventana: las pestañas que ya tiene abiertas se conservan, y las que faltan en el propio Tabverse se abren al lado"
+  },
+  "focusExit": {
+    "message": "Salir del modo enfoque de la herramienta fijada"
+  },
+  "focusEnter": {
+    "message": "Enfocar la herramienta fijada"
+  },
+  "toolUnpin": {
+    "message": "Desfijar la herramienta actual"
+  },
+  "toolPin": {
+    "message": "Fijar la herramienta actual"
+  },
+  "reviseNoRevision": {
+    "message": "No volvió ninguna revisión - inténtalo de nuevo."
+  },
+  "reviseInstructionAria": {
+    "message": "Instrucción para la revisión"
+  },
+  "reviseAria": {
+    "message": "Revisar esta nota con IA"
+  },
+  "reviseTitle": {
+    "message": "Revisar esta nota con IA"
+  },
+  "dedupNeverAgain": {
+    "message": "No volver a sugerir esta URL"
+  },
+  "dedupFound": {
+    "message": "Pestañas duplicadas encontradas"
+  },
+  "dedupReviewDuplicates": {
+    "message": "Revisar los duplicados"
+  },
+  "dedupHide": {
+    "message": "Ocultar"
+  },
+  "dedupReview": {
+    "message": "Revisar"
+  },
+  "editorH1": {
+    "message": "H1"
+  },
+  "editorH2": {
+    "message": "H2"
+  },
+  "editorH3": {
+    "message": "H3"
+  },
+  "editorBlockquote": {
+    "message": "Cita"
+  },
+  "editorUnorderedList": {
+    "message": "Lista Sin Orden"
+  },
+  "editorOrderedList": {
+    "message": "Lista Ordenada"
+  },
+  "editorCodeBlock": {
+    "message": "Bloque De Código"
+  },
+  "editorBold": {
+    "message": "Negrita"
+  },
+  "editorItalic": {
+    "message": "Cursiva"
+  },
+  "editorUnderline": {
+    "message": "Subrayado"
+  },
+  "editorMonospace": {
+    "message": "Monoespaciado"
+  },
+  "editorStrikethrough": {
+    "message": "Tachado"
+  },
+  "pcbReadyStatus": {
+    "message": "Acciones de página para esta pestaña"
+  },
+  "pcbSuspendedStatus": {
+    "message": "Esta pestaña está suspendida - ábrela para cargarla e inténtalo de nuevo"
+  },
+  "pcbUnreadableStatus": {
+    "message": "No se pudo leer esta página como Markdown."
+  },
+  "pcbViewMarkdown": {
+    "message": "Ver el contenido de la página como Markdown"
+  },
+  "pcbSendToChat": {
+    "message": "Enviar el contenido de la página al chat de IA"
+  },
+  "pcbNewNote": {
+    "message": "Nota nueva con resumen de IA"
+  },
+  "pcbAppendNote": {
+    "message": "Añadir a la nota actual con resumen de IA"
+  },
+  "pcbAria": {
+    "message": "Acciones de página para esta pestaña"
+  },
+  "pcbCannotRead": {
+    "message": "No se pudo leer esta pestaña."
+  },
+  "pcbNoSummary": {
+    "message": "No volvió ningún resumen - inténtalo de nuevo."
+  },
+  "pcbNoNoteSelected": {
+    "message": "No hay ninguna nota seleccionada a la que añadir."
+  },
+  "pcbNoteAdded": {
+    "message": "Se añadió una nota a este Tabverse."
+  },
+  "pcbAttached": {
+    "message": "La página se adjuntó al chat de IA."
+  },
+  "tabCardSaveBookmark": {
+    "message": "Guardar esta pestaña como marcador"
+  },
+  "tabCardPinnedInChrome": {
+    "message": "Esta pestaña está fijada en Chrome"
+  },
+  "tabCardWhitelisted": {
+    "message": "Esta pestaña nunca se suspende; haz clic para permitir la suspensión"
+  },
+  "tabCardNeverSuspend": {
+    "message": "Nunca suspender esta pestaña"
+  },
+  "tabCardAllowSuspend": {
+    "message": "Permitir suspender esta pestaña"
+  },
+  "tabCardClose": {
+    "message": "Cerrar esta pestaña"
+  },
+  "noteReviewTitle": {
+    "message": "Revisar los cambios"
+  },
+  "noteRejectAll": {
+    "message": "Rechazar todo"
+  },
+  "noteEditAddedLine": {
+    "message": "Editar la línea añadida"
+  },
+  "noteKeepChange": {
+    "message": "Conservar este cambio"
+  },
+  "noteRevertChange": {
+    "message": "Deshacer este cambio"
+  },
+  "chatNoContextWindow": {
+    "message": "Este navegador no informa de la ventana de contexto."
+  },
+  "chatClearConversation": {
+    "message": "Borrar la conversación"
+  },
+  "chatContextWindowAria": {
+    "message": "Ventana de contexto usada"
+  },
+  "chatCopyAnswer": {
+    "message": "Copiar la respuesta"
+  },
+  "chatRegenerate": {
+    "message": "Regenerar la respuesta"
+  },
+  "chatAttachedPage": {
+    "message": "Página adjunta"
+  },
+  "chatCompactedNotice": {
+    "message": "Conversación anterior resumida para que quepa en el contexto"
+  },
+  "chatRemoveContext": {
+    "message": "Quitar la página adjunta"
+  },
+  "chatPlaceholder": {
+    "message": "Pregunta al modelo del dispositivo…"
+  },
+  "chatMessageAria": {
+    "message": "Mensaje"
+  },
+  "chatClearInput": {
+    "message": "Borrar lo escrito"
+  },
+  "chatClearInputLabel": {
+    "message": "Borrar la entrada"
+  },
+  "chatEnterHint": {
+    "message": "Intro envía · Mayús+Intro hace salto de línea"
+  },
+  "chatNoModelTitle": {
+    "message": "Sin modelo local"
+  },
+  "chatNoModelBody": {
+    "message": "Este navegador no ofrece la IA integrada de Chrome, así que el chat no tiene nada con lo que funcionar. Las demás funciones de IA faltan aquí por el mismo motivo."
+  },
+  "chatModelOffTitle": {
+    "message": "El modelo local está desactivado"
+  },
+  "chatModelOffBody": {
+    "message": "Actívalo de nuevo en Ajustes → IA para usar el chat."
+  },
+  "omniNothingMatched": {
+    "message": "Nada coincide."
+  },
+  "omniKindsAria": {
+    "message": "Tipos de resultado de búsqueda"
+  },
+  "dedupRemoved": {
+    "message": "Pestañas duplicadas eliminadas."
+  },
+  "suggestPickHint": {
+    "message": "Elige un nombre para este Tabverse."
+  },
+  "reviseSayHint": {
+    "message": "Dile qué hacer con esta nota"
+  },
+  "searchContainsAllOf": {
+    "message": "contiene todo"
+  },
+  "managerOtherPage": {
+    "message": "¡Se encontró otra página del Administrador de Tabverse!"
+  },
+  "activeTabClearFilter": {
+    "message": "Borrar el filtro (Esc)"
+  },
+  "groupSplitView": {
+    "message": "vista dividida"
+  },
+  "tabListSaveClose": {
+    "message": "Guardar y cerrar"
+  },
+  "tabListExport": {
+    "message": "Exportar como archivo .tabverse"
+  },
+  "noteNoChanges": {
+    "message": "Sin cambios"
+  },
+  "noteFilterPlaceholder": {
+    "message": "filtrar estas notas…"
+  },
+  "noteFilterAria": {
+    "message": "Filtrar estas notas"
+  }
+}

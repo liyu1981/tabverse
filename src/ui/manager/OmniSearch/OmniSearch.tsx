@@ -1,3 +1,4 @@
+import { t } from '../../../i18n';
 import { InputGroup, Spinner } from '@blueprintjs/core';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import clsx from 'clsx';
@@ -132,7 +133,7 @@ export function OmniSearch() {
           type="search"
           large={true}
           leftIcon="search"
-          placeholder="search tabs, history, notes, todos, bookmarks"
+          placeholder={t('omniPlaceholder')}
           value={query}
           onChange={(event) => setQuery(event.currentTarget.value)}
         />
@@ -146,7 +147,7 @@ export function OmniSearch() {
                 tabverses.length
               } tabverse${tabverses.length === 1 ? '' : 's'} for "${q}"`
             : `searching for "${q}"`
-          : 'Type to search your synced tabverses'}
+          : t('omniTypeToSearch')}
       </div>
 
       {!q ? (
@@ -156,10 +157,10 @@ export function OmniSearch() {
       ) : problem ? (
         <div className={classes.problem}>{problem}</div>
       ) : settled === q && hits.length === 0 ? (
-        <div className={classes.empty}>Nothing matched.</div>
+        <div className={classes.empty}>{t('omniNothingMatched')}</div>
       ) : (
         <div className={classes.layout}>
-          <nav className={classes.kinds} aria-label="Search result kinds">
+          <nav className={classes.kinds} aria-label={t('omniKindsAria')}>
             {tabs.map((tab) => (
               <button
                 key={tab.key}

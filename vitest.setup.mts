@@ -38,5 +38,5 @@ const globals = globalThis as { chrome?: Record<string, unknown> };
 globals.chrome ??= {};
 const chromeApi = globals.chrome as { i18n?: unknown };
 if (chromeApi.i18n === undefined) {
-  chromeApi.i18n = { getMessage };
+  chromeApi.i18n = { getMessage, getUILanguage: () => 'en' };
 }

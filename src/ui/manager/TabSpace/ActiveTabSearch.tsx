@@ -1,3 +1,4 @@
+import { t } from '../../../i18n';
 import { Button, InputGroup, Tooltip } from '@blueprintjs/core';
 import React, { useEffect, useState } from 'react';
 import clsx from 'clsx';
@@ -98,7 +99,7 @@ export function ActiveTabSearch(props: ActiveTabSearchProps) {
             <span className={classes.count}>{countText}</span>
             {/* always rendered, so the count does not shift when the box
                 starts filtering - hidden, so there is nothing to press */}
-            <Tooltip content="Clear the filter (Esc)" placement="bottom">
+            <Tooltip content={t('activeTabClearFilter')} placement="bottom">
               <Button
                 className={clsx(
                   'tv-icon-button',
@@ -107,7 +108,7 @@ export function ActiveTabSearch(props: ActiveTabSearchProps) {
                 icon="cross"
                 minimal={true}
                 small={true}
-                aria-label="Clear the tab filter"
+                aria-label={t('activeTabSearchClearAria')}
                 onClick={() => {
                   props.onChange('');
                   props.inputRef.current?.focus();
@@ -116,7 +117,7 @@ export function ActiveTabSearch(props: ActiveTabSearchProps) {
             </Tooltip>
           </div>
         }
-        aria-label="Search the tabs of this tabverse"
+        aria-label={t('activeTabSearchAria')}
         fill={true}
       />
     </div>

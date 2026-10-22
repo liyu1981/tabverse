@@ -18,6 +18,7 @@
  * The parts are presentational, so the markup can be checked by what it renders
  * (AGENTS.md: no browser); the container only wires the stores to them.
  */
+import { t } from '../../../i18n';
 import { Button, Callout, Icon, Intent, Spinner } from '@blueprintjs/core';
 import clsx from 'clsx';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -84,7 +85,7 @@ function MarkdownContent(props: { content: string }) {
 /** "1,024 / 6,144 tokens" or an honest one-liner when the build reports none. */
 export function contextLabel(usage: ChatUsage): string {
   if (usage.used === null || usage.total === null) {
-    return 'This browser does not report the context window.';
+    return t('chatNoContextWindow');
   }
   return `${usage.used.toLocaleString()} / ${usage.total.toLocaleString()} tokens`;
 }
@@ -118,7 +119,7 @@ export function ChatStats(props: {
           minimal={true}
           small={true}
           icon="trash"
-          text="Clear conversation"
+          text={t('chatClearConversation')}
           onClick={props.onClear}
         />
       ) : null}
@@ -126,7 +127,7 @@ export function ChatStats(props: {
       <div
         className={classes.contextBar}
         role="progressbar"
-        aria-label="Context window used"
+        aria-label={t('chatContextWindowAria')}
         aria-valuemin={0}
         aria-valuemax={known ? (usage.total as number) : 100}
         aria-valuenow={known ? (usage.used as number) : 0}
@@ -141,7 +142,7 @@ export function ChatStats(props: {
 /** Copy an answer, and say so for a moment without a toast. */
 function CopyButton(props: { onCopy: () => void }) {
   const [copied, setCopied] = useState(false);
-  const label = copied ? 'Copied' : 'Copy the answer';
+  const label = copied ? t('markdownCopied') : t('chatCopyAnswer');
   return (
     <button
       type="button"
@@ -165,8 +166,8 @@ function RegenerateButton(props: { disabled: boolean; onClick: () => void }) {
     <button
       type="button"
       className={classes.action}
-      aria-label="Regenerate the answer"
-      title="Regenerate the answer"
+      aria-label={t('chatRegenerate')}
+      title={t('chatRegenerate')}
       disabled={props.disabled}
       onClick={props.onClick}
     >
@@ -221,7 +222,7 @@ function ChatBubble(props: ChatBubbleProps) {
                 <summary className={classes.contextSummary}>
                   <Icon icon="document" size={12} />
                   <span className={classes.contextLabel}>
-                    {message.context.title || 'Attached page'}
+                    {message.context.title || t('chatAttachedPage')}
                   </span>
                 </summary>
                 <pre className={classes.contextText}>
@@ -267,7 +268,7 @@ function CompactNotice(props: { message: ChatMessage }) {
     <details className={classes.compact}>
       <summary className={classes.compactSummary}>
         <Icon icon="compressed" size={12} />
-        <span>Earlier conversation summarized to fit the context</span>
+        <span>{t('chatCompactedNotice')}</span>
       </summary>
       <div className={classes.compactBody}>
         <MarkdownContent content={props.message.content} />
@@ -378,13 +379,13 @@ function ChatComposer(props: ChatComposerProps) {
             className={classes.contextChipLabel}
             title={props.context.title}
           >
-            {props.context.title || 'Attached page'}
+            {props.context.title || t('chatAttachedPage')}
           </span>
           <button
             type="button"
             className={classes.contextChipRemove}
-            aria-label="Remove the attached page"
-            title="Remove the attached page"
+            aria-label={t('chatRemoveContext')}
+            title={t('chatRemoveContext')}
             onClick={props.onRemoveContext}
           >
             <Icon icon="cross" size={12} />
@@ -395,8 +396,8 @@ function ChatComposer(props: ChatComposerProps) {
         className={classes.input}
         value={draft}
         rows={1}
-        placeholder="Ask the on-device model…"
-        aria-label="Message"
+        placeholder={t('chatPlaceholder')}
+        aria-label={t('chatMessageAria')}
         onChange={(event) => props.onDraftChange(event.target.value)}
         onKeyDown={(event) => {
           if (event.key === 'Enter' && !event.shiftKey) {
@@ -406,18 +407,16 @@ function ChatComposer(props: ChatComposerProps) {
         }}
       />
       <div className={classes.composerRow}>
-        <span className={classes.hint}>
-          Enter sends · Shift+Enter makes a new line
-        </span>
+        <span className={classes.hint}>{t('chatEnterHint')}</span>
         <span className={classes.spacer} />
         {draft.trim().length > 0 || props.context ? (
           <Button
             minimal={true}
             small={true}
             icon="cross"
-            text="Clear input"
-            aria-label="Clear the input"
-            title="Clear the input"
+            text={t('chatClearInput')}
+            aria-label={t('chatClearInputLabel')}
+            title={t('chatClearInputLabel')}
             onClick={props.onClearInput}
           />
         ) : null}
@@ -482,10 +481,8 @@ export function ChatView(props: ChatViewProps) {
   if (availability === 'absent') {
     return (
       <div className={classes.center}>
-        <Callout intent={Intent.WARNING} title="No on-device model">
-          This browser does not offer Chrome&rsquo;s built-in AI, so there is
-          nothing for the chat to run on. The other AI features are absent here
-          for the same reason.
+        <Callout intent={Intent.WARNING} title={t('chatNoModelTitle')}>
+          {t('chatNoModelBody')}
         </Callout>
       </div>
     );
@@ -494,8 +491,8 @@ export function ChatView(props: ChatViewProps) {
   if (enabled === false) {
     return (
       <div className={classes.center}>
-        <Callout title="The on-device model is off">
-          Turn it back on in Settings → AI to use the chat.
+        <Callout title={t('chatModelOffTitle')}>
+          {t('chatModelOffBody')}
         </Callout>
       </div>
     );

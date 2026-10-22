@@ -1,3 +1,4 @@
+import { t } from '../../../i18n';
 import { Tab } from '../../../data/tabSpace/Tab';
 import { TabGroupHint } from '../../../data/tabSpace/TabSpace';
 import { subEntriesOfTabs } from '../../../data/tabSpace/tabEntries';
@@ -105,7 +106,7 @@ export function SplitBlock(props: ISplitBlockProps) {
             block's own rule is drawn in */}
         <span className={classes.label}>
           <span aria-hidden={true}>&#9101;</span>
-          <span className={classes.title}>split view</span>
+          <span className={classes.title}>{t('groupSplitView')}</span>
         </span>
       </div>
       {props.children}

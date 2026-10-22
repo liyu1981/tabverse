@@ -1,0 +1,1079 @@
+{
+  "extName": {
+    "message": "Tabverse"
+  },
+  "extDescription": {
+    "message": "Tabverse 是一款理念鮮明的分頁管理工具。"
+  },
+  "extActionTitle": {
+    "message": "Tabverse"
+  },
+  "popupCurrentTabverseFallback": {
+    "message": "目前的 Tabverse"
+  },
+  "popupReplaceNewTitle": {
+    "message": "在此視窗中開始新的 Tabverse？"
+  },
+  "popupReplaceNewBody": {
+    "message": "此視窗已有一個 Tabverse（\"$1\"）。它會自動儲存，因此不會遺失任何內容。繼續將在這裡關閉它並開始新的 Tabverse；此視窗中的分頁會成為新 Tabverse 的一部分。"
+  },
+  "popupAddToWindowTitle": {
+    "message": "將此 Tabverse 加入目前視窗？"
+  },
+  "popupAddToWindowBody": {
+    "message": "此視窗已有一個 Tabverse（\"$1\"）。它會自動儲存，因此不會遺失任何內容。繼續將使 \"$2\" 成為目前視窗的 Tabverse，並在這裡開啟它的 $3 個分頁：此視窗中已開啟的分頁保持不變，而該 Tabverse 中已在這裡開啟的分頁會被重複使用。"
+  },
+  "popupImportedOk": {
+    "message": "已匯入 \"$1\""
+  },
+  "popupImportFailed": {
+    "message": "該檔案不是 Tabverse 匯出檔。"
+  },
+  "popupLoading": {
+    "message": "載入中…"
+  },
+  "popupNothingSaved": {
+    "message": "尚未儲存任何 Tabverse。你用 Tabverse 保留的每個視窗都會成為一個 Tabverse，並隨後顯示在這裡。"
+  },
+  "popupNothingFound": {
+    "message": "找不到符合的項目。試試更少的關鍵字，或用分頁標題裡的詞。"
+  },
+  "popupNothingRecent": {
+    "message": "沒有近期的項目。在某個視窗中開啟一個 Tabverse，它就會顯示在這裡。"
+  },
+  "popupSavedCount": {
+    "message": "已儲存 $1 個"
+  },
+  "popupNewTabverse": {
+    "message": "新增 Tabverse"
+  },
+  "popupNewTabverseTitleWhenOpen": {
+    "message": "儲存目前的 Tabverse 並在此視窗中開始新的"
+  },
+  "popupNewTabverseTitle": {
+    "message": "在此視窗中開始新的 Tabverse"
+  },
+  "popupImport": {
+    "message": "匯入"
+  },
+  "popupImportTitle": {
+    "message": "將 .tabverse 檔案匯入為新的 Tabverse"
+  },
+  "popupSearchPlaceholder": {
+    "message": "搜尋已儲存的 Tabverse…"
+  },
+  "popupResultOne": {
+    "message": "$1 個結果"
+  },
+  "popupResultMany": {
+    "message": "$1 個結果"
+  },
+  "popupRecent": {
+    "message": "最近"
+  },
+  "popupSearchedOnServer": {
+    "message": "在同步伺服器上搜尋"
+  },
+  "popupSearchedOnDevice": {
+    "message": "在本機上搜尋"
+  },
+  "popupNotDownloadedOne": {
+    "message": "$1 個符合項目尚未下載"
+  },
+  "popupNotDownloadedMany": {
+    "message": "$1 個符合項目尚未下載"
+  },
+  "popupConfirmReplace": {
+    "message": "取代"
+  },
+  "commonCancel": {
+    "message": "取消"
+  },
+  "popupRowGoTo": {
+    "message": "前往此 Tabverse"
+  },
+  "popupRowAddToWindow": {
+    "message": "加入目前視窗"
+  },
+  "commonTabCountOne": {
+    "message": "$1 個分頁"
+  },
+  "commonTabCountMany": {
+    "message": "$1 個分頁"
+  },
+  "popupThisWindow": {
+    "message": "目前視窗"
+  },
+  "popupOpenInWindowOne": {
+    "message": "已在 $1 個視窗中開啟"
+  },
+  "popupOpenInWindowMany": {
+    "message": "已在 $1 個視窗中開啟"
+  },
+  "popupGoToWindowOfTabverse": {
+    "message": "前往此 Tabverse 所在的視窗"
+  },
+  "popupOpenInNewWindow": {
+    "message": "在新視窗中開啟"
+  },
+  "commonLoading": {
+    "message": "載入中..."
+  },
+  "commonSomethingWentWrong": {
+    "message": "出了點問題。"
+  },
+  "commonFilterCount": {
+    "message": "$1 / $2"
+  },
+  "commonFilterTotal": {
+    "message": "$1"
+  },
+  "commonFilterPlaceholder": {
+    "message": "篩選…"
+  },
+  "commonClearFilter": {
+    "message": "清除篩選"
+  },
+  "commonCollapseSidebar": {
+    "message": "將側邊欄收合成圖示"
+  },
+  "commonCollapseSidebarAria": {
+    "message": "收合側邊欄"
+  },
+  "commonExpandSidebar": {
+    "message": "展開側邊欄"
+  },
+  "commonPreviousPage": {
+    "message": "上一頁"
+  },
+  "commonNextPage": {
+    "message": "下一頁"
+  },
+  "commonPageIndicator": {
+    "message": "$1/$2"
+  },
+  "commonRemoveAria": {
+    "message": "移除"
+  },
+  "searchTermsAria": {
+    "message": "搜尋關鍵字"
+  },
+  "aboutTagline": {
+    "message": "專為分頁管理而生"
+  },
+  "aboutCreatedIn": {
+    "message": "建立於雪梨"
+  },
+  "aboutWebsite": {
+    "message": "網站"
+  },
+  "aboutGithub": {
+    "message": "GitHub"
+  },
+  "settingsTitle": {
+    "message": "設定"
+  },
+  "settingsTabSync": {
+    "message": "同步"
+  },
+  "settingsTabTabs": {
+    "message": "分頁"
+  },
+  "settingsTabDuplicates": {
+    "message": "重複項目"
+  },
+  "settingsTabLook": {
+    "message": "外觀"
+  },
+  "settingsTabAi": {
+    "message": "AI"
+  },
+  "settingsTabAbout": {
+    "message": "關於"
+  },
+  "commonReading": {
+    "message": "讀取中…"
+  },
+  "suspendOffSummary": {
+    "message": "暫停功能已關閉。不會卸載任何分頁。"
+  },
+  "suspendOnSummary": {
+    "message": "超過 $1 分鐘未操作的分頁會被卸載；開啟時會重新載入。"
+  },
+  "suspendCalloutTitle": {
+    "message": "暫停閒置的分頁"
+  },
+  "suspendHint": {
+    "message": "被暫停的分頁會從記憶體卸載，但仍保留在分頁列中。再次開啟會重新載入網頁；不會關閉任何內容。Tabverse 只會暫停已開啟 Tabverse 的視窗中的分頁，且絕不會暫停你加入白名單、固定或正在聆聽的分頁。"
+  },
+  "suspendSwitchLabel": {
+    "message": "暫停閒置的分頁"
+  },
+  "suspendAfterLabel": {
+    "message": "暫停時機"
+  },
+  "commonMinutes": {
+    "message": "分鐘"
+  },
+  "appearanceCalloutTitle": {
+    "message": "側邊欄顏色"
+  },
+  "appearanceHint": {
+    "message": "側邊列承載著接近白色的圖形（標誌、說明文字以及底列中的圖示），因此這裡的選項都是深色。該顏色屬於目前視窗的 Tabverse：它跟隨視窗，並隨 Tabverse 一起移動。"
+  },
+  "appearanceRandomLabel": {
+    "message": "為新 Tabverse 使用隨機顏色"
+  },
+  "appearanceRandomOn": {
+    "message": "新的 Tabverse 會從該色票中隨機取一種顏色。"
+  },
+  "appearanceRandomOff": {
+    "message": "新的 Tabverse 使用預設顏色。"
+  },
+  "dedupOffSummary": {
+    "message": "重複項目顧問已關閉。不會檢查任何分頁。"
+  },
+  "dedupOnSummary": {
+    "message": "每 $1 分鐘檢查一次開啟的分頁；發現重複項目時會提議移除，但絕不會自動關閉。"
+  },
+  "dedupCalloutTitle": {
+    "message": "重複的分頁"
+  },
+  "dedupHint": {
+    "message": "該顧問只做檢視。當它在已開啟 Tabverse 的視窗中發現兩個指向同一網頁的分頁時，分頁清單會顯示一則通知，你可以在那裡關閉多餘的分頁或將其忽略。它絕不會自行關閉分頁，也絕不會動到已固定或正在播放音訊的分頁。"
+  },
+  "dedupSwitchLabel": {
+    "message": "尋找重複分頁"
+  },
+  "dedupCheckEveryLabel": {
+    "message": "檢查間隔"
+  },
+  "moveFoundNothing": {
+    "message": "找不到符合的項目，關鍵字不對嗎？"
+  },
+  "moveCandidateInfo": {
+    "message": "建立於：$1，儲存於：$2"
+  },
+  "moveNoTargetToast": {
+    "message": "未選擇目標 Tabverse，無法移動分頁！"
+  },
+  "moveMovingToastOne": {
+    "message": "正在將 $1 個分頁移動到 $2"
+  },
+  "moveMovingToastMany": {
+    "message": "正在將 $1 個分頁移動到 $2"
+  },
+  "moveMovedToastOne": {
+    "message": "已將 $1 個分頁移動到 $2"
+  },
+  "moveMovedToastMany": {
+    "message": "已將 $1 個分頁移動到 $2"
+  },
+  "moveDialogTitle": {
+    "message": "將所選分頁移動到其他 Tabverse"
+  },
+  "moveSearchPlaceholder": {
+    "message": "輸入關鍵字，然後按 ↵ Enter 搜尋..."
+  },
+  "moveCloseAfterMove": {
+    "message": "移動後關閉所選分頁"
+  },
+  "moveMoveButton": {
+    "message": "移動"
+  },
+  "aiChecking": {
+    "message": "檢查中…"
+  },
+  "aiSupportAbsent": {
+    "message": "此瀏覽器中無法使用"
+  },
+  "aiSupportAvailable": {
+    "message": "此裝置上可使用"
+  },
+  "aiCouldNotCheck": {
+    "message": "無法檢查"
+  },
+  "aiModelAbsent": {
+    "message": "無法使用"
+  },
+  "aiModelNotInstalled": {
+    "message": "尚未安裝"
+  },
+  "aiInstallingPercent": {
+    "message": "安裝中… $1%"
+  },
+  "aiInstalling": {
+    "message": "安裝中…"
+  },
+  "aiModelReady": {
+    "message": "已安裝並就緒"
+  },
+  "aiCalloutTitle": {
+    "message": "Chrome 內建 AI"
+  },
+  "aiCalloutHint": {
+    "message": "下列功能執行在 Chrome 自帶的模型（Gemma Nano）上，在本機執行。你提供給它們的內容會在瀏覽器內部交給模型，絕不會傳送到任何地方；沒有伺服器、沒有帳號、無需任何設定。"
+  },
+  "aiWhereTitle": {
+    "message": "在哪裡找到它"
+  },
+  "aiFeatureNameTabverse": {
+    "message": "為 Tabverse 命名"
+  },
+  "aiFeatureNameTabverseWhere": {
+    "message": "開啟一個 Tabverse；燈泡在頂端它名稱的旁邊，會給出三個候選名稱讓你選擇。"
+  },
+  "aiFeatureSummarizeTab": {
+    "message": "摘要分頁"
+  },
+  "aiFeatureSummarizeTabWhere": {
+    "message": "在已開啟的 Tabverse 中，燈泡位於每個作用中分頁列的右側，它會把該網頁變成一條新筆記。"
+  },
+  "aiSwitchLabel": {
+    "message": "使用本機模型"
+  },
+  "aiDeviceSupportLabel": {
+    "message": "裝置支援"
+  },
+  "aiLocalModelLabel": {
+    "message": "本機模型"
+  },
+  "aiOfferedLabel": {
+    "message": "是否提供"
+  },
+  "aiOfferedOn": {
+    "message": "已提供 AI 功能"
+  },
+  "aiOfferedOff": {
+    "message": "關閉"
+  },
+  "aiDownloadButton": {
+    "message": "立即下載模型"
+  },
+  "aiDownloadTitle": {
+    "message": "只需在此裝置下載一次；模型由 Chrome 提供，不隨擴充功能一起分發"
+  },
+  "aiDownloadingNote": {
+    "message": "Chrome 正在下載模型；本頁面會顯示進度。"
+  },
+  "aiCheckAgainButton": {
+    "message": "重新檢查"
+  },
+  "syncLabelOfficial": {
+    "message": "Tabverse 官方伺服器"
+  },
+  "syncLabelCustom": {
+    "message": "你自己的伺服器（配對碼）"
+  },
+  "syncNotConnected": {
+    "message": "未連線：Tabverse 完全在本機執行，直到你與自己的同步伺服器配對為止。"
+  },
+  "syncConnectedTo": {
+    "message": "已連線到 $1"
+  },
+  "syncFailedTo": {
+    "message": "失敗：$1"
+  },
+  "syncWizardOpened": {
+    "message": "已開啟 Tabverse 視窗。請在那裡登入並允許此裝置；權杖會自動傳回。"
+  },
+  "syncBothRequired": {
+    "message": "伺服器 URL 與配對碼都是必要的。"
+  },
+  "syncPairedNoUpload": {
+    "message": "已與 $1 配對。你既有的資料仍保留在本機上；此後新的與變更過的 Tabverse 會進行同步。"
+  },
+  "syncPairedUploadSkipped": {
+    "message": "已與 $1 配對，但略過了上傳：尚未設定同步。請使用「上傳本機資料」重試。"
+  },
+  "syncPairedUploading": {
+    "message": "已與 $1 配對。正在上傳本機上的資料..."
+  },
+  "syncPairedUploadDoneNoStale": {
+    "message": "已與 $1 配對。已上傳 $3 筆本機記錄中的 $2 筆。"
+  },
+  "syncPairedUploadDoneStale": {
+    "message": "已與 $1 配對。已上傳 $3 筆本機記錄中的 $2 筆；另有 $4 筆在伺服器上已是較新的版本。"
+  },
+  "syncPairedUploadFailed": {
+    "message": "已與 $1 配對，但上傳失敗：$2。你的資料仍在本機上；請使用「上傳本機資料」重試。"
+  },
+  "syncNotConfigured": {
+    "message": "尚未設定同步。"
+  },
+  "syncSyncedNoStale": {
+    "message": "已同步：推送 $1，拉取 $2"
+  },
+  "syncSyncedStale": {
+    "message": "已同步：推送 $1，拉取 $2，解決了 $3 個衝突"
+  },
+  "syncSyncFailed": {
+    "message": "同步失敗：$1"
+  },
+  "syncUnknownError": {
+    "message": "未知錯誤"
+  },
+  "syncUploadingNow": {
+    "message": "正在上傳本機上的資料..."
+  },
+  "syncUploadDoneNoStale": {
+    "message": "已上傳 $2 筆本機記錄中的 $1 筆。"
+  },
+  "syncUploadDoneStale": {
+    "message": "已上傳 $2 筆本機記錄中的 $1 筆；另有 $3 筆在伺服器上已是較新的版本。"
+  },
+  "syncDisconnected": {
+    "message": "已中斷連線。你的資料仍保留在本機上。"
+  },
+  "syncPairCalloutTitle": {
+    "message": "配對此瀏覽器"
+  },
+  "syncPairHint1": {
+    "message": "執行你自己的 "
+  },
+  "syncPairHint2": {
+    "message": " 伺服器，在其上建立帳號，然後產生一次性的配對碼，配對碼由 "
+  },
+  "syncPairHint3": {
+    "message": " 回傳，再貼到下方。"
+  },
+  "syncServerUrlLabel": {
+    "message": "伺服器 URL"
+  },
+  "syncServerUrlPlaceholder": {
+    "message": "https://sync.example.com"
+  },
+  "syncPairingCodeLabel": {
+    "message": "配對碼"
+  },
+  "syncPairingCodePlaceholder": {
+    "message": "XXXX-XXXX-XXXX-XXXX"
+  },
+  "syncDeviceNameLabel": {
+    "message": "裝置名稱"
+  },
+  "syncDeviceNamePlaceholder": {
+    "message": "chrome"
+  },
+  "syncUploadLocalLabel": {
+    "message": "同時上傳本機上既有的資料"
+  },
+  "syncUploadHintCount": {
+    "message": "本機存有 $1 筆記錄（$2 個 Tabverse、$3 個分頁）。連線時會一次性傳送到伺服器。"
+  },
+  "syncUploadHintStays": {
+    "message": "你既有的資料仍保留在本機上。此後新的與變更過的 Tabverse 仍會同步。"
+  },
+  "syncUploadHintNothing": {
+    "message": "本機尚無任何儲存內容，因此沒有可上傳的資料。"
+  },
+  "syncPairUploadButton": {
+    "message": "配對並上傳本機資料"
+  },
+  "syncPairConnectButton": {
+    "message": "配對並連線"
+  },
+  "syncWaitingTitle": {
+    "message": "正在等待 Tabverse 視窗"
+  },
+  "syncWaitingHint1": {
+    "message": "已在 "
+  },
+  "syncWaitingHint2": {
+    "message": " 開啟一個視窗。請在那裡登入、為此裝置命名並允許它——權杖會自動傳回，本對話框會自動跟進。"
+  },
+  "syncOfficialHint1": {
+    "message": "Tabverse 自己執行的伺服器。用你的電子郵件（或 Google）登入、為此裝置命名並核准它——無需複製任何代碼。"
+  },
+  "syncOfficialHint2": {
+    "message": " ——說明文件在這裡，主控台位於 "
+  },
+  "syncConnectOfficialButton": {
+    "message": "使用 Tabverse 連線"
+  },
+  "syncOwnServerHint1": {
+    "message": "你在執行自己的 "
+  },
+  "syncOwnServerHint2": {
+    "message": " 伺服器？請選擇 "
+  },
+  "syncOwnServerHint3": {
+    "message": " ——它使用配對碼。"
+  },
+  "syncCustomServerMode": {
+    "message": "自訂伺服器"
+  },
+  "syncDeviceLabel": {
+    "message": "裝置："
+  },
+  "syncAccountLabel": {
+    "message": "帳號："
+  },
+  "syncUnknown": {
+    "message": "未知"
+  },
+  "syncSyncingAria": {
+    "message": "同步中"
+  },
+  "syncNotSyncedYet": {
+    "message": "尚未同步"
+  },
+  "syncLastSyncLabel": {
+    "message": "上次同步："
+  },
+  "syncNowButton": {
+    "message": "立即同步"
+  },
+  "syncUploadLocalButton": {
+    "message": "上傳本機資料"
+  },
+  "syncUploadLocalTitle": {
+    "message": "將本機上儲存的所有內容傳送到伺服器。設定時除非你取消勾選，否則會自動執行；本按鈕用於之後的情況：中斷連線期間產生的資料，或上傳失敗後的重試。"
+  },
+  "syncDisconnectButton": {
+    "message": "中斷連線"
+  },
+  "syncNotSetUpTitle": {
+    "message": "尚未設定"
+  },
+  "syncNotSetUpHint": {
+    "message": "在設定同步之前，Tabverse 完全在本機執行：沒有任何內容離開本機。"
+  },
+  "syncSetUpButton": {
+    "message": "設定同步"
+  },
+  "syncTabStatus": {
+    "message": "狀態"
+  },
+  "syncTabSetup": {
+    "message": "設定"
+  },
+  "syncConnectedToSetup1": {
+    "message": "已連線到 "
+  },
+  "syncConnectedToSetup2": {
+    "message": "（$1）。再次連線會取代目前的設定。"
+  },
+  "syncOfficialModeTitle": {
+    "message": "在 tabversed.liyu1981.xyz 登入並允許此裝置"
+  },
+  "syncCustomModeTitle": {
+    "message": "你自己執行的 tabversed 伺服器，以配對碼連線"
+  },
+  "syncUploadingProgress": {
+    "message": "正在上傳 $2 筆記錄中的 $1 筆..."
+  },
+  "sidebarCurrentTabverse": {
+    "message": "目前的 Tabverse"
+  },
+  "sidebarSavedTabverses": {
+    "message": "已儲存的 Tabverse"
+  },
+  "sidebarOmniSearch": {
+    "message": "全域搜尋"
+  },
+  "sidebarMyWebTools": {
+    "message": "我的 WebTools"
+  },
+  "sidebarOtherTabverses": {
+    "message": "其他 Tabverse"
+  },
+  "previewReading": {
+    "message": "讀取中…"
+  },
+  "previewNoTabs": {
+    "message": "此視窗中沒有開啟的分頁。"
+  },
+  "previewMore": {
+    "message": "另有 +$1 個"
+  },
+  "bottomNavSyncing": {
+    "message": "同步中…"
+  },
+  "sidebarSavedCountSuffix": {
+    "message": "個 Tabverse 已儲存"
+  },
+  "sidebarLoadedCountSuffix": {
+    "message": "其中已載入"
+  },
+  "sidebarSortBy": {
+    "message": "排序方式"
+  },
+  "sidebarSortCreated": {
+    "message": "建立時間"
+  },
+  "sidebarSortSaved": {
+    "message": "儲存時間"
+  },
+  "rightPanelAiHistory": {
+    "message": "AI 歷史紀錄"
+  },
+  "rightPanelServerConsole": {
+    "message": "伺服器主控台"
+  },
+  "rightPanelOpenThe": {
+    "message": "開啟$1"
+  },
+  "rightPanelShowThe": {
+    "message": "顯示$1"
+  },
+  "rightPanelCollapseAria": {
+    "message": "收合右側面板"
+  },
+  "rightPanelCollapse": {
+    "message": "收合"
+  },
+  "consoleReadingSetup": {
+    "message": "正在讀取同步設定…"
+  },
+  "consoleReadError": {
+    "message": "無法讀取同步設定。請關閉並重新開啟此面板重試。"
+  },
+  "consoleUnpaired": {
+    "message": "尚未與伺服器配對。透過底部列的同步按鈕配對後，此面板會顯示其主控台。"
+  },
+  "consoleOpenInTab": {
+    "message": "在分頁中開啟"
+  },
+  "consoleOpenInTabTitle": {
+    "message": "將主控台作為獨立分頁開啟，在那裡你的登入狀態始終有效"
+  },
+  "consoleSignedOutNote": {
+    "message": "如果主控台在這裡顯示為未登入，請使用「$1」：工作階段 cookie 屬於瀏覽器，而內嵌框格屬於不同的網站。"
+  },
+  "consoleFrameTitle": {
+    "message": "同步伺服器主控台"
+  },
+  "timeToday": {
+    "message": "今天"
+  },
+  "timeTomorrow": {
+    "message": "明天"
+  },
+  "timeYesterday": {
+    "message": "昨天"
+  },
+  "timeLastWeekday": {
+    "message": "上週$1"
+  },
+  "timeCalendarAt": {
+    "message": "$1 $2"
+  },
+  "bookmarkOpenInCurrent": {
+    "message": "在目前的 Tabverse 中開啟"
+  },
+  "bookmarkDeleteIt": {
+    "message": "刪除它"
+  },
+  "bookmarkFilterPlaceholder": {
+    "message": "篩選這些書籤…"
+  },
+  "bookmarkFilterAria": {
+    "message": "篩選這些書籤"
+  },
+  "notePlaceholder": {
+    "message": "在此寫下你的筆記 ..."
+  },
+  "capabilityHideDetails": {
+    "message": "隱藏詳細資料"
+  },
+  "capabilityShowMissing": {
+    "message": "查看缺少的項目"
+  },
+  "markdownCopied": {
+    "message": "已複製"
+  },
+  "markdownCopy": {
+    "message": "複製 Markdown"
+  },
+  "markdownDialogTitle": {
+    "message": "網頁內容（Markdown）"
+  },
+  "webtoolTitle": {
+    "message": "我的網頁工具收藏"
+  },
+  "activeTabSearchClearAria": {
+    "message": "清除分頁篩選"
+  },
+  "activeTabSearchAria": {
+    "message": "搜尋此 Tabverse 的分頁"
+  },
+  "suggestPreparing": {
+    "message": "正在準備本機模型…"
+  },
+  "suggestSuggesting": {
+    "message": "正在產生名稱建議…"
+  },
+  "suggestNoAiBrowser": {
+    "message": "此瀏覽器沒有內建 AI。"
+  },
+  "suggestNoTabs": {
+    "message": "此 Tabverse 還沒有可命名的分頁。"
+  },
+  "suggestNoNames": {
+    "message": "沒有傳回任何名稱——請再試一次。"
+  },
+  "suggestCannotReach": {
+    "message": "無法連上本機模型——請再試一次。"
+  },
+  "suggestAria": {
+    "message": "為此 Tabverse 建議名稱"
+  },
+  "tabListWorkingOn": {
+    "message": "正在處理 $1 個分頁"
+  },
+  "tabListSelectedOne": {
+    "message": "已選取 $1 個分頁"
+  },
+  "tabListSelectedMany": {
+    "message": "已選取 $1 個分頁"
+  },
+  "tabListSaveCloseAria": {
+    "message": "儲存並關閉此 Tabverse"
+  },
+  "tabListExportAria": {
+    "message": "將此 Tabverse 匯出為 .tabverse 檔案"
+  },
+  "historySearchPlaceholder": {
+    "message": "搜尋這些已關閉的分頁"
+  },
+  "historyClearSearch": {
+    "message": "清除搜尋 (Esc)"
+  },
+  "historyClearSearchAria": {
+    "message": "清除歷史搜尋"
+  },
+  "historySearchAria": {
+    "message": "搜尋已關閉的分頁"
+  },
+  "historyGrouped": {
+    "message": "依網站分組"
+  },
+  "historyGroupBy": {
+    "message": "依網站分組"
+  },
+  "historyGroupAria": {
+    "message": "依網站對已關閉的分頁分組"
+  },
+  "historyReopen": {
+    "message": "在目前的 Tabverse 中重新開啟"
+  },
+  "historyAlreadyBookmarked": {
+    "message": "此網頁已在書籤中"
+  },
+  "historySaveAsBookmark": {
+    "message": "儲存為書籤（並從這裡移除）"
+  },
+  "historyForgetIt": {
+    "message": "忘掉它"
+  },
+  "historyAlreadyBookmarkedToast": {
+    "message": "此網頁已在書籤中。"
+  },
+  "historySavedToast": {
+    "message": "已儲存為書籤。"
+  },
+  "historyClearedToast": {
+    "message": "已清除已關閉分頁的歷史紀錄。"
+  },
+  "historyReopenLast": {
+    "message": "重新開啟最近關閉的分頁"
+  },
+  "historyClearWhole": {
+    "message": "清除全部歷史紀錄"
+  },
+  "todoEditHint": {
+    "message": "雙擊或按 Enter 編輯"
+  },
+  "todoDeleteAria": {
+    "message": "刪除待辦事項"
+  },
+  "todoMarkAll": {
+    "message": "全部標記為已完成"
+  },
+  "todoPlaceholder": {
+    "message": "要做些什麼？"
+  },
+  "todoFilterPlaceholder": {
+    "message": "篩選這些待辦事項…"
+  },
+  "todoFilterAria": {
+    "message": "篩選這些待辦事項"
+  },
+  "omniPlaceholder": {
+    "message": "搜尋分頁、歷史紀錄、筆記、待辦、書籤"
+  },
+  "omniTypeToSearch": {
+    "message": "輸入以搜尋你已同步的 Tabverse"
+  },
+  "omniKindTabverses": {
+    "message": "Tabverse"
+  },
+  "omniKindTabs": {
+    "message": "分頁"
+  },
+  "omniKindHistory": {
+    "message": "歷史紀錄"
+  },
+  "omniKindNotes": {
+    "message": "筆記"
+  },
+  "omniKindTodos": {
+    "message": "待辦"
+  },
+  "omniKindBookmarks": {
+    "message": "書籤"
+  },
+  "omniKindSessions": {
+    "message": "工作階段"
+  },
+  "savedDetailSwitch": {
+    "message": "切換到此 Tabverse 的視窗"
+  },
+  "savedDetailLoadNewWindow": {
+    "message": "將所有分頁載入到新視窗"
+  },
+  "savedDetailLoadThisWindow": {
+    "message": "載入到目前視窗：它已開啟的分頁會保留，而該 Tabverse 自身缺少的分頁會在旁邊開啟"
+  },
+  "focusExit": {
+    "message": "結束固定工具的專注模式"
+  },
+  "focusEnter": {
+    "message": "專注於固定的工具"
+  },
+  "toolUnpin": {
+    "message": "取消固定目前的工具"
+  },
+  "toolPin": {
+    "message": "固定目前的工具"
+  },
+  "reviseNoRevision": {
+    "message": "沒有傳回任何修改——請再試一次。"
+  },
+  "reviseInstructionAria": {
+    "message": "修改指令"
+  },
+  "reviseAria": {
+    "message": "用 AI 修改此筆記"
+  },
+  "reviseTitle": {
+    "message": "用 AI 修改此筆記"
+  },
+  "dedupNeverAgain": {
+    "message": "不再提示此 URL"
+  },
+  "dedupFound": {
+    "message": "發現重複的分頁"
+  },
+  "dedupReviewDuplicates": {
+    "message": "檢視重複項目"
+  },
+  "dedupHide": {
+    "message": "隱藏"
+  },
+  "dedupReview": {
+    "message": "檢視"
+  },
+  "editorH1": {
+    "message": "H1"
+  },
+  "editorH2": {
+    "message": "H2"
+  },
+  "editorH3": {
+    "message": "H3"
+  },
+  "editorBlockquote": {
+    "message": "引言"
+  },
+  "editorUnorderedList": {
+    "message": "項目清單"
+  },
+  "editorOrderedList": {
+    "message": "編號清單"
+  },
+  "editorCodeBlock": {
+    "message": "程式碼區塊"
+  },
+  "editorBold": {
+    "message": "粗體"
+  },
+  "editorItalic": {
+    "message": "斜體"
+  },
+  "editorUnderline": {
+    "message": "底線"
+  },
+  "editorMonospace": {
+    "message": "等寬字體"
+  },
+  "editorStrikethrough": {
+    "message": "刪除線"
+  },
+  "pcbReadyStatus": {
+    "message": "此分頁的網頁操作"
+  },
+  "pcbSuspendedStatus": {
+    "message": "此分頁已被暫停——請先開啟載入它，然後再試一次"
+  },
+  "pcbUnreadableStatus": {
+    "message": "無法將此網頁讀取為 Markdown。"
+  },
+  "pcbViewMarkdown": {
+    "message": "檢視網頁內容（Markdown）"
+  },
+  "pcbSendToChat": {
+    "message": "將網頁內容傳送到 AI 聊天"
+  },
+  "pcbNewNote": {
+    "message": "用 AI 摘要新增筆記"
+  },
+  "pcbAppendNote": {
+    "message": "用 AI 摘要附加到目前的筆記"
+  },
+  "pcbAria": {
+    "message": "此分頁的網頁操作"
+  },
+  "pcbCannotRead": {
+    "message": "無法讀取此分頁。"
+  },
+  "pcbNoSummary": {
+    "message": "沒有傳回任何摘要——請再試一次。"
+  },
+  "pcbNoNoteSelected": {
+    "message": "未選擇要附加到的筆記。"
+  },
+  "pcbNoteAdded": {
+    "message": "已為此 Tabverse 新增一條筆記。"
+  },
+  "pcbAttached": {
+    "message": "已將網頁附加到 AI 聊天。"
+  },
+  "tabCardSaveBookmark": {
+    "message": "將此分頁儲存為書籤"
+  },
+  "tabCardPinnedInChrome": {
+    "message": "此分頁已在 Chrome 中固定"
+  },
+  "tabCardWhitelisted": {
+    "message": "此分頁永遠不會被暫停；點擊以允許暫停"
+  },
+  "tabCardNeverSuspend": {
+    "message": "永不暫停此分頁"
+  },
+  "tabCardAllowSuspend": {
+    "message": "允許暫停此分頁"
+  },
+  "tabCardClose": {
+    "message": "關閉此分頁"
+  },
+  "noteReviewTitle": {
+    "message": "檢視變更"
+  },
+  "noteRejectAll": {
+    "message": "全部拒絕"
+  },
+  "noteEditAddedLine": {
+    "message": "編輯新增的行"
+  },
+  "noteKeepChange": {
+    "message": "保留此變更"
+  },
+  "noteRevertChange": {
+    "message": "還原此變更"
+  },
+  "chatNoContextWindow": {
+    "message": "此瀏覽器未回報內容視窗大小。"
+  },
+  "chatClearConversation": {
+    "message": "清除對話"
+  },
+  "chatContextWindowAria": {
+    "message": "已用內容視窗"
+  },
+  "chatCopyAnswer": {
+    "message": "複製回答"
+  },
+  "chatRegenerate": {
+    "message": "重新產生回答"
+  },
+  "chatAttachedPage": {
+    "message": "附加的網頁"
+  },
+  "chatCompactedNotice": {
+    "message": "較早的對話已壓縮以符合內容視窗"
+  },
+  "chatRemoveContext": {
+    "message": "移除附加的網頁"
+  },
+  "chatPlaceholder": {
+    "message": "向本機模型提問…"
+  },
+  "chatMessageAria": {
+    "message": "訊息"
+  },
+  "chatClearInput": {
+    "message": "清除輸入"
+  },
+  "chatClearInputLabel": {
+    "message": "清除輸入內容"
+  },
+  "chatEnterHint": {
+    "message": "Enter 送出 · Shift+Enter 換行"
+  },
+  "chatNoModelTitle": {
+    "message": "沒有本機模型"
+  },
+  "chatNoModelBody": {
+    "message": "此瀏覽器不提供 Chrome 內建 AI，因此聊天沒有可執行的模型。其他 AI 功能在這裡也同樣不存在。"
+  },
+  "chatModelOffTitle": {
+    "message": "本機模型已關閉"
+  },
+  "chatModelOffBody": {
+    "message": "前往「設定 → AI」重新開啟即可使用聊天。"
+  },
+  "omniNothingMatched": {
+    "message": "沒有符合的項目。"
+  },
+  "omniKindsAria": {
+    "message": "搜尋結果類別"
+  },
+  "dedupRemoved": {
+    "message": "已移除重複的分頁。"
+  },
+  "suggestPickHint": {
+    "message": "為此 Tabverse 選擇一個名稱。"
+  },
+  "reviseSayHint": {
+    "message": "說明要如何處理這條筆記"
+  },
+  "searchContainsAllOf": {
+    "message": "包含全部"
+  },
+  "managerOtherPage": {
+    "message": "發現另一個 Tabverse 管理頁！"
+  },
+  "activeTabClearFilter": {
+    "message": "清除篩選 (Esc)"
+  },
+  "groupSplitView": {
+    "message": "分割畫面"
+  },
+  "tabListSaveClose": {
+    "message": "儲存並關閉"
+  },
+  "tabListExport": {
+    "message": "匯出為 .tabverse 檔案"
+  },
+  "noteNoChanges": {
+    "message": "沒有變更"
+  },
+  "noteFilterPlaceholder": {
+    "message": "篩選這些筆記…"
+  },
+  "noteFilterAria": {
+    "message": "篩選這些筆記"
+  }
+}

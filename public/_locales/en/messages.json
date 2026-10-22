@@ -858,5 +858,581 @@
   "consoleFrameTitle": {
     "message": "Sync server console",
     "description": "Server console: the iframe's accessible title."
+  },
+  "timeToday": {
+    "message": "Today",
+    "description": "Dates: the bucket label for today."
+  },
+  "timeTomorrow": {
+    "message": "Tomorrow",
+    "description": "Dates: the bucket label for tomorrow."
+  },
+  "timeYesterday": {
+    "message": "Yesterday",
+    "description": "Dates: the bucket label for yesterday."
+  },
+  "timeLastWeekday": {
+    "message": "Last $1",
+    "description": "Dates: the bucket label for a weekday in the last week. $1 is the weekday name."
+  },
+  "timeCalendarAt": {
+    "message": "$1 at $2",
+    "description": "Dates: a near day with its time. $1 the day label, $2 the time."
+  },
+  "bookmarkOpenInCurrent": {
+    "message": "Open In Current Tabverse",
+    "description": "Bookmark tool: a bookmark row's tooltip - opens the saved tab into this tabverse."
+  },
+  "bookmarkDeleteIt": {
+    "message": "Delete It",
+    "description": "Bookmark tool: a bookmark row's delete tooltip."
+  },
+  "bookmarkFilterPlaceholder": {
+    "message": "filter these bookmarks…",
+    "description": "Bookmark tool: the filter box placeholder."
+  },
+  "bookmarkFilterAria": {
+    "message": "Filter these bookmarks",
+    "description": "Bookmark tool: the filter box's accessible name."
+  },
+  "notePlaceholder": {
+    "message": "Write your notes here ...",
+    "description": "Note tool: the editor's placeholder."
+  },
+  "capabilityHideDetails": {
+    "message": "Hide the details",
+    "description": "Manager: the tooltip on the capability warning once it is expanded."
+  },
+  "capabilityShowMissing": {
+    "message": "Show what is missing",
+    "description": "Manager: the tooltip on the capability warning while it is collapsed."
+  },
+  "markdownCopied": {
+    "message": "Copied",
+    "description": "Markdown viewer: the copy button once the text is on the clipboard."
+  },
+  "markdownCopy": {
+    "message": "Copy Markdown",
+    "description": "Markdown viewer: the copy button before it is pressed."
+  },
+  "markdownDialogTitle": {
+    "message": "Page content as Markdown",
+    "description": "Markdown viewer: the dialog's title."
+  },
+  "webtoolTitle": {
+    "message": "My web tools gallery",
+    "description": "Webtools: the view's title."
+  },
+  "activeTabSearchClearAria": {
+    "message": "Clear the tab filter",
+    "description": "Tab list: the clear button's accessible name."
+  },
+  "activeTabSearchAria": {
+    "message": "Search the tabs of this tabverse",
+    "description": "Tab list: the filter box's accessible name."
+  },
+  "suggestPreparing": {
+    "message": "Preparing the on-device model…",
+    "description": "Name suggestion: shown while the local model is being loaded."
+  },
+  "suggestSuggesting": {
+    "message": "Suggesting names…",
+    "description": "Name suggestion: shown while names are being generated."
+  },
+  "suggestNoAiBrowser": {
+    "message": "This browser has no built-in AI.",
+    "description": "Name suggestion: the note when the Prompt API is missing."
+  },
+  "suggestNoTabs": {
+    "message": "This tabverse has no tabs to name yet.",
+    "description": "Name suggestion: the note when there is nothing to name."
+  },
+  "suggestNoNames": {
+    "message": "No names came back - try again.",
+    "description": "Name suggestion: the note when the model returned nothing."
+  },
+  "suggestCannotReach": {
+    "message": "Could not reach the on-device model - try again.",
+    "description": "Name suggestion: the note when loading the model failed."
+  },
+  "suggestAria": {
+    "message": "Suggest a name for this tabverse",
+    "description": "Name suggestion: the button's accessible name."
+  },
+  "tabListWorkingOn": {
+    "message": "Working on $1 tabs",
+    "description": "Tab list: the toolbar's count of tabs in this tabverse. $1 is the number."
+  },
+  "tabListSelectedOne": {
+    "message": "Selected $1 tab",
+    "description": "Tab list: the selected-tab count, exactly one. $1 is the number."
+  },
+  "tabListSelectedMany": {
+    "message": "Selected $1 tabs",
+    "description": "Tab list: the selected-tab count, more than one. $1 is the number."
+  },
+  "tabListSaveCloseAria": {
+    "message": "Save and close this tabverse",
+    "description": "Tab list: the save-and-close button's accessible name."
+  },
+  "tabListExportAria": {
+    "message": "Export this tabverse to a .tabverse file",
+    "description": "Tab list: the export button's accessible name."
+  },
+  "historySearchPlaceholder": {
+    "message": "search these closed tabs",
+    "description": "History: the search box placeholder."
+  },
+  "historyClearSearch": {
+    "message": "Clear the search (Esc)",
+    "description": "History: the clear button's tooltip."
+  },
+  "historyClearSearchAria": {
+    "message": "Clear the history search",
+    "description": "History: the clear button's accessible name."
+  },
+  "historySearchAria": {
+    "message": "Search the closed tabs",
+    "description": "History: the search box's accessible name."
+  },
+  "historyGrouped": {
+    "message": "Grouped by site",
+    "description": "History: the group toggle's tooltip while grouped."
+  },
+  "historyGroupBy": {
+    "message": "Group by site",
+    "description": "History: the group toggle's tooltip while flat."
+  },
+  "historyGroupAria": {
+    "message": "Group the closed tabs by site",
+    "description": "History: the group toggle's accessible name."
+  },
+  "historyReopen": {
+    "message": "Reopen In Current Tabverse",
+    "description": "History: a closed tab row's reopen tooltip."
+  },
+  "historyAlreadyBookmarked": {
+    "message": "This page is already bookmarked",
+    "description": "History: the save button's label when the page is already bookmarked."
+  },
+  "historySaveAsBookmark": {
+    "message": "Save as Bookmark (removes it from here)",
+    "description": "History: the save button's label when it will bookmark and forget."
+  },
+  "historyForgetIt": {
+    "message": "Forget It",
+    "description": "History: a closed tab row's forget tooltip."
+  },
+  "historyAlreadyBookmarkedToast": {
+    "message": "This page is already bookmarked.",
+    "description": "History: the toast when saving was refused for that reason."
+  },
+  "historySavedToast": {
+    "message": "Saved as bookmark.",
+    "description": "History: the toast after a page was bookmarked."
+  },
+  "historyClearedToast": {
+    "message": "Closed tab history cleared.",
+    "description": "History: the toast after the whole history was cleared."
+  },
+  "historyReopenLast": {
+    "message": "Reopen The Last Closed Tab",
+    "description": "History: the reopen-last button's tooltip."
+  },
+  "historyClearWhole": {
+    "message": "Clear The Whole History",
+    "description": "History: the clear-everything button's tooltip."
+  },
+  "todoEditHint": {
+    "message": "Double click, or press Enter, to edit",
+    "description": "Todo tool: a row's tooltip saying how to edit it."
+  },
+  "todoDeleteAria": {
+    "message": "Delete todo",
+    "description": "Todo tool: a row's delete button's accessible name."
+  },
+  "todoMarkAll": {
+    "message": "Mark all as complete",
+    "description": "Todo tool: the toggle-all label."
+  },
+  "todoPlaceholder": {
+    "message": "What needs to be done?",
+    "description": "Todo tool: the new-todo input's placeholder."
+  },
+  "todoFilterPlaceholder": {
+    "message": "filter these todos…",
+    "description": "Todo tool: the filter box placeholder."
+  },
+  "todoFilterAria": {
+    "message": "Filter these todos",
+    "description": "Todo tool: the filter box's accessible name."
+  },
+  "omniPlaceholder": {
+    "message": "search tabs, history, notes, todos, bookmarks",
+    "description": "Omni search: the search box placeholder."
+  },
+  "omniTypeToSearch": {
+    "message": "Type to search your synced tabverses",
+    "description": "Omni search: shown before anything is typed."
+  },
+  "omniKindTabverses": {
+    "message": "Tabverses",
+    "description": "Omni search: the group name for tabverse matches."
+  },
+  "omniKindTabs": {
+    "message": "Tabs",
+    "description": "Omni search: the group name for tab matches."
+  },
+  "omniKindHistory": {
+    "message": "History",
+    "description": "Omni search: the group name for closed-tab matches."
+  },
+  "omniKindNotes": {
+    "message": "Notes",
+    "description": "Omni search: the group name for note matches."
+  },
+  "omniKindTodos": {
+    "message": "Todos",
+    "description": "Omni search: the group name for todo matches."
+  },
+  "omniKindBookmarks": {
+    "message": "Bookmarks",
+    "description": "Omni search: the group name for bookmark matches."
+  },
+  "omniKindSessions": {
+    "message": "Sessions",
+    "description": "Omni search: the group name for browser-session matches."
+  },
+  "savedDetailSwitch": {
+    "message": "Switch to the window of this tabverse",
+    "description": "Saved tabverse: the switch button's tooltip."
+  },
+  "savedDetailLoadNewWindow": {
+    "message": "Load all tabs to new window",
+    "description": "Saved tabverse: the open-in-new-window button's tooltip."
+  },
+  "savedDetailLoadThisWindow": {
+    "message": "Load into this window: the tabs it already has open are kept, and the tabverse's own missing tabs are opened beside them",
+    "description": "Saved tabverse: the load-into-this-window button's tooltip."
+  },
+  "focusExit": {
+    "message": "Exit focus on the pinned tool",
+    "description": "Tools: the focus toggle's tooltip while focused."
+  },
+  "focusEnter": {
+    "message": "Focus on the pinned tool",
+    "description": "Tools: the focus toggle's tooltip while not focused."
+  },
+  "toolUnpin": {
+    "message": "Unpin current tool",
+    "description": "Tools: the unpin button's tooltip."
+  },
+  "toolPin": {
+    "message": "Pin current tool",
+    "description": "Tools: the pin button's tooltip."
+  },
+  "reviseNoRevision": {
+    "message": "No revision came back - try again.",
+    "description": "Note revision: the error when the model returned nothing."
+  },
+  "reviseInstructionAria": {
+    "message": "Instruction for the revision",
+    "description": "Note revision: the instruction box's accessible name."
+  },
+  "reviseAria": {
+    "message": "Revise this note with AI",
+    "description": "Note revision: the button's accessible name."
+  },
+  "reviseTitle": {
+    "message": "Revise this note with AI",
+    "description": "Note revision: the button's tooltip."
+  },
+  "dedupNeverAgain": {
+    "message": "Never offer this URL again",
+    "description": "Duplicate advisor: the always-ignore button's tooltip."
+  },
+  "dedupFound": {
+    "message": "Duplicate tabs found",
+    "description": "Duplicate advisor: the notice's heading."
+  },
+  "dedupReviewDuplicates": {
+    "message": "Review the duplicates",
+    "description": "Duplicate advisor: the expand button's tooltip while collapsed."
+  },
+  "dedupHide": {
+    "message": "Hide",
+    "description": "Duplicate advisor: the expand button's label while expanded."
+  },
+  "dedupReview": {
+    "message": "Review",
+    "description": "Duplicate advisor: the expand button's label while collapsed."
+  },
+  "editorH1": {
+    "message": "H1",
+    "description": "Note editor: the level-one heading button."
+  },
+  "editorH2": {
+    "message": "H2",
+    "description": "Note editor: the level-two heading button."
+  },
+  "editorH3": {
+    "message": "H3",
+    "description": "Note editor: the level-three heading button."
+  },
+  "editorBlockquote": {
+    "message": "Blockquote",
+    "description": "Note editor: the blockquote button."
+  },
+  "editorUnorderedList": {
+    "message": "Unordered List",
+    "description": "Note editor: the bullet-list button."
+  },
+  "editorOrderedList": {
+    "message": "Ordered List",
+    "description": "Note editor: the numbered-list button."
+  },
+  "editorCodeBlock": {
+    "message": "Code Block",
+    "description": "Note editor: the code-block button."
+  },
+  "editorBold": {
+    "message": "Bold",
+    "description": "Note editor: the bold button."
+  },
+  "editorItalic": {
+    "message": "Italic",
+    "description": "Note editor: the italic button."
+  },
+  "editorUnderline": {
+    "message": "Underline",
+    "description": "Note editor: the underline button."
+  },
+  "editorMonospace": {
+    "message": "Monospace",
+    "description": "Note editor: the inline-code button."
+  },
+  "editorStrikethrough": {
+    "message": "Strikethrough",
+    "description": "Note editor: the strikethrough button."
+  },
+  "pcbReadyStatus": {
+    "message": "Page actions for this tab",
+    "description": "Page actions: the status under the button before anything has happened."
+  },
+  "pcbSuspendedStatus": {
+    "message": "This tab is suspended - open it to load it, then try again",
+    "description": "Page actions: why the button is disabled on a suspended tab."
+  },
+  "pcbUnreadableStatus": {
+    "message": "Could not read this page as Markdown.",
+    "description": "Page actions: the status when the page could not be converted."
+  },
+  "pcbViewMarkdown": {
+    "message": "View page content as Markdown",
+    "description": "Page actions: the item that shows the page as Markdown. Needs no model."
+  },
+  "pcbSendToChat": {
+    "message": "Send page content to AI chat",
+    "description": "Page actions: the item that attaches the page to a chat question."
+  },
+  "pcbNewNote": {
+    "message": "New note with AI summary",
+    "description": "Page actions: the item that creates a note summarising the page."
+  },
+  "pcbAppendNote": {
+    "message": "Append to current note with AI summary",
+    "description": "Page actions: the item that appends a summary to the open note."
+  },
+  "pcbAria": {
+    "message": "Page actions for this tab",
+    "description": "Page actions: the lightbulb button's accessible name."
+  },
+  "pcbCannotRead": {
+    "message": "Could not read this tab.",
+    "description": "Page actions: the status when the tab could not be read at all."
+  },
+  "pcbNoSummary": {
+    "message": "No summary came back - try again.",
+    "description": "Page actions: the status when the model returned nothing."
+  },
+  "pcbNoNoteSelected": {
+    "message": "No note is selected to append to.",
+    "description": "Page actions: the status when append was chosen with no note open."
+  },
+  "pcbNoteAdded": {
+    "message": "Added a note to this tabverse.",
+    "description": "Page actions: the status after a summary note was created."
+  },
+  "pcbAttached": {
+    "message": "Attached the page to the AI chat.",
+    "description": "Page actions: the status after the page was attached to the chat."
+  },
+  "tabCardSaveBookmark": {
+    "message": "Save this tab as a bookmark",
+    "description": "Tab row: the bookmark button's tooltip and accessible name."
+  },
+  "tabCardPinnedInChrome": {
+    "message": "This tab is pinned in Chrome",
+    "description": "Tab row: the tooltip on the pin tag."
+  },
+  "tabCardWhitelisted": {
+    "message": "This tab is never suspended; click to allow it",
+    "description": "Tab row: the whitelist toggle's tooltip while whitelisted."
+  },
+  "tabCardNeverSuspend": {
+    "message": "Never suspend this tab",
+    "description": "Tab row: the whitelist toggle's tooltip and accessible name while not whitelisted."
+  },
+  "tabCardAllowSuspend": {
+    "message": "Allow this tab to be suspended",
+    "description": "Tab row: the whitelist toggle's accessible name while whitelisted."
+  },
+  "tabCardClose": {
+    "message": "Close this tab",
+    "description": "Tab row: the close button's tooltip and accessible name."
+  },
+  "noteReviewTitle": {
+    "message": "Review changes",
+    "description": "Note review: the dialog's title."
+  },
+  "noteRejectAll": {
+    "message": "Reject all",
+    "description": "Note review: the button that discards the whole proposal."
+  },
+  "noteEditAddedLine": {
+    "message": "Edit added line",
+    "description": "Note review: an added line's accessible name once it is being edited."
+  },
+  "noteKeepChange": {
+    "message": "Keep this change",
+    "description": "Note review: the per-line toggle's label once reverted."
+  },
+  "noteRevertChange": {
+    "message": "Revert this change",
+    "description": "Note review: the per-line toggle's label while un-reverted."
+  },
+  "chatNoContextWindow": {
+    "message": "This browser does not report the context window.",
+    "description": "AI chat: shown when the model's context size is unknown."
+  },
+  "chatClearConversation": {
+    "message": "Clear conversation",
+    "description": "AI chat: the button that drops the whole conversation."
+  },
+  "chatContextWindowAria": {
+    "message": "Context window used",
+    "description": "AI chat: the context-usage readout's accessible name."
+  },
+  "chatCopyAnswer": {
+    "message": "Copy the answer",
+    "description": "AI chat: the copy button before it is pressed."
+  },
+  "chatRegenerate": {
+    "message": "Regenerate the answer",
+    "description": "AI chat: the regenerate button's tooltip and accessible name."
+  },
+  "chatAttachedPage": {
+    "message": "Attached page",
+    "description": "AI chat: what an attached page is called when it has no title."
+  },
+  "chatCompactedNotice": {
+    "message": "Earlier conversation summarized to fit the context",
+    "description": "AI chat: the note left where older turns were folded away."
+  },
+  "chatRemoveContext": {
+    "message": "Remove the attached page",
+    "description": "AI chat: the attached-page chip's remove control."
+  },
+  "chatPlaceholder": {
+    "message": "Ask the on-device model…",
+    "description": "AI chat: the composer's placeholder."
+  },
+  "chatMessageAria": {
+    "message": "Message",
+    "description": "AI chat: the composer's accessible name."
+  },
+  "chatClearInput": {
+    "message": "Clear input",
+    "description": "AI chat: the clear-input button's label."
+  },
+  "chatClearInputLabel": {
+    "message": "Clear the input",
+    "description": "AI chat: the clear-input button's tooltip and accessible name."
+  },
+  "chatEnterHint": {
+    "message": "Enter sends · Shift+Enter makes a new line",
+    "description": "AI chat: the hint under the composer."
+  },
+  "chatNoModelTitle": {
+    "message": "No on-device model",
+    "description": "AI chat: the heading when the browser has no Prompt API."
+  },
+  "chatNoModelBody": {
+    "message": "This browser does not offer Chrome’s built-in AI, so there is nothing for the chat to run on. The other AI features are absent here for the same reason.",
+    "description": "AI chat: why the chat is empty without the API."
+  },
+  "chatModelOffTitle": {
+    "message": "The on-device model is off",
+    "description": "AI chat: the heading when the feature is switched off."
+  },
+  "chatModelOffBody": {
+    "message": "Turn it back on in Settings → AI to use the chat.",
+    "description": "AI chat: where to switch the feature back on."
+  },
+  "omniNothingMatched": {
+    "message": "Nothing matched.",
+    "description": "Omni search: shown when a search found nothing."
+  },
+  "omniKindsAria": {
+    "message": "Search result kinds",
+    "description": "Omni search: the result-kind navigation's accessible name."
+  },
+  "dedupRemoved": {
+    "message": "Duplicate tabs removed.",
+    "description": "Duplicate advisor: the line after duplicates were closed."
+  },
+  "suggestPickHint": {
+    "message": "Pick a name for this tabverse.",
+    "description": "Name suggestion: the hint before any names are offered."
+  },
+  "reviseSayHint": {
+    "message": "Say what to do with this note",
+    "description": "Note revision: the hint over the instruction box."
+  },
+  "searchContainsAllOf": {
+    "message": "contains all of",
+    "description": "Search: the words between a scope tag and the terms of one AND-group."
+  },
+  "managerOtherPage": {
+    "message": "Found another Tabverse Manager page!",
+    "description": "Manager: what a second manager tab says instead of opening twice."
+  },
+  "activeTabClearFilter": {
+    "message": "Clear the filter (Esc)",
+    "description": "Tab list: the clear button's tooltip."
+  },
+  "groupSplitView": {
+    "message": "split view",
+    "description": "Tab list: the label on the split-view group."
+  },
+  "tabListSaveClose": {
+    "message": "Save and close",
+    "description": "Tab list: the save-and-close button's tooltip."
+  },
+  "tabListExport": {
+    "message": "Export as .tabverse file",
+    "description": "Tab list: the export button's tooltip."
+  },
+  "noteNoChanges": {
+    "message": "No changes",
+    "description": "Note review: shown when a proposal altered nothing."
+  },
+  "noteFilterPlaceholder": {
+    "message": "filter these notes…",
+    "description": "Note tool: the filter box placeholder."
+  },
+  "noteFilterAria": {
+    "message": "Filter these notes",
+    "description": "Note tool: the filter box's accessible name."
   }
 }

@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { $allNote, noteStoreApi } from '../../data/note/store';
 import React, { useState } from 'react';
 import { Note, newEmptyNote, setName } from '../../data/note/Note';
@@ -63,10 +64,10 @@ export function NotebookView() {
             <ListFilter
               value={filterText}
               onChange={setFilterText}
-              placeholder="filter these notes…"
+              placeholder={t('noteFilterPlaceholder')}
               count={currentNotes.length}
               total={allNotes.length}
-              ariaLabel="Filter these notes"
+              ariaLabel={t('noteFilterAria')}
             />
           </div>
         </div>

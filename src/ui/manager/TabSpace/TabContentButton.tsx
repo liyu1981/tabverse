@@ -17,6 +17,7 @@
  * checked by what it renders, and a container that owns the availability
  * subscription, the run, and the failure line.
  */
+import { t } from '../../../i18n';
 import { Button, Menu, MenuItem, Popover } from '@blueprintjs/core';
 import React, {
   useCallback,
@@ -57,14 +58,13 @@ import { MarkdownViewDialog } from './MarkdownViewDialog';
 import classes from './TabContentButton.module.scss';
 
 /** The line under the button when nothing has happened yet. */
-const READY_STATUS = 'Page actions for this tab';
+const READY_STATUS = 'pcbReadyStatus';
 
 /** Why the button is disabled: a suspended tab has no page to read. */
-const SUSPENDED_STATUS =
-  'This tab is suspended - open it to load it, then try again';
+const SUSPENDED_STATUS = 'pcbSuspendedStatus';
 
 /** The failures the Markdown step can report. */
-const UNREADABLE_STATUS = 'Could not read this page as Markdown.';
+const UNREADABLE_STATUS = 'pcbUnreadableStatus';
 
 /** What one menu item does. */
 export type TabContentMode = 'view' | 'chat' | 'summary-new' | 'summary-append';
@@ -83,24 +83,24 @@ export function TabContentMenu(props: TabContentMenuProps) {
     <Menu>
       <MenuItem
         icon="eye-open"
-        text="View page content as Markdown"
+        text={t('pcbViewMarkdown')}
         onClick={() => props.onSelect('view')}
       />
       <MenuItem
         icon="comment"
-        text="Send page content to AI chat"
+        text={t('pcbSendToChat')}
         disabled={props.aiDisabled}
         onClick={() => props.onSelect('chat')}
       />
       <MenuItem
         icon="document"
-        text="New note with AI summary"
+        text={t('pcbNewNote')}
         disabled={props.aiDisabled}
         onClick={() => props.onSelect('summary-new')}
       />
       <MenuItem
         icon="insert"
-        text="Append to current note with AI summary"
+        text={t('pcbAppendNote')}
         disabled={props.aiDisabled || !props.canAppend}
         onClick={() => props.onSelect('summary-append')}
       />
@@ -138,7 +138,7 @@ export function TabContentButtonView(props: TabContentButtonViewProps) {
     >
       <Button
         className="tv-icon-button"
-        aria-label="Page actions for this tab"
+        aria-label={t('pcbAria')}
         title={props.status}
         icon="lightbulb"
         minimal={true}
@@ -205,20 +205,20 @@ export function TabContentButton(props: TabContentButtonProps) {
         text = (await extractTabText(tab.chromeTabId)) ?? '';
       }
       if (!text.trim()) {
-        setStatus('Could not read this tab.');
+        setStatus(t('pcbCannotRead'));
         return;
       }
       const session = await ensureAiSession(SUMMARIZE_SYSTEM_PROMPT);
       const summary = await summarizeTab(session, text);
       if (!summary.trim()) {
-        setStatus('No summary came back - try again.');
+        setStatus(t('pcbNoSummary'));
         return;
       }
       const body = summaryNoteBody(tab.title, tab.url, summary);
       if (mode === 'summary-append') {
         const target = getNoteEditor(selectedNoteId);
         if (target === null) {
-          setStatus('No note is selected to append to.');
+          setStatus(t('pcbNoNoteSelected'));
           return;
         }
         const existing = target.getContent();
@@ -230,7 +230,7 @@ export function TabContentButton(props: TabContentButtonProps) {
         tabSpaceId,
         newSummaryNote(summaryNoteName(tab.title), body),
       );
-      setStatus('Added a note to this tabverse.');
+      setStatus(t('pcbNoteAdded'));
     },
     [
       readAsMarkdown,
@@ -254,7 +254,7 @@ export function TabContentButton(props: TabContentButtonProps) {
         if (mode === 'view') {
           const markdown = await readAsMarkdown();
           if (!markdown) {
-            setStatus(UNREADABLE_STATUS);
+            setStatus(t(UNREADABLE_STATUS));
             return;
           }
           setPreview({ markdown });
@@ -263,7 +263,7 @@ export function TabContentButton(props: TabContentButtonProps) {
         if (mode === 'chat') {
           const markdown = await readAsMarkdown();
           if (!markdown) {
-            setStatus(UNREADABLE_STATUS);
+            setStatus(t(UNREADABLE_STATUS));
             return;
           }
           // Attach the page as the question's context, not as the composer's
@@ -275,7 +275,7 @@ export function TabContentButton(props: TabContentButtonProps) {
             markdown,
           });
           sendPubSubMessage(ToolTabMsg.OpenChat, true);
-          setStatus('Attached the page to the AI chat.');
+          setStatus(t('pcbAttached'));
           return;
         }
         let current = getAiAvailability();
@@ -285,7 +285,7 @@ export function TabContentButton(props: TabContentButtonProps) {
           current = await probeAiAvailability();
         }
         if (current.state === 'absent') {
-          setStatus('This browser has no built-in AI.');
+          setStatus(t('suggestNoAiBrowser'));
           return;
         }
         await summarize(mode);
@@ -295,8 +295,8 @@ export function TabContentButton(props: TabContentButtonProps) {
         evictAiSession(SUMMARIZE_SYSTEM_PROMPT);
         setStatus(
           getAiAvailability().state === 'absent'
-            ? 'This browser has no built-in AI.'
-            : 'Could not reach the on-device model - try again.',
+            ? t('suggestNoAiBrowser')
+            : t('suggestCannotReach'),
         );
       } finally {
         runningRef.current = false;
@@ -314,7 +314,7 @@ export function TabContentButton(props: TabContentButtonProps) {
         disabled={suspended}
         canAppend={getNoteEditor(selectedNoteId) !== null}
         aiDisabled={aiDisabled}
-        status={suspended ? SUSPENDED_STATUS : (status ?? READY_STATUS)}
+        status={suspended ? t(SUSPENDED_STATUS) : (status ?? t(READY_STATUS))}
         onSelect={(mode) => void run(mode)}
       />
       {preview ? (

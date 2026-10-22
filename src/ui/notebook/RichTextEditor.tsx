@@ -1,3 +1,4 @@
+import { t, type MessageKey } from '../../i18n';
 import React, {
   useCallback,
   useImperativeHandle,
@@ -41,7 +42,7 @@ type Editor = NonNullable<ReturnType<typeof useEditor>>;
 
 interface IStyleButton {
   icon: IconName;
-  label: string;
+  label: MessageKey;
   isActive: (editor: Editor) => boolean;
   run: (editor: Editor) => void;
 }
@@ -49,43 +50,43 @@ interface IStyleButton {
 const BLOCK_BUTTONS: IStyleButton[] = [
   {
     icon: 'header-one',
-    label: 'H1',
+    label: 'editorH1',
     isActive: (e) => e.isActive('heading', { level: 1 }),
     run: (e) => e.chain().focus().toggleHeading({ level: 1 }).run(),
   },
   {
     icon: 'header-two',
-    label: 'H2',
+    label: 'editorH2',
     isActive: (e) => e.isActive('heading', { level: 2 }),
     run: (e) => e.chain().focus().toggleHeading({ level: 2 }).run(),
   },
   {
     icon: 'header-three',
-    label: 'H3',
+    label: 'editorH3',
     isActive: (e) => e.isActive('heading', { level: 3 }),
     run: (e) => e.chain().focus().toggleHeading({ level: 3 }).run(),
   },
   {
     icon: 'citation',
-    label: 'Blockquote',
+    label: 'editorBlockquote',
     isActive: (e) => e.isActive('blockquote'),
     run: (e) => e.chain().focus().toggleBlockquote().run(),
   },
   {
     icon: 'properties',
-    label: 'Unordered List',
+    label: 'editorUnorderedList',
     isActive: (e) => e.isActive('bulletList'),
     run: (e) => e.chain().focus().toggleBulletList().run(),
   },
   {
     icon: 'numbered-list',
-    label: 'Ordered List',
+    label: 'editorOrderedList',
     isActive: (e) => e.isActive('orderedList'),
     run: (e) => e.chain().focus().toggleOrderedList().run(),
   },
   {
     icon: 'code',
-    label: 'Code Block',
+    label: 'editorCodeBlock',
     isActive: (e) => e.isActive('codeBlock'),
     run: (e) => e.chain().focus().toggleCodeBlock().run(),
   },
@@ -94,31 +95,31 @@ const BLOCK_BUTTONS: IStyleButton[] = [
 const INLINE_BUTTONS: IStyleButton[] = [
   {
     icon: 'bold',
-    label: 'Bold',
+    label: 'editorBold',
     isActive: (e) => e.isActive('bold'),
     run: (e) => e.chain().focus().toggleBold().run(),
   },
   {
     icon: 'italic',
-    label: 'Italic',
+    label: 'editorItalic',
     isActive: (e) => e.isActive('italic'),
     run: (e) => e.chain().focus().toggleItalic().run(),
   },
   {
     icon: 'underline',
-    label: 'Underline',
+    label: 'editorUnderline',
     isActive: (e) => e.isActive('underline'),
     run: (e) => e.chain().focus().toggleUnderline().run(),
   },
   {
     icon: 'font',
-    label: 'Monospace',
+    label: 'editorMonospace',
     isActive: (e) => e.isActive('code'),
     run: (e) => e.chain().focus().toggleCode().run(),
   },
   {
     icon: 'strikethrough',
-    label: 'Strikethrough',
+    label: 'editorStrikethrough',
     isActive: (e) => e.isActive('strike'),
     run: (e) => e.chain().focus().toggleStrike().run(),
   },
@@ -130,7 +131,7 @@ function StyleButton(props: { button: IStyleButton; editor: Editor | null }) {
   return (
     <button
       type="button"
-      aria-label={button.label}
+      aria-label={t(button.label)}
       aria-pressed={active}
       className={clsx(classes.styleButton, active ? classes.activeButton : '')}
       onMouseDown={(e) => {
@@ -140,7 +141,7 @@ function StyleButton(props: { button: IStyleButton; editor: Editor | null }) {
           button.run(editor);
         }
       }}
-      title={button.label}
+      title={t(button.label)}
     >
       <Icon icon={button.icon} />
     </button>

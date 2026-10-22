@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { $allTodo, todoStoreApi } from '../../data/todo/store';
 import React, { useState } from 'react';
 import { Todo, setCompleted } from '../../data/todo/Todo';
@@ -46,7 +47,7 @@ const TodoItemView = (props: TodoItemViewProps) => {
         <button
           type="button"
           className={classes.content}
-          title="Double click, or press Enter, to edit"
+          title={t('todoEditHint')}
           onDoubleClick={() => setEditing(true)}
           onKeyDown={(event) => {
             if (event.key === 'Enter' || event.key === ' ') {
@@ -59,7 +60,7 @@ const TodoItemView = (props: TodoItemViewProps) => {
         </button>
         <button
           type="button"
-          aria-label="Delete todo"
+          aria-label={t('todoDeleteAria')}
           className={classes.destroy}
           onClick={() => props.removeFunc(props.todo.id)}
         />
@@ -155,7 +156,7 @@ export function TodoView(_props: TodoViewProps) {
         checked={false}
         onChange={() => {}}
       />
-      <label htmlFor="toggle-all">Mark all as complete</label>
+      <label htmlFor="toggle-all">{t('todoMarkAll')}</label>
       <ul className={classes.todoList}>{todoItems}</ul>
     </section>
   );
@@ -164,7 +165,7 @@ export function TodoView(_props: TodoViewProps) {
     <header className={classes.header}>
       <input
         className={classes.newTodo}
-        placeholder="What needs to be done?"
+        placeholder={t('todoPlaceholder')}
         value={currentInputValue ?? ''}
         onKeyDown={(event) => {
           if (event.keyCode === RETURN_KEY) {
@@ -236,10 +237,10 @@ export function TodoView(_props: TodoViewProps) {
         <ListFilter
           value={filterText}
           onChange={setFilterText}
-          placeholder="filter these todos…"
+          placeholder={t('todoFilterPlaceholder')}
           count={matchingTodos.length}
           total={allTodo.todos.size}
-          ariaLabel="Filter these todos"
+          ariaLabel={t('todoFilterAria')}
         />
       </div>
       <div className={classes.todoapp}>

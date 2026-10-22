@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import {
   Button,
   ButtonGroup,
@@ -91,7 +92,7 @@ const HistoryItem = (props: IHistoryItemProps) => {
         <ButtonGroup>
           <Button
             icon="undo"
-            title="Reopen In Current Tabverse"
+            title={t('historyReopen')}
             minimal={true}
             onClick={() => props.restore(closedTab)}
           />
@@ -99,8 +100,8 @@ const HistoryItem = (props: IHistoryItemProps) => {
             icon="bookmark"
             title={
               props.isBookmarked
-                ? 'This page is already bookmarked'
-                : 'Save as Bookmark (removes it from here)'
+                ? t('historyAlreadyBookmarked')
+                : t('historySaveAsBookmark')
             }
             minimal={true}
             disabled={props.isBookmarked}
@@ -108,7 +109,7 @@ const HistoryItem = (props: IHistoryItemProps) => {
           />
           <Button
             icon="trash"
-            title="Forget It"
+            title={t('historyForgetIt')}
             minimal={true}
             onClick={() => props.remove(closedTab)}
           />
@@ -212,7 +213,7 @@ export function HistoryView() {
     if (isBookmarked(closedTab.url)) {
       toaster.show({
         intent: Intent.WARNING,
-        message: 'This page is already bookmarked.',
+        message: t('historyAlreadyBookmarkedToast'),
       });
       return;
     }
@@ -226,7 +227,7 @@ export function HistoryView() {
     // it lives in the Bookmark tool now, so it does not need to stay in the
     // history as well
     deleteClosedTab(closedTab.id);
-    toaster.show({ message: 'Saved as bookmark.' });
+    toaster.show({ message: t('historySavedToast') });
   };
 
   const remove = (closedTab: ClosedTab) => {
@@ -255,10 +256,10 @@ export function HistoryView() {
         text={`Clear all ${allClosedTab.closedTabs.size} entries`}
         onClick={() => {
           clearAllClosedTabs();
-          toaster.show({ message: 'Closed tab history cleared.' });
+          toaster.show({ message: t('historyClearedToast') });
         }}
       />
-      <Button text="Cancel" minimal={true} />
+      <Button text={t('commonCancel')} minimal={true} />
     </ButtonGroup>
   );
 
@@ -278,7 +279,7 @@ export function HistoryView() {
           <span className={classes.headerActions}>
             <Button
               icon="undo"
-              title="Reopen The Last Closed Tab"
+              title={t('historyReopenLast')}
               minimal={true}
               small={true}
               disabled={allClosedTab.closedTabs.size <= 0}
@@ -292,7 +293,7 @@ export function HistoryView() {
               >
                 <Button
                   icon="trash"
-                  title="Clear The Whole History"
+                  title={t('historyClearWhole')}
                   minimal={true}
                   small={true}
                 />

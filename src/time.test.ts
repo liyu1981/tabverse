@@ -1,8 +1,12 @@
+import { format } from 'date-fns';
+import { enUS } from 'date-fns/locale';
+
 import {
   calendarLabel,
   dayGroupLabel,
   formatDateTime,
   fromNow,
+  resolveDateLocale,
   startOfDayMs,
 } from './time';
 
@@ -42,4 +46,36 @@ test('formatDateTime and fromNow are stable strings', () => {
   expect(fromNow(Date.now())).toBeTruthy();
   expect(fromNow(Date.now() - 5 * 60_000)).toBe('5 minutes ago');
   expect(fromNow(Date.now() - 2 * 86_400_000)).toBe('2 days ago');
+});
+
+test('resolveDateLocale maps the browser language onto a shipped language', () => {
+  // 2026-09-28 is a Monday; the weekday name is where a locale shows
+  expect(resolveDateLocale('en')).toBe(enUS);
+  expect(resolveDateLocale('en-GB')).toBe(enUS);
+  expect(resolveDateLocale('de')).not.toBe(enUS);
+  expect(format(day(0), 'EEEE', { locale: resolveDateLocale('de') })).toBe(
+    'Montag',
+  );
+  expect(format(day(0), 'EEEE', { locale: resolveDateLocale('fr') })).toBe(
+    'lundi',
+  );
+  expect(format(day(0), 'EEEE', { locale: resolveDateLocale('es') })).toBe(
+    'lunes',
+  );
+  expect(format(day(0), 'EEEE', { locale: resolveDateLocale('ja') })).toBe(
+    '月曜日',
+  );
+});
+
+test('resolveDateLocale keeps the two Chineses apart and falls back sanely', () => {
+  // Chrome writes these with a dash, a locale tag may arrive underscored
+  expect(resolveDateLocale('pt-BR')).toBe(resolveDateLocale('pt_BR'));
+  // simplified and traditional are different locales, not one with two names
+  expect(resolveDateLocale('zh-CN')).not.toBe(resolveDateLocale('zh-TW'));
+  // Chinese with no region is simplified, which is what Chrome defaults to
+  expect(resolveDateLocale('zh')).toBe(resolveDateLocale('zh-CN'));
+  // a language we do not ship still has to render a date
+  expect(resolveDateLocale('xx')).toBe(enUS);
+  expect(resolveDateLocale(undefined)).toBe(enUS);
+  expect(resolveDateLocale('')).toBe(enUS);
 });

@@ -12,20 +12,22 @@ import {
   matchCount,
 } from './omniSearchGrouping';
 import { highlightTerms, parseSnippet, type TextPart } from './omniSearchText';
+import { t, type MessageKey } from '../../../i18n';
 import classes from './OmniSearch.module.scss';
 
-const KIND_LABEL: Record<string, string> = {
-  tabspace: 'Tabverses',
-  tab: 'Tabs',
-  closedtab: 'History',
-  note: 'Notes',
-  todo: 'Todos',
-  bookmark: 'Bookmarks',
-  session: 'Sessions',
+const KIND_LABEL: Record<string, MessageKey> = {
+  tabspace: 'omniKindTabverses',
+  tab: 'omniKindTabs',
+  closedtab: 'omniKindHistory',
+  note: 'omniKindNotes',
+  todo: 'omniKindTodos',
+  bookmark: 'omniKindBookmarks',
+  session: 'omniKindSessions',
 };
 
 function labelOf(kind: string): string {
-  return KIND_LABEL[kind] || kind;
+  const key = KIND_LABEL[kind];
+  return key ? t(key) : kind;
 }
 
 function Highlighted(props: { parts: TextPart[] }) {

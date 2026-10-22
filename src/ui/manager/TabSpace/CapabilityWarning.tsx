@@ -1,3 +1,4 @@
+import { t } from '../../../i18n';
 import { Callout, Icon, Intent, Tag } from '@blueprintjs/core';
 import React, { useRef, useState } from 'react';
 
@@ -77,7 +78,9 @@ export function CapabilityWarning() {
           type="button"
           className={classes.header}
           aria-expanded={expanded}
-          title={expanded ? 'Hide the details' : 'Show what is missing'}
+          title={
+            expanded ? t('capabilityHideDetails') : t('capabilityShowMissing')
+          }
           onClick={toggle}
           onKeyDown={onKeyDown}
           onBlur={collapseIfFocusLeft}

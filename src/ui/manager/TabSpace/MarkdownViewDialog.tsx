@@ -9,6 +9,7 @@
  * `renderToStaticMarkup` (the same note `NoteReviewDialog` carries) - so this
  * way the Markdown and the copy state are still checkable by what they render.
  */
+import { t } from '../../../i18n';
 import { Button, Dialog, DialogBody } from '@blueprintjs/core';
 import React, { useCallback, useState } from 'react';
 
@@ -35,7 +36,7 @@ export function MarkdownViewBody(props: MarkdownViewBodyProps) {
         <Button
           className="tv-primary-button"
           icon={props.copied ? 'tick' : 'duplicate'}
-          text={props.copied ? 'Copied' : 'Copy Markdown'}
+          text={props.copied ? t('markdownCopied') : t('markdownCopy')}
           onClick={props.onCopy}
         />
       </div>
@@ -67,7 +68,7 @@ export function MarkdownViewDialog(props: MarkdownViewDialogProps) {
       isOpen={true}
       onClose={onClose}
       icon="document"
-      title="Page content as Markdown"
+      title={t('markdownDialogTitle')}
     >
       <MarkdownViewBody
         title={title}

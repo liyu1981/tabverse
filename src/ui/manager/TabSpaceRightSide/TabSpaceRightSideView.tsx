@@ -1,3 +1,4 @@
+import { t } from '../../../i18n';
 import { Tab as BPTab, Tabs as BPTabs, Button, Icon } from '@blueprintjs/core';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
@@ -220,11 +221,7 @@ export function TabSpaceRightSideView() {
               <Button
                 minimal={true}
                 onClick={() => setFocus((last) => !last)}
-                title={
-                  focus
-                    ? 'Exit focus on the pinned tool'
-                    : 'Focus on the pinned tool'
-                }
+                title={focus ? t('focusExit') : t('focusEnter')}
                 aria-pressed={focus}
               >
                 <Icon icon={focus ? 'minimize' : 'maximize'} />
@@ -232,7 +229,7 @@ export function TabSpaceRightSideView() {
               <Button
                 minimal={true}
                 onClick={unpinCurrentTool}
-                title="Unpin current tool"
+                title={t('toolUnpin')}
               >
                 <Icon icon="unlock" />
               </Button>
@@ -264,7 +261,7 @@ export function TabSpaceRightSideView() {
           <Button
             minimal={true}
             className={classes.floatRightButton}
-            title="Pin current tool"
+            title={t('toolPin')}
             onClick={pinCurrentTool}
           >
             <Icon icon="lock" />

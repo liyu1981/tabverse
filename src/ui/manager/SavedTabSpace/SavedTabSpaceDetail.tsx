@@ -1,3 +1,4 @@
+import { t } from '../../../i18n';
 import { formatDateTime, fromNow } from '../../../time';
 import { Alignment, Button, ButtonGroup } from '@blueprintjs/core';
 import React from 'react';
@@ -99,7 +100,7 @@ export function SavedTabSpaceDetail(props: SavedTabSpaceDetailProps) {
           >
             <Button
               icon="duplicate"
-              title="Switch to the window of this tabverse"
+              title={t('savedDetailSwitch')}
               onClick={() => {
                 props.switchFunc(props.tabSpace);
               }}
@@ -119,7 +120,7 @@ export function SavedTabSpaceDetail(props: SavedTabSpaceDetailProps) {
               onClick={() => {
                 props.restoreFunc(props.tabSpace);
               }}
-              title="Load all tabs to new window"
+              title={t('savedDetailLoadNewWindow')}
             >
               Load to New
             </Button>
@@ -128,7 +129,7 @@ export function SavedTabSpaceDetail(props: SavedTabSpaceDetailProps) {
               onClick={() => {
                 props.loadToCurrentWindowFunc(props.tabSpace.id);
               }}
-              title="Load into this window: the tabs it already has open are kept, and the tabverse's own missing tabs are opened beside them"
+              title={t('savedDetailLoadThisWindow')}
             >
               Load to Current
             </Button>

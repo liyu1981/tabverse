@@ -1,3 +1,4 @@
+import { t } from '../../../i18n';
 import React from 'react';
 import classes from './WebtoolView.module.scss';
 
@@ -10,7 +11,7 @@ export function WebtoolView(_props) {
   return (
     <iframe
       className={classes.iframeContainer}
-      title="My web tools gallery"
+      title={t('webtoolTitle')}
       src="https://liyu1981.github.io/my-awesome-web-tool-gallery/"
     ></iframe>
     // <SimpleBar style={{ height: '100vh' }}>

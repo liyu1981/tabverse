@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { Button, Popover, TextArea } from '@blueprintjs/core';
 import React, {
   useCallback,
@@ -81,14 +82,14 @@ export function ReviseNoteButton(props: ReviseNoteButtonProps) {
         current = await probeAiAvailability();
       }
       if (current.state === 'absent') {
-        setError('This browser has no built-in AI.');
+        setError(t('suggestNoAiBrowser'));
         return;
       }
       const note = getContent();
       const session = await ensureAiSession(NOTE_REWRITE_SYSTEM_PROMPT);
       const revised = await rewriteNote(session, instruction, note);
       if (!revised.trim()) {
-        setError('No revision came back - try again.');
+        setError(t('reviseNoRevision'));
         return;
       }
       setOpen(false);
@@ -99,8 +100,8 @@ export function ReviseNoteButton(props: ReviseNoteButtonProps) {
       evictAiSession(NOTE_REWRITE_SYSTEM_PROMPT);
       setError(
         getAiAvailability().state === 'absent'
-          ? 'This browser has no built-in AI.'
-          : 'Could not reach the on-device model - try again.',
+          ? t('suggestNoAiBrowser')
+          : t('suggestCannotReach'),
       );
     } finally {
       runningRef.current = false;
@@ -136,13 +137,13 @@ export function ReviseNoteButton(props: ReviseNoteButtonProps) {
       portalClassName={classes.portal}
       content={
         <div className={classes.panel}>
-          <p className="muted small">Say what to do with this note</p>
+          <p className="muted small">{t('reviseSayHint')}</p>
           <TextArea
             fill={true}
             rows={3}
             value={instruction}
             onChange={(event) => setInstruction(event.currentTarget.value)}
-            aria-label="Instruction for the revision"
+            aria-label={t('reviseInstructionAria')}
           />
           {error ? <p className="danger-text">{error}</p> : null}
           <div className={classes.actions}>
@@ -165,8 +166,8 @@ export function ReviseNoteButton(props: ReviseNoteButtonProps) {
       <Button
         icon="lightbulb"
         minimal={true}
-        aria-label="Revise this note with AI"
-        title="Revise this note with AI"
+        aria-label={t('reviseAria')}
+        title={t('reviseTitle')}
       />
     </Popover>
   );
