@@ -2,6 +2,7 @@ import { fromNow } from '../../time';
 import { Button, Checkbox, Dialog, Intent } from '@blueprintjs/core';
 import { EmptyQuery, Query, searchSavedTabSpaces } from '../../data/search';
 import React, { useCallback, useContext, useEffect, useState } from 'react';
+import { t } from '../../i18n';
 import {
   moveTabsToTabSpace,
   querySavedTabSpace,
@@ -67,7 +68,7 @@ export function MoveToExistTabSpaceDialog(
 
   const renderCandidateTabSpaces = () => {
     if (candidateTabSpaces.length <= 0) {
-      return <div>Found nothing, wrong search?</div>;
+      return <div>{t('moveFoundNothing')}</div>;
     } else {
       return (
         <div className={classes.candidateTopContainer}>
@@ -90,8 +91,10 @@ export function MoveToExistTabSpaceDialog(
               >
                 <span className={classes.candidateName}>{tabSpace.name}</span>
                 <span className={classes.candidateInfo}>
-                  created: {fromNow(tabSpace.createdAt)}, saved:
-                  {fromNow(tabSpace.updatedAt)}
+                  {t('moveCandidateInfo', [
+                    fromNow(tabSpace.createdAt),
+                    fromNow(tabSpace.updatedAt),
+                  ])}
                 </span>
               </button>
             );
@@ -106,7 +109,7 @@ export function MoveToExistTabSpaceDialog(
       managerViewContext.toaster.show({
         icon: 'error',
         intent: Intent.WARNING,
-        message: 'Can not move tabs without selecting a target tabverse!',
+        message: t('moveNoTargetToast'),
       });
       // the toast above is a warning, not a cancel: without this the move ran
       // with a null target
@@ -118,9 +121,15 @@ export function MoveToExistTabSpaceDialog(
       const key = managerViewContext.toaster.show(
         merge(commonToasterProps, {
           intent: Intent.NONE,
-          message: `moving ${props.tabsForMoving.length} ${
-            props.tabsForMoving.length > 1 ? 'tabs' : 'tab'
-          } to ${selectedCandidateTabSpace.name}`,
+          message: t(
+            props.tabsForMoving.length > 1
+              ? 'moveMovingToastMany'
+              : 'moveMovingToastOne',
+            [
+              String(props.tabsForMoving.length),
+              selectedCandidateTabSpace.name,
+            ],
+          ),
         }),
       );
       await moveTabsToTabSpace(props.tabsForMoving, selectedCandidateTabSpace);
@@ -132,9 +141,15 @@ export function MoveToExistTabSpaceDialog(
       managerViewContext.toaster.show(
         merge(commonToasterProps, {
           intent: Intent.SUCCESS,
-          message: `moved ${props.tabsForMoving.length} ${
-            props.tabsForMoving.length > 1 ? 'tabs' : 'tab'
-          } to ${selectedCandidateTabSpace.name}`,
+          message: t(
+            props.tabsForMoving.length > 1
+              ? 'moveMovedToastMany'
+              : 'moveMovedToastOne',
+            [
+              String(props.tabsForMoving.length),
+              selectedCandidateTabSpace.name,
+            ],
+          ),
         }),
         key,
       );
@@ -147,7 +162,7 @@ export function MoveToExistTabSpaceDialog(
       isOpen={props.isOpen}
       canOutsideClickClose={true}
       onClose={props.onClose}
-      title={'Move Selected Tabs To Other Tabverse'}
+      title={t('moveDialogTitle')}
     >
       <div className={classes.contentContainer}>
         <div className={classes.searchInputContainer}>
@@ -155,7 +170,7 @@ export function MoveToExistTabSpaceDialog(
             large={true}
             leftIcon={'search'}
             tagProps={{ minimal: true }}
-            placeholder={'input keywords,  then ↵ enter to search...'}
+            placeholder={t('moveSearchPlaceholder')}
             query={query}
             onChangeQuery={setQuery}
             scopeDefault={scopeMap['anywhere']}
@@ -175,12 +190,12 @@ export function MoveToExistTabSpaceDialog(
               checked={removeAfterMove}
               onClick={() => setRemoveAfterMove((lastValue) => !lastValue)}
             >
-              Close selected tabs after move
+              {t('moveCloseAfterMove')}
             </Checkbox>
           </div>
           <div className={classes.buttonContainer}>
             <Button className="tv-primary-button" onClick={() => onMove()}>
-              Move
+              {t('moveMoveButton')}
             </Button>
           </div>
         </div>

@@ -8,6 +8,7 @@ import {
   readTabversePreview,
 } from '../../../data/tabSpace/tabversePreview';
 import tabCardClasses from '../TabSpace/TabCard.module.scss';
+import { t } from '../../../i18n';
 import classes from './TabverseHoverPreview.module.scss';
 
 export interface TabversePreviewRowsProps {
@@ -43,15 +44,20 @@ export function TabversePreviewRows(props: TabversePreviewRowsProps) {
         </div>
         <div className={classes.count}>
           {preview === undefined
-            ? 'reading…'
-            : `${preview.tabCount} tab${preview.tabCount === 1 ? '' : 's'}`}
+            ? t('previewReading')
+            : t(
+                preview.tabCount === 1
+                  ? 'commonTabCountOne'
+                  : 'commonTabCountMany',
+                [String(preview.tabCount)],
+              )}
         </div>
       </div>
       <div className={classes.list}>
         {preview === undefined ? (
           <div className={classes.empty}>…</div>
         ) : preview.tabs.length <= 0 ? (
-          <div className={classes.empty}>No tabs open in this window.</div>
+          <div className={classes.empty}>{t('previewNoTabs')}</div>
         ) : (
           <>
             {preview.tabs.map((tab: PreviewTab) => (
@@ -75,7 +81,7 @@ export function TabversePreviewRows(props: TabversePreviewRowsProps) {
             ))}
             {preview.tabCount > limit ? (
               <div className={classes.more}>
-                {`+${preview.tabCount - limit} more`}
+                {t('previewMore', [String(preview.tabCount - limit)])}
               </div>
             ) : (
               ''

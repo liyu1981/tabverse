@@ -3,6 +3,7 @@ import { IManagerQueryParams, ManagerViewRoute } from '../routes';
 import { BottomNav } from '../BottomNav/BottomNav';
 import { ErrorBoundary } from '../../common/ErrorBoundary';
 import { Icon, IconName, Tooltip } from '@blueprintjs/core';
+import { t } from '../../../i18n';
 import { LiveTabSpace } from './LiveTabSpace';
 import React from 'react';
 import { OtherTabSpaces } from './OtherTabSpaces';
@@ -156,7 +157,7 @@ export const Sidebar = (props: ISidebarProps) => {
   // the rail has no room for a name, so the current tabverse's own name is the
   // tooltip; before the bootstrap write lands there is no name yet
   const currentLabel =
-    tabSpace.name.length > 0 ? tabSpace.name : 'Current Tabverse';
+    tabSpace.name.length > 0 ? tabSpace.name : t('sidebarCurrentTabverse');
 
   return (
     <>
@@ -177,7 +178,8 @@ export const Sidebar = (props: ISidebarProps) => {
           railLabel={currentLabel}
           header={
             <div className={classes.sidebarHeaderContainer}>
-              <Icon icon="panel-table" size={ICON_SIZE} /> Current Tabverse
+              <Icon icon="panel-table" size={ICON_SIZE} />{' '}
+              {t('sidebarCurrentTabverse')}
             </div>
           }
         >
@@ -191,10 +193,11 @@ export const Sidebar = (props: ISidebarProps) => {
           route={ManagerViewRoute.Saved}
           onSwitch={props.switchRoute}
           railIcon="git-repo"
-          railLabel="Saved Tabverses"
+          railLabel={t('sidebarSavedTabverses')}
           header={
             <div className={classes.sidebarHeaderContainer}>
-              <Icon icon="git-repo" size={ICON_SIZE} /> Saved Tabverses
+              <Icon icon="git-repo" size={ICON_SIZE} />{' '}
+              {t('sidebarSavedTabverses')}
             </div>
           }
         >
@@ -208,10 +211,10 @@ export const Sidebar = (props: ISidebarProps) => {
             route={ManagerViewRoute.Search}
             onSwitch={props.switchRoute}
             railIcon="search"
-            railLabel="Omni Search"
+            railLabel={t('sidebarOmniSearch')}
             header={
               <div className={classes.sidebarHeaderContainer}>
-                <Icon icon="search" size={ICON_SIZE} /> Omni Search
+                <Icon icon="search" size={ICON_SIZE} /> {t('sidebarOmniSearch')}
               </div>
             }
           />
@@ -222,10 +225,12 @@ export const Sidebar = (props: ISidebarProps) => {
             route={ManagerViewRoute.Webtool}
             onSwitch={props.switchRoute}
             railIcon="build"
-            railLabel="My WebTools"
+            railLabel={t('sidebarMyWebTools')}
             header={
               <div className={classes.sidebarHeaderContainer}>
-                <Icon icon="build" size={ICON_SIZE} /> My WebTools{' '}
+                <Icon icon="build" size={ICON_SIZE} /> {t(
+                  'sidebarMyWebTools',
+                )}{' '}
               </div>
             }
           ></SidebarComponent>

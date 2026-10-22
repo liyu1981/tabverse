@@ -16,6 +16,7 @@
 import { Dialog, DialogBody, Icon, Tab, Tabs } from '@blueprintjs/core';
 import React, { useEffect, useState } from 'react';
 
+import { t } from '../../i18n';
 import { AboutPanel } from './AboutPanel';
 import { AiSettingsPanel } from './AiSettingsPanel';
 import { AppearanceSettingsPanel } from './AppearanceSettingsPanel';
@@ -60,7 +61,7 @@ export function SettingsBody(props: SettingsBodyProps) {
           id="sync"
           title={
             <span>
-              <Icon icon="refresh" /> Sync
+              <Icon icon="refresh" /> {t('settingsTabSync')}
             </span>
           }
           panel={<ServerSyncPanel />}
@@ -69,7 +70,7 @@ export function SettingsBody(props: SettingsBodyProps) {
           id="suspend"
           title={
             <span>
-              <Icon icon="pause" /> Tabs
+              <Icon icon="pause" /> {t('settingsTabTabs')}
             </span>
           }
           panel={<SuspendSettingsPanel />}
@@ -78,7 +79,7 @@ export function SettingsBody(props: SettingsBodyProps) {
           id="dedup"
           title={
             <span>
-              <Icon icon="duplicate" /> Duplicates
+              <Icon icon="duplicate" /> {t('settingsTabDuplicates')}
             </span>
           }
           panel={<DedupSettingsPanel />}
@@ -87,7 +88,7 @@ export function SettingsBody(props: SettingsBodyProps) {
           id="look"
           title={
             <span>
-              <Icon icon="tint" /> Look
+              <Icon icon="tint" /> {t('settingsTabLook')}
             </span>
           }
           panel={<AppearanceSettingsPanel />}
@@ -96,7 +97,7 @@ export function SettingsBody(props: SettingsBodyProps) {
           id="ai"
           title={
             <span>
-              <Icon icon="lightbulb" /> AI
+              <Icon icon="lightbulb" /> {t('settingsTabAi')}
             </span>
           }
           panel={<AiSettingsPanel />}
@@ -105,7 +106,7 @@ export function SettingsBody(props: SettingsBodyProps) {
           id="about"
           title={
             <span>
-              <Icon icon="help" /> About
+              <Icon icon="help" /> {t('settingsTabAbout')}
             </span>
           }
           panel={<AboutPanel />}
@@ -146,7 +147,7 @@ export function SettingsDialog(props: SettingsDialogProps) {
       onClose={onClose}
       canOutsideClickClose={true}
       icon="cog"
-      title="Settings"
+      title={t('settingsTitle')}
     >
       <SettingsBody tab={tab} onSelectTab={setTab} />
     </Dialog>

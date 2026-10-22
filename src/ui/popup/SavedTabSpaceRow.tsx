@@ -57,7 +57,7 @@ export function SavedTabSpaceRow(props: ISavedTabSpaceRowProps) {
         <div className={classes.rowName}>{tabSpace.name}</div>
         <div className={classes.rowMeta}>
           <span>
-            {t(tabCount === 1 ? 'popupTabCountOne' : 'popupTabCountMany', [
+            {t(tabCount === 1 ? 'commonTabCountOne' : 'commonTabCountMany', [
               String(tabCount),
             ])}
           </span>

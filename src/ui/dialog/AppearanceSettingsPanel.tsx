@@ -29,6 +29,7 @@ import {
 } from '../../data/tabSpace/sidebarColorSettings';
 import { $tabSpace, tabSpaceStoreApi } from '../../data/tabSpace/store';
 import { saveCurrentTabSpaceNow } from '../../data/tabSpace/util';
+import { t } from '../../i18n';
 import classes from './AppearanceSettingsPanel.module.scss';
 
 export interface AppearanceSettingsViewProps {
@@ -43,24 +44,17 @@ export interface AppearanceSettingsViewProps {
 /** The one sentence that says what the switch does in plain language. */
 export function randomColorSummary(randomOnCreate: boolean | null): string {
   if (randomOnCreate === null) {
-    return 'Reading…';
+    return t('commonReading');
   }
-  return randomOnCreate
-    ? 'A new tabverse rolls a colour from this palette.'
-    : 'A new tabverse starts with the default colour.';
+  return randomOnCreate ? t('appearanceRandomOn') : t('appearanceRandomOff');
 }
 
 /** The section's body, presentational so its shapes can be checked statically. */
 export function AppearanceSettingsView(props: AppearanceSettingsViewProps) {
   return (
     <div className={classes.section}>
-      <Callout title="Sidebar colour">
-        <p className={classes.hint}>
-          The rail carries near-white glyphs - the logo, the caption, the icons
-          in the bar at the bottom - so the choices here are all dark. The
-          colour belongs to the tabverse in this window: it follows the window,
-          and it travels with the tabverse.
-        </p>
+      <Callout title={t('appearanceCalloutTitle')}>
+        <p className={classes.hint}>{t('appearanceHint')}</p>
       </Callout>
 
       <div className={classes.swatches}>
@@ -83,7 +77,7 @@ export function AppearanceSettingsView(props: AppearanceSettingsViewProps) {
 
       <Switch
         checked={props.randomOnCreate === true}
-        label="Use a random colour for a new tabverse"
+        label={t('appearanceRandomLabel')}
         onChange={(event) => props.onToggleRandom(event.currentTarget.checked)}
       />
 

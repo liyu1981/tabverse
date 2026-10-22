@@ -10,6 +10,7 @@ import {
 } from '../../../data/tabSpace/openWindowStore';
 import { SidebarComponent } from './Sidebar';
 import { TabverseHoverPreview } from './TabverseHoverPreview';
+import { t } from '../../../i18n';
 import { logger } from '../../../global';
 import { useSidebarCollapsed } from '../../common/SidebarContainer';
 import classes from './OtherTabSpaces.module.scss';
@@ -67,7 +68,7 @@ export function OtherTabSpaces() {
   return (
     <>
       {collapsed ? null : (
-        <div className={classes.otherHeader}>Other Tabverses</div>
+        <div className={classes.otherHeader}>{t('sidebarOtherTabverses')}</div>
       )}
       {rows.map((row) => {
         const label = labelOfOtherTabSpace(row);

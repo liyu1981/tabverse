@@ -10,6 +10,7 @@ import {
 } from '../../../data/tabSpaceQuery/store';
 import { $tabSpace, $tabSpaceStorage } from '../../../data/tabSpace/store';
 import { SortMethods } from '../../../data/tabSpaceQuery/TabSpaceQuery';
+import { t } from '../../../i18n';
 
 export type SavedTabSpaceProps = SidebarComponentProps;
 
@@ -31,17 +32,18 @@ export function SavedTabSpace(_props: SavedTabSpaceProps) {
   return (
     <div className={classes.noticeContainer}>
       <div className={classes.noticeLine}>
-        <b>{`${tabSpaceStorage.totalSavedCount}`}</b> tabverses saved
+        <b>{`${tabSpaceStorage.totalSavedCount}`}</b>{' '}
+        {t('sidebarSavedCountSuffix')}
       </div>
       {openedSavedCount > 0 ? (
         <div className={classes.noticeLine}>
-          <b>{`${openedSavedCount}`}</b> of them loaded
+          <b>{`${openedSavedCount}`}</b> {t('sidebarLoadedCountSuffix')}
         </div>
       ) : (
         ''
       )}
       <div className={classes.noticeLine}>
-        sort by{' '}
+        {t('sidebarSortBy')}{' '}
         <HTMLSelect
           minimal={true}
           value={sortMethod}
@@ -51,8 +53,8 @@ export function SavedTabSpace(_props: SavedTabSpaceProps) {
             );
           }}
         >
-          <option value={SortMethods.CREATED}>Created Time</option>
-          <option value={SortMethods.SAVED}>Saved Time</option>
+          <option value={SortMethods.CREATED}>{t('sidebarSortCreated')}</option>
+          <option value={SortMethods.SAVED}>{t('sidebarSortSaved')}</option>
         </HTMLSelect>
       </div>
     </div>

@@ -34,19 +34,20 @@ import {
 import { NAMING_SYSTEM_PROMPT } from '../../ai/naming';
 import { prepareAiModel } from '../../ai/session';
 import { logger } from '../../global';
+import { t } from '../../i18n';
 import classes from './AiSettingsPanel.module.scss';
 
 /** "Available on this device" / "Not available in this browser" / … */
 function supportText(state: AiAvailabilityState): string {
   switch (state) {
     case 'checking':
-      return 'Checking…';
+      return t('aiChecking');
     case 'absent':
-      return 'Not available in this browser';
+      return t('aiSupportAbsent');
     case 'error':
-      return 'Could not check';
+      return t('aiCouldNotCheck');
     default:
-      return 'Available on this device';
+      return t('aiSupportAvailable');
   }
 }
 
@@ -57,19 +58,19 @@ function modelText(
 ): string {
   switch (state) {
     case 'checking':
-      return 'Checking…';
+      return t('aiChecking');
     case 'absent':
-      return 'Not available';
+      return t('aiModelAbsent');
     case 'error':
-      return 'Could not check';
+      return t('aiCouldNotCheck');
     case 'downloadable':
-      return 'Not installed yet';
+      return t('aiModelNotInstalled');
     case 'downloading':
       return progress !== null
-        ? `Installing… ${Math.round(progress * 100)}%`
-        : 'Installing…';
+        ? t('aiInstallingPercent', [String(Math.round(progress * 100))])
+        : t('aiInstalling');
     case 'ready':
-      return 'Installed and ready';
+      return t('aiModelReady');
   }
 }
 
@@ -98,35 +99,32 @@ export function AiSettingsView(props: AiSettingsViewProps) {
 
   return (
     <div className={classes.section}>
-      <Callout intent={intent} title="Chrome's built-in AI">
-        <p className={classes.hint}>
-          The features below run on the model Chrome ships with itself (Gemma
-          Nano), on this device. What you point them at is handed to the model
-          inside the browser and is never sent anywhere; no server, no account,
-          nothing to configure.
-        </p>
+      <Callout intent={intent} title={t('aiCalloutTitle')}>
+        <p className={classes.hint}>{t('aiCalloutHint')}</p>
       </Callout>
 
       <div className={classes.features}>
-        <h4 className={classes.featuresTitle}>Where to find it</h4>
+        <h4 className={classes.featuresTitle}>{t('aiWhereTitle')}</h4>
         <ul className={classes.featureList}>
           <li className={classes.feature}>
             <Icon icon="lightbulb" className={classes.featureIcon} />
             <span className={classes.featureText}>
-              <span className={classes.featureName}>Name a tabverse</span>
+              <span className={classes.featureName}>
+                {t('aiFeatureNameTabverse')}
+              </span>
               <span className={classes.featureWhere}>
-                Open a tabverse; the lightbulb is next to its name at the top,
-                and it suggests three names to pick from.
+                {t('aiFeatureNameTabverseWhere')}
               </span>
             </span>
           </li>
           <li className={classes.feature}>
             <Icon icon="lightbulb" className={classes.featureIcon} />
             <span className={classes.featureText}>
-              <span className={classes.featureName}>Summarize a tab</span>
+              <span className={classes.featureName}>
+                {t('aiFeatureSummarizeTab')}
+              </span>
               <span className={classes.featureWhere}>
-                In an open tabverse, the lightbulb is on the right of every live
-                tab row, and it turns that page into a new note.
+                {t('aiFeatureSummarizeTabWhere')}
               </span>
             </span>
           </li>
@@ -136,27 +134,27 @@ export function AiSettingsView(props: AiSettingsViewProps) {
       <Switch
         checked={enabled === true}
         disabled={!supported}
-        label="Use the on-device model"
+        label={t('aiSwitchLabel')}
         onChange={(event) => props.onToggle(event.currentTarget.checked)}
       />
 
       <div className={classes.rows}>
         <div className={classes.row}>
-          <span className={classes.label}>Device support</span>
+          <span className={classes.label}>{t('aiDeviceSupportLabel')}</span>
           <span className={classes.value}>{supportText(state)}</span>
         </div>
         <div className={classes.row}>
-          <span className={classes.label}>Local model</span>
+          <span className={classes.label}>{t('aiLocalModelLabel')}</span>
           <span className={classes.value}>{modelText(state, progress)}</span>
         </div>
         <div className={classes.row}>
-          <span className={classes.label}>Offered</span>
+          <span className={classes.label}>{t('aiOfferedLabel')}</span>
           <span className={classes.value}>
             {enabled === null
-              ? 'Reading…'
+              ? t('commonReading')
               : enabled
-                ? 'AI features are offered'
-                : 'Off'}
+                ? t('aiOfferedOn')
+                : t('aiOfferedOff')}
           </span>
         </div>
       </div>
@@ -166,18 +164,20 @@ export function AiSettingsView(props: AiSettingsViewProps) {
           <Button
             intent={Intent.PRIMARY}
             loading={busy}
-            text="Download the model now"
-            title="Downloads once, on this device; the model is Chrome's own and is not shipped with the extension"
+            text={t('aiDownloadButton')}
+            title={t('aiDownloadTitle')}
             onClick={props.onDownload}
           />
         ) : null}
         {state === 'downloading' ? (
-          <span className={classes.progress}>
-            Chrome is downloading the model; this page follows the progress.
-          </span>
+          <span className={classes.progress}>{t('aiDownloadingNote')}</span>
         ) : null}
         {state === 'error' ? (
-          <Button minimal={true} text="Check again" onClick={props.onCheck} />
+          <Button
+            minimal={true}
+            text={t('aiCheckAgainButton')}
+            onClick={props.onCheck}
+          />
         ) : null}
       </div>
     </div>

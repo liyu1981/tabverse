@@ -23,6 +23,7 @@ import {
   setSuspendEnabled,
   subscribeSuspendSettings,
 } from '../../data/tabSpace/suspendSettings';
+import { t } from '../../i18n';
 import classes from './SuspendSettingsPanel.module.scss';
 
 export interface SuspendSettingsViewProps {
@@ -39,14 +40,12 @@ export function suspendSummary(
   afterMinutes: number | null,
 ): string {
   if (enabled === null) {
-    return 'Reading…';
+    return t('commonReading');
   }
   if (!enabled) {
-    return 'Suspension is off. No tab is unloaded.';
+    return t('suspendOffSummary');
   }
-  return `Tabs left alone for more than ${
-    afterMinutes ?? 0
-  } minutes are unloaded; opening one reloads it.`;
+  return t('suspendOnSummary', [String(afterMinutes ?? 0)]);
 }
 
 /** The section's body, presentational so its shapes can be checked statically. */
@@ -54,23 +53,18 @@ export function SuspendSettingsView(props: SuspendSettingsViewProps) {
   const { enabled, afterMinutes } = props;
   return (
     <div className={classes.section}>
-      <Callout title="Suspending inactive tabs">
-        <p className={classes.hint}>
-          A suspended tab is unloaded from memory but stays in the tab strip.
-          Opening it again reloads the page; nothing is closed. Tabverse only
-          suspends tabs in a window that has a tabverse open, and never one you
-          whitelist, pin, or are listening to.
-        </p>
+      <Callout title={t('suspendCalloutTitle')}>
+        <p className={classes.hint}>{t('suspendHint')}</p>
       </Callout>
 
       <Switch
         checked={enabled === true}
-        label="Suspend inactive tabs"
+        label={t('suspendSwitchLabel')}
         onChange={(event) => props.onToggle(event.currentTarget.checked)}
       />
 
       <div className={classes.row}>
-        <span className={classes.label}>Suspend after</span>
+        <span className={classes.label}>{t('suspendAfterLabel')}</span>
         <div className={classes.control}>
           <NumericInput
             className={classes.minutes}
@@ -87,7 +81,7 @@ export function SuspendSettingsView(props: SuspendSettingsViewProps) {
               }
             }}
           />
-          <span className={classes.unit}>minutes</span>
+          <span className={classes.unit}>{t('commonMinutes')}</span>
         </div>
       </div>
 

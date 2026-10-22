@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { TABSPACE_VERSION } from '../../global';
+import { t } from '../../i18n';
 import { TabSpaceLogo } from '../common/TabSpaceLogo';
 import classes from './AboutPanel.module.scss';
 
@@ -20,24 +21,24 @@ export function AboutPanel() {
       </div>
       <div className={classes.otherContainer}>
         <p className={classes.aboutText1}>
-          Opinionated Way of Managing Tabs
+          {t('aboutTagline')}
           <br />
           <sub>{TABSPACE_VERSION}</sub>
         </p>
-        <p className={classes.aboutText2}>Created in Sydney</p>
+        <p className={classes.aboutText2}>{t('aboutCreatedIn')}</p>
         <p className={classes.aboutText2}>
           <a
             className={classes.aboutTextLink}
             href="https://liyu1981.github.io/tabverse/"
           >
-            Website
+            {t('aboutWebsite')}
           </a>{' '}
           |{' '}
           <a
             className={classes.aboutTextLink}
             href="https://github.com/liyu1981/tabverse"
           >
-            Github
+            {t('aboutGithub')}
           </a>
         </p>
       </div>

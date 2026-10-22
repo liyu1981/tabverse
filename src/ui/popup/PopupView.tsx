@@ -378,7 +378,7 @@ export function PopupView() {
         canEscapeKeyCancel={true}
         canOutsideClickCancel={true}
         confirmButtonText={t('popupConfirmReplace')}
-        cancelButtonText={t('popupCancel')}
+        cancelButtonText={t('commonCancel')}
         intent={Intent.WARNING}
         onCancel={() => setPendingReplace(null)}
         onConfirm={() => {

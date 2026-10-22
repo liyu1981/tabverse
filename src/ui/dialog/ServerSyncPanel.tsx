@@ -14,6 +14,7 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { logger } from '../../global';
+import { t } from '../../i18n';
 import { formatDateTime, fromNow } from '../../time';
 import classes from './ServerSyncPanel.module.scss';
 import { useSyncActivity } from '../common/useSyncActivity';
@@ -68,8 +69,8 @@ export function initialSyncTab(config: SyncConfig | null): SyncTab {
 /** How the status says which server this device is on. */
 export function setupLabelOf(config: SyncConfig | null | undefined): string {
   return config && config.kind === 'official'
-    ? 'Tabverse official server'
-    : 'your own server (pairing code)';
+    ? t('syncLabelOfficial')
+    : t('syncLabelCustom');
 }
 
 interface IStatus {
@@ -79,7 +80,7 @@ interface IStatus {
 
 const NOT_CONNECTED: IStatus = {
   intent: Intent.NONE,
-  text: 'Not connected: Tabverse runs fully local until you pair it with your own sync server.',
+  text: t('syncNotConnected'),
 };
 
 export const ServerSyncPanel = () => {
@@ -144,7 +145,7 @@ export const ServerSyncPanel = () => {
         if (cfg) {
           setStatus({
             intent: Intent.SUCCESS,
-            text: `Connected to ${cfg.baseUrl}`,
+            text: t('syncConnectedTo', [cfg.baseUrl]),
           });
           void refreshLastSync();
         } else {
@@ -186,7 +187,7 @@ export const ServerSyncPanel = () => {
           setTab('status');
           setStatus({
             intent: Intent.SUCCESS,
-            text: `Connected to ${cfg.baseUrl}`,
+            text: t('syncConnectedTo', [cfg.baseUrl]),
           });
           setWizardWaiting(false);
           await closePairWindow(wizardWindowIdRef.current);
@@ -211,7 +212,9 @@ export const ServerSyncPanel = () => {
     } catch (err: any) {
       setStatus({
         intent: Intent.DANGER,
-        text: `Failed: ${err && err.message ? err.message : String(err)}`,
+        text: t('syncFailedTo', [
+          err && err.message ? err.message : String(err),
+        ]),
       });
     } finally {
       setBusy(false);
@@ -232,9 +235,7 @@ export const ServerSyncPanel = () => {
       setWizardWaiting(true);
       setStatus({
         intent: Intent.PRIMARY,
-        text:
-          'A Tabverse window opened. Sign in there and allow this device; ' +
-          'the token comes back on its own.',
+        text: t('syncWizardOpened'),
       });
     });
 
@@ -251,7 +252,7 @@ export const ServerSyncPanel = () => {
       if (!baseUrl.trim() || !inviteCode.trim()) {
         setStatus({
           intent: Intent.WARNING,
-          text: 'Both the server URL and the pairing code are required.',
+          text: t('syncBothRequired'),
         });
         return;
       }
@@ -277,16 +278,14 @@ export const ServerSyncPanel = () => {
       if (!uploadLocal || !hasLocalData) {
         setStatus({
           intent: Intent.SUCCESS,
-          text:
-            `Paired with ${cfg.baseUrl}. Your existing data stays on this ` +
-            'device; new and changed tabverses sync from now on.',
+          text: t('syncPairedNoUpload', [cfg.baseUrl]),
         });
         return;
       }
       if (!runtime) {
         setStatus({
           intent: Intent.WARNING,
-          text: `Paired with ${cfg.baseUrl}, but the upload was skipped: sync is not configured. Use "Upload local data" to retry.`,
+          text: t('syncPairedUploadSkipped', [cfg.baseUrl]),
         });
         return;
       }
@@ -297,7 +296,7 @@ export const ServerSyncPanel = () => {
       try {
         setStatus({
           intent: Intent.PRIMARY,
-          text: `Paired with ${cfg.baseUrl}. Uploading the data on this device...`,
+          text: t('syncPairedUploading', [cfg.baseUrl]),
         });
         const result = await uploadAllLocalRecords(runtime.engine, {
           onProgress: (done, total) => setUploadProgress({ done, total }),
@@ -306,20 +305,27 @@ export const ServerSyncPanel = () => {
         setStatus({
           intent: result.stale > 0 ? Intent.WARNING : Intent.SUCCESS,
           text:
-            `Paired with ${cfg.baseUrl}. Uploaded ${result.uploaded} of ` +
-            `${result.total} local record(s)` +
-            (result.stale > 0
-              ? `; ${result.stale} were already newer on the server.`
-              : '.'),
+            result.stale > 0
+              ? t('syncPairedUploadDoneStale', [
+                  cfg.baseUrl,
+                  String(result.uploaded),
+                  String(result.total),
+                  String(result.stale),
+                ])
+              : t('syncPairedUploadDoneNoStale', [
+                  cfg.baseUrl,
+                  String(result.uploaded),
+                  String(result.total),
+                ]),
         });
       } catch (err: any) {
         setUploadProgress(null);
         setStatus({
           intent: Intent.WARNING,
-          text:
-            `Paired with ${cfg.baseUrl}, but the upload failed: ` +
-            `${err && err.message ? err.message : String(err)}. ` +
-            'Your data is still on this device; use "Upload local data" to retry.',
+          text: t('syncPairedUploadFailed', [
+            cfg.baseUrl,
+            err && err.message ? err.message : String(err),
+          ]),
         });
       }
     });
@@ -330,7 +336,7 @@ export const ServerSyncPanel = () => {
       if (!runtime) {
         setStatus({
           intent: Intent.WARNING,
-          text: 'Sync is not configured.',
+          text: t('syncNotConfigured'),
         });
         return;
       }
@@ -340,17 +346,23 @@ export const ServerSyncPanel = () => {
         setStatus({
           intent: Intent.SUCCESS,
           text:
-            `Synced: pushed ${outcome.pushed}, pulled ${outcome.pulled}` +
-            (outcome.stale > 0
-              ? `, ${outcome.stale} conflict(s) resolved`
-              : ''),
+            outcome.stale > 0
+              ? t('syncSyncedStale', [
+                  String(outcome.pushed),
+                  String(outcome.pulled),
+                  String(outcome.stale),
+                ])
+              : t('syncSyncedNoStale', [
+                  String(outcome.pushed),
+                  String(outcome.pulled),
+                ]),
         });
       } else if (outcome.status === 'error') {
         setStatus({
           intent: Intent.DANGER,
-          text: `Sync failed: ${
-            outcome.error ? outcome.error.message : 'unknown error'
-          }`,
+          text: t('syncSyncFailed', [
+            outcome.error ? outcome.error.message : t('syncUnknownError'),
+          ]),
         });
       }
     });
@@ -361,14 +373,14 @@ export const ServerSyncPanel = () => {
       if (!runtime) {
         setStatus({
           intent: Intent.WARNING,
-          text: 'Sync is not configured.',
+          text: t('syncNotConfigured'),
         });
         return;
       }
       setUploadProgress(null);
       setStatus({
         intent: Intent.PRIMARY,
-        text: 'Uploading the data on this device...',
+        text: t('syncUploadingNow'),
       });
       const result = await uploadAllLocalRecords(runtime.engine, {
         onProgress: (done, total) => setUploadProgress({ done, total }),
@@ -378,10 +390,16 @@ export const ServerSyncPanel = () => {
       setStatus({
         intent: result.stale > 0 ? Intent.WARNING : Intent.SUCCESS,
         text:
-          `Uploaded ${result.uploaded} of ${result.total} local record(s)` +
-          (result.stale > 0
-            ? `; ${result.stale} were already newer on the server.`
-            : '.'),
+          result.stale > 0
+            ? t('syncUploadDoneStale', [
+                String(result.uploaded),
+                String(result.total),
+                String(result.stale),
+              ])
+            : t('syncUploadDoneNoStale', [
+                String(result.uploaded),
+                String(result.total),
+              ]),
       });
     });
 
@@ -397,7 +415,7 @@ export const ServerSyncPanel = () => {
       setLastSyncAt(null);
       setStatus({
         intent: Intent.NONE,
-        text: 'Disconnected. Your data stays on this device.',
+        text: t('syncDisconnected'),
       });
     });
 
@@ -410,35 +428,37 @@ export const ServerSyncPanel = () => {
    */
   const customSetupPanel = (
     <div className={classes.section}>
-      <Callout intent={Intent.PRIMARY} title="Pair this browser">
+      <Callout intent={Intent.PRIMARY} title={t('syncPairCalloutTitle')}>
         <p className={classes.pairingHint}>
-          Run your own <code>tabversed</code> server, create an account on it,
-          then generate a one time pairing code with
-          <code> POST /console/api/v1/auth/invites</code> and paste it below.
+          {t('syncPairHint1')}
+          <code>tabversed</code>
+          {t('syncPairHint2')}
+          <code> POST /console/api/v1/auth/invites</code>
+          {t('syncPairHint3')}
         </p>
       </Callout>
-      <FormGroup label="Server URL" labelFor="sync-url-input">
+      <FormGroup label={t('syncServerUrlLabel')} labelFor="sync-url-input">
         <InputGroup
           id="sync-url-input"
-          placeholder="https://sync.example.com"
+          placeholder={t('syncServerUrlPlaceholder')}
           value={baseUrl}
           onChange={(event) => setBaseUrl(event.target.value)}
           fill={true}
         />
       </FormGroup>
-      <FormGroup label="Pairing code" labelFor="sync-code-input">
+      <FormGroup label={t('syncPairingCodeLabel')} labelFor="sync-code-input">
         <InputGroup
           id="sync-code-input"
-          placeholder="XXXX-XXXX-XXXX-XXXX"
+          placeholder={t('syncPairingCodePlaceholder')}
           value={inviteCode}
           onChange={(event) => setInviteCode(event.target.value)}
           fill={true}
         />
       </FormGroup>
-      <FormGroup label="Device name" labelFor="sync-device-input">
+      <FormGroup label={t('syncDeviceNameLabel')} labelFor="sync-device-input">
         <InputGroup
           id="sync-device-input"
-          placeholder="chrome"
+          placeholder={t('syncDeviceNamePlaceholder')}
           value={deviceName}
           onChange={(event) => setDeviceName(event.target.value)}
           fill={true}
@@ -450,17 +470,18 @@ export const ServerSyncPanel = () => {
           checked={hasLocalData && uploadLocal}
           disabled={!hasLocalData}
           onChange={(event) => setUploadLocal(event.currentTarget.checked)}
-          label="Also upload the data already on this device"
+          label={t('syncUploadLocalLabel')}
         />
         <p className={classes.uploadHint}>
           {hasLocalData && uploadLocal
-            ? `This device holds ${localCounts?.total} record(s) ` +
-              `(${(localCounts?.byEntity.tabspace || 0).toString()} tabverse(s), ` +
-              `${(localCounts?.byEntity.tab || 0).toString()} tab(s)). ` +
-              'They are sent to the server once, when you connect.'
+            ? t('syncUploadHintCount', [
+                String(localCounts?.total ?? 0),
+                String(localCounts?.byEntity.tabspace || 0),
+                String(localCounts?.byEntity.tab || 0),
+              ])
             : hasLocalData
-              ? 'Your existing data stays on this device. New and changed tabverses still sync from now on.'
-              : 'Nothing stored on this device yet, so there is nothing to upload.'}
+              ? t('syncUploadHintStays')
+              : t('syncUploadHintNothing')}
         </p>
       </div>
       <div className={classes.buttonRow}>
@@ -469,8 +490,8 @@ export const ServerSyncPanel = () => {
           loading={busy}
           text={
             uploadLocal && hasLocalData
-              ? 'Pair & upload local data'
-              : 'Pair & connect'
+              ? t('syncPairUploadButton')
+              : t('syncPairConnectButton')
           }
           onClick={onPair}
         />
@@ -480,14 +501,14 @@ export const ServerSyncPanel = () => {
 
   const officialSetupPanel = wizardWaiting ? (
     <div className={classes.section}>
-      <Callout intent={Intent.PRIMARY} title="Waiting for the Tabverse window">
+      <Callout intent={Intent.PRIMARY} title={t('syncWaitingTitle')}>
         <p className={classes.pairingHint}>
-          A window opened at <code>{OFFICIAL_PAIR_URL}</code>. Sign in there,
-          name this device and allow it - the token comes back on its own, and
-          this dialog follows.
+          {t('syncWaitingHint1')}
+          <code>{OFFICIAL_PAIR_URL}</code>
+          {t('syncWaitingHint2')}
         </p>
         <Button
-          text="Cancel"
+          text={t('commonCancel')}
           loading={busy}
           onClick={() => void cancelOfficialWizard()}
         />
@@ -495,27 +516,28 @@ export const ServerSyncPanel = () => {
     </div>
   ) : (
     <div className={classes.section}>
-      <Callout intent={Intent.SUCCESS} title="Tabverse official server">
+      <Callout intent={Intent.SUCCESS} title={t('syncLabelOfficial')}>
+        <p className={classes.pairingHint}>{t('syncOfficialHint1')}</p>
         <p className={classes.pairingHint}>
-          The server Tabverse runs itself. Sign in with your email (or Google),
-          name this device and approve it - there is no code to copy.
-        </p>
-        <p className={classes.pairingHint}>
-          <code>{OFFICIAL_SERVER_URL}</code> - the documentation lives there,
-          the console at <code>{OFFICIAL_CONSOLE_URL}</code>
+          <code>{OFFICIAL_SERVER_URL}</code>
+          {t('syncOfficialHint2')}
+          <code>{OFFICIAL_CONSOLE_URL}</code>
         </p>
       </Callout>
       <div className={classes.buttonRow}>
         <Button
           className="tv-primary-button"
           loading={busy}
-          text="Connect with Tabverse"
+          text={t('syncConnectOfficialButton')}
           onClick={startOfficialWizard}
         />
       </div>
       <p className={classes.pairingHint}>
-        Running your own <code>tabversed</code> server? Choose{' '}
-        <b>Custom server</b> - it takes a pairing code instead.
+        {t('syncOwnServerHint1')}
+        <code>tabversed</code>
+        {t('syncOwnServerHint2')}
+        <b>{t('syncCustomServerMode')}</b>
+        {t('syncOwnServerHint3')}
       </p>
     </div>
   );
@@ -524,23 +546,26 @@ export const ServerSyncPanel = () => {
     <div className={classes.section}>
       <Callout intent={Intent.SUCCESS} title={config.baseUrl}>
         <p className={classes.identity}>
-          Device: <code>{config.deviceId || 'unknown'}</code>
+          {t('syncDeviceLabel')}
+          <code>{config.deviceId || t('syncUnknown')}</code>
           <br />
-          Account: <code>{config.userId || 'unknown'}</code>
+          {t('syncAccountLabel')}
+          <code>{config.userId || t('syncUnknown')}</code>
           <br />
           {syncing ? (
             <Icon
               icon="refresh"
               size={12}
               className="tv-syncing"
-              aria-label="Syncing"
+              aria-label={t('syncSyncingAria')}
             />
           ) : null}
           {lastSyncAt === null ? (
-            'Not synced yet'
+            t('syncNotSyncedYet')
           ) : (
             <span title={formatDateTime(lastSyncAt)}>
-              Last sync: {fromNow(lastSyncAt)}
+              {t('syncLastSyncLabel')}
+              {fromNow(lastSyncAt)}
             </span>
           )}
         </p>
@@ -549,32 +574,29 @@ export const ServerSyncPanel = () => {
         <Button
           className="tv-primary-button"
           loading={busy}
-          text="Sync now"
+          text={t('syncNowButton')}
           onClick={onSyncNow}
         />
         <Button
           loading={busy}
-          text="Upload local data"
-          title="Send everything stored on this device to the server. Setup does this for you unless you untick the box, so this is for later: data created while disconnected, or a retry after a failed upload."
+          text={t('syncUploadLocalButton')}
+          title={t('syncUploadLocalTitle')}
           onClick={onUpload}
         />
         <Button
           intent={Intent.DANGER}
           minimal={true}
           loading={busy}
-          text="Disconnect"
+          text={t('syncDisconnectButton')}
           onClick={onDisconnect}
         />
       </div>
     </div>
   ) : (
     <div className={classes.section}>
-      <Callout intent={Intent.PRIMARY} title="Not set up yet">
-        <p className={classes.pairingHint}>
-          Tabverse runs fully local until sync is set up: nothing leaves this
-          device.
-        </p>
-        <Button text="Set up sync" onClick={() => setTab('setup')} />
+      <Callout intent={Intent.PRIMARY} title={t('syncNotSetUpTitle')}>
+        <p className={classes.pairingHint}>{t('syncNotSetUpHint')}</p>
+        <Button text={t('syncSetUpButton')} onClick={() => setTab('setup')} />
       </Callout>
     </div>
   );
@@ -598,30 +620,31 @@ export const ServerSyncPanel = () => {
           onChange={(next) => setTab(next as SyncTab)}
           animate={false}
         >
-          <Tab id="status" title="Status" panel={statusPanel} />
+          <Tab id="status" title={t('syncTabStatus')} panel={statusPanel} />
           <Tab
             id="setup"
-            title="Setup"
+            title={t('syncTabSetup')}
             panel={
               <div>
                 {config ? (
                   <p className={classes.pairingHint}>
-                    Connected to <b>{config.baseUrl}</b> ({setupLabel}).
-                    Connecting again replaces this setup.
+                    {t('syncConnectedToSetup1')}
+                    <b>{config.baseUrl}</b>
+                    {t('syncConnectedToSetup2', [setupLabel])}
                   </p>
                 ) : null}
                 <div className={classes.modeRow}>
                   <ButtonGroup fill={true}>
                     <Button
                       active={setupMode === 'official'}
-                      text="Tabverse official server"
-                      title="Sign in on tabversed.liyu1981.xyz and allow this device"
+                      text={t('syncLabelOfficial')}
+                      title={t('syncOfficialModeTitle')}
                       onClick={() => setSetupMode('official')}
                     />
                     <Button
                       active={setupMode === 'custom'}
-                      text="Custom server"
-                      title="A tabversed server you run yourself, paired with a code"
+                      text={t('syncCustomServerMode')}
+                      title={t('syncCustomModeTitle')}
                       onClick={() => setSetupMode('custom')}
                     />
                   </ButtonGroup>
@@ -638,8 +661,10 @@ export const ServerSyncPanel = () => {
         <Callout intent={status.intent}>{status.text}</Callout>
         {uploadProgress ? (
           <p className={classes.uploadProgress}>
-            Uploading {uploadProgress.done} of {uploadProgress.total} record(s)
-            ...
+            {t('syncUploadingProgress', [
+              String(uploadProgress.done),
+              String(uploadProgress.total),
+            ])}
           </p>
         ) : null}
       </div>

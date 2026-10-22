@@ -21,10 +21,11 @@
  * The panel is a column of the page, not an overlay: opening it pushes the
  * tabverse left (see ManagerView.module.scss).
  */
-import { Button, Icon } from '@blueprintjs/core';
+import { Button, Icon, type IconName } from '@blueprintjs/core';
 import React from 'react';
 
 import { useSettingItem } from '../../../storage/localSetting';
+import { t, type MessageKey } from '../../../i18n';
 import { PromptHistoryPanel } from './PromptHistoryPanel';
 import { ServerConsoleView } from './ServerConsolePanel';
 import classes from './RightSidePanel.module.scss';
@@ -34,10 +35,10 @@ export type RightPanelView = 'ai' | 'server';
 /** Remembered across reloads: which panel is open ('' = the rail). */
 const PANEL_SETTING = 'tabverse_right_panel';
 
-const VIEWS = [
-  { id: 'ai', icon: 'chat', label: 'AI history' },
-  { id: 'server', icon: 'cloud-server', label: 'Server console' },
-] as const;
+const VIEWS: { id: RightPanelView; icon: IconName; label: MessageKey }[] = [
+  { id: 'ai', icon: 'chat', label: 'rightPanelAiHistory' },
+  { id: 'server', icon: 'cloud-server', label: 'rightPanelServerConsole' },
+];
 
 function isRightPanelView(value: string): value is RightPanelView {
   return value === 'ai' || value === 'server';
@@ -65,8 +66,8 @@ export function RightSidePanelShell(props: RightSidePanelShellProps) {
             key={entry.id}
             type="button"
             className={classes.railButton}
-            aria-label={`Open the ${entry.label}`}
-            title={entry.label}
+            aria-label={t('rightPanelOpenThe', [t(entry.label)])}
+            title={t(entry.label)}
             onClick={() => props.onSelectView(entry.id)}
           >
             <Icon icon={entry.icon} />
@@ -79,10 +80,10 @@ export function RightSidePanelShell(props: RightSidePanelShellProps) {
   const active = VIEWS.find((entry) => entry.id === view);
 
   return (
-    <aside className={classes.drawer} aria-label={active.label}>
+    <aside className={classes.drawer} aria-label={t(active.label)}>
       <header className={classes.header}>
         <span className={classes.title}>
-          <Icon icon={active.icon} /> {active.label}
+          <Icon icon={active.icon} /> {t(active.label)}
         </span>
         <span className={classes.spacer} />
         {/* The rail's buttons again, in the header: the two views are the two
@@ -95,8 +96,8 @@ export function RightSidePanelShell(props: RightSidePanelShellProps) {
             small={true}
             icon={entry.icon}
             active={entry.id === view}
-            aria-label={`Show the ${entry.label}`}
-            title={entry.label}
+            aria-label={t('rightPanelShowThe', [t(entry.label)])}
+            title={t(entry.label)}
             onClick={() => props.onSelectView(entry.id)}
           />
         ))}
@@ -104,8 +105,8 @@ export function RightSidePanelShell(props: RightSidePanelShellProps) {
           minimal={true}
           small={true}
           icon="chevron-right"
-          aria-label="Collapse the right panel"
-          title="Collapse"
+          aria-label={t('rightPanelCollapseAria')}
+          title={t('rightPanelCollapse')}
           onClick={props.onCollapse}
         />
       </header>

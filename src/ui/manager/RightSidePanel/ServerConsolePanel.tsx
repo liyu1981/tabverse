@@ -33,6 +33,7 @@ import {
   subscribePubSubMessage,
   unsubscribePubSubMessage,
 } from '../../../message/message';
+import { t } from '../../../i18n';
 import classes from './ServerConsolePanel.module.scss';
 
 /**
@@ -64,22 +65,13 @@ export function ServerConsolePanel(props: ServerConsolePanelProps) {
   const { state, onOpenInTab } = props;
 
   if (state.kind === 'loading') {
-    return <p className={classes.hint}>Reading the sync setup…</p>;
+    return <p className={classes.hint}>{t('consoleReadingSetup')}</p>;
   }
   if (state.kind === 'error') {
-    return (
-      <p className={classes.hint}>
-        Could not read the sync setup. Close and reopen this panel to retry.
-      </p>
-    );
+    return <p className={classes.hint}>{t('consoleReadError')}</p>;
   }
   if (state.kind === 'unpaired') {
-    return (
-      <p className={classes.hint}>
-        Not paired with a server yet. Pair one from the sync button in the
-        bottom bar, and this panel shows its console.
-      </p>
-    );
+    return <p className={classes.hint}>{t('consoleUnpaired')}</p>;
   }
 
   return (
@@ -90,19 +82,18 @@ export function ServerConsolePanel(props: ServerConsolePanelProps) {
           minimal={true}
           small={true}
           icon="share"
-          text="Open in a tab"
-          title="Open the console as its own tab, where your sign-in always carries"
+          text={t('consoleOpenInTab')}
+          title={t('consoleOpenInTabTitle')}
           onClick={() => onOpenInTab(state.url)}
         />
       </div>
       <p className={classes.note}>
-        If the console looks signed out in here, use “Open in a tab”: the
-        session cookie is the browser's, and a frame is a different site.
+        {t('consoleSignedOutNote', [t('consoleOpenInTab')])}
       </p>
       <iframe
         className={classes.frame}
         src={state.url}
-        title="Sync server console"
+        title={t('consoleFrameTitle')}
       />
     </>
   );

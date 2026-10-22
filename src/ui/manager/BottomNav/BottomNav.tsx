@@ -11,6 +11,7 @@ import React, { useState } from 'react';
 import { type SettingsTab, SettingsDialog } from '../../dialog/SettingsDialog';
 import { useSidebarCollapsed } from '../../common/SidebarContainer';
 import { useSyncActivity } from '../../common/useSyncActivity';
+import { t } from '../../../i18n';
 import classes from './BottomNav.module.scss';
 import clsx from 'clsx';
 
@@ -41,7 +42,7 @@ export const BottomNav = () => {
 
   // The sync button is the sync indicator as well as the way into the sync
   // section: its icon spins while a cycle runs, and its label says so.
-  const syncLabel = syncing ? 'Syncing…' : 'Sync';
+  const syncLabel = syncing ? t('bottomNavSyncing') : t('settingsTabSync');
   const syncButton = (
     <Button
       icon="refresh"
@@ -55,9 +56,9 @@ export const BottomNav = () => {
   const settingsButton = (
     <Button
       icon="cog"
-      text={collapsed ? undefined : 'Settings'}
-      title={collapsed ? undefined : 'Settings'}
-      aria-label="Settings"
+      text={collapsed ? undefined : t('settingsTitle')}
+      title={collapsed ? undefined : t('settingsTitle')}
+      aria-label={t('settingsTitle')}
       onClick={() => openSettings(FIRST_SETTINGS_TAB)}
     />
   );
@@ -68,7 +69,7 @@ export const BottomNav = () => {
       <Tooltip content={syncLabel} placement="right">
         {syncButton}
       </Tooltip>
-      <Tooltip content="Settings" placement="right">
+      <Tooltip content={t('settingsTitle')} placement="right">
         {settingsButton}
       </Tooltip>
     </>

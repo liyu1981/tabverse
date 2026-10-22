@@ -115,9 +115,9 @@
     "message": "Replace",
     "description": "Popup: the confirm button on the replace-this-window alert."
   },
-  "popupCancel": {
+  "commonCancel": {
     "message": "Cancel",
-    "description": "Popup: the cancel button on the replace-this-window alert."
+    "description": "The cancel button, on the popup alert and the sync dialog."
   },
   "popupRowGoTo": {
     "message": "Go to this tabverse",
@@ -127,13 +127,13 @@
     "message": "Add to this window",
     "description": "Popup: a saved row's tooltip when the tabverse is not open - clicking adds it here."
   },
-  "popupTabCountOne": {
+  "commonTabCountOne": {
     "message": "$1 tab",
-    "description": "Popup: a saved row's tab count, exactly one. $1 is the number."
+    "description": "A tab count,'s tab count, exactly one. $1 is the number."
   },
-  "popupTabCountMany": {
+  "commonTabCountMany": {
     "message": "$1 tabs",
-    "description": "Popup: a saved row's tab count, more than one. $1 is the number."
+    "description": "A tab count,'s tab count, more than one. $1 is the number."
   },
   "popupThisWindow": {
     "message": "this window",
@@ -210,5 +210,653 @@
   "searchTermsAria": {
     "message": "Search terms",
     "description": "The accessible name of the input in the scoped search box."
+  },
+  "aboutTagline": {
+    "message": "Opinionated Way of Managing Tabs",
+    "description": "About panel: the tagline under the logo. Keep 'Tabverse' as the brand name wherever it appears in a translation."
+  },
+  "aboutCreatedIn": {
+    "message": "Created in Sydney",
+    "description": "About panel: the line under the tagline."
+  },
+  "aboutWebsite": {
+    "message": "Website",
+    "description": "About panel: the link to the product site."
+  },
+  "aboutGithub": {
+    "message": "Github",
+    "description": "About panel: the link to the source repository."
+  },
+  "settingsTitle": {
+    "message": "Settings",
+    "description": "The settings dialog's title."
+  },
+  "settingsTabSync": {
+    "message": "Sync",
+    "description": "Settings dialog: the sync section's tab label."
+  },
+  "settingsTabTabs": {
+    "message": "Tabs",
+    "description": "Settings dialog: the tab-suspension section's tab label."
+  },
+  "settingsTabDuplicates": {
+    "message": "Duplicates",
+    "description": "Settings dialog: the duplicate-tab advisor section's tab label."
+  },
+  "settingsTabLook": {
+    "message": "Look",
+    "description": "Settings dialog: the appearance section's tab label."
+  },
+  "settingsTabAi": {
+    "message": "AI",
+    "description": "Settings dialog: the on-device AI section's tab label."
+  },
+  "settingsTabAbout": {
+    "message": "About",
+    "description": "Settings dialog: the about section's tab label."
+  },
+  "commonReading": {
+    "message": "Reading…",
+    "description": "Shown while a setting is still being read."
+  },
+  "suspendOffSummary": {
+    "message": "Suspension is off. No tab is unloaded.",
+    "description": "Tabs settings: the sentence shown when suspension is disabled."
+  },
+  "suspendOnSummary": {
+    "message": "Tabs left alone for more than $1 minutes are unloaded; opening one reloads it.",
+    "description": "Tabs settings: the sentence restating the threshold. $1 is the number of minutes."
+  },
+  "suspendCalloutTitle": {
+    "message": "Suspending inactive tabs",
+    "description": "Tabs settings: the callout heading."
+  },
+  "suspendHint": {
+    "message": "A suspended tab is unloaded from memory but stays in the tab strip. Opening it again reloads the page; nothing is closed. Tabverse only suspends tabs in a window that has a tabverse open, and never one you whitelist, pin, or are listening to.",
+    "description": "Tabs settings: what suspension does. 'Tabverse' is the product name - keep it as-is."
+  },
+  "suspendSwitchLabel": {
+    "message": "Suspend inactive tabs",
+    "description": "Tabs settings: the master switch's label."
+  },
+  "suspendAfterLabel": {
+    "message": "Suspend after",
+    "description": "Tabs settings: the label before the minutes input."
+  },
+  "commonMinutes": {
+    "message": "minutes",
+    "description": "The unit after a minutes input."
+  },
+  "appearanceCalloutTitle": {
+    "message": "Sidebar colour",
+    "description": "Look settings: the callout heading."
+  },
+  "appearanceHint": {
+    "message": "The rail carries near-white glyphs - the logo, the caption, the icons in the bar at the bottom - so the choices here are all dark. The colour belongs to the tabverse in this window: it follows the window, and it travels with the tabverse.",
+    "description": "Look settings: why the palette is dark only. 'Tabverse' is the product name - keep it as-is."
+  },
+  "appearanceRandomLabel": {
+    "message": "Use a random colour for a new tabverse",
+    "description": "Look settings: the switch that decides what colour a brand-new tabverse gets."
+  },
+  "appearanceRandomOn": {
+    "message": "A new tabverse rolls a colour from this palette.",
+    "description": "Look settings: the sentence shown when the random-colour switch is on."
+  },
+  "appearanceRandomOff": {
+    "message": "A new tabverse starts with the default colour.",
+    "description": "Look settings: the sentence shown when the random-colour switch is off."
+  },
+  "dedupOffSummary": {
+    "message": "The duplicate advisor is off. No tab is looked at.",
+    "description": "Duplicates settings: the sentence shown when the advisor is disabled."
+  },
+  "dedupOnSummary": {
+    "message": "Open tabs are checked every $1 minutes; duplicates are offered for removal, never closed on their own.",
+    "description": "Duplicates settings: the sentence restating the scan interval. $1 is the number of minutes."
+  },
+  "dedupCalloutTitle": {
+    "message": "Duplicate tabs",
+    "description": "Duplicates settings: the callout heading."
+  },
+  "dedupHint": {
+    "message": "The advisor only looks. When it finds two open tabs on the same page in a window with a tabverse, the tab list shows a notice where you can close the extras or ignore them. It never closes a tab by itself, and never touches a pinned tab or one that is playing audio.",
+    "description": "Duplicates settings: what the advisor does and refuses to do. 'Tabverse' is the product name - keep it as-is."
+  },
+  "dedupSwitchLabel": {
+    "message": "Find duplicate tabs",
+    "description": "Duplicates settings: the master switch's label."
+  },
+  "dedupCheckEveryLabel": {
+    "message": "Check every",
+    "description": "Duplicates settings: the label before the scan-interval input."
+  },
+  "moveFoundNothing": {
+    "message": "Found nothing, wrong search?",
+    "description": "Move-to-tabverse dialog: shown when the candidate list is empty."
+  },
+  "moveCandidateInfo": {
+    "message": "created: $1, saved: $2",
+    "description": "Move-to-tabverse dialog: one candidate row's timestamps. $1 when it was created, $2 when it was last saved."
+  },
+  "moveNoTargetToast": {
+    "message": "Can not move tabs without selecting a target tabverse!",
+    "description": "Move-to-tabverse dialog: the warning shown when Move is pressed with nothing chosen."
+  },
+  "moveMovingToastOne": {
+    "message": "moving $1 tab to $2",
+    "description": "Move-to-tabverse dialog: the progress toast, exactly one tab. $1 the count, $2 the target's name."
+  },
+  "moveMovingToastMany": {
+    "message": "moving $1 tabs to $2",
+    "description": "Move-to-tabverse dialog: the progress toast, more than one tab. $1 the count, $2 the target's name."
+  },
+  "moveMovedToastOne": {
+    "message": "moved $1 tab to $2",
+    "description": "Move-to-tabverse dialog: the success toast, exactly one tab. $1 the count, $2 the target's name."
+  },
+  "moveMovedToastMany": {
+    "message": "moved $1 tabs to $2",
+    "description": "Move-to-tabverse dialog: the success toast, more than one tab. $1 the count, $2 the target's name."
+  },
+  "moveDialogTitle": {
+    "message": "Move Selected Tabs To Other Tabverse",
+    "description": "Move-to-tabverse dialog: its title."
+  },
+  "moveSearchPlaceholder": {
+    "message": "input keywords,  then ↵ enter to search...",
+    "description": "Move-to-tabverse dialog: the search box placeholder."
+  },
+  "moveCloseAfterMove": {
+    "message": "Close selected tabs after move",
+    "description": "Move-to-tabverse dialog: the checkbox that closes the tabs once they have moved."
+  },
+  "moveMoveButton": {
+    "message": "Move",
+    "description": "Move-to-tabverse dialog: the button that performs the move."
+  },
+  "aiChecking": {
+    "message": "Checking…",
+    "description": "AI settings: shown while the device is being probed for the Prompt API."
+  },
+  "aiSupportAbsent": {
+    "message": "Not available in this browser",
+    "description": "AI settings: the device-support row when the browser has no Prompt API."
+  },
+  "aiSupportAvailable": {
+    "message": "Available on this device",
+    "description": "AI settings: the device-support row when the API is there."
+  },
+  "aiCouldNotCheck": {
+    "message": "Could not check",
+    "description": "AI settings: shown when the probe itself failed - not an error state of the model."
+  },
+  "aiModelAbsent": {
+    "message": "Not available",
+    "description": "AI settings: the local-model row when the API is missing."
+  },
+  "aiModelNotInstalled": {
+    "message": "Not installed yet",
+    "description": "AI settings: the local-model row before the model has been fetched."
+  },
+  "aiInstallingPercent": {
+    "message": "Installing… $1%",
+    "description": "AI settings: the local-model row while it downloads. $1 is the percentage."
+  },
+  "aiInstalling": {
+    "message": "Installing…",
+    "description": "AI settings: the local-model row while it downloads, when the percentage is unknown."
+  },
+  "aiModelReady": {
+    "message": "Installed and ready",
+    "description": "AI settings: the local-model row once it can be used."
+  },
+  "aiCalloutTitle": {
+    "message": "Chrome's built-in AI",
+    "description": "AI settings: the callout heading."
+  },
+  "aiCalloutHint": {
+    "message": "The features below run on the model Chrome ships with itself (Gemma Nano), on this device. What you point them at is handed to the model inside the browser and is never sent anywhere; no server, no account, nothing to configure.",
+    "description": "AI settings: the privacy stance of the on-device model."
+  },
+  "aiWhereTitle": {
+    "message": "Where to find it",
+    "description": "AI settings: the heading over the list of where the AI features live."
+  },
+  "aiFeatureNameTabverse": {
+    "message": "Name a tabverse",
+    "description": "AI settings: the naming feature's name."
+  },
+  "aiFeatureNameTabverseWhere": {
+    "message": "Open a tabverse; the lightbulb is next to its name at the top, and it suggests three names to pick from.",
+    "description": "AI settings: where to find the naming feature."
+  },
+  "aiFeatureSummarizeTab": {
+    "message": "Summarize a tab",
+    "description": "AI settings: the summarize feature's name."
+  },
+  "aiFeatureSummarizeTabWhere": {
+    "message": "In an open tabverse, the lightbulb is on the right of every live tab row, and it turns that page into a new note.",
+    "description": "AI settings: where to find the summarize feature."
+  },
+  "aiSwitchLabel": {
+    "message": "Use the on-device model",
+    "description": "AI settings: the master switch's label."
+  },
+  "aiDeviceSupportLabel": {
+    "message": "Device support",
+    "description": "AI settings: the label of the device-support row."
+  },
+  "aiLocalModelLabel": {
+    "message": "Local model",
+    "description": "AI settings: the label of the local-model row."
+  },
+  "aiOfferedLabel": {
+    "message": "Offered",
+    "description": "AI settings: the label of the row saying whether the features are offered at all."
+  },
+  "aiOfferedOn": {
+    "message": "AI features are offered",
+    "description": "AI settings: the Offered row when the features are switched on."
+  },
+  "aiOfferedOff": {
+    "message": "Off",
+    "description": "AI settings: the Offered row when the features are switched off."
+  },
+  "aiDownloadButton": {
+    "message": "Download the model now",
+    "description": "AI settings: the button that fetches the local model."
+  },
+  "aiDownloadTitle": {
+    "message": "Downloads once, on this device; the model is Chrome's own and is not shipped with the extension",
+    "description": "AI settings: the download button's tooltip."
+  },
+  "aiDownloadingNote": {
+    "message": "Chrome is downloading the model; this page follows the progress.",
+    "description": "AI settings: the note shown while Chrome fetches the model itself."
+  },
+  "aiCheckAgainButton": {
+    "message": "Check again",
+    "description": "AI settings: the button that re-probes after a failed check."
+  },
+  "syncLabelOfficial": {
+    "message": "Tabverse official server",
+    "description": "Sync: the official server, as a status label, a callout heading and a setup-mode button."
+  },
+  "syncLabelCustom": {
+    "message": "your own server (pairing code)",
+    "description": "Sync: the status label for a server the user runs themselves."
+  },
+  "syncNotConnected": {
+    "message": "Not connected: Tabverse runs fully local until you pair it with your own sync server.",
+    "description": "Sync: the status shown when no server is configured."
+  },
+  "syncConnectedTo": {
+    "message": "Connected to $1",
+    "description": "Sync: the success status after reading a config. $1 is the server URL."
+  },
+  "syncFailedTo": {
+    "message": "Failed: $1",
+    "description": "Sync: the error status when an action threw. $1 is the error message."
+  },
+  "syncWizardOpened": {
+    "message": "A Tabverse window opened. Sign in there and allow this device; the token comes back on its own.",
+    "description": "Sync: the status shown once the official pairing window has been opened."
+  },
+  "syncBothRequired": {
+    "message": "Both the server URL and the pairing code are required.",
+    "description": "Sync: the warning when the pair form is submitted empty."
+  },
+  "syncPairedNoUpload": {
+    "message": "Paired with $1. Your existing data stays on this device; new and changed tabverses sync from now on.",
+    "description": "Sync: the success status after pairing without uploading. $1 is the server URL."
+  },
+  "syncPairedUploadSkipped": {
+    "message": "Paired with $1, but the upload was skipped: sync is not configured. Use \"Upload local data\" to retry.",
+    "description": "Sync: the warning when pairing worked but there was no runtime to upload through. $1 is the server URL."
+  },
+  "syncPairedUploading": {
+    "message": "Paired with $1. Uploading the data on this device...",
+    "description": "Sync: the status while the first upload runs after pairing. $1 is the server URL."
+  },
+  "syncPairedUploadDoneNoStale": {
+    "message": "Paired with $1. Uploaded $2 of $3 local record(s).",
+    "description": "Sync: the success status after the first upload, nothing was newer on the server. $1 the server URL, $2 uploaded, $3 total."
+  },
+  "syncPairedUploadDoneStale": {
+    "message": "Paired with $1. Uploaded $2 of $3 local record(s); $4 were already newer on the server.",
+    "description": "Sync: the success status after the first upload, some records were skipped as stale. $1 the server URL, $2 uploaded, $3 total, $4 stale."
+  },
+  "syncPairedUploadFailed": {
+    "message": "Paired with $1, but the upload failed: $2. Your data is still on this device; use \"Upload local data\" to retry.",
+    "description": "Sync: the warning when pairing worked but the upload threw - the device is still paired. $1 the server URL, $2 the error message."
+  },
+  "syncNotConfigured": {
+    "message": "Sync is not configured.",
+    "description": "Sync: the warning when Sync now or Upload is pressed with no server configured."
+  },
+  "syncSyncedNoStale": {
+    "message": "Synced: pushed $1, pulled $2",
+    "description": "Sync: the success status after a cycle with no conflicts. $1 pushed, $2 pulled."
+  },
+  "syncSyncedStale": {
+    "message": "Synced: pushed $1, pulled $2, $3 conflict(s) resolved",
+    "description": "Sync: the success status after a cycle that resolved conflicts. $1 pushed, $2 pulled, $3 conflicts."
+  },
+  "syncSyncFailed": {
+    "message": "Sync failed: $1",
+    "description": "Sync: the error status when a cycle failed. $1 is the error message."
+  },
+  "syncUnknownError": {
+    "message": "unknown error",
+    "description": "Sync: what to show for a failure that carried no message."
+  },
+  "syncUploadingNow": {
+    "message": "Uploading the data on this device...",
+    "description": "Sync: the status while an upload runs."
+  },
+  "syncUploadDoneNoStale": {
+    "message": "Uploaded $1 of $2 local record(s).",
+    "description": "Sync: the success status after an upload, nothing was newer on the server. $1 uploaded, $2 total."
+  },
+  "syncUploadDoneStale": {
+    "message": "Uploaded $1 of $2 local record(s); $3 were already newer on the server.",
+    "description": "Sync: the success status after an upload, some records were skipped as stale. $1 uploaded, $2 total, $3 stale."
+  },
+  "syncDisconnected": {
+    "message": "Disconnected. Your data stays on this device.",
+    "description": "Sync: the status after disconnecting."
+  },
+  "syncPairCalloutTitle": {
+    "message": "Pair this browser",
+    "description": "Sync setup: the custom-server callout heading."
+  },
+  "syncPairHint1": {
+    "message": "Run your own ",
+    "description": "Sync setup: text before the server name in the custom-server hint. It is joined to the code span that follows."
+  },
+  "syncPairHint2": {
+    "message": " server, create an account on it, then generate a one time pairing code with",
+    "description": "Sync setup: text between the server name and the endpoint code span in the custom-server hint."
+  },
+  "syncPairHint3": {
+    "message": " and paste it below.",
+    "description": "Sync setup: text after the endpoint code span in the custom-server hint."
+  },
+  "syncServerUrlLabel": {
+    "message": "Server URL",
+    "description": "Sync setup: the server address field's label."
+  },
+  "syncServerUrlPlaceholder": {
+    "message": "https://sync.example.com",
+    "description": "Sync setup: the server address field's placeholder - an example URL, usually left untranslated."
+  },
+  "syncPairingCodeLabel": {
+    "message": "Pairing code",
+    "description": "Sync setup: the pairing code field's label."
+  },
+  "syncPairingCodePlaceholder": {
+    "message": "XXXX-XXXX-XXXX-XXXX",
+    "description": "Sync setup: the pairing code field's placeholder shape - usually left untranslated."
+  },
+  "syncDeviceNameLabel": {
+    "message": "Device name",
+    "description": "Sync setup: the device name field's label."
+  },
+  "syncDeviceNamePlaceholder": {
+    "message": "chrome",
+    "description": "Sync setup: the device name field's default value."
+  },
+  "syncUploadLocalLabel": {
+    "message": "Also upload the data already on this device",
+    "description": "Sync setup: the checkbox that opts into uploading what is already stored locally."
+  },
+  "syncUploadHintCount": {
+    "message": "This device holds $1 record(s) ($2 tabverse(s), $3 tab(s)). They are sent to the server once, when you connect.",
+    "description": "Sync setup: how much would be uploaded. $1 records, $2 tabverses, $3 tabs."
+  },
+  "syncUploadHintStays": {
+    "message": "Your existing data stays on this device. New and changed tabverses still sync from now on.",
+    "description": "Sync setup: what happens when the upload box is unticked."
+  },
+  "syncUploadHintNothing": {
+    "message": "Nothing stored on this device yet, so there is nothing to upload.",
+    "description": "Sync setup: shown when the device has nothing to upload."
+  },
+  "syncPairUploadButton": {
+    "message": "Pair & upload local data",
+    "description": "Sync setup: the custom-server button when there is local data to send."
+  },
+  "syncPairConnectButton": {
+    "message": "Pair & connect",
+    "description": "Sync setup: the custom-server button when there is nothing to upload."
+  },
+  "syncWaitingTitle": {
+    "message": "Waiting for the Tabverse window",
+    "description": "Sync setup: the callout heading while the official pairing window is open."
+  },
+  "syncWaitingHint1": {
+    "message": "A window opened at ",
+    "description": "Sync setup: text before the pair URL in the waiting hint."
+  },
+  "syncWaitingHint2": {
+    "message": ". Sign in there, name this device and allow it - the token comes back on its own, and this dialog follows.",
+    "description": "Sync setup: text after the pair URL in the waiting hint."
+  },
+  "syncOfficialHint1": {
+    "message": "The server Tabverse runs itself. Sign in with your email (or Google), name this device and approve it - there is no code to copy.",
+    "description": "Sync setup: what the official server is."
+  },
+  "syncOfficialHint2": {
+    "message": " - the documentation lives there, the console at ",
+    "description": "Sync setup: text between the two server code spans."
+  },
+  "syncConnectOfficialButton": {
+    "message": "Connect with Tabverse",
+    "description": "Sync setup: the button that starts the official pairing wizard."
+  },
+  "syncOwnServerHint1": {
+    "message": "Running your own ",
+    "description": "Sync setup: text before the server name under the official panel."
+  },
+  "syncOwnServerHint2": {
+    "message": " server? Choose ",
+    "description": "Sync setup: text between the server name and the mode name under the official panel."
+  },
+  "syncOwnServerHint3": {
+    "message": " - it takes a pairing code instead.",
+    "description": "Sync setup: text after the mode name under the official panel."
+  },
+  "syncCustomServerMode": {
+    "message": "Custom server",
+    "description": "Sync setup: the self-hosted mode, as a button and as the bold word in the official panel's hint."
+  },
+  "syncDeviceLabel": {
+    "message": "Device: ",
+    "description": "Sync status: the label before the device id."
+  },
+  "syncAccountLabel": {
+    "message": "Account: ",
+    "description": "Sync status: the label before the account id."
+  },
+  "syncUnknown": {
+    "message": "unknown",
+    "description": "Sync status: what to show for an id that is not set."
+  },
+  "syncSyncingAria": {
+    "message": "Syncing",
+    "description": "Sync status: the accessible name of the spinning icon shown during a cycle."
+  },
+  "syncNotSyncedYet": {
+    "message": "Not synced yet",
+    "description": "Sync status: shown before the first cycle has finished."
+  },
+  "syncLastSyncLabel": {
+    "message": "Last sync: ",
+    "description": "Sync status: the label before the last cycle's time."
+  },
+  "syncNowButton": {
+    "message": "Sync now",
+    "description": "Sync status: the button that runs a cycle immediately."
+  },
+  "syncUploadLocalButton": {
+    "message": "Upload local data",
+    "description": "Sync status: the button that sends everything on this device to the server."
+  },
+  "syncUploadLocalTitle": {
+    "message": "Send everything stored on this device to the server. Setup does this for you unless you untick the box, so this is for later: data created while disconnected, or a retry after a failed upload.",
+    "description": "Sync status: the upload button's tooltip."
+  },
+  "syncDisconnectButton": {
+    "message": "Disconnect",
+    "description": "Sync status: the button that drops the pairing."
+  },
+  "syncNotSetUpTitle": {
+    "message": "Not set up yet",
+    "description": "Sync status: the callout heading when there is no config."
+  },
+  "syncNotSetUpHint": {
+    "message": "Tabverse runs fully local until sync is set up: nothing leaves this device.",
+    "description": "Sync status: what no-config means for the data."
+  },
+  "syncSetUpButton": {
+    "message": "Set up sync",
+    "description": "Sync status: the button that jumps to the setup tab."
+  },
+  "syncTabStatus": {
+    "message": "Status",
+    "description": "Sync dialog: the status tab's label."
+  },
+  "syncTabSetup": {
+    "message": "Setup",
+    "description": "Sync dialog: the setup tab's label."
+  },
+  "syncConnectedToSetup1": {
+    "message": "Connected to ",
+    "description": "Sync setup: text before the server URL when already connected."
+  },
+  "syncConnectedToSetup2": {
+    "message": " ($1). Connecting again replaces this setup.",
+    "description": "Sync setup: text after the server URL when already connected. $1 is which kind of server it is."
+  },
+  "syncOfficialModeTitle": {
+    "message": "Sign in on tabversed.liyu1981.xyz and allow this device",
+    "description": "Sync setup: the official-mode button's tooltip."
+  },
+  "syncCustomModeTitle": {
+    "message": "A tabversed server you run yourself, paired with a code",
+    "description": "Sync setup: the custom-mode button's tooltip."
+  },
+  "syncUploadingProgress": {
+    "message": "Uploading $1 of $2 record(s)...",
+    "description": "Sync: the upload progress line. $1 done, $2 total."
+  },
+  "sidebarCurrentTabverse": {
+    "message": "Current Tabverse",
+    "description": "Sidebar: the entry for the tabverse of this window, as its header and its collapsed-rail name."
+  },
+  "sidebarSavedTabverses": {
+    "message": "Saved Tabverses",
+    "description": "Sidebar: the entry for the saved list, as its header and its collapsed-rail name."
+  },
+  "sidebarOmniSearch": {
+    "message": "Omni Search",
+    "description": "Sidebar: the full-text search entry. Only shown when a sync server is configured."
+  },
+  "sidebarMyWebTools": {
+    "message": "My WebTools",
+    "description": "Sidebar: the webtools entry, which is only drawn in a debug build."
+  },
+  "sidebarOtherTabverses": {
+    "message": "Other Tabverses",
+    "description": "Sidebar: the heading over the tabverses open in this browser's other windows."
+  },
+  "previewReading": {
+    "message": "reading…",
+    "description": "Hover preview: shown while a tabverse's open tabs are still being read."
+  },
+  "previewNoTabs": {
+    "message": "No tabs open in this window.",
+    "description": "Hover preview: shown when the window holds no tabs."
+  },
+  "previewMore": {
+    "message": "+$1 more",
+    "description": "Hover preview: how many tabs were left out of the panel. $1 is the number."
+  },
+  "bottomNavSyncing": {
+    "message": "Syncing…",
+    "description": "Sidebar bottom bar: the sync button's label while a cycle is running."
+  },
+  "sidebarSavedCountSuffix": {
+    "message": "tabverses saved",
+    "description": "Saved sidebar: what follows the bold count of saved tabverses. The count is drawn separately, so this reads as the tail of the sentence."
+  },
+  "sidebarLoadedCountSuffix": {
+    "message": "of them loaded",
+    "description": "Saved sidebar: what follows the bold count of tabverses loaded in this window."
+  },
+  "sidebarSortBy": {
+    "message": "sort by",
+    "description": "Saved sidebar: the label before the sort-order select."
+  },
+  "sidebarSortCreated": {
+    "message": "Created Time",
+    "description": "Saved sidebar: the sort order by creation time."
+  },
+  "sidebarSortSaved": {
+    "message": "Saved Time",
+    "description": "Saved sidebar: the sort order by last-saved time."
+  },
+  "rightPanelAiHistory": {
+    "message": "AI history",
+    "description": "Right side panel: the prompt-history view's name."
+  },
+  "rightPanelServerConsole": {
+    "message": "Server console",
+    "description": "Right side panel: the server console view's name."
+  },
+  "rightPanelOpenThe": {
+    "message": "Open the $1",
+    "description": "Right side panel: the rail button's accessible name. $1 is the view's name."
+  },
+  "rightPanelShowThe": {
+    "message": "Show the $1",
+    "description": "Right side panel: the header's switch-to-view button's accessible name. $1 is the view's name."
+  },
+  "rightPanelCollapseAria": {
+    "message": "Collapse the right panel",
+    "description": "Right side panel: the close button's accessible name."
+  },
+  "rightPanelCollapse": {
+    "message": "Collapse",
+    "description": "Right side panel: the close button's tooltip."
+  },
+  "consoleReadingSetup": {
+    "message": "Reading the sync setup…",
+    "description": "Server console: shown while the pairing is being read."
+  },
+  "consoleReadError": {
+    "message": "Could not read the sync setup. Close and reopen this panel to retry.",
+    "description": "Server console: shown when the pairing could not be read."
+  },
+  "consoleUnpaired": {
+    "message": "Not paired with a server yet. Pair one from the sync button in the bottom bar, and this panel shows its console.",
+    "description": "Server console: shown when no server is configured."
+  },
+  "consoleOpenInTab": {
+    "message": "Open in a tab",
+    "description": "Server console: the button that opens the console as a real tab, and the phrase the signed-out note refers to."
+  },
+  "consoleOpenInTabTitle": {
+    "message": "Open the console as its own tab, where your sign-in always carries",
+    "description": "Server console: the Open in a tab button's tooltip."
+  },
+  "consoleSignedOutNote": {
+    "message": "If the console looks signed out in here, use “$1”: the session cookie is the browser's, and a frame is a different site.",
+    "description": "Server console: why a framed console may show as signed out. $1 is the Open in a tab button's label, so the note always names the button as it reads."
+  },
+  "consoleFrameTitle": {
+    "message": "Sync server console",
+    "description": "Server console: the iframe's accessible title."
   }
 }

@@ -18,6 +18,7 @@ import {
   setDedupScanMinutes,
   subscribeDedupSettings,
 } from '../../data/tabSpace/dedupSettings';
+import { t } from '../../i18n';
 import classes from './DedupSettingsPanel.module.scss';
 
 export interface DedupSettingsViewProps {
@@ -34,14 +35,12 @@ export function dedupSummary(
   minutes: number | null,
 ): string {
   if (enabled === null) {
-    return 'Reading…';
+    return t('commonReading');
   }
   if (!enabled) {
-    return 'The duplicate advisor is off. No tab is looked at.';
+    return t('dedupOffSummary');
   }
-  return `Open tabs are checked every ${
-    minutes ?? 0
-  } minutes; duplicates are offered for removal, never closed on their own.`;
+  return t('dedupOnSummary', [String(minutes ?? 0)]);
 }
 
 /** The section's body, presentational so its shapes can be checked statically. */
@@ -49,23 +48,18 @@ export function DedupSettingsView(props: DedupSettingsViewProps) {
   const { enabled, minutes } = props;
   return (
     <div className={classes.section}>
-      <Callout title="Duplicate tabs">
-        <p className={classes.hint}>
-          The advisor only looks. When it finds two open tabs on the same page
-          in a window with a tabverse, the tab list shows a notice where you can
-          close the extras or ignore them. It never closes a tab by itself, and
-          never touches a pinned tab or one that is playing audio.
-        </p>
+      <Callout title={t('dedupCalloutTitle')}>
+        <p className={classes.hint}>{t('dedupHint')}</p>
       </Callout>
 
       <Switch
         checked={enabled !== false}
-        label="Find duplicate tabs"
+        label={t('dedupSwitchLabel')}
         onChange={(event) => props.onToggle(event.currentTarget.checked)}
       />
 
       <div className={classes.row}>
-        <span className={classes.label}>Check every</span>
+        <span className={classes.label}>{t('dedupCheckEveryLabel')}</span>
         <div className={classes.control}>
           <NumericInput
             className={classes.minutes}
@@ -82,7 +76,7 @@ export function DedupSettingsView(props: DedupSettingsViewProps) {
               }
             }}
           />
-          <span className={classes.unit}>minutes</span>
+          <span className={classes.unit}>{t('commonMinutes')}</span>
         </div>
       </div>
 
