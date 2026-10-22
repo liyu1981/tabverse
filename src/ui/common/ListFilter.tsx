@@ -10,6 +10,7 @@ import { Button, InputGroup } from '@blueprintjs/core';
 import React from 'react';
 import clsx from 'clsx';
 
+import { t } from '../../i18n';
 import classes from './ListFilter.module.scss';
 
 export interface ListFilterProps {
@@ -26,15 +27,15 @@ export interface ListFilterProps {
 export function ListFilter(props: ListFilterProps) {
   const filtering = props.value.trim().length > 0;
   const countText = filtering
-    ? `${props.count} of ${props.total}`
-    : `${props.total}`;
+    ? t('commonFilterCount', [String(props.count), String(props.total)])
+    : t('commonFilterTotal', [String(props.total)]);
 
   return (
     <div className={classes.container}>
       <InputGroup
         className={classes.input}
         leftIcon="search"
-        placeholder={props.placeholder ?? 'filter…'}
+        placeholder={props.placeholder ?? t('commonFilterPlaceholder')}
         value={props.value}
         onValueChange={props.onChange}
         rightElement={
@@ -50,8 +51,8 @@ export function ListFilter(props: ListFilterProps) {
               icon="cross"
               minimal={true}
               small={true}
-              title="Clear the filter"
-              aria-label="Clear the filter"
+              title={t('commonClearFilter')}
+              aria-label={t('commonClearFilter')}
               onClick={() => props.onChange('')}
             />
           </div>

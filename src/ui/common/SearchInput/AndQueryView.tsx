@@ -9,6 +9,7 @@ import {
   Utils,
 } from '@blueprintjs/core';
 import { QueryScope, QueryScopeMap } from '../../../data/search/Query';
+import { t } from '../../../i18n';
 
 import { AndQuery } from '../../../data/search/Query';
 import AndQueryViewClasses from './AndQueryView.module.scss';
@@ -82,7 +83,7 @@ export function AndQueryView(props: AndQueryViewProps) {
 
   const removeButton = isRemovable ? (
     <button
-      aria-label="Remove"
+      aria-label={t('commonRemoveAria')}
       type="button"
       className={Classes.TAG_REMOVE}
       onClick={onRemoveClick}

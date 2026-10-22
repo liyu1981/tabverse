@@ -31,6 +31,7 @@
     "server:docker": "pnpm run server:prebuild && cd server && docker build -t tabversed:dev -t tabversed:latest .",
     "format:check": "biome format .",
     "format:write": "biome format --write .",
+    "i18n:check": "node tools/i18ncheck.mjs",
     "lint:check": "biome lint .",
     "lint:fix": "biome lint --write .",
     "depcheck": "depcheck"

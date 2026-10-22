@@ -2,6 +2,7 @@ import { Button, ButtonGroup, Intent, Tag } from '@blueprintjs/core';
 import React from 'react';
 
 import { TabSpace } from '../../data/tabSpace/TabSpace';
+import { t } from '../../i18n';
 import { calendarLabel } from '../../time';
 import { resolveSidebarColor } from '../../data/tabSpace/sidebarColor';
 import classes from './PopupView.module.scss';
@@ -46,7 +47,7 @@ export function SavedTabSpaceRow(props: ISavedTabSpaceRowProps) {
       <button
         type="button"
         className={classes.rowLabel}
-        title={isOpen ? 'Go to this tabverse' : 'Add to this window'}
+        title={isOpen ? t('popupRowGoTo') : t('popupRowAddToWindow')}
         onClick={() =>
           isOpen
             ? props.switchToOpen(tabSpace)
@@ -55,19 +56,26 @@ export function SavedTabSpaceRow(props: ISavedTabSpaceRowProps) {
       >
         <div className={classes.rowName}>{tabSpace.name}</div>
         <div className={classes.rowMeta}>
-          <span>{`${tabCount} tab${tabCount === 1 ? '' : 's'}`}</span>
+          <span>
+            {t(tabCount === 1 ? 'popupTabCountOne' : 'popupTabCountMany', [
+              String(tabCount),
+            ])}
+          </span>
           <span>·</span>
           <span>{calendarLabel(tabSpace.updatedAt)}</span>
           {props.isCurrentWindow ? (
             <Tag minimal={true} intent={Intent.PRIMARY} round={true}>
-              this window
+              {t('popupThisWindow')}
             </Tag>
           ) : null}
           {isOpen && !props.isCurrentWindow ? (
             <span className={classes.rowBadge}>
-              {`open in ${props.openWindowCount} window${
-                props.openWindowCount === 1 ? '' : 's'
-              }`}
+              {t(
+                props.openWindowCount === 1
+                  ? 'popupOpenInWindowOne'
+                  : 'popupOpenInWindowMany',
+                [String(props.openWindowCount)],
+              )}
             </span>
           ) : null}
         </div>
@@ -77,7 +85,7 @@ export function SavedTabSpaceRow(props: ISavedTabSpaceRowProps) {
           <Button
             className="tv-icon-button"
             icon="locate"
-            title="Go to the window of this tabverse"
+            title={t('popupGoToWindowOfTabverse')}
             minimal={true}
             small={true}
             onClick={() => props.switchToOpen(tabSpace)}
@@ -89,11 +97,9 @@ export function SavedTabSpaceRow(props: ISavedTabSpaceRowProps) {
           // the door this opens switches when the tabverse is already open
           // somewhere (openOrSwitchToTabSpace), so the title says which of the
           // two it will do rather than promising a new window either way
-          title={
-            isOpen
-              ? 'Go to the window of this tabverse'
-              : 'Open In A New Window'
-          }
+          title={t(
+            isOpen ? 'popupGoToWindowOfTabverse' : 'popupOpenInNewWindow',
+          )}
           minimal={true}
           small={true}
           onClick={() => props.openInNewWindow(tabSpace)}

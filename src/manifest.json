@@ -1,8 +1,8 @@
 {
-  "name": "Tabverse",
+  "name": "__MSG_extName__",
   "manifest_version": 3,
   "minimum_chrome_version": "140",
-  "description": "Tabverse is an opinionated way of managing tabs.",
+  "description": "__MSG_extDescription__",
   "homepage_url": "https://tabverse.github.io",
   "icons": {
     "16": "icons/icon16.png",
@@ -10,7 +10,7 @@
     "128": "icons/icon128.png"
   },
   "action": {
-    "default_title": "Tabverse",
+    "default_title": "__MSG_extActionTitle__",
     "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon16.png",

@@ -6,6 +6,7 @@ import classes from './SidebarContainer.module.scss';
 import clsx from 'clsx';
 import { $tabSpace } from '../../data/tabSpace/store';
 import { resolveSidebarColor } from '../../data/tabSpace/sidebarColor';
+import { t } from '../../i18n';
 import { useSettingItem } from '../../storage/localSetting';
 
 interface SidebarState {
@@ -84,8 +85,8 @@ export const SidebarContainer = (props: { children?: React.ReactNode }) => {
                 minimal={true}
                 large={true}
                 icon={<Icon icon="chevron-left" size={CHEVRON_ICON_SIZE} />}
-                title="Collapse the sidebar to icons"
-                aria-label="Collapse sidebar"
+                title={t('commonCollapseSidebar')}
+                aria-label={t('commonCollapseSidebarAria')}
                 onClick={() => setCollapsed(true)}
               />
             </div>

@@ -29,6 +29,7 @@ import {
 } from '../../data/tabSpace/chromeUtil';
 import { randomSidebarColor } from '../../data/tabSpace/sidebarColor';
 import { loadSidebarRandomOnCreate } from '../../data/tabSpace/sidebarColorSettings';
+import { t } from '../../i18n';
 import classes from './PopupView.module.scss';
 
 const SEARCH_DEBOUNCE_MS = 200;
@@ -161,7 +162,9 @@ export function PopupView() {
   }, [text, searchNonce, currentTabSpaceId]);
 
   const currentTabSpaceName =
-    currentTabSpace?.name || currentTabSpaceId || 'the current tabverse';
+    currentTabSpace?.name ||
+    currentTabSpaceId ||
+    t('popupCurrentTabverseFallback');
 
   const close = () => window.close();
 
@@ -184,8 +187,8 @@ export function PopupView() {
     if (currentTabSpaceId) {
       setPendingReplace({
         url,
-        title: 'Start a new tabverse in this window?',
-        body: `This window already has a tabverse ("${currentTabSpaceName}"). It is saved automatically, so nothing is lost. Continuing closes it here and starts a new tabverse; the tabs in this window become part of it.`,
+        title: t('popupReplaceNewTitle'),
+        body: t('popupReplaceNewBody', [currentTabSpaceName]),
       });
       return;
     }
@@ -198,12 +201,12 @@ export function PopupView() {
   const onImportFile = async (file: File) => {
     try {
       const result = await importTabverseFile(file);
-      setImportStatus(`Imported "${result.name}"`);
+      setImportStatus(t('popupImportedOk', [result.name]));
       setText('');
       setSearchNonce((nonce) => nonce + 1);
     } catch (err) {
       logger.error('popup could not import the tabverse', err);
-      setImportStatus('That file is not a Tabverse export.');
+      setImportStatus(t('popupImportFailed'));
     }
   };
 
@@ -211,8 +214,12 @@ export function PopupView() {
     if (currentTabSpaceId) {
       setPendingReplace({
         url: tabverseUrl(TabSpaceOp.LoadSaved, tabSpace.id),
-        title: 'Add this tabverse to this window?',
-        body: `This window already has a tabverse ("${currentTabSpaceName}"). It is saved automatically, so nothing is lost. Continuing makes "${tabSpace.name}" the tabverse of this window and opens its ${tabSpace.tabs.size} tab(s) here: the tabs already open in this window stay, and the ones of that tabverse already open here are reused.`,
+        title: t('popupAddToWindowTitle'),
+        body: t('popupAddToWindowBody', [
+          currentTabSpaceName,
+          tabSpace.name,
+          String(tabSpace.tabs.size),
+        ]),
       });
       return;
     }
@@ -260,7 +267,7 @@ export function PopupView() {
 
   const renderList = () => {
     if (loadStatus === LoadStatus.Loading) {
-      return <div className={classes.notice}>Loading…</div>;
+      return <div className={classes.notice}>{t('popupLoading')}</div>;
     }
     if (currentTabSpace || listedTabSpaces.length > 0) {
       return (
@@ -271,18 +278,11 @@ export function PopupView() {
       );
     }
     if (nothingSaved) {
-      return (
-        <div className={classes.notice}>
-          No tabverse saved yet. Every window you keep with Tabverse becomes
-          one, and shows up here afterwards.
-        </div>
-      );
+      return <div className={classes.notice}>{t('popupNothingSaved')}</div>;
     }
     return (
       <div className={classes.notice}>
-        {isSearching
-          ? 'Nothing found. Try fewer words, or a word from a tab title.'
-          : 'Nothing recent. Open a tabverse in a window and it shows up here.'}
+        {isSearching ? t('popupNothingFound') : t('popupNothingRecent')}
       </div>
     );
   };
@@ -290,18 +290,18 @@ export function PopupView() {
   return (
     <div className={classes.container}>
       <div className={classes.header}>
-        <span className={classes.headerTitle}>Tabverse</span>
-        <span>{`${savedCount} saved`}</span>
+        <span className={classes.headerTitle}>{t('extName')}</span>
+        <span>{t('popupSavedCount', [String(savedCount)])}</span>
       </div>
       <div className={classes.createContainer}>
         <Button
           className={`tv-primary-button ${classes.createButton}`}
           icon="plus"
-          text="New tabverse"
+          text={t('popupNewTabverse')}
           title={
             currentTabSpaceId
-              ? 'Saves the current tabverse and starts a new one in this window'
-              : 'Starts a new tabverse in this window'
+              ? t('popupNewTabverseTitleWhenOpen')
+              : t('popupNewTabverseTitle')
           }
           onClick={() => {
             void createNewTabSpace();
@@ -309,8 +309,8 @@ export function PopupView() {
         />
         <Button
           icon="import"
-          text="Import"
-          title="Import a .tabverse file as a new tabverse"
+          text={t('popupImport')}
+          title={t('popupImportTitle')}
           onClick={() => importInputRef.current?.click()}
         />
         <input
@@ -332,7 +332,7 @@ export function PopupView() {
       <div className={classes.searchContainer}>
         <InputGroup
           leftIcon="search"
-          placeholder="search saved tabverses…"
+          placeholder={t('popupSearchPlaceholder')}
           disabled={nothingSaved}
           value={text}
           onValueChange={setText}
@@ -349,18 +349,25 @@ export function PopupView() {
       <div className={classes.listContainer}>
         <div className={classes.listHeading}>
           {isSearching
-            ? `${tabSpaces.length} result${tabSpaces.length === 1 ? '' : 's'}`
-            : 'Recent'}
+            ? t(tabSpaces.length === 1 ? 'popupResultOne' : 'popupResultMany', [
+                String(tabSpaces.length),
+              ])
+            : t('popupRecent')}
         </div>
         {renderList()}
       </div>
       {isSearching && loadStatus === LoadStatus.Done ? (
         <div className={classes.status}>
           {searchBackend === 'server'
-            ? 'searched on the sync server'
-            : 'searched on this device'}
+            ? t('popupSearchedOnServer')
+            : t('popupSearchedOnDevice')}
           {unknownCount > 0
-            ? ` · ${unknownCount} match${unknownCount === 1 ? '' : 'es'} not downloaded yet`
+            ? ` · ${t(
+                unknownCount === 1
+                  ? 'popupNotDownloadedOne'
+                  : 'popupNotDownloadedMany',
+                [String(unknownCount)],
+              )}`
             : ''}
         </div>
       ) : (
@@ -370,8 +377,8 @@ export function PopupView() {
         isOpen={pendingReplace !== null}
         canEscapeKeyCancel={true}
         canOutsideClickCancel={true}
-        confirmButtonText="Replace"
-        cancelButtonText="Cancel"
+        confirmButtonText={t('popupConfirmReplace')}
+        cancelButtonText={t('popupCancel')}
         intent={Intent.WARNING}
         onCancel={() => setPendingReplace(null)}
         onConfirm={() => {

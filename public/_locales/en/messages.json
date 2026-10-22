@@ -1,6 +1,214 @@
 {
-  "l10nHello": {
-    "message": "Hello, React!",
-    "description": "Hello text for the popup."
+  "extName": {
+    "message": "Tabverse",
+    "description": "The extension's name, shown in the store listing, the chrome://extensions row and the toolbar tooltip parent."
+  },
+  "extDescription": {
+    "message": "Tabverse is an opinionated way of managing tabs.",
+    "description": "The extension's one-line description, shown in the store listing and on chrome://extensions."
+  },
+  "extActionTitle": {
+    "message": "Tabverse",
+    "description": "The toolbar button's tooltip, from action.default_title in the manifest."
+  },
+  "popupCurrentTabverseFallback": {
+    "message": "the current tabverse",
+    "description": "Popup: what to call this window's tabverse when it has neither a name nor an id to show."
+  },
+  "popupReplaceNewTitle": {
+    "message": "Start a new tabverse in this window?",
+    "description": "Popup: the alert header when New tabverse is pressed while this window already has one."
+  },
+  "popupReplaceNewBody": {
+    "message": "This window already has a tabverse (\"$1\"). It is saved automatically, so nothing is lost. Continuing closes it here and starts a new tabverse; the tabs in this window become part of it.",
+    "description": "Popup: the alert body for New tabverse over an existing tabverse. $1 is the current tabverse's name."
+  },
+  "popupAddToWindowTitle": {
+    "message": "Add this tabverse to this window?",
+    "description": "Popup: the alert header when adding a saved tabverse to a window that already has one."
+  },
+  "popupAddToWindowBody": {
+    "message": "This window already has a tabverse (\"$1\"). It is saved automatically, so nothing is lost. Continuing makes \"$2\" the tabverse of this window and opens its $3 tab(s) here: the tabs already open in this window stay, and the ones of that tabverse already open here are reused.",
+    "description": "Popup: the alert body when adding a saved tabverse over the current one. $1 the current tabverse's name, $2 the one being added, $3 its number of tabs."
+  },
+  "popupImportedOk": {
+    "message": "Imported \"$1\"",
+    "description": "Popup: the success notice after importing a .tabverse file. $1 is the imported tabverse's name."
+  },
+  "popupImportFailed": {
+    "message": "That file is not a Tabverse export.",
+    "description": "Popup: the error notice when the chosen file cannot be imported."
+  },
+  "popupLoading": {
+    "message": "Loading…",
+    "description": "Popup: shown while the tabverse list is being read."
+  },
+  "popupNothingSaved": {
+    "message": "No tabverse saved yet. Every window you keep with Tabverse becomes one, and shows up here afterwards.",
+    "description": "Popup: the empty state when nothing has ever been saved."
+  },
+  "popupNothingFound": {
+    "message": "Nothing found. Try fewer words, or a word from a tab title.",
+    "description": "Popup: the empty state for a search that matched nothing."
+  },
+  "popupNothingRecent": {
+    "message": "Nothing recent. Open a tabverse in a window and it shows up here.",
+    "description": "Popup: the empty state when there is nothing saved but the user is not searching."
+  },
+  "popupSavedCount": {
+    "message": "$1 saved",
+    "description": "Popup: the header count of saved tabverses. $1 is the number."
+  },
+  "popupNewTabverse": {
+    "message": "New tabverse",
+    "description": "Popup: the button that starts a new tabverse in this window."
+  },
+  "popupNewTabverseTitleWhenOpen": {
+    "message": "Saves the current tabverse and starts a new one in this window",
+    "description": "Popup: the New tabverse button's tooltip when this window already has a tabverse."
+  },
+  "popupNewTabverseTitle": {
+    "message": "Starts a new tabverse in this window",
+    "description": "Popup: the New tabverse button's tooltip when this window has no tabverse yet."
+  },
+  "popupImport": {
+    "message": "Import",
+    "description": "Popup: the button that picks a .tabverse file to import."
+  },
+  "popupImportTitle": {
+    "message": "Import a .tabverse file as a new tabverse",
+    "description": "Popup: the Import button's tooltip."
+  },
+  "popupSearchPlaceholder": {
+    "message": "search saved tabverses…",
+    "description": "Popup: the placeholder in the search box."
+  },
+  "popupResultOne": {
+    "message": "$1 result",
+    "description": "Popup: the list heading while searching, exactly one match. $1 is the number."
+  },
+  "popupResultMany": {
+    "message": "$1 results",
+    "description": "Popup: the list heading while searching, more than one match. $1 is the number."
+  },
+  "popupRecent": {
+    "message": "Recent",
+    "description": "Popup: the list heading when not searching."
+  },
+  "popupSearchedOnServer": {
+    "message": "searched on the sync server",
+    "description": "Popup: the search-status line when the sync server answered the search."
+  },
+  "popupSearchedOnDevice": {
+    "message": "searched on this device",
+    "description": "Popup: the search-status line when the search ran against the local database."
+  },
+  "popupNotDownloadedOne": {
+    "message": "$1 match not downloaded yet",
+    "description": "Popup: how many search matches are still only on the server. $1 is the number."
+  },
+  "popupNotDownloadedMany": {
+    "message": "$1 matches not downloaded yet",
+    "description": "Popup: how many search matches are still only on the server, more than one. $1 is the number."
+  },
+  "popupConfirmReplace": {
+    "message": "Replace",
+    "description": "Popup: the confirm button on the replace-this-window alert."
+  },
+  "popupCancel": {
+    "message": "Cancel",
+    "description": "Popup: the cancel button on the replace-this-window alert."
+  },
+  "popupRowGoTo": {
+    "message": "Go to this tabverse",
+    "description": "Popup: a saved row's tooltip when the tabverse is already open somewhere - clicking goes to it."
+  },
+  "popupRowAddToWindow": {
+    "message": "Add to this window",
+    "description": "Popup: a saved row's tooltip when the tabverse is not open - clicking adds it here."
+  },
+  "popupTabCountOne": {
+    "message": "$1 tab",
+    "description": "Popup: a saved row's tab count, exactly one. $1 is the number."
+  },
+  "popupTabCountMany": {
+    "message": "$1 tabs",
+    "description": "Popup: a saved row's tab count, more than one. $1 is the number."
+  },
+  "popupThisWindow": {
+    "message": "this window",
+    "description": "Popup: the tag on the row for the tabverse of the window the popup was opened from."
+  },
+  "popupOpenInWindowOne": {
+    "message": "open in $1 window",
+    "description": "Popup: the badge on a row that is open elsewhere, exactly one window. $1 is the number."
+  },
+  "popupOpenInWindowMany": {
+    "message": "open in $1 windows",
+    "description": "Popup: the badge on a row that is open elsewhere, more than one window. $1 is the number."
+  },
+  "popupGoToWindowOfTabverse": {
+    "message": "Go to the window of this tabverse",
+    "description": "Popup: the locate button's tooltip - switches to the window this tabverse is open in."
+  },
+  "popupOpenInNewWindow": {
+    "message": "Open In A New Window",
+    "description": "Popup: the folder-shared button's tooltip - opens the tabverse in a new window."
+  },
+  "commonLoading": {
+    "message": "Loading...",
+    "description": "Shown while a view's data is still being read."
+  },
+  "commonSomethingWentWrong": {
+    "message": "Something went wrong.",
+    "description": "The error boundary's heading when a view crashed."
+  },
+  "commonFilterCount": {
+    "message": "$1 of $2",
+    "description": "A filter box's count pill while filtering: $1 matching rows of $2 total."
+  },
+  "commonFilterTotal": {
+    "message": "$1",
+    "description": "A filter box's count pill when not filtering: the total row count. $1 is the number."
+  },
+  "commonFilterPlaceholder": {
+    "message": "filter…",
+    "description": "The default placeholder of a filter box that was not given one."
+  },
+  "commonClearFilter": {
+    "message": "Clear the filter",
+    "description": "A filter box's clear button, as a tooltip and an aria-label."
+  },
+  "commonCollapseSidebar": {
+    "message": "Collapse the sidebar to icons",
+    "description": "The sidebar collapse button's tooltip."
+  },
+  "commonCollapseSidebarAria": {
+    "message": "Collapse sidebar",
+    "description": "The sidebar collapse button's accessible name."
+  },
+  "commonExpandSidebar": {
+    "message": "Expand the sidebar",
+    "description": "The collapsed sidebar's logo button, which is the way back out of the rail."
+  },
+  "commonPreviousPage": {
+    "message": "Previous page",
+    "description": "A pager's left arrow."
+  },
+  "commonNextPage": {
+    "message": "Next page",
+    "description": "A pager's right arrow."
+  },
+  "commonPageIndicator": {
+    "message": "$1/$2",
+    "description": "A pager's page position: $1 the current page, $2 the last."
+  },
+  "commonRemoveAria": {
+    "message": "Remove",
+    "description": "The accessible name of the x on a removable search tag."
+  },
+  "searchTermsAria": {
+    "message": "Search terms",
+    "description": "The accessible name of the input in the scoped search box."
   }
 }

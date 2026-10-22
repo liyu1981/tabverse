@@ -1,6 +1,7 @@
 import { Tooltip } from '@blueprintjs/core';
 import React from 'react';
 
+import { t } from '../../i18n';
 import { useSidebarActions } from './SidebarContainer';
 import classes from './TabSpaceLogo.module.scss';
 import { merge } from 'lodash';
@@ -22,12 +23,12 @@ export const TabSpaceLogo = (props: TabSpaceLogoProps) => {
   if (props.collapsed) {
     return (
       <div className={classes.collapsedContainer}>
-        <Tooltip content="Expand the sidebar" placement="right">
+        <Tooltip content={t('commonExpandSidebar')} placement="right">
           <button
             type="button"
             className={classes.collapsedMarkButton}
             onClick={expandSidebar}
-            aria-label="Expand the sidebar"
+            aria-label={t('commonExpandSidebar')}
           >
             {/* decorative: the button is already labelled by aria-label */}
             <img

@@ -1,6 +1,8 @@
 import { Button, ButtonGroup } from '@blueprintjs/core';
 import React, { useState } from 'react';
 
+import { t } from '../../i18n';
+
 /**
  * A page index that is never past the last page and never before the first.
  *
@@ -43,7 +45,7 @@ export function usePageControl<T>(
                 <Button
                   minimal={true}
                   icon="chevron-left"
-                  title="Previous page"
+                  title={t('commonPreviousPage')}
                   onClick={() => {
                     setStartPage((lastStart) =>
                       clampPage(lastStart - 1, totalPage),
@@ -51,12 +53,15 @@ export function usePageControl<T>(
                   }}
                 ></Button>
                 <Button minimal={true} disabled={true}>
-                  {`${page + 1}/${totalPage}`}
+                  {t('commonPageIndicator', [
+                    String(page + 1),
+                    String(totalPage),
+                  ])}
                 </Button>
                 <Button
                   minimal={true}
                   icon="chevron-right"
-                  title="Next page"
+                  title={t('commonNextPage')}
                   onClick={() => {
                     setStartPage((lastStart) =>
                       clampPage(lastStart + 1, totalPage),

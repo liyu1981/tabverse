@@ -12,6 +12,8 @@ import {
   Utils,
 } from '@blueprintjs/core';
 
+import { t } from '../../../i18n';
+
 import React from 'react';
 import classNames from 'classnames';
 import { isReactNodeEmpty } from './util';
@@ -149,7 +151,7 @@ export function EditableTag(props: EditableTagProps) {
 
   const removeButton = isRemovable ? (
     <button
-      aria-label="Remove"
+      aria-label={t('commonRemoveAria')}
       type="button"
       className={Classes.TAG_REMOVE}
       onClick={onRemoveClick}

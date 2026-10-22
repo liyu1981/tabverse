@@ -19,6 +19,10 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
+    // Gives the node environment the one chrome API the UI cannot render
+    // without: `t()` -> `chrome.i18n.getMessage`, backed by the real English
+    // catalog so the markup tests assert on what a browser would show.
+    setupFiles: ['./vitest.setup.mts'],
     include: [
       'src/**/__tests__/**/*.test.{ts,tsx}',
       'src/**/*.test.{ts,tsx}',

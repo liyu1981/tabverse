@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 
 import { LoadStatus } from '../../global';
+import { t } from '../../i18n';
 import { useAsyncEffect } from './useAsyncEffect';
 
 export function getLoadingComponent2<T extends React.FC<any>>(
@@ -21,7 +22,7 @@ export function getLoadingComponent2<T extends React.FC<any>>(
     return loadStatus === LoadStatus.Done ? (
       <div>{React.createElement(component, props)}</div>
     ) : (
-      <div>Loading...</div>
+      <div>{t('commonLoading')}</div>
     );
   }
   return WrappedComponent;

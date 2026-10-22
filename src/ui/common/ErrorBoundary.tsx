@@ -1,5 +1,7 @@
 import React from 'react';
 
+import { t } from '../../i18n';
+
 export class ErrorBoundary extends React.Component<
   any,
   { error: any; errorInfo: any }
@@ -20,7 +22,7 @@ export class ErrorBoundary extends React.Component<
     if (this.state.errorInfo) {
       return (
         <div>
-          <h2>Something went wrong.</h2>
+          <h2>{t('commonSomethingWentWrong')}</h2>
           <details style={{ whiteSpace: 'pre-wrap' }}>
             {this.state.error && this.state.error.toString()}
             <br />

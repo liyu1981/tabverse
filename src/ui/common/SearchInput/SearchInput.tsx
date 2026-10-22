@@ -18,6 +18,7 @@ import { useRef, useState } from 'react';
 
 import { AndQueryView } from './AndQueryView';
 import { Query } from '../../../data/search/Query';
+import { t } from '../../../i18n';
 import React from 'react';
 import SearchInputClasses from './SearchInput.module.scss';
 import classNames from 'classnames';
@@ -227,7 +228,7 @@ export function SearchInput(props: SearchInputProps) {
           {props.children}
           <input
             // a placeholder is not a label
-            aria-label="Search terms"
+            aria-label={t('searchTermsAria')}
             value={inputState.inputValue}
             {...props.inputProps}
             onFocus={handleInputFocus}
