@@ -79,10 +79,73 @@ scripts. The only network call is the sync server the user connected to; the
 extension additionally *receives* a single message from its own pairing page
 while a pairing is in progress (see `externally_connectable` above).
 
-## Release checklist
+## Releasing
 
-1. `npm version <x.y.z>` then `node tools/version_update <x.y.z>` (updates
-   `src/global.ts`; the manifest version is injected from `package.json`).
-2. `npm ci && npm run typecheck && npm run lint:check && npm run format:check && npm test`
-3. `pnpm run build-store` → upload `dist_store/tabverse.zip`.
-4. Re-check the disclosure answers above if sync behaviour changed.
+A release is a tag ([adr/0034](../adr/0034-releases-are-tags.md)).
+`.github/workflows/release.yml` does the rest: it runs the CI gates, attaches the
+store package to a GitHub release, and submits that package to the Chrome Web
+Store for review.
+
+```sh
+node tools/version_update 0.7.3   # package.json and src/global.ts
+pnpm run format:check             # the bump touches two formatted files
+git commit -am "Version 0.7.3"
+git tag v0.7.3
+git push origin main --tags
+```
+
+The workflow refuses to build unless the tag, `package.json` and
+`src/global.ts` agree, and `tools/cwsUpload.mjs` refuses to upload a version the
+store already has - a version number cannot be used twice, so a failed
+submission is a new patch version, not a re-run.
+
+Rehearse a release, or check the credentials, without releasing anything:
+
+```sh
+gh workflow run release.yml -f tag=v0.7.3 -f dry_run=true
+```
+
+A failed store step can be retried by re-running the workflow for the same tag:
+the GitHub release is updated in place, and the submission is attempted again.
+If the upload itself had already succeeded, the tool stops and says so.
+
+The release notes are GitHub's generated list of merged changes; edit them in
+the release if a version needs prose to explain itself.
+
+### One-time setup: store credentials
+
+The Chrome Web Store API has no account-less access; the workflow publishes as
+an OAuth client owned by the publisher account.
+
+1. **Google Cloud project**: enable the *Chrome Web Store API*, then configure
+   an OAuth consent screen (External, app name, support email, developer
+   contact) and add the publisher address as a test user.
+2. **Publish the consent screen** when it works ("Publish app"). While it stays
+   in *Testing*, Google expires refresh tokens after 7 days, and the next
+   release then fails with `invalid_grant` for no visible reason.
+3. **OAuth client**: *Create credentials* → *OAuth client ID* → application type
+   **Web application**, with `https://developers.google.com/oauthplayground` as
+   an authorized redirect URI. Keep the client id and secret.
+4. **Refresh token**: at the [OAuth 2.0
+   Playground](https://developers.google.com/oauthplayground), use your own
+   credentials, authorize the scope
+   `https://www.googleapis.com/auth/chromewebstore`, sign in **as the publisher
+   account** (it owns the item; the Cloud project may belong to anyone), then
+   *Exchange authorization code for tokens* and copy the refresh token.
+5. **Publisher id**: *Publisher* → *Settings* in the [developer
+   dashboard](https://chrome.google.com/webstore/devconsole), where it is shown
+   as *Publisher ID*.
+6. **Repository settings**: add the secrets `CWS_CLIENT_ID`,
+   `CWS_CLIENT_SECRET`, `CWS_REFRESH_TOKEN`, and the variable
+   `CWS_PUBLISHER_ID` (Settings → Secrets and variables → Actions). The
+   extension id defaults to the published item; a fork overrides it with the
+   variable `CWS_EXTENSION_ID`.
+
+Publishing over the API also requires **2-step verification** on the publisher
+account.
+
+## Manual steps before a release
+
+- Re-check the disclosure answers above if sync or page reading changed.
+- The listing itself - name, description, screenshots, privacy answers,
+  visibility - is dashboard work: the API cannot change it.

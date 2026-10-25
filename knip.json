@@ -1,7 +1,11 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "project": ["src/**/*.{ts,tsx}", "server/ui/**/*.{ts,tsx}", "tools/**/*.mts"],
-  "entry": ["tools/version_update", "tools/i18ncheck.mjs"],
+  "entry": [
+    "tools/version_update",
+    "tools/i18ncheck.mjs",
+    "tools/cwsUpload.mjs"
+  ],
   "ignoreDependencies": ["@blueprintjs/colors", "replace-in-file"],
   "ignoreBinaries": ["air", "go", "gofmt"]
 }

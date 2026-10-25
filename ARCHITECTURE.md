@@ -504,6 +504,9 @@ again.
       stays on
 - [x] CI: typecheck, format, lint, tests, prod build, store zip + Go
       vet/race/cross-compile
+- [x] Releases are tags (`adr/0034`): a `v*` tag re-runs those gates, creates
+      the GitHub release with the store package attached, and submits that
+      package to the Chrome Web Store for review (`tools/cwsUpload.mjs`, API v2)
 - [x] Store disclosure notes (`doc/chrome-webstore/listing.md`) and the
       privacy policy's "Optional server sync" section
 - [x] Existing users' local data uploads when sync is set up, **ticked by

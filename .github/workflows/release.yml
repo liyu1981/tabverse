@@ -1,0 +1,165 @@
+name: Release
+
+# A release is a tag (adr/0034): pushing `v0.7.3` runs this workflow, which
+# gates on the checks CI runs, attaches the store package to a GitHub release,
+# and then submits that package to the Chrome Web Store and asks for a review.
+# The version is nowhere written down here: it is the tag, and the tag has to
+# agree with package.json and src/global.ts before anything is built.
+on:
+  push:
+    tags: ['v[0-9]*.[0-9]*.[0-9]*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: The existing tag to release, for example v0.7.3
+        required: true
+      dry_run:
+        description: Build and check only - release nothing, submit nothing
+        type: boolean
+        default: false
+
+# One release at a time. Re-running is a supported way to retry the store step
+# (the release is then updated in place), so a second run waits rather than
+# cancelling the first.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  # create the GitHub release and upload the zip to it
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      # A dispatched run can be started from any branch; the release is always
+      # the tag, so check that out either way.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+
+      - name: the version is the tag
+        id: version
+        env:
+          TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          set -euo pipefail
+          version="${TAG#v}"
+          if ! [[ "$version" =~ ^[0-9]+(\.[0-9]+){0,3}$ ]]; then
+            echo "::error::tag '$TAG' is not v<version>, for example v0.7.3"
+            exit 1
+          fi
+          # One version, three places: the tag names it, package.json is what
+          # the manifest is built from, and src/global.ts is what the About
+          # panel shows. A release that is labelled 0.7.3 while its UI says
+          # 0.7.2 is a bug nobody notices until a user reports it.
+          package=$(node -p "require('./package.json').version")
+          ui=$(node -p "require('fs').readFileSync('src/global.ts', 'utf8').match(/TABSPACE_VERSION = 'v([^']+)'/)[1]")
+          if [ "$version" != "$package" ] || [ "$version" != "$ui" ]; then
+            echo "::error::the tag says $version, package.json says $package and src/global.ts says v$ui: run 'node tools/version_update $version', commit, and tag that commit"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "releasing $version from tag $TAG"
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # The same gates as ci.yml. A tag can be pushed from a commit that never
+      # went through a pull request, so the release cannot assume they passed.
+      - name: typecheck
+        run: pnpm run typecheck
+
+      - name: format check
+        run: pnpm run format:check
+
+      - name: lint
+        run: pnpm run lint:check
+
+      - name: unit tests
+        run: pnpm test
+
+      - name: build the store package
+        run: pnpm run build-store
+
+      - name: archive the store package
+        uses: actions/upload-artifact@v4
+        with:
+          name: tabverse-store-zip
+          path: dist_store/tabverse.zip
+          retention-days: 14
+
+      # Everything after this point is a release. The GitHub release is created
+      # *before* the store submission on purpose: it is the step that can be
+      # retried, so a store failure never leaves a tag without its download
+      # (adr/0034).
+      - name: attach the package to the GitHub release
+        if: ${{ !inputs.dry_run }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag || github.ref_name }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          # release assets have always carried the version: tabverse_v0.7.2.zip
+          asset="dist_store/tabverse_v${VERSION}.zip"
+          cp dist_store/tabverse.zip "$asset"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            # a re-run: replace the asset instead of adding a second copy
+            gh release upload "$TAG" "$asset" --clobber
+          else
+            gh release create "$TAG" "$asset" \
+              --title "Tabverse v${VERSION}" \
+              --generate-notes
+          fi
+          echo "https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG"
+
+      # The one irreversible step: a version number cannot be uploaded twice,
+      # so tools/cwsUpload.mjs checks the archive and the store's current
+      # version first and fails before uploading if either says no.
+      - name: submit to the Chrome Web Store
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          # a fork has no store credentials and no store to submit to: it still
+          # validates the package, which is what a dry run is for
+          DRY_RUN: ${{ inputs.dry_run || secrets.CWS_REFRESH_TOKEN == '' }}
+          CWS_PUBLISHER_ID: ${{ vars.CWS_PUBLISHER_ID }}
+          CWS_EXTENSION_ID: ${{ vars.CWS_EXTENSION_ID || 'lffblcippngalmglinedcbmikkncihdm' }}
+          CWS_CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
+          CWS_CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
+          CWS_REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+        run: |
+          set -euo pipefail
+          args=(--source dist_store/tabverse.zip --expect-version "$VERSION" --publish)
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "::notice::dry run or no store credentials: the package is validated, not submitted"
+            args+=(--dry-run)
+          fi
+          node tools/cwsUpload.mjs "${args[@]}"
+
+      - name: summary
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          TAG: ${{ inputs.tag || github.ref_name }}
+          DRY_RUN: ${{ inputs.dry_run || secrets.CWS_REFRESH_TOKEN == '' }}
+        run: |
+          set -euo pipefail
+          {
+            echo "### Tabverse ${VERSION}"
+            if [ "$DRY_RUN" = "true" ]; then
+              echo
+              echo "Dry run: the package was built, checked and archived; nothing was released."
+            else
+              echo
+              echo "- GitHub release: https://github.com/$GITHUB_REPOSITORY/releases/tag/${TAG}"
+              echo "- Chrome Web Store: submitted for review; approval is not instant"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

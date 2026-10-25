@@ -115,6 +115,25 @@ Version bumps happen in one place: a `pnpm version`-style edit of
 `package.json` - the manifest version is injected at build time, and
 `tools/version_update` keeps `src/global.ts`'s UI version string in sync.
 
+## Release
+
+A release is a tag ([`adr/0034`](adr/0034-releases-are-tags.md)). Bump the
+version, commit, tag, push:
+
+```sh
+node tools/version_update 0.7.3   # package.json + src/global.ts
+git commit -am "Version 0.7.3"
+git tag v0.7.3
+git push origin main --tags
+```
+
+[`.github/workflows/release.yml`](.github/workflows/release.yml) then runs the
+same checks CI does, attaches `tabverse_v0.7.3.zip` to a GitHub release, and
+submits the package to the Chrome Web Store for review with
+[`tools/cwsUpload.mjs`](tools/cwsUpload.mjs). The store credentials that last
+step needs are set up once, as described in
+[`doc/chrome-webstore/listing.md`](doc/chrome-webstore/listing.md).
+
 ## Project
 
 - [Architecture](ARCHITECTURE.md) - how the extension and the server fit
