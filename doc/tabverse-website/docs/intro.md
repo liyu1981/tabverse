@@ -21,22 +21,35 @@ network. Pairing with a server is optional and comes later.
 
 Tabverse is a Chrome extension (Manifest V3, Chrome 140 or newer).
 
-The Chrome Web Store listing is still under review, so the store button on this
-site is disabled for now. In the meantime, install it from the GitHub release:
+Install it from the
+[Chrome Web Store](https://chromewebstore.google.com/detail/tabverse/lffblcippngalmglinedcbmikkncihdm).
+That listing is the release build; Chrome keeps it updated for you.
 
-1. Download `tabverse.zip` from the
-   [GitHub releases](https://github.com/liyu1981/tabverse/releases).
-2. **Extract it to a folder, and keep that folder.** Chrome loads a folder, not
-   a zip; extracting each new version into the *same* folder keeps the extension
-   id - and so your settings - stable, while a new folder is a new extension.
-3. Open `chrome://extensions`, turn on **Developer mode**, click **Load
+### Without the store
+
+You can also run a build by hand. [GitHub releases](https://github.com/liyu1981/tabverse/releases)
+carry `tabverse.zip`:
+
+1. Download `tabverse.zip` and **extract it to a folder, and keep that folder.**
+   Chrome loads a folder, not a zip; extracting each new version into the *same*
+   folder keeps the extension id - and so your settings - stable, while a new
+   folder is a new extension.
+2. Open `chrome://extensions`, turn on **Developer mode**, click **Load
    unpacked**, and pick the extracted folder.
+
+Note that a hand-loaded build has its own extension id and so its own, empty,
+profile: your data does not move between it and the store install. Export a
+`.tabverse` file to carry it across.
 
 The
 [manual installation guide](https://www.cnet.com/tech/services-and-software/how-to-install-chrome-extensions-manually/)
-walks the same steps through with screenshots. Developers can build `dist/` from
-source and load it unpacked; the
-[repository](https://github.com/liyu1981/tabverse) has the commands.
+walks the same steps through with screenshots.
+
+### From source
+
+To build the extension yourself - or work on it - see
+[Install from source](./install-from-source): a clone, `pnpm install`, a build,
+and load `dist/` unpacked.
 
 ## What it does
 

@@ -33,13 +33,16 @@ every tool in detail.
 
 Chrome 140 or newer, Manifest V3.
 
-- **Chrome Web Store** - the listing is in review; the button on the
-  [website](https://liyu1981.github.io/tabverse/) turns on when it is live.
+- **Chrome Web Store** - [install Tabverse](https://chromewebstore.google.com/detail/tabverse/lffblcippngalmglinedcbmikkncihdm)
+  (Chrome keeps it updated).
 - **From a release** - download `tabverse.zip` from
   [GitHub releases](https://github.com/liyu1981/tabverse/releases) and extract it
   to a folder. Keep that folder: extracting each version into the same one keeps
   the extension id, and your settings, stable. Then open `chrome://extensions`,
   turn on **Developer mode**, and **Load unpacked** that folder.
+- **From source** - build it yourself;
+  [Install from source](https://liyu1981.github.io/tabverse/docs/install-from-source)
+  has the steps.
 
 ## Documentation
 

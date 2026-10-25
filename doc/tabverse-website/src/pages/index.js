@@ -28,25 +28,23 @@ function HomepageHeader() {
             {siteConfig.tagline}
           </p>
           <div className={styles.buttons}>
-            <span
-              className={clsx(
-                'button button--secondary button--lg',
-                styles.tabverseButton,
-                styles.tabverseButtonDisabled,
-              )}
-              aria-disabled="true"
-              title="The Chrome Web Store listing is still under review"
-            >
-              Chrome Web Store · Coming soon
-            </span>
             <Link
               className={clsx(
                 'button button--secondary button--lg',
                 styles.tabverseButton,
               )}
-              href="https://github.com/liyu1981/tabverse/releases"
+              href="https://chromewebstore.google.com/detail/tabverse/lffblcippngalmglinedcbmikkncihdm"
             >
-              Download from Github (.zip)
+              Install from Chrome Web Store
+            </Link>
+            <Link
+              className={clsx(
+                'button button--secondary button--lg',
+                styles.tabverseButton,
+              )}
+              to="/docs/install-from-source"
+            >
+              Install from Source
             </Link>
           </div>
         </div>
