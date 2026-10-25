@@ -121,14 +121,24 @@ const config = {
                 href: 'https://github.com/liyu1981/tabverse',
               },
               {
-                label: 'Feedback & Issue',
-                href: 'https://github.com/liyu1981/tabverse/discussions',
+                label: 'Source Issues',
+                href: 'https://github.com/liyu1981/tabverse/issues',
               },
             ],
           },
           {
             title: 'Community',
             items: [
+              // The subreddit is the main support and discussion place; the
+              // repository is for code and bug reports.
+              {
+                label: 'Reddit r/tabverse',
+                href: 'https://www.reddit.com/r/tabverse/',
+              },
+              {
+                label: 'GitHub Discussions',
+                href: 'https://github.com/liyu1981/tabverse/discussions',
+              },
               {
                 label: 'Privacy Policy',
                 to: '/privacy',

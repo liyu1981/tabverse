@@ -39,6 +39,15 @@ export function AboutPanel() {
             href="https://github.com/liyu1981/tabverse"
           >
             {t('aboutGithub')}
+          </a>{' '}
+          |{' '}
+          {/* The subreddit is where support and discussion happen; the
+              repository is for code and issues. */}
+          <a
+            className={classes.aboutTextLink}
+            href="https://www.reddit.com/r/tabverse/"
+          >
+            {t('aboutReddit')}
           </a>
         </p>
       </div>

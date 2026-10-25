@@ -90,3 +90,12 @@ you run yourself; the extension talks only to the address you enter.
 - [Sync with a server](./advanced-usage/server-sync) - what syncs, how pairing
   works, and the privacy posture.
 - [Self-host a server](./self-host-server) - run `tabversed` for yourself.
+
+## Questions and feedback
+
+Support and discussion happen at [r/tabverse](https://www.reddit.com/r/tabverse/)
+on Reddit: ask a question, report a problem, or say what you would like Tabverse
+to do. Code, releases and the source of this site are in the
+[repository](https://github.com/liyu1981/tabverse), which also takes
+[issues](https://github.com/liyu1981/tabverse/issues) and
+[discussions](https://github.com/liyu1981/tabverse/discussions).

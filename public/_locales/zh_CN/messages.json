@@ -170,6 +170,9 @@
   "aboutGithub": {
     "message": "GitHub"
   },
+  "aboutReddit": {
+    "message": "社区 (Reddit)"
+  },
   "settingsTitle": {
     "message": "设置"
   },

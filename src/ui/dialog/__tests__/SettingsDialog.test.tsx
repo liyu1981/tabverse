@@ -52,6 +52,13 @@ describe('SettingsBody', () => {
     expect(markup).toContain('Created in Sydney');
     expect(markup).not.toContain('bp6-spinner');
   });
+
+  test('About links to the site, the repository and the community', () => {
+    const markup = body('about');
+    expect(markup).toContain('https://liyu1981.github.io/tabverse/');
+    expect(markup).toContain('https://github.com/liyu1981/tabverse');
+    expect(markup).toContain('https://www.reddit.com/r/tabverse/');
+  });
 });
 
 describe('SettingsDialog', () => {

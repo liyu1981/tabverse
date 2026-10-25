@@ -120,6 +120,9 @@ Version bumps happen in one place: a `pnpm version`-style edit of
 - [Architecture](ARCHITECTURE.md) - how the extension and the server fit
   together.
 - [Design decisions](adr/) - the ADRs behind both.
-- [Discussions](https://github.com/liyu1981/tabverse/discussions) - feedback and
-  questions.
+- [r/tabverse](https://www.reddit.com/r/tabverse/) - the community: support,
+  questions and discussion.
+- [Issues](https://github.com/liyu1981/tabverse/issues) and
+  [discussions](https://github.com/liyu1981/tabverse/discussions) - bug reports
+  and code-side conversation.
 - [MIT licensed](LICENSE.txt).

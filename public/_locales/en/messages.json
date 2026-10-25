@@ -227,6 +227,10 @@
     "message": "Github",
     "description": "About panel: the link to the source repository."
   },
+  "aboutReddit": {
+    "message": "Community (Reddit)",
+    "description": "About panel: the link to the r/tabverse community, where support and discussion happen. Keep 'Reddit' as the platform name."
+  },
   "settingsTitle": {
     "message": "Settings",
     "description": "The settings dialog's title."

@@ -170,6 +170,9 @@
   "aboutGithub": {
     "message": "Github"
   },
+  "aboutReddit": {
+    "message": "Community (Reddit)"
+  },
   "settingsTitle": {
     "message": "Einstellungen"
   },
