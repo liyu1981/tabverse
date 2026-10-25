@@ -24,6 +24,12 @@ $ pnpm build
 
 This command generates static content into the `../../docs` directory (the GitHub Pages output of this repository) and can be served using any static contents hosting service.
 
+### llms.txt
+
+`static/llms.txt` is served at the root of whichever site is built (`/tabverse/llms.txt` on the Pages site, `/llms.txt` in the copy embedded in `tabversed`). It is the [llms.txt](https://llmstxt.org/) index for agents: what a tabverse is, the manual page by page, and the handful of facts that are easy to get wrong - one tabverse per window, "Load to Current" merges and closes nothing, import remints ids, an unpacked build has its own profile.
+
+It is hand written and cannot be generated from the sidebar without losing those notes, so it is kept in step by hand: a new page, a rename or a changed behaviour gets its line in the same change. Its links are relative (no leading slash) so that it is correct in both deployments.
+
 ### Deployment
 
 ```

@@ -1,0 +1,104 @@
+# Tabverse
+
+> Tabverse is a Chrome extension that turns a window full of related tabs into a
+> named workspace - a "tabverse" - that can be put down and picked up again,
+> with its own notes, todos, bookmarks, closed-tab history and AI chat.
+
+Tabverse is a Manifest V3 extension for Chrome 140 or newer, local first: every
+tabverse and everything attached to it lives in IndexedDB in the browser
+profile, with no account, no network and no telemetry. Pairing with a sync
+server is optional and is the only thing that ever sends data anywhere; the
+server is `tabversed`, an open source Go program the user runs (the project also
+runs one for people who do not want to).
+
+The links below are the user manual on this site, in reading order. Each page is
+the authority for its subject; this file is the index an agent should start from.
+
+## Getting started
+
+- [Get Started](docs/intro/): what a tabverse is, both ways to install (Chrome
+  Web Store, or a release zip loaded unpacked), the popup's actions, the first
+  tabverse, and where the optional server sync fits.
+- [Install from source](docs/install-from-source/): for developers - clone,
+  `pnpm install`, `pnpm run dev` or `pnpm run build`, load `dist/` unpacked,
+  and why an unpacked build has its own extension id and empty profile.
+- [Tabverses](docs/basic-usage/tabverses/): the core page. Creating a tabverse
+  (one per window, at most), the manager interface, save & close, restoring,
+  searching saved tabverses, and exporting/importing `.tabverse` files.
+
+## The tools attached to a tabverse
+
+- [Todo](docs/basic-usage/todo/): the checklist for this tabverse.
+- [Note](docs/basic-usage/note/): Markdown notes, with the editor's commands.
+- [Bookmark](docs/basic-usage/bookmark/): bookmarks scoped to the tabverse
+  rather than to Chrome's bookmark store.
+- [History](docs/basic-usage/history/): the tabs closed from this tabverse - up
+  to 999, one row per url, not a copy of Chrome's history - with search,
+  grouping by site, reopen/undo, save-as-bookmark and forget.
+- [On-device AI](docs/advanced-usage/ai/): AI Chat, summarizing a page into a
+  note and naming a tabverse, where Chrome ships its built-in model; plus "view
+  page content as Markdown", which needs no model.
+
+One tool can be pinned to the top of the tools column, the pinned tool and the
+selected tool are remembered across reloads, and a tool's own header stays put
+while its rows scroll. The details are in [Tabverses](docs/basic-usage/tabverses/).
+
+## Search and sync
+
+- [Omni search](docs/advanced-usage/omni-search/): one search over tab titles and
+  urls, history, notes, todos and bookmarks - a local scan without a server, the
+  server's full-text index with one, falling back to the local scan when the
+  server cannot be reached. Results are catalogued by tabverse, not as loose
+  records.
+- [Sync with a server](docs/advanced-usage/server-sync/): what syncs, the two
+  pairing paths (the project's server with an email sign-in, or any
+  `tabversed` with a single-use pairing code), device tokens, and the privacy
+  posture. A device is paired, not logged in.
+- [Self-host a server](docs/self-host-server/): running `tabversed` - a single Go
+  binary over SQLite, configuration, and TLS.
+- [Server console](docs/server-console/): the account surface - paired devices,
+  revoking a token, the read-only view of stored data, and sign-in.
+
+## Facts an agent should not guess
+
+- A window holds **at most one** tabverse. Creating one in a window that already
+  has one asks first, and the open tabs become part of the new tabverse.
+- **Nothing is closed without the user asking.** "Load to Current" is a merge:
+  open tabs are kept, a saved tab whose url is already open is reused, and only
+  missing tabs are opened. "Load to New" opens a new window. "Switch to
+  Tabverse" focuses the window that already holds it.
+- **Delete has no confirmation and no undo** - it removes the tabverse and
+  everything attached to it.
+- Edits are saved as they happen; there is no save button. "Save & close" only
+  flushes a pending change and closes the manager tab, leaving the window open.
+- A `.tabverse` file is one JSON document holding the tabverse, its tabs and tab
+  groups, notes, todos, bookmarks and history. Import always creates a **new,
+  independent** tabverse (ids are reminted, the name becomes `Imported: <name> -
+  <time>`), and it lands in the saved list without being opened.
+- Data lives in IndexedDB in the browser (tab previews are a cache keyed by tab
+  id, swept when a tab closes). Nothing leaves the device until a device is
+  paired with a server, and then only the content - tab urls and titles, notes,
+  todos, bookmarks, history.
+- Without Chrome's built-in model the AI actions are disabled and the chat says
+  so; the page-to-Markdown action still works.
+- An unpacked (source or release-zip) install has a different extension id from
+  the store build, hence a separate, empty profile; a `.tabverse` export is the
+  way to move data between them.
+
+## Support
+
+- [r/tabverse](https://www.reddit.com/r/tabverse/): the community, where support
+  and discussion happen.
+- [GitHub repository](https://github.com/liyu1981/tabverse): source, releases,
+  issues and discussions.
+- [Chrome Web Store listing](https://chromewebstore.google.com/detail/tabverse/lffblcippngalmglinedcbmikkncihdm):
+  the released build.
+
+## Optional
+
+- [Privacy policy](privacy/): what is stored, what is sent, and when.
+- [User agreement](terms/): the terms of use.
+- [Design decisions](https://github.com/liyu1981/tabverse/tree/main/adr): the
+  ADRs behind the extension and the server.
+- [Architecture](https://github.com/liyu1981/tabverse/blob/main/ARCHITECTURE.md):
+  how the extension, the sync layer and the server fit together.
