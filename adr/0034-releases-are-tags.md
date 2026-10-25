@@ -30,8 +30,11 @@ depended on who did it.
 ## Decisions
 
 1. **A tag is the release.** Pushing `v*.*.*` runs
-   `.github/workflows/release.yml`; `workflow_dispatch` re-runs an existing tag
-   through the same workflow. Nothing releases from a branch.
+   `.github/workflows/release.yml`. `workflow_dispatch` serves two other cases
+   with the same workflow: with `tag` it releases that tag's tree again (a
+   retry), and with no tag and `dry_run` it rehearses the commit it was
+   dispatched from - the only way to rehearse code that has not been tagged
+   yet. A dispatch with no tag refuses to release.
 
 2. **The release gates on what CI gates on.** The same typecheck, format, lint,
    test and build steps, in the release job. A tag can be pushed from a commit
@@ -93,6 +96,11 @@ depended on who did it.
 
 - Cutting a release needs a maintainer with tag rights *and* the secrets. A
   contribution from a fork cannot publish to the store; that is the intent.
+- A dispatched run is the workflow from the dispatching commit but the tree of
+  the ref it checks out, so a retry of a tag predating this machinery runs the
+  new steps against an old tree (and has no `tools/cwsUpload.mjs` to run).
+  Releasing an old tag again is therefore only meaningful for tags cut after
+  this decision; everything before it is already on the store.
 - Review is asynchronous and outside the pipeline: the workflow ends at
   "submitted", and the approval or rejection is read in the dashboard (or with
   `fetchStatus`). A rejection costs a patch version.

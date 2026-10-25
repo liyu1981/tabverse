@@ -102,8 +102,23 @@ submission is a new patch version, not a re-run.
 Rehearse a release, or check the credentials, without releasing anything:
 
 ```sh
-gh workflow run release.yml -f tag=v0.7.3 -f dry_run=true
+node tools/version_update 0.7.3   # rehearse the version you are about to cut
+git commit -am "Version 0.7.3"
+gh workflow run release.yml -f dry_run=true
 ```
+
+That runs the whole pipeline against the commit you dispatched - the only way
+to rehearse code that has not been tagged yet. It builds, checks the archive,
+exchanges the store token, prints the version the store currently has and stops
+before the upload.
+
+Bump first: the version guard runs in a dry run too, so rehearsing at the
+version already on the store stops there with "the store already has 0.7.2
+published". That message is itself proof that the token, the publisher id and
+the extension id are all right - the run got as far as asking the store.
+
+Passing `-f tag=v0.7.3` instead releases *that tag's* tree, which is what a
+retry does; a dispatch with no tag and no dry run is refused.
 
 A failed store step can be retried by re-running the workflow for the same tag:
 the GitHub release is updated in place, and the submission is attempted again.
@@ -143,6 +158,12 @@ an OAuth client owned by the publisher account.
 
 Publishing over the API also requires **2-step verification** on the publisher
 account.
+
+If the submission step fails with `missing CWS_PUBLISHER_ID`, check that it was
+added on the repository settings' **Variables** tab and not the *Secrets* one:
+the workflow reads it as `vars.CWS_PUBLISHER_ID`, and a secret of the same name
+is simply not visible there. The job log prints both, so an empty
+`CWS_PUBLISHER_ID:` line next to masked `CWS_*` values is this exact mistake.
 
 ## Manual steps before a release
 

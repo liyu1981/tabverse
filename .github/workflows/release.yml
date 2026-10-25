@@ -11,8 +11,8 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: The existing tag to release, for example v0.7.3
-        required: true
+        description: Existing tag to release (leave empty to rehearse the current branch - dry run only)
+        required: false
       dry_run:
         description: Build and check only - release nothing, submit nothing
         type: boolean
@@ -33,35 +33,50 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      # A dispatched run can be started from any branch; the release is always
-      # the tag, so check that out either way.
+      # A dispatched run for an existing tag releases *that tag's* tree; a
+      # dispatched run with no tag rehearses the commit it was started from,
+      # which is the only way to rehearse code that has not been tagged yet.
+      # (A tag push dispatches nothing: github.sha is that tag's commit.)
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.tag || github.ref_name }}
+          ref: ${{ inputs.tag || github.sha }}
 
-      - name: the version is the tag
+      - name: the version
         id: version
         env:
-          TAG: ${{ inputs.tag || github.ref_name }}
+          # a tag push names the release; a dispatched run names it explicitly
+          TAG: ${{ github.event_name == 'push' && github.ref_name || inputs.tag }}
+          DRY_RUN: ${{ inputs.dry_run }}
         run: |
           set -euo pipefail
-          version="${TAG#v}"
-          if ! [[ "$version" =~ ^[0-9]+(\.[0-9]+){0,3}$ ]]; then
-            echo "::error::tag '$TAG' is not v<version>, for example v0.7.3"
-            exit 1
-          fi
           # One version, three places: the tag names it, package.json is what
           # the manifest is built from, and src/global.ts is what the About
           # panel shows. A release that is labelled 0.7.3 while its UI says
           # 0.7.2 is a bug nobody notices until a user reports it.
           package=$(node -p "require('./package.json').version")
           ui=$(node -p "require('fs').readFileSync('src/global.ts', 'utf8').match(/TABSPACE_VERSION = 'v([^']+)'/)[1]")
+          if [ -n "$TAG" ]; then
+            version="${TAG#v}"
+            if ! [[ "$version" =~ ^[0-9]+(\.[0-9]+){0,3}$ ]]; then
+              echo "::error::tag '$TAG' is not v<version>, for example v0.7.3"
+              exit 1
+            fi
+          else
+            # no tag: a rehearsal of this commit, never a release
+            if [ "$DRY_RUN" != "true" ]; then
+              echo "::error::a release needs a tag: push v<version>, or dispatch with tag=v<version>"
+              exit 1
+            fi
+            version="$package"
+            echo "::notice::rehearsing $version from commit $GITHUB_SHA - no tag, nothing will be released"
+          fi
           if [ "$version" != "$package" ] || [ "$version" != "$ui" ]; then
-            echo "::error::the tag says $version, package.json says $package and src/global.ts says v$ui: run 'node tools/version_update $version', commit, and tag that commit"
+            echo "::error::the version is $version, package.json says $package and src/global.ts says v$ui: run 'node tools/version_update $version', commit, and tag that commit"
             exit 1
           fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "releasing $version from tag $TAG"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "releasing $version${TAG:+ from tag $TAG}"
 
       - uses: pnpm/action-setup@v4
 
@@ -105,7 +120,7 @@ jobs:
         if: ${{ !inputs.dry_run }}
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ inputs.tag || github.ref_name }}
+          TAG: ${{ steps.version.outputs.tag }}
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
@@ -148,7 +163,7 @@ jobs:
       - name: summary
         env:
           VERSION: ${{ steps.version.outputs.version }}
-          TAG: ${{ inputs.tag || github.ref_name }}
+          TAG: ${{ steps.version.outputs.tag }}
           DRY_RUN: ${{ inputs.dry_run || secrets.CWS_REFRESH_TOKEN == '' }}
         run: |
           set -euo pipefail
