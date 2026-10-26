@@ -150,20 +150,18 @@ an OAuth client owned by the publisher account.
 5. **Publisher id**: *Publisher* → *Settings* in the [developer
    dashboard](https://chrome.google.com/webstore/devconsole), where it is shown
    as *Publisher ID*.
-6. **Repository settings**: add the secrets `CWS_CLIENT_ID`,
-   `CWS_CLIENT_SECRET`, `CWS_REFRESH_TOKEN`, and the variable
-   `CWS_PUBLISHER_ID` (Settings → Secrets and variables → Actions). The
-   extension id defaults to the published item; a fork overrides it with the
-   variable `CWS_EXTENSION_ID`.
+6. **Repository settings**: add four secrets (Settings → Secrets and variables
+   → Actions → *Secrets*): `CWS_PUBLISHER_ID`, `CWS_CLIENT_ID`,
+   `CWS_CLIENT_SECRET`, `CWS_REFRESH_TOKEN`. The extension id defaults to the
+   published item; a fork overrides it with the *variable* `CWS_EXTENSION_ID`,
+   which is not a secret - the id is in the store URL.
 
 Publishing over the API also requires **2-step verification** on the publisher
 account.
 
-If the submission step fails with `missing CWS_PUBLISHER_ID`, check that it was
-added on the repository settings' **Variables** tab and not the *Secrets* one:
-the workflow reads it as `vars.CWS_PUBLISHER_ID`, and a secret of the same name
-is simply not visible there. The job log prints both, so an empty
-`CWS_PUBLISHER_ID:` line next to masked `CWS_*` values is this exact mistake.
+If the submission step fails with `missing CWS_PUBLISHER_ID`, the job log's
+`CWS_PUBLISHER_ID:` line tells you which way: empty means the secret is not
+there at all, a masked `***` means it is there and the failure is elsewhere.
 
 ## Manual steps before a release
 

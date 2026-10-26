@@ -146,7 +146,13 @@ jobs:
           # a fork has no store credentials and no store to submit to: it still
           # validates the package, which is what a dry run is for
           DRY_RUN: ${{ inputs.dry_run || secrets.CWS_REFRESH_TOKEN == '' }}
-          CWS_PUBLISHER_ID: ${{ vars.CWS_PUBLISHER_ID }}
+          # all four credentials are secrets, deliberately: one place to look,
+          # and one place to rotate. The publisher id is not sensitive (the
+          # dashboard shows it), but splitting it out to a variable only
+          # created a way to configure it somewhere the workflow cannot read.
+          CWS_PUBLISHER_ID: ${{ secrets.CWS_PUBLISHER_ID }}
+          # the extension id is public, so it is an overridable default rather
+          # than a secret a fork has to invent
           CWS_EXTENSION_ID: ${{ vars.CWS_EXTENSION_ID || 'lffblcippngalmglinedcbmikkncihdm' }}
           CWS_CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
           CWS_CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}

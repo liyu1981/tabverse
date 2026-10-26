@@ -56,14 +56,15 @@ depended on who did it.
    in the one place that can publish to users' browsers, and its bugs would have
    been someone else's release notes.
 
-5. **Credentials: an OAuth client for the publisher account.** Three repository
-   secrets (client id, secret, refresh token) and a repository variable for the
-   publisher id; the extension id defaults to the published item, and a fork can
-   override it. The token is issued with the
-   `https://www.googleapis.com/auth/chromewebstore` scope by the account that
-   owns the item, and the consent screen has to be published - while it is in
-   "Testing", Google expires its refresh tokens after seven days, which would
-   turn into a release failing a week later for no visible reason.
+5. **Credentials: an OAuth client for the publisher account.** Four repository
+   secrets - publisher id, client id, client secret, refresh token - in one
+   place, because the alternative (the id as a variable) is a way to configure
+   it somewhere the workflow does not read. The extension id defaults to the
+   published item, and a fork can override it with a variable. The token is
+   issued with the `https://www.googleapis.com/auth/chromewebstore` scope by
+   the account that owns the item, and the consent screen has to be published -
+   while it is in "Testing", Google expires its refresh tokens after seven days,
+   which would turn into a release failing a week later for no visible reason.
 
 6. **The GitHub release is created first, the store submission last.** The two
    halves have different retry costs: creating a release can be repeated
