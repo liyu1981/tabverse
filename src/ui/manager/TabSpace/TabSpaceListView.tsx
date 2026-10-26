@@ -49,7 +49,10 @@ import {
   tabverseEntries,
   tabverseTabs,
 } from '../../../data/tabSpace/tabEntries';
-import { filterActiveTabs } from '../../../data/tabSpace/activeTabFilter';
+import { activeTabFilterTerms, matchActiveTabs } from '../../../data/tabSpace/activeTabFilter';
+import { convertTabToMarkdown } from '../../../data/tabSpace/pageMarkdown';
+import { extractTabText } from '../../../data/tabSpace/tabText';
+import { markdownToPlainText } from '../../../data/note/markdownText';
 import { focusLiveTabUtil } from '../../../data/tabSpace/chromeUtil';
 import {
   getWhitelistedUrls,
@@ -131,6 +134,15 @@ export function TabSpaceListView() {
   // the filter box over the live tabs; empty means the whole list, unchanged
   const [filterText, setFilterText] = useState<string>('');
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
+  // in-memory cache of extracted page text, keyed by chrome tab id. Session
+  // only: nothing here is synced or persisted (see the page-content search plan).
+  const [tabTextByChromeTabId, setTabTextByChromeTabId] = useState<
+    Record<number, string | null>
+  >({});
+  const tabTextRef = useRef(tabTextByChromeTabId);
+  useEffect(() => {
+    tabTextRef.current = tabTextByChromeTabId;
+  }, [tabTextByChromeTabId]);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
 
   const isFiltering = filterText.trim().length > 0;
@@ -138,10 +150,65 @@ export function TabSpaceListView() {
   // the window's own order, flattened: the box ranks matches, so it cannot
   // hand them back nested in the group and split blocks they came from
   const orderedTabs = useMemo(() => tabverseTabs(tabSpace), [tabSpace]);
-  const matchedTabs = useMemo(
-    () => filterActiveTabs(orderedTabs, filterText),
-    [orderedTabs, filterText],
+  const matched = useMemo(
+    () => matchActiveTabs(orderedTabs, filterText, tabTextByChromeTabId),
+    [orderedTabs, filterText, tabTextByChromeTabId],
   );
+  const matchedTabs = useMemo(() => matched.map((m) => m.tab), [matched]);
+  const matchFieldByTabId = useMemo(
+    () => Object.fromEntries(matched.map((m) => [m.tab.id, m.field])),
+    [matched],
+  );
+
+  // Extract page text lazily while the filter is active, so a query can match
+  // the rendered content of the tabs that are on screen. Suspended and
+  // unreadable tabs simply end up with no entry.
+  const pendingTextExtractions = useRef<Set<number>>(new Set());
+  useEffect(() => {
+    if (!isFiltering) {
+      pendingTextExtractions.current.clear();
+      return undefined;
+    }
+    let cancelled = false;
+    for (const tab of orderedTabs) {
+      if (tab.suspended || tab.chromeTabId <= 0) {
+        continue;
+      }
+      if (Object.hasOwn(tabTextRef.current, tab.chromeTabId)) {
+        continue;
+      }
+      if (pendingTextExtractions.current.has(tab.chromeTabId)) {
+        continue;
+      }
+      const chromeTabId = tab.chromeTabId;
+      pendingTextExtractions.current.add(chromeTabId);
+      void (async () => {
+        let text: string | null = null;
+        try {
+          const article = await convertTabToMarkdown(chromeTabId);
+          if (article?.markdown) {
+            text = markdownToPlainText(article.markdown);
+          }
+          if (!text) {
+            text = await extractTabText(chromeTabId);
+          }
+        } catch {
+          text = null;
+        }
+        pendingTextExtractions.current.delete(chromeTabId);
+        if (cancelled) {
+          return;
+        }
+        setTabTextByChromeTabId((prev) => ({
+          ...prev,
+          [chromeTabId]: text ? text.slice(0, 12000) : null,
+        }));
+      })();
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [isFiltering, orderedTabs]);
 
   const onActiveMatchChange = useCallback((tab: Tab | null) => {
     setActiveTabId(tab ? tab.id : null);
@@ -245,6 +312,11 @@ export function TabSpaceListView() {
       <ErrorBoundary>
         <TabCard
           tab={tab}
+          matchField={isFiltering ? matchFieldByTabId[tab.id] : undefined}
+          filterTerms={isFiltering ? activeTabFilterTerms(filterText) : undefined}
+          pageText={
+            isFiltering ? tabTextByChromeTabId[tab.chromeTabId] ?? null : undefined
+          }
           needPreview={true}
           needSelector={true}
           tabPreview={getPreview(tab.chromeTabId, tabPreviewCache)}

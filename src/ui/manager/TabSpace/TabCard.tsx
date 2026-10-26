@@ -14,6 +14,7 @@ import { CollapsibleLabel } from '../../common/CollapsibleLabel';
 import { FavIcon } from '../../common/FavIcon';
 import React from 'react';
 import { Tab } from '../../../data/tabSpace/Tab';
+import { highlightTerms } from '../../manager/OmniSearch/omniSearchText';
 import { focusLiveTabUtil } from '../../../data/tabSpace/chromeUtil';
 import classes from './TabCard.module.scss';
 import clsx from 'clsx';
@@ -131,6 +132,12 @@ interface ITabCardProps {
   onToggleWhitelist?: (tab: Tab) => void;
   /** Extra controls for a live tab's action row (e.g. summarize). */
   actions?: React.ReactNode;
+  /** Which field the current filter matched, for a small badge. */
+  matchField?: 'title' | 'url' | 'content';
+  /** Terms to highlight when filtering. */
+  filterTerms?: string[];
+  /** Extracted page text, for a match snippet. */
+  pageText?: string | null;
   onSelect?: (tabId: string, selected: boolean) => void;
   /**
    * What clicking the card does. Defaults to switching to the live tab; the
@@ -140,6 +147,24 @@ interface ITabCardProps {
    * button is invalid markup that loses the inner one's styling.
    */
   onActivate?: (tab: Tab) => void;
+}
+
+
+function snippetFor(text: string, terms: string[]): string {
+  const lower = text.toLowerCase();
+  let index = -1;
+  for (const term of terms) {
+    const found = lower.indexOf(term.toLowerCase());
+    if (found >= 0 && (index < 0 || found < index)) {
+      index = found;
+    }
+  }
+  if (index < 0) {
+    return text.slice(0, 100);
+  }
+  const start = Math.max(0, index - 40);
+  const end = Math.min(text.length, index + 100);
+  return `${start > 0 ? '…' : ''}${text.slice(start, end)}${end < text.length ? '…' : ''}`;
 }
 
 export function TabCard(props: ITabCardProps) {
@@ -194,11 +219,44 @@ export function TabCard(props: ITabCardProps) {
         >
           <div className={clsx(classes.tabTitle, classes.wrapText)}>
             <b>
-              <CollapsibleLabel
-                maxLength={TAB_TITLE_MAX_LENGTH}
-                text={props.tab.title}
-              />
+              {props.filterTerms && props.filterTerms.length > 0 ? (
+                highlightTerms(
+                  (props.tab.title || '').slice(0, TAB_TITLE_MAX_LENGTH),
+                  props.filterTerms,
+                ).map((part) =>
+                  part.match ? (
+                    <mark key={part.text}>{part.text}</mark>
+                  ) : (
+                    <React.Fragment key={part.text}>{part.text}</React.Fragment>
+                  ),
+                )
+              ) : (
+                <CollapsibleLabel
+                  maxLength={TAB_TITLE_MAX_LENGTH}
+                  text={props.tab.title}
+                />
+              )}
             </b>
+            {props.matchField ? (
+              <Tag minimal={true} className={classes.matchFieldTag}>
+                {props.matchField === 'content' ? 'page' : props.matchField}
+              </Tag>
+            ) : null}
+            {props.matchField === 'content' && props.pageText && props.filterTerms ? (
+              <div className={classes.matchSnippet}>
+                <span className={classes.matchSnippetLabel}>page: </span>
+                {highlightTerms(
+                  snippetFor(props.pageText, props.filterTerms),
+                  props.filterTerms,
+                ).map((part) =>
+                  part.match ? (
+                    <mark key={part.text}>{part.text}</mark>
+                  ) : (
+                    <React.Fragment key={part.text}>{part.text}</React.Fragment>
+                  ),
+                )}
+              </div>
+            ) : null}
             {props.tab.pinned ? (
               <Tooltip content={t('tabCardPinnedInChrome')} placement="bottom">
                 <Tag
@@ -214,10 +272,23 @@ export function TabCard(props: ITabCardProps) {
           </div>
           <div className={clsx(classes.tabUrl, classes.wrapText)}>
             <small>
-              <CollapsibleLabel
-                maxLength={TAB_URL_MAX_LENGTH}
-                text={props.tab.url}
-              />
+              {props.filterTerms && props.filterTerms.length > 0 ? (
+                highlightTerms(
+                  (props.tab.url || '').slice(0, TAB_URL_MAX_LENGTH),
+                  props.filterTerms,
+                ).map((part) =>
+                  part.match ? (
+                    <mark key={part.text}>{part.text}</mark>
+                  ) : (
+                    <React.Fragment key={part.text}>{part.text}</React.Fragment>
+                  ),
+                )
+              ) : (
+                <CollapsibleLabel
+                  maxLength={TAB_URL_MAX_LENGTH}
+                  text={props.tab.url}
+                />
+              )}
             </small>
           </div>
         </button>

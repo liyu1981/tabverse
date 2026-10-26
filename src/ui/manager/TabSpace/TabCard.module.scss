@@ -197,3 +197,35 @@
 .tabCardPopover :global(.bp6-popover) :global(.bp6-popover-content) {
   border-radius: global.$radius-card;
 }
+
+.matchSnippet {
+  font-size: 0.75rem;
+  color: var(--tv-text-muted, #666);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.matchFieldTag {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 0 6px;
+  font-size: 0.7rem;
+  line-height: 1.6;
+  border-radius: 999px;
+  background: global.$color-light-accent;
+  color: global.$color-c;
+}
+
+.matchSnippetLabel {
+  display: inline-block;
+  padding: 0 6px;
+  margin-right: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.6;
+  border-radius: 999px;
+  background: global.$color-light-accent;
+  color: global.$color-c;
+}

@@ -14,7 +14,7 @@ import { Tab } from './Tab';
  */
 
 /** Which of a tab's two searchable fields the whole query was found in. */
-type ActiveTabMatchField = 'title' | 'url';
+type ActiveTabMatchField = 'title' | 'url' | 'content';
 
 export interface ActiveTabMatch {
   tab: Tab;
@@ -31,6 +31,8 @@ export interface ActiveTabMatch {
 /** A hit in the title is worth more than the same hit in the url. */
 const TITLE_WEIGHT = 2;
 const URL_WEIGHT = 1;
+/** A hit in the page text is the weakest of the three. */
+const CONTENT_WEIGHT = 1;
 /** The terms next to each other, in that order, in one title. */
 const PHRASE_BONUS = 2;
 
@@ -59,6 +61,7 @@ export function isActiveTabFilterActive(text: string): boolean {
 export function matchActiveTabs(
   tabs: readonly Tab[],
   text: string,
+  contentByChromeTabId?: Readonly<Record<number, string | null>>,
 ): ActiveTabMatch[] {
   const terms = activeTabFilterTerms(text);
   if (terms.length <= 0) {
@@ -74,13 +77,18 @@ export function matchActiveTabs(
     }
     const title = (tab.title ?? '').toLowerCase();
     const url = (tab.url ?? '').toLowerCase();
+    const content = (
+      contentByChromeTabId?.[tab.chromeTabId] ?? ''
+    ).toLowerCase();
     let score = 0;
     let titleHits = 0;
+    let urlHits = 0;
     let firstAt = Number.MAX_SAFE_INTEGER;
     for (const term of terms) {
       const inTitle = title.indexOf(term);
       const inUrl = url.indexOf(term);
-      if (inTitle < 0 && inUrl < 0) {
+      const inContent = content.indexOf(term);
+      if (inTitle < 0 && inUrl < 0 && inContent < 0) {
         // one term is nowhere to be found: this tab is out
         score = -1;
         break;
@@ -92,7 +100,12 @@ export function matchActiveTabs(
       }
       if (inUrl >= 0) {
         score += URL_WEIGHT;
+        urlHits += 1;
         firstAt = Math.min(firstAt, inUrl);
+      }
+      if (inContent >= 0) {
+        score += CONTENT_WEIGHT;
+        firstAt = Math.min(firstAt, inContent);
       }
     }
     if (score < 0) {
@@ -104,7 +117,12 @@ export function matchActiveTabs(
     found.push({
       match: {
         tab,
-        field: titleHits === terms.length ? 'title' : 'url',
+        field:
+          titleHits === terms.length
+            ? 'title'
+            : urlHits === terms.length
+              ? 'url'
+              : 'content',
         score,
       },
       firstAt,
@@ -122,6 +140,12 @@ export function matchActiveTabs(
 }
 
 /** Just the tabs, for a caller that has no use for the score. */
-export function filterActiveTabs(tabs: readonly Tab[], text: string): Tab[] {
-  return matchActiveTabs(tabs, text).map((match) => match.tab);
+export function filterActiveTabs(
+  tabs: readonly Tab[],
+  text: string,
+  contentByChromeTabId?: Readonly<Record<number, string | null>>,
+): Tab[] {
+  return matchActiveTabs(tabs, text, contentByChromeTabId).map(
+    (match) => match.tab,
+  );
 }
