@@ -85,6 +85,11 @@ jobs:
           node-version: 22
           cache: pnpm
 
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: server/go.mod
+          cache-dependency-path: server/go.sum
+
       - name: install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -112,6 +117,19 @@ jobs:
           path: dist_store/tabverse.zip
           retention-days: 14
 
+      # The server's artefacts are built by the same workflow but released on
+      # their own (adr/0034): a static Go binary for the two Linux targets the
+      # self-hosting guide supports, attached to the same GitHub release.
+      - name: build server binaries
+        run: pnpm run server:cross
+
+      - name: archive server binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: tabversed-binaries
+          path: server/dist/
+          retention-days: 14
+
       # Everything after this point is a release. The GitHub release is created
       # *before* the store submission on purpose: it is the step that can be
       # retried, so a store failure never leaves a tag without its download
@@ -127,11 +145,13 @@ jobs:
           # release assets have always carried the version: tabverse_v0.7.2.zip
           asset="dist_store/tabverse_v${VERSION}.zip"
           cp dist_store/tabverse.zip "$asset"
+          # the server binaries ride along on the same release (linux amd64/arm64)
+          binaries=(server/dist/tabversed-linux-amd64 server/dist/tabversed-linux-arm64)
           if gh release view "$TAG" >/dev/null 2>&1; then
             # a re-run: replace the asset instead of adding a second copy
-            gh release upload "$TAG" "$asset" --clobber
+            gh release upload "$TAG" "$asset" "${binaries[@]}" --clobber
           else
-            gh release create "$TAG" "$asset" \
+            gh release create "$TAG" "$asset" "${binaries[@]}" \
               --title "Tabverse v${VERSION}" \
               --generate-notes
           fi
