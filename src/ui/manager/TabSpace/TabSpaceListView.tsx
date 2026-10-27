@@ -49,7 +49,10 @@ import {
   tabverseEntries,
   tabverseTabs,
 } from '../../../data/tabSpace/tabEntries';
-import { activeTabFilterTerms, matchActiveTabs } from '../../../data/tabSpace/activeTabFilter';
+import {
+  activeTabFilterTerms,
+  matchActiveTabs,
+} from '../../../data/tabSpace/activeTabFilter';
 import { convertTabToMarkdown } from '../../../data/tabSpace/pageMarkdown';
 import { extractTabText } from '../../../data/tabSpace/tabText';
 import { markdownToPlainText } from '../../../data/note/markdownText';
@@ -313,9 +316,13 @@ export function TabSpaceListView() {
         <TabCard
           tab={tab}
           matchField={isFiltering ? matchFieldByTabId[tab.id] : undefined}
-          filterTerms={isFiltering ? activeTabFilterTerms(filterText) : undefined}
+          filterTerms={
+            isFiltering ? activeTabFilterTerms(filterText) : undefined
+          }
           pageText={
-            isFiltering ? tabTextByChromeTabId[tab.chromeTabId] ?? null : undefined
+            isFiltering
+              ? (tabTextByChromeTabId[tab.chromeTabId] ?? null)
+              : undefined
           }
           needPreview={true}
           needSelector={true}

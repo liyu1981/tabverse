@@ -149,7 +149,6 @@ interface ITabCardProps {
   onActivate?: (tab: Tab) => void;
 }
 
-
 function snippetFor(text: string, terms: string[]): string {
   const lower = text.toLowerCase();
   let index = -1;
@@ -242,7 +241,9 @@ export function TabCard(props: ITabCardProps) {
                 {props.matchField === 'content' ? 'page' : props.matchField}
               </Tag>
             ) : null}
-            {props.matchField === 'content' && props.pageText && props.filterTerms ? (
+            {props.matchField === 'content' &&
+            props.pageText &&
+            props.filterTerms ? (
               <div className={classes.matchSnippet}>
                 <span className={classes.matchSnippetLabel}>page: </span>
                 {highlightTerms(
