@@ -149,6 +149,52 @@ interface ITabCardProps {
   onActivate?: (tab: Tab) => void;
 }
 
+/**
+ * Escapes the text before it is handed to the HTML highlighter. Titles, URLs
+ * and page text are untrusted, so this is what keeps the only
+ * dangerouslySetInnerHTML in the tree from turning them into markup.
+ */
+function escapeHtml(text: string): string {
+  return text.replace(/[&<>"']/g, (char) => {
+    switch (char) {
+      case '&':
+        return '&amp;';
+      case '<':
+        return '&lt;';
+      case '>':
+        return '&gt;';
+      case '"':
+        return '&quot;';
+      default:
+        return '&#39;';
+    }
+  });
+}
+
+/**
+ * Renders one string with its query matches wrapped in <mark>.
+ *
+ * This is HTML rather than a React child list on purpose: while the query was
+ * being typed, React's reconciliation of the changing part list could leave
+ * the previous match nodes in place ("w", "wh", "who" left a stray "ww" before
+ * a url). Setting the whole string at once makes every render replace the old
+ * nodes instead of reusing them.
+ */
+function HighlightedHtml(props: {
+  text: string;
+  terms: readonly string[];
+}): React.ReactNode {
+  const html = highlightTerms(props.text, [...props.terms])
+    .map((part) =>
+      part.match
+        ? `<mark>${escapeHtml(part.text)}</mark>`
+        : escapeHtml(part.text),
+    )
+    .join('');
+  // biome-ignore lint/security/noDangerouslySetInnerHtml: the text is escaped above; only our <mark> tags are markup
+  return <span dangerouslySetInnerHTML={{ __html: html }} />;
+}
+
 function snippetFor(text: string, terms: string[]): string {
   const lower = text.toLowerCase();
   let index = -1;
@@ -219,16 +265,10 @@ export function TabCard(props: ITabCardProps) {
           <div className={clsx(classes.tabTitle, classes.wrapText)}>
             <b>
               {props.filterTerms && props.filterTerms.length > 0 ? (
-                highlightTerms(
-                  (props.tab.title || '').slice(0, TAB_TITLE_MAX_LENGTH),
-                  props.filterTerms,
-                ).map((part) =>
-                  part.match ? (
-                    <mark key={part.text}>{part.text}</mark>
-                  ) : (
-                    <React.Fragment key={part.text}>{part.text}</React.Fragment>
-                  ),
-                )
+                <HighlightedHtml
+                  text={(props.tab.title || '').slice(0, TAB_TITLE_MAX_LENGTH)}
+                  terms={props.filterTerms}
+                />
               ) : (
                 <CollapsibleLabel
                   maxLength={TAB_TITLE_MAX_LENGTH}
@@ -246,16 +286,10 @@ export function TabCard(props: ITabCardProps) {
             props.filterTerms ? (
               <div className={classes.matchSnippet}>
                 <span className={classes.matchSnippetLabel}>page: </span>
-                {highlightTerms(
-                  snippetFor(props.pageText, props.filterTerms),
-                  props.filterTerms,
-                ).map((part) =>
-                  part.match ? (
-                    <mark key={part.text}>{part.text}</mark>
-                  ) : (
-                    <React.Fragment key={part.text}>{part.text}</React.Fragment>
-                  ),
-                )}
+                <HighlightedHtml
+                  text={snippetFor(props.pageText, props.filterTerms)}
+                  terms={props.filterTerms}
+                />
               </div>
             ) : null}
             {props.tab.pinned ? (
@@ -274,16 +308,10 @@ export function TabCard(props: ITabCardProps) {
           <div className={clsx(classes.tabUrl, classes.wrapText)}>
             <small>
               {props.filterTerms && props.filterTerms.length > 0 ? (
-                highlightTerms(
-                  (props.tab.url || '').slice(0, TAB_URL_MAX_LENGTH),
-                  props.filterTerms,
-                ).map((part) =>
-                  part.match ? (
-                    <mark key={part.text}>{part.text}</mark>
-                  ) : (
-                    <React.Fragment key={part.text}>{part.text}</React.Fragment>
-                  ),
-                )
+                <HighlightedHtml
+                  text={(props.tab.url || '').slice(0, TAB_URL_MAX_LENGTH)}
+                  terms={props.filterTerms}
+                />
               ) : (
                 <CollapsibleLabel
                   maxLength={TAB_URL_MAX_LENGTH}
