@@ -1,5 +1,5 @@
 import { format } from 'date-fns';
-import { enUS } from 'date-fns/locale';
+import { enGB, enUS } from 'date-fns/locale';
 
 import {
   calendarLabel,
@@ -51,7 +51,7 @@ test('formatDateTime and fromNow are stable strings', () => {
 test('resolveDateLocale maps the browser language onto a shipped language', () => {
   // 2026-09-28 is a Monday; the weekday name is where a locale shows
   expect(resolveDateLocale('en')).toBe(enUS);
-  expect(resolveDateLocale('en-GB')).toBe(enUS);
+  expect(resolveDateLocale('en-GB')).toBe(enGB);
   expect(resolveDateLocale('de')).not.toBe(enUS);
   expect(format(day(0), 'EEEE', { locale: resolveDateLocale('de') })).toBe(
     'Montag',

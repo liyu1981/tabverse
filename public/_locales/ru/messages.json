@@ -1,0 +1,1082 @@
+{
+  "extName": {
+    "message": "Tabverse"
+  },
+  "extDescription": {
+    "message": "Tabverse is an opinionated way of managing tabs."
+  },
+  "extActionTitle": {
+    "message": "Tabverse"
+  },
+  "popupCurrentTabverseFallback": {
+    "message": "the current tabverse"
+  },
+  "popupReplaceNewTitle": {
+    "message": "Start a new tabverse in this window?"
+  },
+  "popupReplaceNewBody": {
+    "message": "This window already has a tabverse (\"$1\"). It is saved automatically, so nothing is lost. Continuing closes it here and starts a new tabverse; the tabs in this window become part of it."
+  },
+  "popupAddToWindowTitle": {
+    "message": "Add this tabverse to this window?"
+  },
+  "popupAddToWindowBody": {
+    "message": "This window already has a tabverse (\"$1\"). It is saved automatically, so nothing is lost. Continuing makes \"$2\" the tabverse of this window and opens its $3 tab(s) here: the tabs already open in this window stay, and the ones of that tabverse already open here are reused."
+  },
+  "popupImportedOk": {
+    "message": "Imported \"$1\""
+  },
+  "popupImportFailed": {
+    "message": "That file is not a Tabverse export."
+  },
+  "popupLoading": {
+    "message": "Loading…"
+  },
+  "popupNothingSaved": {
+    "message": "No tabverse saved yet. Every window you keep with Tabverse becomes one, and shows up here afterwards."
+  },
+  "popupNothingFound": {
+    "message": "Nothing found. Try fewer words, or a word from a tab title."
+  },
+  "popupNothingRecent": {
+    "message": "Nothing recent. Open a tabverse in a window and it shows up here."
+  },
+  "popupSavedCount": {
+    "message": "$1 saved"
+  },
+  "popupNewTabverse": {
+    "message": "New tabverse"
+  },
+  "popupNewTabverseTitleWhenOpen": {
+    "message": "Saves the current tabverse and starts a new one in this window"
+  },
+  "popupNewTabverseTitle": {
+    "message": "Starts a new tabverse in this window"
+  },
+  "popupImport": {
+    "message": "Import"
+  },
+  "popupImportTitle": {
+    "message": "Import a .tabverse file as a new tabverse"
+  },
+  "popupSearchPlaceholder": {
+    "message": "search saved tabverses…"
+  },
+  "popupResultOne": {
+    "message": "$1 result"
+  },
+  "popupResultMany": {
+    "message": "$1 results"
+  },
+  "popupRecent": {
+    "message": "Recent"
+  },
+  "popupSearchedOnServer": {
+    "message": "searched on the sync server"
+  },
+  "popupSearchedOnDevice": {
+    "message": "searched on this device"
+  },
+  "popupNotDownloadedOne": {
+    "message": "$1 match not downloaded yet"
+  },
+  "popupNotDownloadedMany": {
+    "message": "$1 matches not downloaded yet"
+  },
+  "popupConfirmReplace": {
+    "message": "Replace"
+  },
+  "commonCancel": {
+    "message": "Cancel"
+  },
+  "popupRowGoTo": {
+    "message": "Go to this tabverse"
+  },
+  "popupRowAddToWindow": {
+    "message": "Add to this window"
+  },
+  "commonTabCountOne": {
+    "message": "$1 tab"
+  },
+  "commonTabCountMany": {
+    "message": "$1 tabs"
+  },
+  "popupThisWindow": {
+    "message": "this window"
+  },
+  "popupOpenInWindowOne": {
+    "message": "open in $1 window"
+  },
+  "popupOpenInWindowMany": {
+    "message": "open in $1 windows"
+  },
+  "popupGoToWindowOfTabverse": {
+    "message": "Go to the window of this tabverse"
+  },
+  "popupOpenInNewWindow": {
+    "message": "Open In A New Window"
+  },
+  "commonLoading": {
+    "message": "Loading..."
+  },
+  "commonSomethingWentWrong": {
+    "message": "Something went wrong."
+  },
+  "commonFilterCount": {
+    "message": "$1 of $2"
+  },
+  "commonFilterTotal": {
+    "message": "$1"
+  },
+  "commonFilterPlaceholder": {
+    "message": "filter…"
+  },
+  "commonClearFilter": {
+    "message": "Clear the filter"
+  },
+  "commonCollapseSidebar": {
+    "message": "Collapse the sidebar to icons"
+  },
+  "commonCollapseSidebarAria": {
+    "message": "Collapse sidebar"
+  },
+  "commonExpandSidebar": {
+    "message": "Expand the sidebar"
+  },
+  "commonPreviousPage": {
+    "message": "Previous page"
+  },
+  "commonNextPage": {
+    "message": "Next page"
+  },
+  "commonPageIndicator": {
+    "message": "$1/$2"
+  },
+  "commonRemoveAria": {
+    "message": "Remove"
+  },
+  "searchTermsAria": {
+    "message": "Search terms"
+  },
+  "aboutTagline": {
+    "message": "Opinionated Way of Managing Tabs"
+  },
+  "aboutCreatedIn": {
+    "message": "Created in Sydney"
+  },
+  "aboutWebsite": {
+    "message": "Website"
+  },
+  "aboutGithub": {
+    "message": "Github"
+  },
+  "aboutReddit": {
+    "message": "Community (Reddit)"
+  },
+  "settingsTitle": {
+    "message": "Settings"
+  },
+  "settingsTabSync": {
+    "message": "Sync"
+  },
+  "settingsTabTabs": {
+    "message": "Tabs"
+  },
+  "settingsTabDuplicates": {
+    "message": "Duplicates"
+  },
+  "settingsTabLook": {
+    "message": "Look"
+  },
+  "settingsTabAi": {
+    "message": "AI"
+  },
+  "settingsTabAbout": {
+    "message": "About"
+  },
+  "commonReading": {
+    "message": "Reading…"
+  },
+  "suspendOffSummary": {
+    "message": "Suspension is off. No tab is unloaded."
+  },
+  "suspendOnSummary": {
+    "message": "Tabs left alone for more than $1 minutes are unloaded; opening one reloads it."
+  },
+  "suspendCalloutTitle": {
+    "message": "Suspending inactive tabs"
+  },
+  "suspendHint": {
+    "message": "A suspended tab is unloaded from memory but stays in the tab strip. Opening it again reloads the page; nothing is closed. Tabverse only suspends tabs in a window that has a tabverse open, and never one you whitelist, pin, or are listening to."
+  },
+  "suspendSwitchLabel": {
+    "message": "Suspend inactive tabs"
+  },
+  "suspendAfterLabel": {
+    "message": "Suspend after"
+  },
+  "commonMinutes": {
+    "message": "minutes"
+  },
+  "appearanceCalloutTitle": {
+    "message": "Sidebar colour"
+  },
+  "appearanceHint": {
+    "message": "The rail carries near-white glyphs - the logo, the caption, the icons in the bar at the bottom - so the choices here are all dark. The colour belongs to the tabverse in this window: it follows the window, and it travels with the tabverse."
+  },
+  "appearanceRandomLabel": {
+    "message": "Use a random colour for a new tabverse"
+  },
+  "appearanceRandomOn": {
+    "message": "A new tabverse rolls a colour from this palette."
+  },
+  "appearanceRandomOff": {
+    "message": "A new tabverse starts with the default colour."
+  },
+  "dedupOffSummary": {
+    "message": "The duplicate advisor is off. No tab is looked at."
+  },
+  "dedupOnSummary": {
+    "message": "Open tabs are checked every $1 minutes; duplicates are offered for removal, never closed on their own."
+  },
+  "dedupCalloutTitle": {
+    "message": "Duplicate tabs"
+  },
+  "dedupHint": {
+    "message": "The advisor only looks. When it finds two open tabs on the same page in a window with a tabverse, the tab list shows a notice where you can close the extras or ignore them. It never closes a tab by itself, and never touches a pinned tab or one that is playing audio."
+  },
+  "dedupSwitchLabel": {
+    "message": "Find duplicate tabs"
+  },
+  "dedupCheckEveryLabel": {
+    "message": "Check every"
+  },
+  "moveFoundNothing": {
+    "message": "Found nothing, wrong search?"
+  },
+  "moveCandidateInfo": {
+    "message": "created: $1, saved: $2"
+  },
+  "moveNoTargetToast": {
+    "message": "Can not move tabs without selecting a target tabverse!"
+  },
+  "moveMovingToastOne": {
+    "message": "moving $1 tab to $2"
+  },
+  "moveMovingToastMany": {
+    "message": "moving $1 tabs to $2"
+  },
+  "moveMovedToastOne": {
+    "message": "moved $1 tab to $2"
+  },
+  "moveMovedToastMany": {
+    "message": "moved $1 tabs to $2"
+  },
+  "moveDialogTitle": {
+    "message": "Move Selected Tabs To Other Tabverse"
+  },
+  "moveSearchPlaceholder": {
+    "message": "input keywords,  then ↵ enter to search..."
+  },
+  "moveCloseAfterMove": {
+    "message": "Close selected tabs after move"
+  },
+  "moveMoveButton": {
+    "message": "Move"
+  },
+  "aiChecking": {
+    "message": "Checking…"
+  },
+  "aiSupportAbsent": {
+    "message": "Not available in this browser"
+  },
+  "aiSupportAvailable": {
+    "message": "Available on this device"
+  },
+  "aiCouldNotCheck": {
+    "message": "Could not check"
+  },
+  "aiModelAbsent": {
+    "message": "Not available"
+  },
+  "aiModelNotInstalled": {
+    "message": "Not installed yet"
+  },
+  "aiInstallingPercent": {
+    "message": "Installing… $1%"
+  },
+  "aiInstalling": {
+    "message": "Installing…"
+  },
+  "aiModelReady": {
+    "message": "Installed and ready"
+  },
+  "aiCalloutTitle": {
+    "message": "Chrome's built-in AI"
+  },
+  "aiCalloutHint": {
+    "message": "The features below run on the model Chrome ships with itself (Gemma Nano), on this device. What you point them at is handed to the model inside the browser and is never sent anywhere; no server, no account, nothing to configure."
+  },
+  "aiWhereTitle": {
+    "message": "Where to find it"
+  },
+  "aiFeatureNameTabverse": {
+    "message": "Name a tabverse"
+  },
+  "aiFeatureNameTabverseWhere": {
+    "message": "Open a tabverse; the lightbulb is next to its name at the top, and it suggests three names to pick from."
+  },
+  "aiFeatureSummarizeTab": {
+    "message": "Summarize a tab"
+  },
+  "aiFeatureSummarizeTabWhere": {
+    "message": "In an open tabverse, the lightbulb is on the right of every live tab row, and it turns that page into a new note."
+  },
+  "aiSwitchLabel": {
+    "message": "Use the on-device model"
+  },
+  "aiDeviceSupportLabel": {
+    "message": "Device support"
+  },
+  "aiLocalModelLabel": {
+    "message": "Local model"
+  },
+  "aiOfferedLabel": {
+    "message": "Offered"
+  },
+  "aiOfferedOn": {
+    "message": "AI features are offered"
+  },
+  "aiOfferedOff": {
+    "message": "Off"
+  },
+  "aiDownloadButton": {
+    "message": "Download the model now"
+  },
+  "aiDownloadTitle": {
+    "message": "Downloads once, on this device; the model is Chrome's own and is not shipped with the extension"
+  },
+  "aiDownloadingNote": {
+    "message": "Chrome is downloading the model; this page follows the progress."
+  },
+  "aiCheckAgainButton": {
+    "message": "Check again"
+  },
+  "syncLabelOfficial": {
+    "message": "Tabverse official server"
+  },
+  "syncLabelCustom": {
+    "message": "your own server (pairing code)"
+  },
+  "syncNotConnected": {
+    "message": "Not connected: Tabverse runs fully local until you pair it with your own sync server."
+  },
+  "syncConnectedTo": {
+    "message": "Connected to $1"
+  },
+  "syncFailedTo": {
+    "message": "Failed: $1"
+  },
+  "syncWizardOpened": {
+    "message": "A Tabverse window opened. Sign in there and allow this device; the token comes back on its own."
+  },
+  "syncBothRequired": {
+    "message": "Both the server URL and the pairing code are required."
+  },
+  "syncPairedNoUpload": {
+    "message": "Paired with $1. Your existing data stays on this device; new and changed tabverses sync from now on."
+  },
+  "syncPairedUploadSkipped": {
+    "message": "Paired with $1, but the upload was skipped: sync is not configured. Use \"Upload local data\" to retry."
+  },
+  "syncPairedUploading": {
+    "message": "Paired with $1. Uploading the data on this device..."
+  },
+  "syncPairedUploadDoneNoStale": {
+    "message": "Paired with $1. Uploaded $2 of $3 local record(s)."
+  },
+  "syncPairedUploadDoneStale": {
+    "message": "Paired with $1. Uploaded $2 of $3 local record(s); $4 were already newer on the server."
+  },
+  "syncPairedUploadFailed": {
+    "message": "Paired with $1, but the upload failed: $2. Your data is still on this device; use \"Upload local data\" to retry."
+  },
+  "syncNotConfigured": {
+    "message": "Sync is not configured."
+  },
+  "syncSyncedNoStale": {
+    "message": "Synced: pushed $1, pulled $2"
+  },
+  "syncSyncedStale": {
+    "message": "Synced: pushed $1, pulled $2, $3 conflict(s) resolved"
+  },
+  "syncSyncFailed": {
+    "message": "Sync failed: $1"
+  },
+  "syncUnknownError": {
+    "message": "unknown error"
+  },
+  "syncUploadingNow": {
+    "message": "Uploading the data on this device..."
+  },
+  "syncUploadDoneNoStale": {
+    "message": "Uploaded $1 of $2 local record(s)."
+  },
+  "syncUploadDoneStale": {
+    "message": "Uploaded $1 of $2 local record(s); $3 were already newer on the server."
+  },
+  "syncDisconnected": {
+    "message": "Disconnected. Your data stays on this device."
+  },
+  "syncPairCalloutTitle": {
+    "message": "Pair this browser"
+  },
+  "syncPairHint1": {
+    "message": "Run your own "
+  },
+  "syncPairHint2": {
+    "message": " server, create an account on it, then generate a one time pairing code with"
+  },
+  "syncPairHint3": {
+    "message": " and paste it below."
+  },
+  "syncServerUrlLabel": {
+    "message": "Server URL"
+  },
+  "syncServerUrlPlaceholder": {
+    "message": "https://sync.example.com"
+  },
+  "syncPairingCodeLabel": {
+    "message": "Pairing code"
+  },
+  "syncPairingCodePlaceholder": {
+    "message": "XXXX-XXXX-XXXX-XXXX"
+  },
+  "syncDeviceNameLabel": {
+    "message": "Device name"
+  },
+  "syncDeviceNamePlaceholder": {
+    "message": "chrome"
+  },
+  "syncUploadLocalLabel": {
+    "message": "Also upload the data already on this device"
+  },
+  "syncUploadHintCount": {
+    "message": "This device holds $1 record(s) ($2 tabverse(s), $3 tab(s)). They are sent to the server once, when you connect."
+  },
+  "syncUploadHintStays": {
+    "message": "Your existing data stays on this device. New and changed tabverses still sync from now on."
+  },
+  "syncUploadHintNothing": {
+    "message": "Nothing stored on this device yet, so there is nothing to upload."
+  },
+  "syncPairUploadButton": {
+    "message": "Pair & upload local data"
+  },
+  "syncPairConnectButton": {
+    "message": "Pair & connect"
+  },
+  "syncWaitingTitle": {
+    "message": "Waiting for the Tabverse window"
+  },
+  "syncWaitingHint1": {
+    "message": "A window opened at "
+  },
+  "syncWaitingHint2": {
+    "message": ". Sign in there, name this device and allow it - the token comes back on its own, and this dialog follows."
+  },
+  "syncOfficialHint1": {
+    "message": "The server Tabverse runs itself. Sign in with your email (or Google), name this device and approve it - there is no code to copy."
+  },
+  "syncOfficialHint2": {
+    "message": " - the documentation lives there, the console at "
+  },
+  "syncConnectOfficialButton": {
+    "message": "Connect with Tabverse"
+  },
+  "syncOwnServerHint1": {
+    "message": "Running your own "
+  },
+  "syncOwnServerHint2": {
+    "message": " server? Choose "
+  },
+  "syncOwnServerHint3": {
+    "message": " - it takes a pairing code instead."
+  },
+  "syncCustomServerMode": {
+    "message": "Custom server"
+  },
+  "syncDeviceLabel": {
+    "message": "Device: "
+  },
+  "syncAccountLabel": {
+    "message": "Account: "
+  },
+  "syncUnknown": {
+    "message": "unknown"
+  },
+  "syncSyncingAria": {
+    "message": "Syncing"
+  },
+  "syncNotSyncedYet": {
+    "message": "Not synced yet"
+  },
+  "syncLastSyncLabel": {
+    "message": "Last sync: "
+  },
+  "syncNowButton": {
+    "message": "Sync now"
+  },
+  "syncUploadLocalButton": {
+    "message": "Upload local data"
+  },
+  "syncUploadLocalTitle": {
+    "message": "Send everything stored on this device to the server. Setup does this for you unless you untick the box, so this is for later: data created while disconnected, or a retry after a failed upload."
+  },
+  "syncDisconnectButton": {
+    "message": "Disconnect"
+  },
+  "syncNotSetUpTitle": {
+    "message": "Not set up yet"
+  },
+  "syncNotSetUpHint": {
+    "message": "Tabverse runs fully local until sync is set up: nothing leaves this device."
+  },
+  "syncSetUpButton": {
+    "message": "Set up sync"
+  },
+  "syncTabStatus": {
+    "message": "Status"
+  },
+  "syncTabSetup": {
+    "message": "Setup"
+  },
+  "syncConnectedToSetup1": {
+    "message": "Connected to "
+  },
+  "syncConnectedToSetup2": {
+    "message": " ($1). Connecting again replaces this setup."
+  },
+  "syncOfficialModeTitle": {
+    "message": "Sign in on tabversed.liyu1981.xyz and allow this device"
+  },
+  "syncCustomModeTitle": {
+    "message": "A tabversed server you run yourself, paired with a code"
+  },
+  "syncUploadingProgress": {
+    "message": "Uploading $1 of $2 record(s)..."
+  },
+  "sidebarCurrentTabverse": {
+    "message": "Current Tabverse"
+  },
+  "sidebarSavedTabverses": {
+    "message": "Saved Tabverses"
+  },
+  "sidebarOmniSearch": {
+    "message": "Omni Search"
+  },
+  "sidebarMyWebTools": {
+    "message": "My WebTools"
+  },
+  "sidebarOtherTabverses": {
+    "message": "Other Tabverses"
+  },
+  "previewReading": {
+    "message": "reading…"
+  },
+  "previewNoTabs": {
+    "message": "No tabs open in this window."
+  },
+  "previewMore": {
+    "message": "+$1 more"
+  },
+  "bottomNavSyncing": {
+    "message": "Syncing…"
+  },
+  "sidebarSavedCountSuffix": {
+    "message": "tabverses saved"
+  },
+  "sidebarLoadedCountSuffix": {
+    "message": "of them loaded"
+  },
+  "sidebarSortBy": {
+    "message": "sort by"
+  },
+  "sidebarSortCreated": {
+    "message": "Created Time"
+  },
+  "sidebarSortSaved": {
+    "message": "Saved Time"
+  },
+  "rightPanelAiHistory": {
+    "message": "AI history"
+  },
+  "rightPanelServerConsole": {
+    "message": "Server console"
+  },
+  "rightPanelOpenThe": {
+    "message": "Open the $1"
+  },
+  "rightPanelShowThe": {
+    "message": "Show the $1"
+  },
+  "rightPanelCollapseAria": {
+    "message": "Collapse the right panel"
+  },
+  "rightPanelCollapse": {
+    "message": "Collapse"
+  },
+  "consoleReadingSetup": {
+    "message": "Reading the sync setup…"
+  },
+  "consoleReadError": {
+    "message": "Could not read the sync setup. Close and reopen this panel to retry."
+  },
+  "consoleUnpaired": {
+    "message": "Not paired with a server yet. Pair one from the sync button in the bottom bar, and this panel shows its console."
+  },
+  "consoleOpenInTab": {
+    "message": "Open in a tab"
+  },
+  "consoleOpenInTabTitle": {
+    "message": "Open the console as its own tab, where your sign-in always carries"
+  },
+  "consoleSignedOutNote": {
+    "message": "If the console looks signed out in here, use “$1”: the session cookie is the browser's, and a frame is a different site."
+  },
+  "consoleFrameTitle": {
+    "message": "Sync server console"
+  },
+  "timeToday": {
+    "message": "Today"
+  },
+  "timeTomorrow": {
+    "message": "Tomorrow"
+  },
+  "timeYesterday": {
+    "message": "Yesterday"
+  },
+  "timeLastWeekday": {
+    "message": "Last $1"
+  },
+  "timeCalendarAt": {
+    "message": "$1 at $2"
+  },
+  "bookmarkOpenInCurrent": {
+    "message": "Open In Current Tabverse"
+  },
+  "bookmarkDeleteIt": {
+    "message": "Delete It"
+  },
+  "bookmarkFilterPlaceholder": {
+    "message": "filter these bookmarks…"
+  },
+  "bookmarkFilterAria": {
+    "message": "Filter these bookmarks"
+  },
+  "notePlaceholder": {
+    "message": "Write your notes here ..."
+  },
+  "capabilityHideDetails": {
+    "message": "Hide the details"
+  },
+  "capabilityShowMissing": {
+    "message": "Show what is missing"
+  },
+  "markdownCopied": {
+    "message": "Copied"
+  },
+  "markdownCopy": {
+    "message": "Copy Markdown"
+  },
+  "markdownDialogTitle": {
+    "message": "Page content as Markdown"
+  },
+  "webtoolTitle": {
+    "message": "My web tools gallery"
+  },
+  "activeTabSearchClearAria": {
+    "message": "Clear the tab filter"
+  },
+  "activeTabSearchAria": {
+    "message": "Search the tabs of this tabverse"
+  },
+  "suggestPreparing": {
+    "message": "Preparing the on-device model…"
+  },
+  "suggestSuggesting": {
+    "message": "Suggesting names…"
+  },
+  "suggestNoAiBrowser": {
+    "message": "This browser has no built-in AI."
+  },
+  "suggestNoTabs": {
+    "message": "This tabverse has no tabs to name yet."
+  },
+  "suggestNoNames": {
+    "message": "No names came back - try again."
+  },
+  "suggestCannotReach": {
+    "message": "Could not reach the on-device model - try again."
+  },
+  "suggestAria": {
+    "message": "Suggest a name for this tabverse"
+  },
+  "tabListWorkingOn": {
+    "message": "Working on $1 tabs"
+  },
+  "tabListSelectedOne": {
+    "message": "Selected $1 tab"
+  },
+  "tabListSelectedMany": {
+    "message": "Selected $1 tabs"
+  },
+  "tabListSaveCloseAria": {
+    "message": "Save and close this tabverse"
+  },
+  "tabListExportAria": {
+    "message": "Export this tabverse to a .tabverse file"
+  },
+  "historySearchPlaceholder": {
+    "message": "search these closed tabs"
+  },
+  "historyClearSearch": {
+    "message": "Clear the search (Esc)"
+  },
+  "historyClearSearchAria": {
+    "message": "Clear the history search"
+  },
+  "historySearchAria": {
+    "message": "Search the closed tabs"
+  },
+  "historyGrouped": {
+    "message": "Grouped by site"
+  },
+  "historyGroupBy": {
+    "message": "Group by site"
+  },
+  "historyGroupAria": {
+    "message": "Group the closed tabs by site"
+  },
+  "historyReopen": {
+    "message": "Reopen In Current Tabverse"
+  },
+  "historyAlreadyBookmarked": {
+    "message": "This page is already bookmarked"
+  },
+  "historySaveAsBookmark": {
+    "message": "Save as Bookmark (removes it from here)"
+  },
+  "historyForgetIt": {
+    "message": "Forget It"
+  },
+  "historyAlreadyBookmarkedToast": {
+    "message": "This page is already bookmarked."
+  },
+  "historySavedToast": {
+    "message": "Saved as bookmark."
+  },
+  "historyClearedToast": {
+    "message": "Closed tab history cleared."
+  },
+  "historyReopenLast": {
+    "message": "Reopen The Last Closed Tab"
+  },
+  "historyClearWhole": {
+    "message": "Clear The Whole History"
+  },
+  "todoEditHint": {
+    "message": "Double click, or press Enter, to edit"
+  },
+  "todoDeleteAria": {
+    "message": "Delete todo"
+  },
+  "todoMarkAll": {
+    "message": "Mark all as complete"
+  },
+  "todoPlaceholder": {
+    "message": "What needs to be done?"
+  },
+  "todoFilterPlaceholder": {
+    "message": "filter these todos…"
+  },
+  "todoFilterAria": {
+    "message": "Filter these todos"
+  },
+  "omniPlaceholder": {
+    "message": "search tabs, history, notes, todos, bookmarks"
+  },
+  "omniTypeToSearch": {
+    "message": "Type to search your synced tabverses"
+  },
+  "omniKindTabverses": {
+    "message": "Tabverses"
+  },
+  "omniKindTabs": {
+    "message": "Tabs"
+  },
+  "omniKindHistory": {
+    "message": "History"
+  },
+  "omniKindNotes": {
+    "message": "Notes"
+  },
+  "omniKindTodos": {
+    "message": "Todos"
+  },
+  "omniKindBookmarks": {
+    "message": "Bookmarks"
+  },
+  "omniKindSessions": {
+    "message": "Sessions"
+  },
+  "savedDetailSwitch": {
+    "message": "Switch to the window of this tabverse"
+  },
+  "savedDetailLoadNewWindow": {
+    "message": "Load all tabs to new window"
+  },
+  "savedDetailLoadThisWindow": {
+    "message": "Load into this window: the tabs it already has open are kept, and the tabverse's own missing tabs are opened beside them"
+  },
+  "focusExit": {
+    "message": "Exit focus on the pinned tool"
+  },
+  "focusEnter": {
+    "message": "Focus on the pinned tool"
+  },
+  "toolUnpin": {
+    "message": "Unpin current tool"
+  },
+  "toolPin": {
+    "message": "Pin current tool"
+  },
+  "reviseNoRevision": {
+    "message": "No revision came back - try again."
+  },
+  "reviseInstructionAria": {
+    "message": "Instruction for the revision"
+  },
+  "reviseAria": {
+    "message": "Revise this note with AI"
+  },
+  "reviseTitle": {
+    "message": "Revise this note with AI"
+  },
+  "dedupNeverAgain": {
+    "message": "Never offer this URL again"
+  },
+  "dedupFound": {
+    "message": "Duplicate tabs found"
+  },
+  "dedupReviewDuplicates": {
+    "message": "Review the duplicates"
+  },
+  "dedupHide": {
+    "message": "Hide"
+  },
+  "dedupReview": {
+    "message": "Review"
+  },
+  "editorH1": {
+    "message": "H1"
+  },
+  "editorH2": {
+    "message": "H2"
+  },
+  "editorH3": {
+    "message": "H3"
+  },
+  "editorBlockquote": {
+    "message": "Blockquote"
+  },
+  "editorUnorderedList": {
+    "message": "Unordered List"
+  },
+  "editorOrderedList": {
+    "message": "Ordered List"
+  },
+  "editorCodeBlock": {
+    "message": "Code Block"
+  },
+  "editorBold": {
+    "message": "Bold"
+  },
+  "editorItalic": {
+    "message": "Italic"
+  },
+  "editorUnderline": {
+    "message": "Underline"
+  },
+  "editorMonospace": {
+    "message": "Monospace"
+  },
+  "editorStrikethrough": {
+    "message": "Strikethrough"
+  },
+  "pcbReadyStatus": {
+    "message": "Page actions for this tab"
+  },
+  "pcbSuspendedStatus": {
+    "message": "This tab is suspended - open it to load it, then try again"
+  },
+  "pcbUnreadableStatus": {
+    "message": "Could not read this page as Markdown."
+  },
+  "pcbViewMarkdown": {
+    "message": "View page content as Markdown"
+  },
+  "pcbSendToChat": {
+    "message": "Send page content to AI chat"
+  },
+  "pcbNewNote": {
+    "message": "New note with AI summary"
+  },
+  "pcbAppendNote": {
+    "message": "Append to current note with AI summary"
+  },
+  "pcbAria": {
+    "message": "Page actions for this tab"
+  },
+  "pcbCannotRead": {
+    "message": "Could not read this tab."
+  },
+  "pcbNoSummary": {
+    "message": "No summary came back - try again."
+  },
+  "pcbNoNoteSelected": {
+    "message": "No note is selected to append to."
+  },
+  "pcbNoteAdded": {
+    "message": "Added a note to this tabverse."
+  },
+  "pcbAttached": {
+    "message": "Attached the page to the AI chat."
+  },
+  "tabCardSaveBookmark": {
+    "message": "Save this tab as a bookmark"
+  },
+  "tabCardPinnedInChrome": {
+    "message": "This tab is pinned in Chrome"
+  },
+  "tabCardWhitelisted": {
+    "message": "This tab is never suspended; click to allow it"
+  },
+  "tabCardNeverSuspend": {
+    "message": "Never suspend this tab"
+  },
+  "tabCardAllowSuspend": {
+    "message": "Allow this tab to be suspended"
+  },
+  "tabCardClose": {
+    "message": "Close this tab"
+  },
+  "noteReviewTitle": {
+    "message": "Review changes"
+  },
+  "noteRejectAll": {
+    "message": "Reject all"
+  },
+  "noteEditAddedLine": {
+    "message": "Edit added line"
+  },
+  "noteKeepChange": {
+    "message": "Keep this change"
+  },
+  "noteRevertChange": {
+    "message": "Revert this change"
+  },
+  "chatNoContextWindow": {
+    "message": "This browser does not report the context window."
+  },
+  "chatClearConversation": {
+    "message": "Clear conversation"
+  },
+  "chatContextWindowAria": {
+    "message": "Context window used"
+  },
+  "chatCopyAnswer": {
+    "message": "Copy the answer"
+  },
+  "chatRegenerate": {
+    "message": "Regenerate the answer"
+  },
+  "chatAttachedPage": {
+    "message": "Attached page"
+  },
+  "chatCompactedNotice": {
+    "message": "Earlier conversation summarized to fit the context"
+  },
+  "chatRemoveContext": {
+    "message": "Remove the attached page"
+  },
+  "chatPlaceholder": {
+    "message": "Ask the on-device model…"
+  },
+  "chatMessageAria": {
+    "message": "Message"
+  },
+  "chatClearInput": {
+    "message": "Clear input"
+  },
+  "chatClearInputLabel": {
+    "message": "Clear the input"
+  },
+  "chatEnterHint": {
+    "message": "Enter sends · Shift+Enter makes a new line"
+  },
+  "chatNoModelTitle": {
+    "message": "No on-device model"
+  },
+  "chatNoModelBody": {
+    "message": "This browser does not offer Chrome’s built-in AI, so there is nothing for the chat to run on. The other AI features are absent here for the same reason."
+  },
+  "chatModelOffTitle": {
+    "message": "The on-device model is off"
+  },
+  "chatModelOffBody": {
+    "message": "Turn it back on in Settings → AI to use the chat."
+  },
+  "omniNothingMatched": {
+    "message": "Nothing matched."
+  },
+  "omniKindsAria": {
+    "message": "Search result kinds"
+  },
+  "dedupRemoved": {
+    "message": "Duplicate tabs removed."
+  },
+  "suggestPickHint": {
+    "message": "Pick a name for this tabverse."
+  },
+  "reviseSayHint": {
+    "message": "Say what to do with this note"
+  },
+  "searchContainsAllOf": {
+    "message": "contains all of"
+  },
+  "managerOtherPage": {
+    "message": "Found another Tabverse Manager page!"
+  },
+  "activeTabClearFilter": {
+    "message": "Clear the filter (Esc)"
+  },
+  "groupSplitView": {
+    "message": "split view"
+  },
+  "tabListSaveClose": {
+    "message": "Save and close"
+  },
+  "tabListExport": {
+    "message": "Export as .tabverse file"
+  },
+  "noteNoChanges": {
+    "message": "No changes"
+  },
+  "noteFilterPlaceholder": {
+    "message": "filter these notes…"
+  },
+  "noteFilterAria": {
+    "message": "Filter these notes"
+  }
+}

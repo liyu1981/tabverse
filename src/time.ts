@@ -19,7 +19,25 @@
 
 import { format, formatDistanceToNow, startOfDay } from 'date-fns';
 import type { Locale } from 'date-fns';
-import { de, enUS, es, fr, ja, ptBR, zhCN, zhTW } from 'date-fns/locale';
+import {
+  de,
+  enAU,
+  enGB,
+  enUS,
+  es,
+  fr,
+  frCA,
+  it,
+  ja,
+  ko,
+  nl,
+  pl,
+  pt,
+  ptBR,
+  ru,
+  zhCN,
+  zhTW,
+} from 'date-fns/locale';
 
 import { t } from './i18n';
 
@@ -31,13 +49,24 @@ import { t } from './i18n';
  */
 const DATE_LOCALES: Record<string, Locale> = {
   en: enUS,
+  en_GB: enGB,
+  en_AU: enAU,
   zh_CN: zhCN,
   zh_TW: zhTW,
   fr: fr,
+  fr_CA: frCA,
   de: de,
   es: es,
+  es_419: es,
+  pt: pt,
   pt_BR: ptBR,
+  pt_PT: pt,
   ja: ja,
+  ko: ko,
+  it: it,
+  ru: ru,
+  nl: nl,
+  pl: pl,
 };
 
 /**
