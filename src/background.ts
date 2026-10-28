@@ -31,7 +31,12 @@ import {
 
 setDebugLogLevel(TabSpaceLogLevel.LOG);
 
-chrome.runtime.onInstalled.addListener(() => {
+chrome.runtime.onInstalled.addListener((details) => {
+  if (details.reason === chrome.runtime.OnInstalledReason.INSTALL) {
+    chrome.tabs.create({
+      url: chrome.runtime.getURL('welcome.html'),
+    });
+  }
   chrome.tabs.query({ active: true }, (tabs) => {
     tabs[0] && chrome.tabs.reload(tabs[0].id);
   });

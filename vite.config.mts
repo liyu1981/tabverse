@@ -59,6 +59,7 @@ export default defineConfig(({ mode }) => {
     background: fromRoot('src/background.ts'),
     popup: fromRoot('popup.html'),
     manager: fromRoot('manager.html'),
+    welcome: fromRoot('welcome.html'),
   };
   if (isDev) {
     input.icon = fromRoot('icon.html');

@@ -1,0 +1,11 @@
+@use '../../global.scss';
+
+body {
+  margin: 0;
+  color: global.$color-text;
+  background-color: global.$color-background;
+}
+
+:focus {
+  outline: none;
+}
