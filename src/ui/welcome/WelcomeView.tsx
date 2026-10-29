@@ -25,15 +25,33 @@ export const WelcomeView = () => {
           <h2 className={classes.heading}>Get started</h2>
           <ol className={classes.steps}>
             <li>
-              Pin Tabverse from the Chrome toolbar (puzzle icon) for quick
-              access.
+              <span className={classes.stepIcon} aria-hidden="true">
+                🧩
+              </span>
+              Pin Tabverse from the Chrome toolbar, then click the
+              <img
+                className={classes.stepLogo}
+                src="/icons/icon48.png"
+                alt=""
+                aria-hidden="true"
+              />
+              Tabverse icon to create your first tabverse.
             </li>
-            <li>Open the manager and create your first tabverse.</li>
-            <li>Group tabs into tabverses; save and reopen them anytime.</li>
-            <li>Pair with a server only if you want sync across devices.</li>
+            <li>
+              <span className={classes.stepIcon} aria-hidden="true">
+                🗂️
+              </span>
+              With a tabverse open, work as usual — open and close tabs, take
+              notes, todos and bookmarks. Everything is saved automatically, and
+              you can reopen it later from the Tabverse popup.
+            </li>
           </ol>
           <div className={classes.demoPlaceholder}>
-            Demo video / GIF coming soon
+            <img
+              className={classes.demoMedia}
+              src="/static/tabverse-welcome-intro.gif"
+              alt="Tabverse demo"
+            />
           </div>
         </main>
       </div>
