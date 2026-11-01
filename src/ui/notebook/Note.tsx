@@ -1,8 +1,6 @@
 import { t } from '../../i18n';
-import { Button, Collapse, EditableText, Icon } from '@blueprintjs/core';
-import clsx from 'clsx';
-import React, { useCallback, useRef, useState } from 'react';
-import { useStore } from 'effector-react';
+import { Button, EditableText } from '@blueprintjs/core';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Note } from '../../data/note/Note';
 import { ReviseNoteButton } from './ReviseNoteButton';
@@ -22,88 +20,54 @@ export interface INoteViewProps {
   updateFunc: (id: string, params: Partial<Note>) => void;
 }
 
+/**
+ * One note's pane: the title row (editable title, the AI actions, delete) above
+ * the rich text editor.
+ *
+ * The pane is what a note tab shows; the notebook's tab strip is what decides
+ * which pane is mounted. The note registers its editor while it is mounted, so
+ * the actions outside the notebook ("append to current note") can reach it.
+ */
 export const NoteView = (props: INoteViewProps) => {
-  const [name, setName] = useState(props.note.name);
-  const selectedNoteId = useStore($selectedNoteId);
-  const selected = selectedNoteId === props.note.id;
+  const { note, updateFunc, removeFunc } = props;
+  const [name, setName] = useState(note.name);
   // The editor owns the body, and `getContent()` is how it is read back as
   // markdown; note.data is markdown.
   const editorRef = useRef<RichTextEditorHandle>(null);
-  // The fold is the note's own state, not page state, so a refresh keeps it.
-  const [editorOpen, setEditorOpen] = useState(props.note.collapsed !== true);
+
+  // A note shown in its own tab is the note being worked on.
+  useEffect(() => {
+    selectNote(note.id);
+  }, [note.id]);
 
   // A callback ref, so the handle is registered exactly while the editor is
-  // mounted: collapsing the note unmounts it, and a stale handle must not be
-  // handed to a caller outside the notebook.
+  // mounted: switching tabs unmounts it, and a stale handle must not be handed
+  // to a caller outside the notebook.
   const setEditorRef = useCallback(
     (handle: RichTextEditorHandle | null) => {
       editorRef.current = handle;
       if (handle !== null) {
-        registerNoteEditor(props.note.id, handle);
+        registerNoteEditor(note.id, handle);
       } else {
-        unregisterNoteEditor(props.note.id);
-        // The editor is gone (the note folded, or was removed): if it was the
-        // selected one, there is no current note to append to any more.
-        if ($selectedNoteId.getState() === props.note.id) {
+        unregisterNoteEditor(note.id);
+        if ($selectedNoteId.getState() === note.id) {
           clearNoteSelection();
         }
       }
     },
-    [props.note.id],
+    [note.id],
   );
 
   const updateCurrentNote = () => {
-    props.updateFunc(props.note.id, {
+    updateFunc(note.id, {
       name,
-      data: editorRef.current?.getContent() ?? props.note.data,
+      data: editorRef.current?.getContent() ?? note.data,
     });
-  };
-
-  // A selection, not a focus: it survives the blur that clicking elsewhere on
-  // the page causes, so "append to current note" still has a target.
-  const selectThis = () => {
-    selectNote(props.note.id);
-  };
-
-  const toggleEditor = () => {
-    const next = !editorOpen;
-    setEditorOpen(next);
-    selectThis();
-    // Save the body and remember the fold together.
-    props.updateFunc(props.note.id, {
-      name,
-      data: editorRef.current?.getContent() ?? props.note.data,
-      collapsed: !next,
-    });
-  };
-
-  const confirmName = () => {
-    updateCurrentNote();
   };
 
   return (
-    <div>
-      {/* The row click is a mouse convenience; the caret button and the
-          editor's focus select the note too, so a keyboard user is not left
-          without a way in. */}
-      {/* biome-ignore lint/a11y/noStaticElementInteractions: see above */}
-      {/* biome-ignore lint/a11y/useKeyWithClickEvents: see above */}
-      <div className={classes.container} onClick={selectThis}>
-        <button
-          type="button"
-          className={clsx(
-            classes.collapseButton,
-            selected ? classes.collapseButtonSelected : '',
-          )}
-          aria-pressed={selected}
-          onClick={toggleEditor}
-        >
-          {editorOpen ? (
-            <Icon icon="caret-down" />
-          ) : (
-            <Icon icon="caret-right" />
-          )}
-        </button>
+    <div className={classes.pane}>
+      <div className={classes.titleRow}>
         <div className={classes.titleContainer}>
           <EditableText
             className={classes.titleText}
@@ -112,17 +76,10 @@ export const NoteView = (props: INoteViewProps) => {
             value={name}
             selectAllOnFocus={false}
             onChange={(value) => setName(value)}
-            onConfirm={() => confirmName()}
+            onConfirm={() => updateCurrentNote()}
           />
         </div>
         <div className={classes.toolsContainer}>
-          <Button
-            icon="trash"
-            minimal={true}
-            onClick={() => {
-              props.removeFunc(props.note.id);
-            }}
-          ></Button>
           <ReviseNoteButton
             noteTitle={name}
             getContent={() => editorRef.current?.getContent() ?? ''}
@@ -130,18 +87,25 @@ export const NoteView = (props: INoteViewProps) => {
               editorRef.current?.setContent(markdown)
             }
           />
+          <Button
+            icon="trash"
+            minimal={true}
+            aria-label={t('todoDeleteAria')}
+            onClick={() => removeFunc(note.id)}
+          />
         </div>
       </div>
-      <Collapse isOpen={editorOpen} keepChildrenMounted={false}>
+      <div className={classes.editorContainer}>
         <RichTextEditor
+          fill={true}
           ref={setEditorRef}
-          markdown={props.note.data}
-          onFocus={selectThis}
+          markdown={note.data}
+          onFocus={() => selectNote(note.id)}
           onApply={updateCurrentNote}
           onBlur={updateCurrentNote}
           placeholder={t('notePlaceholder')}
         />
-      </Collapse>
+      </div>
     </div>
   );
 };

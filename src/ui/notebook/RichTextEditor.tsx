@@ -176,6 +176,11 @@ export interface IRichTextEditorProps {
   onFocus?: () => void;
   placeholder?: string;
   className?: string;
+  /**
+   * Fill the height of the container instead of the fixed 300px editor box -
+   * a note shown in its own tab has the whole pane to itself.
+   */
+  fill?: boolean;
   ref?: React.Ref<RichTextEditorHandle>;
 }
 
@@ -188,6 +193,7 @@ export function RichTextEditor(props: IRichTextEditorProps) {
     onFocus,
     placeholder,
     className,
+    fill,
     ref,
   } = props;
 
@@ -264,7 +270,7 @@ export function RichTextEditor(props: IRichTextEditorProps) {
   );
 
   return (
-    <div className={clsx(classes.root, className)}>
+    <div className={clsx(classes.root, fill && classes.fill, className)}>
       <div className={classes.toolbar}>
         <div className={classes.controls}>
           {BLOCK_BUTTONS.map((button) => (

@@ -105,3 +105,28 @@
 .activeButton {
   color: #5890ff;
 }
+
+/*
+ * `fill`: the editor takes the height its container gives it (a note shown in
+ * its own tab), so the last written line is the bottom of the pane. The fixed
+ * 300px box above stays the default: a note list wants a bounded editor.
+ */
+.fill {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.fill .editor {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.fill .editor :global(.tiptap) {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 100px;
+}

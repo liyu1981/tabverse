@@ -1,47 +1,215 @@
+@use 'sass:color';
 @use '../../global.scss';
 
+/* the notebook fills whatever the tool panel gives it, so the index list and a
+   note pane are the same height */
 .container {
   padding-left: 4px;
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
+  height: 100%;
+  /* the tool panel bounds a tool with --tool-content-max-height (45vh pinned,
+     90vh focused, 35vh unpinned); a short note list still takes that height, so
+     the notebook does not shrink and grow as notes come and go */
+  min-height: var(--tool-content-max-height, auto);
 }
 
-/* the New Note / filter row, fixed above the scrolling note list */
-.noteToolContainer {
+/*
+ * The tab strip: the pinned index tab first, then the open notes, which scroll
+ * horizontally when there are more than fit. The New Note button stays put.
+ */
+.tabBar {
   display: flex;
   align-items: center;
-  height: 50px;
-  justify-content: space-between;
+  gap: 8px;
   flex: none;
+  border-bottom: 1px solid global.$color-light-shade;
+  padding: 2px 0;
 }
 
-/* the notes (and the empty/filter notices) scroll under the fixed toolbar */
-.notesContainer {
+.tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+}
+
+.tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  max-width: 220px;
+  min-width: 0;
+  padding: 4px 6px 4px 10px;
+  border-radius: 10px 10px 0 0;
+  color: global.$color-text;
+}
+
+/* the selected note's tab carries a brand-coloured rule along the bottom, so
+   the strip says which pane is showing without relying on the tint alone */
+.tab:not(.indexTab).tabActive::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 2px;
+  background-color: global.$color-main-brand;
+}
+
+.tab:hover {
+  box-shadow: 0 2px 4px rgb(16 22 26 / 20%);
+}
+
+.tabActive {
+  background-color: global.$color-light-shade;
+  color: global.$color-main-brand;
+  font-weight: 600;
+}
+
+/*
+ * The index tab is the split-view pill: a small dark capsule with near-white
+ * text, so the one pinned tab reads differently from the closable note tabs.
+ * It carries its own right padding instead of a close button.
+ */
+.indexTab {
+  gap: 6px;
+  border: 0;
+  padding: 2px 10px;
+  border-radius: 10px;
+  background-color: global.$color-light-accent;
+  color: global.$color-c;
+  font: inherit;
+  font-weight: 600;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.indexTab:hover {
+  background-color: global.$color-dark-accent;
+  box-shadow: none;
+}
+
+.indexTab.tabActive {
+  /* a shade darker than the resting pill, so the selected pinned tab is the
+     pressed-looking one */
+  background-color: color.adjust(global.$color-light-accent, $lightness: -10%);
+  color: global.$color-c;
+}
+
+.tabLabelButton {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.tabLabel {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 170px;
+}
+
+.tabClose {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: none;
+  padding: 2px;
+  margin-left: 6px;
+  border-radius: 50%;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.tabClose:hover {
+  opacity: 1;
+  background-color: rgb(0 0 0 / 8%);
+}
+
+.newNoteButton {
+  flex: 0 0 auto;
+}
+
+/* the index tab's body: the search, then the list of notes */
+.indexPanel {
+  display: flex;
+  flex-direction: column;
   flex: 1 1 auto;
   min-height: 0;
-  overflow-y: auto;
+  height: 100%;
+  padding-top: 8px;
 }
 
 .filterContainer {
-  flex: 1;
-  margin-left: 12px;
+  flex: none;
+  margin-bottom: 8px;
 }
 
-.collapseButton {
-  width: 32px;
+.noteList {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  overflow-y: auto;
 }
 
-.titleContainer {
+.noteListItem {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
   width: 100%;
-  font-size: 1.5em;
+  text-align: left;
+  padding: 8px 12px;
+  margin-bottom: 4px;
+  border: 0;
+  border-radius: global.$radius-card;
+  background-color: #fff;
+  color: global.$color-text;
+  cursor: pointer;
+  transition: box-shadow 150ms linear;
 }
 
-.toolsContainer {
-  min-width: 50px;
-  direction: rtl;
-  text-align: start;
+/* the same hover the tab list's cards use: the row lifts, it does not repaint */
+.noteListItem:hover {
+  box-shadow:
+    0 2px 4px rgb(16 22 26 / 20%),
+    0 8px 24px rgb(16 22 26 / 20%);
+}
+
+.noteListName {
+  font-weight: 600;
+  color: global.$color-main-brand;
+}
+
+.noteListMeta {
+  display: flex;
+  gap: 16px;
+  font-size: 0.8em;
+  color: global.$color-light-accent;
+}
+
+/* a note tab's body is the note pane, which fills what the strip leaves */
+.notePanel {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .noticeContainer {

@@ -1,49 +1,43 @@
-.container {
+@use '../../global.scss';
+
+.pane {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+
+/* the note's own title row: the editable name, then the AI actions and delete */
+.titleRow {
   display: flex;
   align-items: center;
+  gap: 8px;
+  flex: none;
   height: 50px;
 }
 
-/* In the editor's row the title takes whatever the caret and the tools leave,
-   so a long name shows as much of itself as fits (the field ellipsizes). */
-.container .titleContainer {
+.titleContainer {
   flex: 1 1 0;
   min-width: 0;
+  font-size: 1.5em;
 }
 
 .titleText {
   width: 100%;
 }
 
-.collapseButton {
-  width: 32px;
-  /* a real <button> now: drop the button chrome and the line box, and centre
-     the caret in the box the way the block <div> it replaced was centred by
-     the flex row */
+.toolsContainer {
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: inherit;
-  line-height: 0;
-  cursor: pointer;
-}
-
-/* The fold caret is how a person sees which note is selected: the selected
-   note's caret is red, the others keep the inherited colour. */
-.collapseButtonSelected {
-  color: #e53935;
-}
-
-.titleContainer {
-  width: 100%;
-  font-size: 1.5em;
-}
-
-.toolsContainer {
   min-width: 50px;
   direction: rtl;
   text-align: start;
+}
+
+.editorContainer {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
