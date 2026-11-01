@@ -7,10 +7,12 @@ export interface Todo extends IBase {
   tabSpaceId: string;
   content: string;
   completed: boolean;
+  url?: string;
 }
 
 export const TODO_DB_TABLE_NAME = 'SavedTodo';
-export const TODO_DB_SCHEMA = 'id, createdAt, tabSpaceId, content, completed';
+export const TODO_DB_SCHEMA =
+  'id, createdAt, tabSpaceId, content, completed, url';
 
 export function newEmptyTodo(): Todo {
   return {
@@ -24,6 +26,7 @@ export function newEmptyTodo(): Todo {
 export const setTabSpaceId = setAttrForObject2<string, Todo>('tabSpaceId');
 export const setContent = setAttrForObject2<string, Todo>('content');
 export const setCompleted = setAttrForObject2<boolean, Todo>('completed');
+export const setUrl = setAttrForObject2<string, Todo>('url');
 
 export function convertToSavedTodo(targetTodo: Todo): Todo {
   return produce(targetTodo, (draft) => {

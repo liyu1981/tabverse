@@ -21,6 +21,22 @@ interface TodoItemViewProps {
   removeFunc: (id: string) => void;
 }
 
+async function openTodoLink(url: string) {
+  try {
+    const tabs = await chrome.tabs.query({ url });
+    if (tabs.length > 0 && tabs[0].id !== undefined) {
+      await chrome.tabs.update(tabs[0].id, { active: true });
+      if (tabs[0].windowId !== undefined) {
+        await chrome.windows.update(tabs[0].windowId, { focused: true });
+      }
+      return;
+    }
+  } catch {
+    // fall through to creating a new tab
+  }
+  await chrome.tabs.create({ url });
+}
+
 const TodoItemView = (props: TodoItemViewProps) => {
   const [editing, setEditing] = useState(false);
   const [currentEditValue, setCurrentEditValue] = useState(props.todo.content);
@@ -56,7 +72,24 @@ const TodoItemView = (props: TodoItemViewProps) => {
             }
           }}
         >
-          {props.todo.content}
+          {props.todo.url ? (
+            <>
+              read{' '}
+              <button
+                type="button"
+                className={classes.link}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  void openTodoLink(props.todo.url as string);
+                }}
+              >
+                {props.todo.content.replace(/^read\s+/i, '').trim() ||
+                  props.todo.url}
+              </button>
+            </>
+          ) : (
+            props.todo.content
+          )}
         </button>
         <button
           type="button"

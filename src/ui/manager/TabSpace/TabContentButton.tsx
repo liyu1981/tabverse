@@ -56,6 +56,7 @@ import {
   newEmptyTodo,
   setContent,
   setTabSpaceId,
+  setUrl,
 } from '../../../data/todo/Todo';
 import { markdownToPlainText } from '../../../data/note/markdownText';
 import { convertTabToMarkdown } from '../../../data/tabSpace/pageMarkdown';
@@ -304,9 +305,12 @@ export function TabContentButton(props: TabContentButtonProps) {
           }
           const titleText =
             tab.title.length > 60 ? `${tab.title.slice(0, 60)}…` : tab.title;
-          const todo = setTabSpaceId(
-            tabSpaceId,
-            setContent(`read ${titleText}`, newEmptyTodo()),
+          const todo = setUrl(
+            tab.url,
+            setTabSpaceId(
+              tabSpaceId,
+              setContent(`read ${titleText}`, newEmptyTodo()),
+            ),
           );
           todoStoreApi.addTodo(todo);
           saveCurrentTodosNow();

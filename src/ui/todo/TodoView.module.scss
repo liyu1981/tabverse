@@ -406,3 +406,13 @@
 .todoapp label.toggleAll:focus:before {
   transform: rotate(90deg);
 }
+
+.link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: global.$color-main-brand;
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
+}
