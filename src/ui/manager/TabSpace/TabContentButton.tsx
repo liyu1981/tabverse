@@ -47,6 +47,16 @@ import {
 import { ensureAiSession, evictAiSession } from '../../../ai/session';
 import { setChatContext } from '../../../data/aiChat/store';
 import { addNoteToTabSpace, newSummaryNote } from '../../../data/note/util';
+import {
+  loadAllTodoByTabSpaceId,
+  saveCurrentTodosNow,
+} from '../../../data/todo/util';
+import { $allTodo, todoStoreApi } from '../../../data/todo/store';
+import {
+  newEmptyTodo,
+  setContent,
+  setTabSpaceId,
+} from '../../../data/todo/Todo';
 import { markdownToPlainText } from '../../../data/note/markdownText';
 import { convertTabToMarkdown } from '../../../data/tabSpace/pageMarkdown';
 import { extractTabText } from '../../../data/tabSpace/tabText';
@@ -67,7 +77,12 @@ const SUSPENDED_STATUS = 'pcbSuspendedStatus';
 const UNREADABLE_STATUS = 'pcbUnreadableStatus';
 
 /** What one menu item does. */
-export type TabContentMode = 'view' | 'chat' | 'summary-new' | 'summary-append';
+export type TabContentMode =
+  | 'view'
+  | 'chat'
+  | 'summary-new'
+  | 'summary-append'
+  | 'todo';
 
 export interface TabContentMenuProps {
   /** False when no note editor is active, so "append" has nowhere to go. */
@@ -103,6 +118,11 @@ export function TabContentMenu(props: TabContentMenuProps) {
         text={t('pcbAppendNote')}
         disabled={props.aiDisabled || !props.canAppend}
         onClick={() => props.onSelect('summary-append')}
+      />
+      <MenuItem
+        icon="list"
+        text="Add to todo list"
+        onClick={() => props.onSelect('todo')}
       />
     </Menu>
   );
@@ -278,6 +298,21 @@ export function TabContentButton(props: TabContentButtonProps) {
           setStatus(t('pcbAttached'));
           return;
         }
+        if (mode === 'todo') {
+          if ($allTodo.getState().tabSpaceId !== tabSpaceId) {
+            await loadAllTodoByTabSpaceId(tabSpaceId);
+          }
+          const titleText =
+            tab.title.length > 60 ? `${tab.title.slice(0, 60)}…` : tab.title;
+          const todo = setTabSpaceId(
+            tabSpaceId,
+            setContent(`read ${titleText}`, newEmptyTodo()),
+          );
+          todoStoreApi.addTodo(todo);
+          saveCurrentTodosNow();
+          setStatus('Added to todo list');
+          return;
+        }
         let current = getAiAvailability();
         // `checking` is the mount probe still in flight; `error` is the one
         // state a probe does not cache - both mean "ask again"
@@ -288,7 +323,7 @@ export function TabContentButton(props: TabContentButtonProps) {
           setStatus(t('suggestNoAiBrowser'));
           return;
         }
-        await summarize(mode);
+        await summarize(mode as 'summary-new' | 'summary-append');
       } catch (err) {
         logger.log('tab page action failed', err);
         // the session is not worth keeping after a failed prompt
