@@ -84,7 +84,7 @@ describe('SuggestNameButton', () => {
         onApply={() => undefined}
       />,
     );
-    expect(markup).toContain('Suggest a name for this tabverse');
+    expect(markup).toContain('AI actions for this tabverse');
     // no candidate could be pre-applied: the control draws no names
     expect(markup).not.toContain('<form');
   });

@@ -5,12 +5,20 @@
  * copy button stay on screen however long the page's Markdown is.
  */
 .dialog {
+  border-radius: 18px;
+  background-color: #fff;
   width: min(92vw, 900px);
   max-height: min(85vh, 720px);
   display: flex;
   flex-direction: column;
   /* match the app's dialog surface, so the near-white pane reads as a pane */
   background-color: #fff;
+}
+
+.dialog :global(.bp6-dialog-header) {
+  border-radius: 18px 18px 0 0;
+  background-color: #fff;
+  box-shadow: none;
 }
 
 .body {

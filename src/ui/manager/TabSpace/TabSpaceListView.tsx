@@ -414,7 +414,12 @@ export function TabSpaceListView() {
         </h1>
       </div>
       <div className={classes.titleButtons}>
-        <SuggestNameButton tabs={nameTabs} onApply={applySuggestedName} />
+        <SuggestNameButton
+          tabs={nameTabs}
+          tabSpaceId={tabSpace.id}
+          title={title}
+          onApply={applySuggestedName}
+        />
         <Tooltip content={t('tabListSaveClose')} placement="bottom">
           <Button
             className="tv-icon-button"
