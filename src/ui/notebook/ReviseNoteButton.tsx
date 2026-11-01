@@ -1,5 +1,5 @@
 import { t } from '../../i18n';
-import { Button, Popover, TextArea } from '@blueprintjs/core';
+import { Button, Menu, MenuItem, Popover, TextArea } from '@blueprintjs/core';
 import React, {
   useCallback,
   useEffect,
@@ -24,6 +24,8 @@ import {
   rewriteNote,
 } from '../../ai/rewriteNote';
 import { ensureAiSession, evictAiSession } from '../../ai/session';
+import { setChatContext } from '../../data/aiChat/store';
+import { ToolTabMsg, sendPubSubMessage } from '../../message/message';
 import { logger } from '../../global';
 import classes from './ReviseNoteButton.module.scss';
 
@@ -44,10 +46,12 @@ export interface ReviseNoteButtonProps {
   getContent: () => string;
   /** Hand the revision to the editor, which reviews it before applying. */
   proposeContent: (markdown: string) => void;
+  /** The note's name, used when attaching it to the AI chat. */
+  noteTitle?: string;
 }
 
 export function ReviseNoteButton(props: ReviseNoteButtonProps) {
-  const { getContent, proposeContent } = props;
+  const { getContent, proposeContent, noteTitle } = props;
   const availability = useSyncExternalStore(
     subscribeAiAvailability,
     getAiAvailability,
@@ -59,6 +63,7 @@ export function ReviseNoteButton(props: ReviseNoteButtonProps) {
     getAiEnabled,
   );
   const [open, setOpen] = useState(false);
+  const [step, setStep] = useState<'menu' | 'revise'>('menu');
   const [instruction, setInstruction] = useState(DEFAULT_NOTE_INSTRUCTION);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -128,6 +133,7 @@ export function ReviseNoteButton(props: ReviseNoteButtonProps) {
           // a fresh default each time the dropdown opens
           setError(null);
           setInstruction(DEFAULT_NOTE_INSTRUCTION);
+          setStep('menu');
         }
         setOpen(next);
       }}
@@ -136,31 +142,57 @@ export function ReviseNoteButton(props: ReviseNoteButtonProps) {
       autoFocus={true}
       portalClassName={classes.portal}
       content={
-        <div className={classes.panel}>
-          <p className="muted small">{t('reviseSayHint')}</p>
-          <TextArea
-            fill={true}
-            rows={3}
-            value={instruction}
-            onChange={(event) => setInstruction(event.currentTarget.value)}
-            aria-label={t('reviseInstructionAria')}
-          />
-          {error ? <p className="danger-text">{error}</p> : null}
-          <div className={classes.actions}>
-            <Button small={true} onClick={() => setOpen(false)} disabled={busy}>
-              Cancel
-            </Button>
-            <Button
-              small={true}
-              intent="primary"
-              loading={busy}
-              disabled={!instruction.trim()}
-              onClick={() => void run()}
-            >
-              Do It
-            </Button>
+        step === 'menu' ? (
+          <Menu>
+            <MenuItem
+              icon="lightbulb"
+              text="Revise with AI"
+              onClick={() => setStep('revise')}
+            />
+            <MenuItem
+              icon="comment"
+              text="Add to AI chat"
+              onClick={() => {
+                setOpen(false);
+                setChatContext({
+                  title: noteTitle ?? 'Note',
+                  markdown: getContent(),
+                });
+                sendPubSubMessage(ToolTabMsg.OpenChat, true);
+              }}
+            />
+          </Menu>
+        ) : (
+          <div className={classes.panel}>
+            <p className="muted small">{t('reviseSayHint')}</p>
+            <TextArea
+              fill={true}
+              rows={3}
+              value={instruction}
+              onChange={(event) => setInstruction(event.currentTarget.value)}
+              aria-label={t('reviseInstructionAria')}
+            />
+            {error ? <p className="danger-text">{error}</p> : null}
+            <div className={classes.actions}>
+              <Button
+                small={true}
+                onClick={() => setStep('menu')}
+                disabled={busy}
+              >
+                Back
+              </Button>
+              <Button
+                small={true}
+                intent="primary"
+                loading={busy}
+                disabled={!instruction.trim()}
+                onClick={() => void run()}
+              >
+                Do It
+              </Button>
+            </div>
           </div>
-        </div>
+        )
       }
     >
       <Button

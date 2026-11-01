@@ -124,6 +124,7 @@ export const NoteView = (props: INoteViewProps) => {
             }}
           ></Button>
           <ReviseNoteButton
+            noteTitle={name}
             getContent={() => editorRef.current?.getContent() ?? ''}
             proposeContent={(markdown) =>
               editorRef.current?.setContent(markdown)
