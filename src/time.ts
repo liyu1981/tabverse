@@ -34,6 +34,7 @@ import {
   pl,
   pt,
   ptBR,
+  ro,
   ru,
   zhCN,
   zhTW,
@@ -67,6 +68,7 @@ const DATE_LOCALES: Record<string, Locale> = {
   ru: ru,
   nl: nl,
   pl: pl,
+  ro: ro,
 };
 
 /**
