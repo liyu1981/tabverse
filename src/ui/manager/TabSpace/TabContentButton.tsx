@@ -342,7 +342,7 @@ export function TabContentButton(props: TabContentButtonProps) {
         setBusy(false);
       }
     },
-    [readAsMarkdown, summarize, tab.suspended, tab.title, tab.url],
+    [readAsMarkdown, summarize, tab.suspended, tab.title, tab.url, tabSpaceId],
   );
 
   const suspended = tab.suspended === true;

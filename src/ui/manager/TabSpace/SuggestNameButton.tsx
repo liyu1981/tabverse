@@ -92,11 +92,6 @@ export function SuggestNameButton(props: SuggestNameButtonProps) {
     void probeAiAvailability();
   }, []);
 
-  const aiDisabled =
-    enabled !== true ||
-    availability.state === 'checking' ||
-    availability.state === 'absent';
-
   // probe helper shared by both flows
   const ensureReady = useCallback(async () => {
     let current = getAiAvailability();
