@@ -41,6 +41,7 @@ import { TabCard } from './TabCard';
 import { TabContentButton } from './TabContentButton';
 import classes from './TabSpaceListView.module.scss';
 import { getPreview } from '../../../data/tabSpace/TabPreviewCache';
+import { hydratePreview } from '../../../data/tabSpace/tabPreviewStore';
 import { logger } from '../../../global';
 import { saveAndCloseTabSpace } from '../../../data/tabSpace/closeTabSpace';
 import { saveCurrentBookmarks } from '../../../data/bookmark/util';
@@ -71,6 +72,17 @@ import clsx from 'clsx';
 enum SelectedTabTool {
   MoveToExistTabverse = 'Move to Exist Tabverse',
 }
+
+/**
+ * How many tabs one filter pass may read the *page content* of. A tab whose
+ * title or url already matches is not read at all, so this is the budget for
+ * the remaining "maybe it is in the body" candidates - and each one costs a
+ * script injection, a full-page clone and a worker (`pageMarkdown.ts`). Twenty
+ * keeps one keystroke from turning a two-hundred-tab window into two hundred
+ * concurrent conversions; the next pass (the next tab event) continues where
+ * this one stopped.
+ */
+const MAX_PAGE_TEXT_EXTRACTIONS_PER_PASS = 20;
 
 interface SelectedTabToolControlProps {
   className: string;
@@ -139,6 +151,9 @@ export function TabSpaceListView() {
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   // in-memory cache of extracted page text, keyed by chrome tab id. Session
   // only: nothing here is synced or persisted (see the page-content search plan).
+  // It is pruned to the tabs that are still open (below): a chrome tab id is
+  // recycled, and a tab that is gone must not leave its 12 kB of page text in
+  // the heap for the rest of the page's life.
   const [tabTextByChromeTabId, setTabTextByChromeTabId] = useState<
     Record<number, string | null>
   >({});
@@ -146,6 +161,11 @@ export function TabSpaceListView() {
   useEffect(() => {
     tabTextRef.current = tabTextByChromeTabId;
   }, [tabTextByChromeTabId]);
+  // What the extraction loop compares against: the filter as it is *now*, not
+  // as it was when the effect started, so a tab whose title or url already
+  // matches is not read from the page.
+  const filterTextRef = useRef(filterText);
+  filterTextRef.current = filterText;
   const searchInputRef = useRef<HTMLInputElement | null>(null);
 
   const isFiltering = filterText.trim().length > 0;
@@ -166,6 +186,19 @@ export function TabSpaceListView() {
   // Extract page text lazily while the filter is active, so a query can match
   // the rendered content of the tabs that are on screen. Suspended and
   // unreadable tabs simply end up with no entry.
+  //
+  // Three limits, all of them about the memory and CPU a single filter pass can
+  // cost when a window holds hundreds of tabs:
+  //
+  //  - a tab whose title or url already matches is skipped: the answer is
+  //    already "this one", and reading its page would only add a weaker
+  //    "content" badge;
+  //  - at most `MAX_PAGE_TEXT_EXTRACTIONS_PER_PASS` tabs are read per pass, so
+  //    one keystroke cannot start a hundred script injections and workers;
+  //  - the reads are sequential, not concurrent: each conversion clones a page
+  //    and runs Readability in a worker, and a hundred of those at once is the
+  //    memory spike this loop used to cause (one worker per tab, created in the
+  //    same tick).
   const pendingTextExtractions = useRef<Set<number>>(new Set());
   useEffect(() => {
     if (!isFiltering) {
@@ -173,19 +206,27 @@ export function TabSpaceListView() {
       return undefined;
     }
     let cancelled = false;
-    for (const tab of orderedTabs) {
-      if (tab.suspended || tab.chromeTabId <= 0) {
-        continue;
-      }
-      if (Object.hasOwn(tabTextRef.current, tab.chromeTabId)) {
-        continue;
-      }
-      if (pendingTextExtractions.current.has(tab.chromeTabId)) {
-        continue;
-      }
-      const chromeTabId = tab.chromeTabId;
-      pendingTextExtractions.current.add(chromeTabId);
-      void (async () => {
+    void (async () => {
+      let budget = MAX_PAGE_TEXT_EXTRACTIONS_PER_PASS;
+      for (const tab of orderedTabs) {
+        if (cancelled || budget <= 0) {
+          break;
+        }
+        if (tab.suspended || tab.chromeTabId <= 0) {
+          continue;
+        }
+        if (Object.hasOwn(tabTextRef.current, tab.chromeTabId)) {
+          continue;
+        }
+        if (pendingTextExtractions.current.has(tab.chromeTabId)) {
+          continue;
+        }
+        if (matchActiveTabs([tab], filterTextRef.current).length > 0) {
+          continue;
+        }
+        const chromeTabId = tab.chromeTabId;
+        budget -= 1;
+        pendingTextExtractions.current.add(chromeTabId);
         let text: string | null = null;
         try {
           const article = await convertTabToMarkdown(chromeTabId);
@@ -200,14 +241,14 @@ export function TabSpaceListView() {
         }
         pendingTextExtractions.current.delete(chromeTabId);
         if (cancelled) {
-          return;
+          break;
         }
         setTabTextByChromeTabId((prev) => ({
           ...prev,
           [chromeTabId]: text ? text.slice(0, 12000) : null,
         }));
-      })();
-    }
+      }
+    })();
     return () => {
       cancelled = true;
     };
@@ -259,12 +300,33 @@ export function TabSpaceListView() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
 
-  // a tab can be closed while the box is filtering over the list
+  // a tab can be closed while the box is filtering over the list, and its page
+  // text would otherwise stay in the heap for the rest of the page's life
   useEffect(() => {
     if (activeTabId && !tabSpace.tabs.some((tab) => tab.id === activeTabId)) {
       setActiveTabId(null);
     }
+    const liveChromeTabIds = new Set(
+      tabSpace.tabs.map((tab) => tab.chromeTabId).toArray(),
+    );
+    setTabTextByChromeTabId((prev) => {
+      const kept = Object.entries(prev).filter(([id]) =>
+        liveChromeTabIds.has(Number(id)),
+      );
+      if (kept.length === Object.keys(prev).length) {
+        return prev;
+      }
+      return Object.fromEntries(kept);
+    });
   }, [activeTabId, tabSpace.tabs]);
+
+  // A hovered row asks for its stored thumbnail. The in-memory cache is a
+  // bounded window now (TabPreviewCache), so a picture that fell out of it is
+  // read back from the preview table when it is actually wanted - not at
+  // bootstrap, where it used to cost a read (and a base64 string) per tab.
+  const onNeedPreview = useCallback((chromeTabId: number) => {
+    void hydratePreview(chromeTabId);
+  }, []);
 
   // The tabverse itself is saved on every tab event, so this button is not
   // about saving it: it flushes whatever is still pending (a note typed a
@@ -325,6 +387,7 @@ export function TabSpaceListView() {
               : undefined
           }
           needPreview={true}
+          onNeedPreview={onNeedPreview}
           needSelector={true}
           tabPreview={getPreview(tab.chromeTabId, tabPreviewCache)}
           isBookmarked={isBookmarked(tab.url)}

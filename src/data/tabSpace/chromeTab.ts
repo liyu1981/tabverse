@@ -10,8 +10,70 @@ import { saveCurrentTabSpace } from './util';
 import { captureTabGroups, startMonitorTabGroups } from './tabGroup';
 import { copyChromeTabFields } from './chromeTabFields';
 import { persistPreview } from './tabPreviewStore';
+import { shrinkPreview } from './tabPreviewImage';
 
 const CHROME_TAB_DEBOUNCE_TIME = 500;
+
+/**
+ * How often the same tab may be photographed again.
+ *
+ * A capture is a whole-window screenshot (see `doCapturePreview`), so it is the
+ * most expensive thing this page does per tab event: Chrome has to render and
+ * encode the visible area, and the page then keeps a base64 copy of it. Two
+ * paths used to fire it far too often - switching back and forth between two
+ * tabs, and every title rewrite of the active tab (a chat app updates its title
+ * on each message, and `onUpdated` was capturing on all of them). Ten seconds
+ * per tab keeps a fresh thumbnail for a tab somebody is actually using, and
+ * turns a burst into one capture.
+ */
+const PREVIEW_CAPTURE_MIN_INTERVAL_MS = 10_000;
+
+/** chromeTabId -> when it was last photographed. Bounded below when pruned. */
+const lastPreviewCaptureAt = new Map<number, number>();
+
+/** Whether this tab is due for a capture, and records the attempt if so. */
+export function shouldCapturePreview(
+  chromeTabId: number,
+  now: number = Date.now(),
+): boolean {
+  if (chromeTabId < 0) {
+    return false;
+  }
+  const last = lastPreviewCaptureAt.get(chromeTabId);
+  if (last !== undefined && now - last < PREVIEW_CAPTURE_MIN_INTERVAL_MS) {
+    return false;
+  }
+  if (lastPreviewCaptureAt.size > 256) {
+    // drop the entries that no longer throttle anything; the map is keyed by
+    // chrome tab ids, which are recycled, so forgetting is what keeps it small
+    for (const [id, at] of lastPreviewCaptureAt) {
+      if (now - at >= PREVIEW_CAPTURE_MIN_INTERVAL_MS) {
+        lastPreviewCaptureAt.delete(id);
+      }
+    }
+  }
+  lastPreviewCaptureAt.set(chromeTabId, now);
+  return true;
+}
+
+/** Test hook: the throttle map is module state. */
+export function resetPreviewCaptureThrottleForTest(): void {
+  lastPreviewCaptureAt.clear();
+}
+
+/**
+ * Whether an update is worth photographing the window for.
+ *
+ * A title or favicon rewrite is not: it is the page saying "still here", it
+ * does not change what a thumbnail shows, and a chat app produces one every few
+ * seconds. A navigation (`url`) or a finished load (`status: 'complete'`) is
+ * the page actually becoming something else.
+ */
+export function isPreviewWorthCapturing(
+  changeInfo: chrome.tabs.OnUpdatedInfo,
+): boolean {
+  return changeInfo.url !== undefined || changeInfo.status === 'complete';
+}
 
 function inCurrentTabSpace(windowId: number, tabSpace: TabSpace) {
   return windowId === tabSpace.chromeWindowId;
@@ -110,6 +172,10 @@ function doCapturePreview(chromeTabId: number, chromeWindowId: number) {
     // .mocked=true
     return;
   }
+  if (!shouldCapturePreview(chromeTabId)) {
+    logger.log('tab preview capture throttled for tab', chromeTabId);
+    return;
+  }
   // chrome.tabs.captureVisibleTab is currently working as by taking windowId
   // instead of tabId, which in implementation will only try to capture the
   // screen after chrome.tabs are idling, which again is very hard to estimate.
@@ -144,13 +210,17 @@ function doCapturePreview(chromeTabId: number, chromeWindowId: number) {
             tabs[0].id,
             chromeTabId,
           );
+          // a full-window capture is far larger than the card it is shown in
+          // (`tabPreviewImage`), and it is kept twice: in the cache and in the
+          // preview table. Shrinking it once here is what keeps both small.
+          const preview = await shrinkPreview(dataUrl);
           tabSpaceStoreApi.setPreview({
             chromeTabId: chromeTabId,
-            preview: dataUrl,
+            preview,
           });
           // the cache dies with the page; the durable copy is what makes a
           // thumbnail still there after a reload
-          void persistPreview(chromeTabId, dataUrl);
+          void persistPreview(chromeTabId, preview);
         } else {
           logger.log(
             'current tab not matched requested, will skip save preview',
@@ -382,22 +452,36 @@ function getOnChromeTabUpdated() {
    * tab next to it.
    */
   const debouncedActions = new Map<number, () => void>();
+  /**
+   * Per tab, whether anything in the debounce window was worth a capture.
+   * Kept beside the debounce (rather than in its arguments, which
+   * `debounce()` drops) and only read when the action fires.
+   */
+  const captureWanted = new Map<number, boolean>();
 
-  function scheduleTabUpdate(chromeTabId: number) {
+  function scheduleTabUpdate(
+    chromeTabId: number,
+    changeInfo: chrome.tabs.OnUpdatedInfo,
+  ) {
     let action = debouncedActions.get(chromeTabId);
     if (!action) {
       action = debounce(() => {
         // drop the entry once it fired, so the next burst starts a fresh
         // window and the map does not keep a closure per tab forever
         debouncedActions.delete(chromeTabId);
-        return normalTabAction(chromeTabId);
+        const wanted = captureWanted.get(chromeTabId) === true;
+        captureWanted.delete(chromeTabId);
+        return normalTabAction(chromeTabId, wanted);
       }, CHROME_TAB_DEBOUNCE_TIME);
       debouncedActions.set(chromeTabId, action);
+    }
+    if (isPreviewWorthCapturing(changeInfo)) {
+      captureWanted.set(chromeTabId, true);
     }
     action();
   }
 
-  async function normalTabAction(chromeTabId: number) {
+  async function normalTabAction(chromeTabId: number, capturePreview: boolean) {
     const tab = await chrome.tabs.get(chromeTabId);
     if (!inCurrentTabSpace(tab.windowId, $tabSpace.getState())) {
       return;
@@ -418,7 +502,7 @@ function getOnChromeTabUpdated() {
         }
       }
     }
-    if (tab.active) {
+    if (tab.active && capturePreview && oldT && !isTabSpaceManagerPage(tab)) {
       doCapturePreview(chromeTabId, tab.windowId);
     }
   }
@@ -431,7 +515,7 @@ function getOnChromeTabUpdated() {
     }
     // debounce tab update because app like workplace chat will update table
     // titles frequently when there is new message.
-    scheduleTabUpdate(chromeTabId);
+    scheduleTabUpdate(chromeTabId, changeInfo);
   };
 }
 

@@ -199,6 +199,7 @@ export async function handleChanges(
     return;
   }
 
+  const inputs: RecordInput[] = [];
   for (const change of changes) {
     const entity = entityForTable(change.table);
     if (!entity) {
@@ -207,11 +208,22 @@ export async function handleChanges(
     try {
       const input = toRecordInput(entity, change);
       if (input) {
-        await outbox.enqueue(input);
+        inputs.push(input);
       }
     } catch (err) {
       logger.log('repo: failed to queue change', change, err);
     }
+  }
+  if (inputs.length === 0) {
+    return;
+  }
+  // One read-modify-write for the whole batch (see Outbox.enqueueMany). The
+  // batch is what a bulkPut of a tabverse's rows produces, and queueing those
+  // one at a time made a single save quadratic in the number of tabs.
+  try {
+    await outbox.enqueueMany(inputs);
+  } catch (err) {
+    logger.log('repo: failed to queue changes', err);
   }
 }
 

@@ -216,6 +216,29 @@ export async function querySavedTabSpaceById(
   return savedTabSpaces[0];
 }
 
+const TAB_ROW_FIELDS_NOT_COMPARED = ['updatedAt'];
+
+/**
+ * Whether a tab row being saved is the same record the database already has.
+ *
+ * `updatedAt` is left out: every save re-stamps it (`convertToSavedBase`), and
+ * the point of the comparison is to find the tabs whose *content* changed since
+ * the last save. Everything else is compared, so a lost field (a `put` that
+ * dropped one) still counts as a change and gets written back.
+ */
+function isSameSavedTab(
+  stored: TabSavePayload | undefined,
+  next: TabSavePayload,
+): boolean {
+  if (!stored) {
+    return false;
+  }
+  return isEqual(
+    omit(stored, TAB_ROW_FIELDS_NOT_COMPARED),
+    omit(next, TAB_ROW_FIELDS_NOT_COMPARED),
+  );
+}
+
 export async function saveTabSpace(targetTabSpace: TabSpace): Promise<number> {
   const isCurrentTabSpace = targetTabSpace.id === $tabSpace.getState().id;
   // What the store holds just before it is replaced below. The update inside the
@@ -247,8 +270,24 @@ export async function saveTabSpace(targetTabSpace: TabSpace): Promise<number> {
       }
       // every id is final from the moment a record is created, so a row that is
       // not in the database yet and one that is there both go in with put
+      //
+      // Only the rows whose content actually changed are written. A save stamps
+      // every tab with a new `updatedAt` (`convertToSavedBase`), so writing the
+      // whole set makes every save look like an edit of every tab - the change
+      // feed queues all of them, the outbox rewrites itself once per row, and
+      // the next sync pushes the whole tabverse to the server, just because one
+      // tab was opened in a window of a hundred. Comparing against what is
+      // stored keeps a tab event at O(1) rows written whatever the window holds.
+      const storedRows = await db
+        .table<TabSavePayload>(TAB_DB_TABLE_NAME)
+        .bulkGet(tabSavePayloads.map((row) => row.id));
+      const changedRows = tabSavePayloads.filter(
+        (row, index) => !isSameSavedTab(storedRows[index], row),
+      );
       await db.table(TABSPACE_DB_TABLE_NAME).put(tabSpaceSavePayload);
-      await db.table(TAB_DB_TABLE_NAME).bulkPut(tabSavePayloads);
+      if (changedRows.length > 0) {
+        await db.table(TAB_DB_TABLE_NAME).bulkPut(changedRows);
+      }
       return updatedTabSpace;
     },
   );

@@ -196,7 +196,11 @@ export async function applyServerRecords(
         continue;
       }
       const local: any = await db.table(table).get(record.id);
-      if (local && rowUpdatedAt(local) > record.updated_at) {
+      // `>=` rather than `>`: an equal timestamp is the *same* version. That is
+      // exactly what a pulled echo of our own push looks like, and rewriting
+      // those rows would cost one put per record per sync for no change - and
+      // wake every open page through the change feed for it.
+      if (local && rowUpdatedAt(local) >= record.updated_at) {
         result.skipped += 1;
         continue;
       }

@@ -130,6 +130,13 @@ interface ITabCardProps {
   isWhitelisted?: boolean;
   /** Present only for live tabs; toggles the never-suspend list. */
   onToggleWhitelist?: (tab: Tab) => void;
+  /**
+   * Asks the owner for this tab's thumbnail, on the way into the hover
+   * preview. The cache is a bounded window (`TabPreviewCache`), so a picture
+   * that is not in memory any more is read from the preview table when the row
+   * is about to show it - not at page load, for every tab at once.
+   */
+  onNeedPreview?: (chromeTabId: number) => void;
   /** Extra controls for a live tab's action row (e.g. summarize). */
   actions?: React.ReactNode;
   /** Which field the current filter matched, for a small badge. */
@@ -408,6 +415,14 @@ export function TabCard(props: ITabCardProps) {
       enforceFocus={false}
       fill={true}
       portalClassName={classes.tabCardPopover}
+      // the thumbnail is fetched on the way in, so opening the preview costs
+      // one row read at most and the picture is usually there by the time the
+      // 800ms hover delay has passed
+      targetProps={{
+        onMouseEnter: () => props.onNeedPreview?.(props.tab.chromeTabId),
+        onFocus: () => props.onNeedPreview?.(props.tab.chromeTabId),
+        onTouchStart: () => props.onNeedPreview?.(props.tab.chromeTabId),
+      }}
     >
       {card}
     </Popover>

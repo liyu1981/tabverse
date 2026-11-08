@@ -1,5 +1,6 @@
 import {
   createSyncRuntime,
+  isRealtimeRevNews,
   startBackgroundSync,
   stopBackgroundSyncForTest,
   uploadAllLocalRecords,
@@ -311,4 +312,19 @@ test('outbox survives a network failure during flush', async () => {
   // the queued change is still there, nothing was lost
   expect(await outbox.size()).toBe(1);
   runtime.stop();
+});
+
+/**
+ * The server tells the writer about its own write (`server/internal/hub`:
+ * "including the writer; clients dedupe by rev"). Without the dedupe every push
+ * scheduled another sync one debounce later, which pulled the rows we had just
+ * written - a sync per tab event while a window is being rearranged.
+ */
+test('a realtime frame at a revision we already have is our own echo', () => {
+  expect(isRealtimeRevNews({ rev: 7 }, 7)).toBe(false);
+  expect(isRealtimeRevNews({ rev: 6 }, 7)).toBe(false);
+  expect(isRealtimeRevNews({ rev: 8 }, 7)).toBe(true);
+  // a server that does not say cannot be assumed to be echoing
+  expect(isRealtimeRevNews({}, 7)).toBe(true);
+  expect(isRealtimeRevNews({ rev: 'x' }, 7)).toBe(true);
 });

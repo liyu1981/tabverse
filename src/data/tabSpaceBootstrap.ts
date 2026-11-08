@@ -2,12 +2,10 @@ import { scanCurrentTabs, startMonitorTabChanges } from './tabSpace/chromeTab';
 import { startSplitViewRescan } from './tabSpace/splitView';
 import { startMonitorSuspendWhitelist } from './tabSpace/suspendWhitelistMonitor';
 
-import { loadPreviews } from './tabSpace/tabPreviewStore';
 import { monitorDbChanges, saveCurrentTabSpace } from './tabSpace/util';
 import { startMonitorChromeMessage } from '../message/chromeMessage';
-import { $tabSpace, tabSpaceStoreApi } from './tabSpace/store';
+import { tabSpaceStoreApi } from './tabSpace/store';
 import { startMonitorOpenTabSpaces } from './tabSpace/openWindowStore';
-import { logger } from '../global';
 
 /**
  * @param tabSpaceId the tabverse id from the tab's url (`tvid`). It is minted
@@ -31,7 +29,6 @@ export async function tabSpaceBootstrap(
   await saveCurrentTabSpace();
 
   await scanCurrentTabs();
-  await restoreTabPreviews();
   startMonitorTabChanges();
   // Keep the worker's suspension whitelist in step with this window: the
   // durable list is our tab ids, but the worker acts on chrome tab ids, and
@@ -52,28 +49,14 @@ export async function tabSpaceBootstrap(
 }
 
 /**
- * Puts the stored thumbnails back into the in-memory cache.
+ * Thumbnails are no longer hydrated here.
  *
- * It runs on bootstrap, which is the only moment the full set of live tabs is
- * known - but that is a *restore*, not a reap. Dropping what has no tab is the
- * worker's job now (data/tabSpace/previewReaper): the sweep works on indexed
- * keys, and the manager page should not be doing that work at all before it has
- * drawn anything.
+ * Bootstrap used to read every live tab's stored preview before the page had
+ * drawn anything, into a cache with no limit: a window with many tabs
+ * materialised tens of megabytes of base64 at load time for pictures that only
+ * ever show on hover. The cache is bounded now (see `TabPreviewCache`), and a
+ * thumbnail is read when its hover preview opens instead
+ * (`tabPreviewStore.hydratePreview`), so bootstrap does nothing about previews
+ * at all. Dropping what has no tab is still the worker's job, and still not
+ * this page's (data/tabSpace/previewReaper).
  */
-async function restoreTabPreviews(): Promise<void> {
-  const tabSpace = $tabSpace.getState();
-  const liveChromeTabIds = tabSpace.tabs
-    .map((tab) => tab.chromeTabId)
-    .filter((id) => id >= 0)
-    .toArray();
-  if (liveChromeTabIds.length === 0) {
-    return;
-  }
-  const stored = await loadPreviews(liveChromeTabIds);
-  stored.forEach((preview, chromeTabId) => {
-    tabSpaceStoreApi.setPreview({ chromeTabId, preview });
-  });
-  if (stored.size > 0) {
-    logger.log(`restored ${stored.size} stored tab preview(s)`);
-  }
-}

@@ -53,6 +53,32 @@ export interface SyncRuntime {
 
 const DEBOUNCE_MS = 1500;
 
+/**
+ * Whether a `records_changed` frame is news this device still has to pull.
+ *
+ * The server tells *every* connection of the user, including the one that made
+ * the write (`server/internal/hub`: "clients dedupe by rev"). Without that
+ * dedupe every push we make comes straight back as an event and schedules a
+ * sync one debounce later - which pulls the rows we just wrote and, before
+ * `dbBridge` was taught otherwise, wrote them all again. With many tabs open
+ * that loop is a sync and a page-wide re-query every couple of seconds while
+ * the person is opening and closing tabs.
+ *
+ * A frame at or below the newest revision this device already has (its cursor,
+ * or the `server_rev` of the last push/pull) carries nothing new. A frame with
+ * no rev at all is taken at face value rather than dropped: a server that does
+ * not say cannot be assumed to be echoing.
+ */
+export function isRealtimeRevNews(
+  message: { rev?: unknown },
+  lastKnownRev: number,
+): boolean {
+  if (typeof message.rev !== 'number' || !Number.isFinite(message.rev)) {
+    return true;
+  }
+  return message.rev > lastKnownRev;
+}
+
 /** Builds the full runtime for a config; starts the realtime connection. */
 export function createSyncRuntime(
   config: SyncConfig,
@@ -92,7 +118,30 @@ export function createSyncRuntime(
   // the engine's own "already syncing" guard. The activity wrapper is what
   // makes the open pages spin their sync icon (see syncActivity.ts).
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-  const syncNow = () => withSyncActivity(() => engine.syncOnce());
+  // The newest revision this device has seen: the cursor at start, then the
+  // `server_rev` of every push and pull. What makes our own write's echo not
+  // news (see `isRealtimeRevNews`).
+  let lastKnownRev = -1;
+  void stateStore
+    .get()
+    .then((state) => {
+      lastKnownRev = Math.max(lastKnownRev, state.last_rev);
+    })
+    .catch(() => undefined);
+  const rememberRev = (outcome: SyncOutcome): SyncOutcome => {
+    if (
+      typeof outcome.serverRev === 'number' &&
+      outcome.serverRev > lastKnownRev
+    ) {
+      lastKnownRev = outcome.serverRev;
+    }
+    if (typeof outcome.cursor === 'number' && outcome.cursor > lastKnownRev) {
+      lastKnownRev = outcome.cursor;
+    }
+    return outcome;
+  };
+  const syncNow = () =>
+    withSyncActivity(() => engine.syncOnce().then(rememberRev));
   const triggerSync = () => {
     if (debounceTimer !== null) {
       clearTimeout(debounceTimer);
@@ -108,9 +157,15 @@ export function createSyncRuntime(
     realtime = new RealtimeClient({
       url: api.streamUrl(),
       onMessage: (message) => {
-        if (message.type === 'records_changed') {
-          triggerSync();
+        if (message.type !== 'records_changed') {
+          return;
         }
+        if (!isRealtimeRevNews(message, lastKnownRev)) {
+          logger.log('repo: realtime event is our own echo, rev', message.rev);
+          return;
+        }
+        lastKnownRev = Math.max(lastKnownRev, message.rev ?? -1);
+        triggerSync();
       },
       onStatus: (status) => {
         logger.log('repo: realtime status:', status);

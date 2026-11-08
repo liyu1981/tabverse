@@ -23,6 +23,8 @@ import { db } from '../../storage/db';
 import { logger } from '../../global';
 import { currentPreviewSessionId } from './previewSession';
 import { TAB_PREVIEW_DB_TABLE_NAME } from './tabPreviewSchema';
+import { $tabSpacePreviewCache, tabSpaceStoreApi } from './store';
+import { getPreview } from './TabPreviewCache';
 
 export { TAB_PREVIEW_DB_TABLE_NAME };
 
@@ -76,38 +78,84 @@ export async function forgetPreview(chromeTabId: number): Promise<void> {
 }
 
 /**
- * Reads the stored thumbnails for the given tabs, for hydrating the in-memory
- * cache on load. Returns a map keyed by chrome tab id; unknown ids are simply
- * absent, and a missing or unreadable table yields an empty map rather than an
- * error (a profile mid-upgrade, or a test database without the table).
+ * The stored thumbnail of one tab, or null. One primary-key read, so the cost
+ * of asking is the one row and not the table.
+ *
+ * Only this browser run's row is answerable. A row from a previous run whose
+ * chrome tab id has since been recycled would otherwise be shown on a
+ * completely different page - and the reaper, which drops those rows, may not
+ * have woken up yet (see ./previewReaper). A missing or unreadable table is
+ * "no thumbnail", not an error (a profile mid-upgrade, a cleaned profile).
+ */
+export async function loadPreview(chromeTabId: number): Promise<string | null> {
+  if (chromeTabId <= 0) {
+    return null;
+  }
+  try {
+    const sessionId = await currentPreviewSessionId();
+    const row = await table().get(key(chromeTabId));
+    if (!row || row.sessionId !== sessionId) {
+      return null;
+    }
+    return typeof row.preview === 'string' ? row.preview : null;
+  } catch (err) {
+    logger.log('repo: could not read the stored tab preview', chromeTabId, err);
+    return null;
+  }
+}
+
+/**
+ * Reads the stored thumbnails for the given tabs. Returns a map keyed by chrome
+ * tab id; unknown ids are simply absent.
+ *
+ * One `loadPreview` per id: the page hydrates a thumbnail at a time now (on the
+ * way into a hover preview), so a batch read is not on any production path -
+ * this exists for callers that want a set, and it is deliberately not the old
+ * `where('sessionId').equals(...).and(...).toArray()`, which deserialised every
+ * row of the run (previews included) to answer for a handful of ids.
  */
 export async function loadPreviews(
   chromeTabIds: number[],
 ): Promise<Map<number, string>> {
   const out = new Map<number, string>();
-  if (chromeTabIds.length === 0) {
-    return out;
-  }
-  try {
-    // Only this browser run's rows. A row from a previous run whose chrome tab
-    // id has since been recycled would otherwise be shown on a completely
-    // different page - and the reaper, which drops those rows, may not have
-    // woken up yet (see ./previewReaper).
-    const sessionId = await currentPreviewSessionId();
-    const wanted = new Set(chromeTabIds.map(key));
-    const rows = await table()
-      .where('sessionId')
-      .equals(sessionId)
-      .and((row) => wanted.has(row.id))
-      .toArray()
-      .catch(() => [] as TabPreviewRow[]);
-    rows.forEach((row) => {
-      if (row && typeof row.preview === 'string') {
-        out.set(Number(row.id), row.preview);
-      }
-    });
-  } catch (err) {
-    logger.log('repo: could not read the stored tab previews', err);
+  for (const chromeTabId of chromeTabIds) {
+    const preview = await loadPreview(chromeTabId);
+    if (preview !== null) {
+      out.set(chromeTabId, preview);
+    }
   }
   return out;
+}
+
+/**
+ * Puts a tab's stored thumbnail back into the in-memory cache - how a picture
+ * that is no longer hot gets shown again.
+ *
+ * The page used to load every live tab's row at bootstrap, into an unbounded
+ * cache: with a window of many tabs that is tens of megabytes of base64 read
+ * and materialised before anything was drawn, for pictures that only ever show
+ * on hover. The cache is bounded now (see `TabPreviewCache`), so a thumbnail
+ * is read when somebody actually asks for it - on the way into the hover
+ * preview - and at most one row is deserialised for it.
+ *
+ * No cache entry is a miss, not a re-read on a loop: the caller is the hover
+ * path, so a second hover simply asks again. Never throws (the store read is
+ * best effort already).
+ */
+export async function hydratePreview(chromeTabId: number): Promise<void> {
+  if (chromeTabId <= 0) {
+    return;
+  }
+  if (getPreview(chromeTabId, $tabSpacePreviewCache.getState()) !== '') {
+    return;
+  }
+  const preview = await loadPreview(chromeTabId);
+  if (!preview) {
+    return;
+  }
+  if (getPreview(chromeTabId, $tabSpacePreviewCache.getState()) !== '') {
+    // a capture landed while the read was in flight; the newer picture wins
+    return;
+  }
+  tabSpaceStoreApi.setPreview({ chromeTabId, preview });
 }

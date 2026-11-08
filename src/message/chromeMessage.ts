@@ -122,14 +122,18 @@ function onMessage() {
   ) => {
     if (message.type && message.type in handlers) {
       handlers[message.type](message, sender, sendResponse);
-    } else {
-      logger.log(
-        'Do not know how to handle chrome runtime message:',
-        JSON.stringify(message),
-        sender.id,
-      );
+      // `true` tells Chrome a response is coming on this channel. Returning it
+      // for a message nobody handled leaves the channel (and the sender's
+      // callback) alive for as long as the page lives, so unknown types now
+      // say so and let it close.
+      return true;
     }
-    return true;
+    logger.log(
+      'Do not know how to handle chrome runtime message:',
+      JSON.stringify(message),
+      sender.id,
+    );
+    return false;
   };
 }
 

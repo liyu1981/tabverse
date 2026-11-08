@@ -297,3 +297,28 @@ test('an empty tabverse is not uploaded (opening and closing one is not a tabver
     'tabspace/ts-empty',
   ]);
 });
+
+/**
+ * The server broadcasts `records_changed` to the device that wrote too, so a
+ * pull can contain a row this device already has at exactly the same
+ * `updated_at`. Applying it is a no-op that used to be a write - one put per
+ * record per sync, each one waking every open page through the change feed.
+ */
+test('a pulled echo of our own write is skipped, not rewritten', async () => {
+  const row = note('n1', 'ts1', 5000, 'already here');
+  await db.table(NOTE).put(row);
+
+  const echoed: SyncRecord = {
+    entity: 'note',
+    id: 'n1',
+    updated_at: 5000,
+    deleted: false,
+    payload: JSON.stringify(row),
+    rev: 7,
+    server_at: 5000,
+  };
+
+  const result = await applyServerRecords([echoed]);
+
+  expect(result).toMatchObject({ applied: 0, skipped: 1, deleted: 0 });
+});

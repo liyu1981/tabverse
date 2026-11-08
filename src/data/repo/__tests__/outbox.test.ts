@@ -127,3 +127,61 @@ test('corrupted storage content is ignored instead of throwing', async () => {
   await storage.set({ tabverse_outbox_v1: [{ bogus: true }, null] });
   expect(await outbox.list()).toEqual([]);
 });
+
+/**
+ * A batch costs one read and one write of the stored queue. Saving a tabverse
+ * rewrites its tab rows, and queueing those one at a time meant the whole
+ * outbox array was cloned once per row - quadratic in the size of the window,
+ * for one tab event.
+ */
+test('a batch is collapsed and written once', async () => {
+  const area = new MemoryStorageArea();
+  let gets = 0;
+  let sets = 0;
+  const counting = {
+    get: async (keys: string[]) => {
+      gets += 1;
+      return area.get(keys);
+    },
+    set: async (items: Record<string, any>) => {
+      sets += 1;
+      return area.set(items);
+    },
+    remove: async (keys: string[]) => area.remove(keys),
+  };
+  const outbox = new Outbox(counting);
+
+  const outcomes = await outbox.enqueueMany([
+    input('tab', 't1', 100),
+    input('tab', 't2', 100),
+    input('tab', 't1', 200),
+    input('note', 'n1', 100),
+  ]);
+
+  expect(outcomes).toEqual(['queued', 'queued', 'replaced', 'queued']);
+  expect(gets).toBe(1);
+  expect(sets).toBe(1);
+  const entries = await outbox.list();
+  expect(entries).toHaveLength(3);
+  expect(entries.find((e) => e.id === 't1')!.updated_at).toBe(200);
+});
+
+test('a batch against existing entries keeps the newest and rewrites nothing when all are stale', async () => {
+  const area = new MemoryStorageArea();
+  const outbox = new Outbox(area);
+  await outbox.enqueue(input('tab', 't1', 200));
+
+  const outcomes = await outbox.enqueueMany([
+    input('tab', 't1', 100),
+    input('tab', 't2', 100),
+  ]);
+
+  expect(outcomes).toEqual(['ignored_stale', 'queued']);
+  expect((await outbox.list()).map((e) => e.id).sort()).toEqual(['t1', 't2']);
+});
+
+test('an empty batch touches nothing', async () => {
+  const outbox = new Outbox(new MemoryStorageArea());
+  expect(await outbox.enqueueMany([])).toEqual([]);
+  expect(await outbox.size()).toBe(0);
+});

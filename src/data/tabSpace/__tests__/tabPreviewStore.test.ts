@@ -6,8 +6,12 @@
  */
 import { db } from '../../../storage/db';
 import { resetTestDb } from '../../../dev/dbImplTest';
+import { $tabSpacePreviewCache } from '../store';
+import { getPreview } from '../TabPreviewCache';
 import {
   forgetPreview,
+  hydratePreview,
+  loadPreview,
   loadPreviews,
   persistPreview,
   TAB_PREVIEW_DB_TABLE_NAME,
@@ -93,4 +97,30 @@ test('losing the whole table is a supported state', async () => {
 
 test('loading nothing is not an error', async () => {
   expect((await loadPreviews([])).size).toBe(0);
+});
+
+test('one row can be read on its own, for a hover that found the cache empty', async () => {
+  await persistPreview(10, preview(1));
+  await persistPreview(20, preview(2));
+
+  expect(await loadPreview(10)).toBe(preview(1));
+  expect(await loadPreview(30)).toBeNull();
+  // a saved tab, or a tab that is gone: there is nothing to read
+  expect(await loadPreview(-1)).toBeNull();
+});
+
+test('hydrating puts a stored picture back into the in-memory cache', async () => {
+  await persistPreview(10, preview(1));
+
+  await hydratePreview(10);
+
+  expect(getPreview(10, $tabSpacePreviewCache.getState())).toBe(preview(1));
+});
+
+test('hydrating a tab with no stored row leaves the cache alone', async () => {
+  await hydratePreview(999);
+  expect(getPreview(999, $tabSpacePreviewCache.getState())).toBe('');
+  // and an impossible id is not even asked for
+  await hydratePreview(-1);
+  expect(getPreview(-1, $tabSpacePreviewCache.getState())).toBe('');
 });

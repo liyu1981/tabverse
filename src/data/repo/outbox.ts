@@ -144,30 +144,61 @@ export class Outbox {
    * (`replaced`) or appended (`queued`).
    */
   enqueue(input: RecordInput): Promise<EnqueueOutcome> {
+    return this.enqueueMany([input]).then((outcomes) => outcomes[0]);
+  }
+
+  /**
+   * Queues a batch of local changes with **one** read-modify-write of the
+   * stored queue.
+   *
+   * One write per record was the shape of a real problem: saving a tabverse
+   * rewrites every tab row, the change feed reports one write per row, and a
+   * hundred tabs then meant a hundred `chrome.storage.local` gets (each a
+   * structured clone of the whole array) and a hundred sets. That is quadratic
+   * in the size of the tabverse for a single tab event. Collapsing per record
+   * still happens, just inside one pass.
+   */
+  enqueueMany(inputs: RecordInput[]): Promise<EnqueueOutcome[]> {
+    if (inputs.length === 0) {
+      return Promise.resolve([]);
+    }
     return this.serial(async () => {
       const entries = await this.read();
-      const idx = entries.findIndex(
-        (e) => e.entity === input.entity && e.id === input.id,
-      );
-      if (idx >= 0 && entries[idx].updated_at >= input.updated_at) {
-        return 'ignored_stale';
+      const indexByKey = new Map<string, number>();
+      entries.forEach((e, index) => {
+        indexByKey.set(`${e.entity}/${e.id}`, index);
+      });
+      const outcomes: EnqueueOutcome[] = [];
+      let changed = false;
+      for (const input of inputs) {
+        const k = `${input.entity}/${input.id}`;
+        const idx = indexByKey.get(k);
+        if (idx !== undefined && entries[idx].updated_at >= input.updated_at) {
+          outcomes.push('ignored_stale');
+          continue;
+        }
+        const entry: OutboxEntry = {
+          entity: input.entity,
+          id: input.id,
+          updated_at: input.updated_at,
+          deleted: !!input.deleted,
+          payload: input.payload,
+          attempts: 0,
+        };
+        if (idx !== undefined) {
+          entries[idx] = entry;
+          outcomes.push('replaced');
+        } else {
+          indexByKey.set(k, entries.length);
+          entries.push(entry);
+          outcomes.push('queued');
+        }
+        changed = true;
       }
-      const entry: OutboxEntry = {
-        entity: input.entity,
-        id: input.id,
-        updated_at: input.updated_at,
-        deleted: !!input.deleted,
-        payload: input.payload,
-        attempts: 0,
-      };
-      if (idx >= 0) {
-        entries[idx] = entry;
+      if (changed) {
         await this.write(entries);
-        return 'replaced';
       }
-      entries.push(entry);
-      await this.write(entries);
-      return 'queued';
+      return outcomes;
     });
   }
 
