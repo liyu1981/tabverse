@@ -7,6 +7,7 @@ import {
   historySiteOf,
   isHistorySearchActive,
   matchHistoryEntries,
+  mergeHistoryByUrl,
 } from '../historyFilter';
 import type { ClosedTab } from '../ClosedTab';
 
@@ -274,4 +275,55 @@ test('a row is in exactly one group, and it is the one its url names', () => {
   expect([...bySite.keys()].sort()).toEqual(['a.com', 'b.com']);
   expect(titlesOf(bySite.get('a.com'))).toEqual(['a', 'c']);
   expect(bySite.get('b.com').length).toBe(1);
+});
+
+/**
+ * The list is "pages you closed", not "rows in a table": a page closed on two
+ * devices arrives as two rows (different ids, same url), and deleting one row
+ * then left the page on screen. These are the rules of the fold.
+ */
+test('two rows for one page are one entry, where the newer one was', () => {
+  const entries = [
+    closed(1, 'github', 'https://github.com/a', at(9, 6, 11)),
+    closed(2, 'news', 'https://news.example.com', at(9, 6, 10)),
+    closed(3, 'github again', 'https://github.com/a', at(9, 6, 9)),
+  ];
+  entries[2].timesClosed = 4;
+
+  const merged = mergeHistoryByUrl(entries);
+
+  expect(merged.map((entry) => entry.url)).toEqual([
+    'https://github.com/a',
+    'https://news.example.com',
+  ]);
+  // the later close time, and the larger count (never a sum: a copy can be the
+  // same close re-synced)
+  expect(merged[0].closedAt).toEqual(at(9, 6, 11));
+  expect(merged[0].timesClosed).toEqual(4);
+  // the surviving row is the first one's identity, so its click handler and
+  // key stay the same
+  expect(merged[0].id).toEqual('c1');
+});
+
+test('a row with no url is never merged into another', () => {
+  const entries = [
+    { ...closed(1, 'one', ''), id: 'a' },
+    { ...closed(2, 'two', ''), id: 'b' },
+  ];
+
+  expect(mergeHistoryByUrl(entries).map((entry) => (entry as any).id)).toEqual([
+    'a',
+    'b',
+  ]);
+});
+
+test('different pages are left alone, in their order', () => {
+  const entries = [
+    closed(1, 'one', 'https://one.example.com'),
+    closed(2, 'two', 'https://two.example.com'),
+  ];
+  expect(mergeHistoryByUrl(entries).map((entry) => entry.url)).toEqual([
+    'https://one.example.com',
+    'https://two.example.com',
+  ]);
 });

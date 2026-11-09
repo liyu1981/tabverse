@@ -9,6 +9,7 @@ import {
   clearClosedTabs,
   newEmptyAllClosedTab,
   removeClosedTab,
+  removeClosedTabsByUrl,
   updateClosedTab,
   updateTabSpaceId,
 } from './AllClosedTab';
@@ -26,6 +27,8 @@ const allClosedTabApi = createApi($allClosedTab, {
     { tid, changes }: { tid: string; changes: Partial<ClosedTab> },
   ) => updateClosedTab(tid, changes, last),
   removeClosedTab: (last, tid: string) => removeClosedTab(tid, last),
+  removeClosedTabsByUrl: (last, url: string) =>
+    removeClosedTabsByUrl(url, last),
   clearClosedTabs: (last) => clearClosedTabs(last),
 });
 

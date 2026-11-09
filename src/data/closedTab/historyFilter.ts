@@ -179,3 +179,58 @@ export function groupHistoryBySite<T extends HistorySearchable>(
   }
   return groups;
 }
+
+/** The fields a merge of two rows for the same page has to reconcile. */
+export interface HistoryCopy extends HistorySearchable {
+  url: string;
+  closedAt: number;
+  timesClosed: number;
+}
+
+/**
+ * One entry per page, for the list on screen.
+ *
+ * The model is one row per url (`ClosedTab`), and this is where that is kept:
+ * a second row for the same page is not a second page somebody closed twice
+ * (that is `timesClosed`), it is the same page recorded twice - and with sync
+ * it is what happens when two devices each closed it, because rows arrive by
+ * id and nothing on the wire merges them.
+ *
+ * The copies are folded into the first one's place, so the list keeps its
+ * newest-first order: `closedAt` is the later of the two (when the page was
+ * last closed) and `timesClosed` the larger count, never the sum - a copied row
+ * may be a re-sync of the same close, and an inflated "closed 5 times" is worse
+ * than a conservative one.
+ *
+ * A row with no url is left alone: it cannot be "the same page" as another, and
+ * blank urls would otherwise all collapse into one.
+ */
+export function mergeHistoryByUrl<T extends HistoryCopy>(
+  entries: readonly T[],
+): T[] {
+  const byUrl = new Map<string, T>();
+  const out: T[] = [];
+  for (const entry of entries) {
+    if (!entry.url) {
+      out.push(entry);
+      continue;
+    }
+    const seen = byUrl.get(entry.url);
+    if (!seen) {
+      byUrl.set(entry.url, entry);
+      out.push(entry);
+      continue;
+    }
+    const merged = {
+      ...seen,
+      closedAt: Math.max(seen.closedAt, entry.closedAt),
+      timesClosed: Math.max(seen.timesClosed ?? 0, entry.timesClosed ?? 0),
+    } as T;
+    byUrl.set(entry.url, merged);
+    const at = out.indexOf(seen);
+    if (at >= 0) {
+      out[at] = merged;
+    }
+  }
+  return out;
+}

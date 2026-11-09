@@ -19,6 +19,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import {
   groupHistoryBySite,
   matchHistoryEntries,
+  mergeHistoryByUrl,
 } from '../../data/closedTab/historyFilter';
 import {
   newEmptyBookmark,
@@ -226,15 +227,19 @@ export function HistoryView() {
     saveCurrentBookmarks();
     // it lives in the Bookmark tool now, so it does not need to stay in the
     // history as well
-    deleteClosedTab(closedTab.id);
+    deleteClosedTab(closedTab);
     toaster.show({ message: t('historySavedToast') });
   };
 
   const remove = (closedTab: ClosedTab) => {
-    deleteClosedTab(closedTab.id);
+    deleteClosedTab(closedTab);
   };
 
-  const entries = allClosedTab.closedTabs.toArray();
+  // One row per page: the same url can be stored twice when another device
+  // closed it too, and the list is "pages you closed", not "rows in a table"
+  // (see `mergeHistoryByUrl`). Deleting a row forgets the page, i.e. all of
+  // its copies.
+  const entries = mergeHistoryByUrl(allClosedTab.closedTabs.toArray());
   // what the card draws is the box's answer and nothing else: the group switch
   // is a second way of drawing the same list, never a second list to keep in
   // step with the first
@@ -268,12 +273,12 @@ export function HistoryView() {
       <div className={classes.container}>
         <div className={classes.header}>
           <span>
-            {allClosedTab.closedTabs.size} closed tab
-            {allClosedTab.closedTabs.size === 1 ? '' : 's'}
-            {allClosedTab.closedTabs.size > 0
-              ? `, last one ${fromNow(
-                  allClosedTab.closedTabs.first().closedAt,
-                )}`
+            {/* the merged list's count: a page another device also closed is
+                one entry here, however many rows carry it */}
+            {entries.length} closed tab
+            {entries.length === 1 ? '' : 's'}
+            {entries.length > 0
+              ? `, last one ${fromNow(entries[0].closedAt)}`
               : ''}
           </span>
           <span className={classes.headerActions}>
@@ -282,10 +287,10 @@ export function HistoryView() {
               title={t('historyReopenLast')}
               minimal={true}
               small={true}
-              disabled={allClosedTab.closedTabs.size <= 0}
+              disabled={entries.length <= 0}
               onClick={() => restore(allClosedTab.closedTabs.first())}
             />
-            {allClosedTab.closedTabs.size > 0 ? (
+            {entries.length > 0 ? (
               <Popover
                 content={confirmClearAll}
                 position={Position.BOTTOM_RIGHT}
@@ -301,7 +306,7 @@ export function HistoryView() {
             ) : null}
           </span>
         </div>
-        {allClosedTab.closedTabs.size <= 0 ? (
+        {entries.length <= 0 ? (
           <div className={classes.noticeContainer}>
             No tab closed in this tabverse yet. Every tab you close shows up
             here, ready to be reopened or saved as a bookmark.

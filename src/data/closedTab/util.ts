@@ -11,6 +11,8 @@ import {
 import { TabSpaceDBMsg, subscribePubSubMessage } from '../../message/message';
 import { TabCore } from '../tabSpace/Tab';
 import { db } from '../../storage/db';
+import { isEqual, omit } from 'lodash';
+
 import { debounce, logger } from '../../global';
 import { $tabSpace } from '../tabSpace/store';
 import { DEFAULT_SAVE_DEBOUNCE } from '../../storage/StorageOverview';
@@ -46,18 +48,40 @@ export function startMonitorDbChanges() {
       if (!changedTables.includes(CLOSED_TAB_DB_TABLE_NAME)) {
         return;
       }
-      if (localChangePending) {
+      if (hasUnsavedLocalEdits()) {
         return;
       }
       logger.log('closed tab table changed, reloading the history');
-      void loadClosedTabsByTabSpaceId($tabSpace.getState().id);
+      void loadClosedTabsByTabSpaceId($tabSpace.getState().id, {
+        guardLocalEdits: true,
+      });
     },
   );
 }
 
-/** Set while the store holds a change the database does not have yet. */
-let localChangePending = false;
+/**
+ * How many local edits the store holds, and how many of them the database is
+ * known to have.
+ *
+ * These replaced a `localChangePending` boolean, and the reason matters: a
+ * delete taken while a save was already in flight used to be undone by that
+ * save, which ended by replacing the store with the snapshot it had written
+ * (see `saveAllClosedTabsImpl`). A counter says *which* state is newer, so the
+ * write of an older one never wins, and "the database does not have this yet"
+ * stays true until the write that includes it lands - not until the first write
+ * to finish.
+ */
+let localMutation = 0;
+let savedMutation = 0;
 let dbChangesMonitorStarted = false;
+
+function noteLocalEdit(): void {
+  localMutation += 1;
+}
+
+function hasUnsavedLocalEdits(): boolean {
+  return localMutation > savedMutation;
+}
 
 /** Reads the newest rows of one tabverse, capped at the history limit. */
 export async function queryClosedTabs(
@@ -71,13 +95,48 @@ export async function queryClosedTabs(
   return allClosedTabFromRows(tabSpaceId, rows).closedTabs.toArray();
 }
 
-export async function loadClosedTabsByTabSpaceId(tabSpaceId: string) {
+/**
+ * Replaces the store with what the database holds for this tabverse.
+ *
+ * `guardLocalEdits` is for the worker's "the table changed" notice: the read
+ * takes a moment, and an edit the person made while it was in flight is newer
+ * than the rows it comes back with. Dropping the read there is what stops a
+ * just-deleted row from re-appearing under the cursor; the next notice (or the
+ * next panel open) brings the table back in step.
+ *
+ * The other callers - opening the panel, the tabverse switch - want the table
+ * as it is, and an edit landing during those is covered by the store side (the
+ * save's own snapshot guard).
+ */
+export async function loadClosedTabsByTabSpaceId(
+  tabSpaceId: string,
+  options: { guardLocalEdits?: boolean } = {},
+) {
+  const startedAt = localMutation;
   const rows = await queryClosedTabs(tabSpaceId);
+  if (options.guardLocalEdits === true && localMutation !== startedAt) {
+    logger.log(
+      'closed tab history changed while it was being read, dropping the read',
+    );
+    return;
+  }
   closedTabStoreApi.update(allClosedTabFromRows(tabSpaceId, rows));
+}
+
+/** Everything a stored row means except when it was written. */
+function isSameSavedClosedTab(
+  stored: ClosedTab | undefined,
+  next: ClosedTab,
+): boolean {
+  if (!stored) {
+    return false;
+  }
+  return isEqual(omit(stored, 'updatedAt'), omit(next, 'updatedAt'));
 }
 
 async function saveAllClosedTabsImpl(): Promise<number> {
   const before = $allClosedTab.getState();
+  const startedAt = localMutation;
   const { allClosedTab, closedTabSavePayloads } =
     convertAndGetClosedTabSavePayloads(before);
   const keptIds = new Set(allClosedTab.closedTabs.map((t) => t.id).toArray());
@@ -94,7 +153,21 @@ async function saveAllClosedTabsImpl(): Promise<number> {
     'rw',
     [db.table(CLOSED_TAB_DB_TABLE_NAME)],
     async (_tx) => {
-      await db.table(CLOSED_TAB_DB_TABLE_NAME).bulkPut(closedTabSavePayloads);
+      // Only the rows whose content changed are written. A save re-stamps every
+      // row it holds (`convertToSavedClosedTab`), so writing the whole list
+      // makes each save look like an edit of all of them: up to 999 rows queued
+      // for the server (several hundred kilobytes) because one page was
+      // forgotten. That is also why the History panel used to be heavy after a
+      // few deletes: each click paid for the whole history, on both ends.
+      const storedRows = await db
+        .table<ClosedTab>(CLOSED_TAB_DB_TABLE_NAME)
+        .bulkGet(closedTabSavePayloads.map((row) => row.id));
+      const changedRows = closedTabSavePayloads.filter(
+        (row, index) => !isSameSavedClosedTab(storedRows[index], row),
+      );
+      if (changedRows.length > 0) {
+        await db.table(CLOSED_TAB_DB_TABLE_NAME).bulkPut(changedRows);
+      }
       // rows the store no longer holds: deleted by the user, cleared in bulk,
       // or pushed off the end by the cap. Deleting them (rather than leaving
       // them behind) is what turns into a tombstone on the server.
@@ -112,7 +185,19 @@ async function saveAllClosedTabsImpl(): Promise<number> {
       return Date.now();
     },
   );
-  closedTabStoreApi.update(allClosedTab);
+  if (localMutation === startedAt) {
+    // The store has not moved since the snapshot: the saved copy is the truth.
+    closedTabStoreApi.update(allClosedTab);
+  } else {
+    // An edit landed while this write was in flight. Its own save is already
+    // scheduled, and replacing the store with the older snapshot here is what
+    // resurrected a row the person had just deleted (the row was written back
+    // on the next save, and pushed to the server, so it stayed).
+    logger.log(
+      'closed tab history changed while it was saved, keeping the newer store',
+    );
+  }
+  savedMutation = Math.max(savedMutation, startedAt);
   closedTabStoreApi.updateLastSavedTime(updatedAt);
   return updatedAt;
 }
@@ -135,7 +220,6 @@ const saveCurrentClosedTabsImpl = async () => {
     const savedTime = await saveAllClosedTabs();
     closedTabStoreApi.updateLastSavedTime(savedTime);
   } finally {
-    localChangePending = false;
     closedTabStoreApi.markInSaving(false);
   }
 };
@@ -222,14 +306,31 @@ function addClosedTabToStore(
 ) {
   const closedTab = newClosedTabFromTab(tab, tabSpaceId, closedAt);
   logger.log('closed tab recorded into history:', closedTab.url);
-  localChangePending = true;
+  noteLocalEdit();
   closedTabStoreApi.addClosedTab(closedTab);
   void saveCurrentClosedTabs();
 }
 
-export function deleteClosedTab(tid: string) {
-  localChangePending = true;
-  closedTabStoreApi.removeClosedTab(tid);
+/**
+ * Forgets one page from the history - **all** of its rows.
+ *
+ * The HISTORY is one row per url (`ClosedTab`: "closing the same page again
+ * bumps `closedAt` instead of adding a row"), and this is the delete for that
+ * model. It removes by url, not by id, because a second copy of the same page
+ * can exist: another device closed it too, and its row arrives through sync
+ * with its own id. Deleting by id left that copy on screen - the row looked
+ * undeleted, and clicking again happened to work - so "forget it" forgets the
+ * page.
+ *
+ * A row with no url (only old rows have one) is deleted by id.
+ */
+export function deleteClosedTab(closedTab: Pick<ClosedTab, 'id' | 'url'>) {
+  noteLocalEdit();
+  if (closedTab.url !== '') {
+    closedTabStoreApi.removeClosedTabsByUrl(closedTab.url);
+  } else {
+    closedTabStoreApi.removeClosedTab(closedTab.id);
+  }
   void saveCurrentClosedTabs();
 }
 
@@ -241,7 +342,7 @@ export function clearAllClosedTabs() {
   if (droppedIds.length <= 0) {
     return;
   }
-  localChangePending = true;
+  noteLocalEdit();
   closedTabStoreApi.clearClosedTabs();
   void saveCurrentClosedTabs();
   logger.log('closed tab history cleared:', droppedIds.length, 'entries');

@@ -1,4 +1,9 @@
-import { MemoryStorageArea, Outbox } from '../outbox';
+import {
+  LockManagerLike,
+  MemoryStorageArea,
+  Outbox,
+  StorageAreaLike,
+} from '../outbox';
 import { RecordResult } from '../types';
 
 function input(entity: any, id: string, updated_at: number, payload = '{}') {
@@ -184,4 +189,76 @@ test('an empty batch touches nothing', async () => {
   const outbox = new Outbox(new MemoryStorageArea());
   expect(await outbox.enqueueMany([])).toEqual([]);
   expect(await outbox.size()).toBe(0);
+});
+
+/** A minimal Web Locks stand-in: one queue, FIFO, like the real one. */
+class FakeLocks implements LockManagerLike {
+  private tail: Promise<unknown> = Promise.resolve();
+
+  request<T>(_name: string, callback: () => Promise<T>): Promise<T> {
+    const next = this.tail.then(callback, callback);
+    this.tail = next.catch(() => undefined);
+    return next;
+  }
+}
+
+/**
+ * The queue is one chrome.storage key with two writers: a manager page (local
+ * edits) and the service worker (flush acks). `serial()` only orders one
+ * instance, so a page enqueue and a worker ack could both read the old array
+ * and both write their own version - losing one of them, very often a
+ * tombstone, i.e. a delete the server never heard about (the row then came back
+ * on the next pull). The Web Locks lock makes the read-modify-write one at a
+ * time across contexts; this pins that the two instances share it.
+ */
+test('two contexts never have a read-modify-write in flight at once', async () => {
+  const base = new MemoryStorageArea();
+  let inFlight = 0;
+  let maxInFlight = 0;
+  const tick = () => new Promise((resolve) => setTimeout(resolve, 5));
+  const enter = () => {
+    inFlight += 1;
+    maxInFlight = Math.max(maxInFlight, inFlight);
+  };
+  const leave = () => {
+    inFlight -= 1;
+  };
+  const storage: StorageAreaLike = {
+    async get(keys) {
+      enter();
+      try {
+        await tick();
+        return await base.get(keys);
+      } finally {
+        leave();
+      }
+    },
+    async set(items) {
+      enter();
+      try {
+        await tick();
+        await base.set(items);
+      } finally {
+        leave();
+      }
+    },
+    remove: (keys) => base.remove(keys),
+  };
+  const locks = new FakeLocks();
+  const page = new Outbox(storage, undefined, locks);
+  const worker = new Outbox(storage, undefined, locks);
+
+  await page.enqueue(input('closedtab', 'kept', 100));
+  await Promise.all([
+    // the worker acknowledging a flush
+    worker.applyResults([
+      { entity: 'closedtab', id: 'acked', status: 'ok', rev: 1, updated_at: 1 },
+    ]),
+    // the page queueing a delete at the same time
+    page.enqueue(input('closedtab', 'tombstone', 200)),
+  ]);
+
+  expect(maxInFlight).toBe(1);
+  const ids = (await page.list()).map((entry) => entry.id).sort();
+  expect(ids).toEqual(['kept', 'tombstone']);
 });

@@ -5,6 +5,7 @@ import {
   HISTORY_MAX_ENTRIES,
 } from '../ClosedTab';
 import { TabCore, TAB_DB_TABLE_NAME } from '../../tabSpace/Tab';
+import { mergeHistoryByUrl } from '../historyFilter';
 import {
   clearAllClosedTabs,
   deleteClosedTab,
@@ -206,7 +207,7 @@ test('delete and clear remove the rows from the database too', async () => {
   expect((await rowsInDb()).length).toEqual(2);
 
   const [first] = $allClosedTab.getState().closedTabs.toArray();
-  deleteClosedTab(first.id);
+  deleteClosedTab(first);
   await saveAllClosedTabs();
   expect((await rowsInDb()).length).toEqual(1);
   expect($allClosedTab.getState().closedTabs.size).toEqual(1);
@@ -331,10 +332,150 @@ test('a store that has read the history does prune it', async () => {
 
   // newest first, so this is the row just recorded
   const [newest] = $allClosedTab.getState().closedTabs.toArray();
-  deleteClosedTab(newest.id);
+  deleteClosedTab(newest);
   await saveAllClosedTabs();
 
   expect((await queryClosedTabs(TABSPACE_ID)).map((row) => row.url)).toEqual([
     'https://www.one.com',
   ]);
+});
+
+/**
+ * Deleting a row is a local edit that must win over work already in flight.
+ *
+ * The History tool saves whenever a tab is closed, so a click can land while a
+ * save's store snapshot (or the worker's "SavedClosedTab changed" reload) is
+ * already on its way back. Both used to end by replacing the store wholesale
+ * with what they had read before the click, which put the deleted entry back -
+ * and the save that followed wrote it to the database and pushed it to the
+ * server again. Whether that happened depended on what was in flight, which is
+ * why the same click "worked" one time and not the next.
+ */
+async function seedThreeRows() {
+  await loadClosedTabsByTabSpaceId(TABSPACE_ID);
+  recordClosedTab(aTab('https://a.example.com'), 1000);
+  recordClosedTab(aTab('https://b.example.com'), 2000);
+  recordClosedTab(aTab('https://c.example.com'), 3000);
+  await saveAllClosedTabs();
+  return $allClosedTab.getState().closedTabs;
+}
+
+test('a delete that lands during a save is not undone by that save', async () => {
+  const seeded = await seedThreeRows();
+  const doomed = seeded.find((t) => t.url === 'https://b.example.com')!;
+
+  // the save takes its snapshot of the store now; the click lands after it
+  const saving = saveAllClosedTabs();
+  await Promise.resolve();
+  deleteClosedTab(doomed);
+  await saving;
+  // the click scheduled its own save; let it run
+  await saveAllClosedTabs();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+
+  expect(
+    $allClosedTab.getState().closedTabs.some((t) => t.id === doomed.id),
+  ).toBe(false);
+  expect((await rowsInDb()).some((row) => row.id === doomed.id)).toBe(false);
+});
+
+test('a reload that was already reading does not bring a deleted entry back', async () => {
+  const seeded = await seedThreeRows();
+  const doomed = seeded.find((t) => t.url === 'https://c.example.com')!;
+
+  // the worker said "SavedClosedTab changed", so the page re-read the table...
+  const reloading = loadClosedTabsByTabSpaceId(TABSPACE_ID, {
+    guardLocalEdits: true,
+  });
+  // ...and the person deleted a row before that read came back
+  deleteClosedTab(doomed);
+  await reloading;
+  await saveAllClosedTabs();
+
+  expect(
+    $allClosedTab.getState().closedTabs.some((t) => t.id === doomed.id),
+  ).toBe(false);
+  expect((await rowsInDb()).some((row) => row.id === doomed.id)).toBe(false);
+});
+
+/**
+ * One page, two rows.
+ *
+ * The model is one row per url (`ClosedTab`), and `recordClosedTab` keeps it by
+ * folding a repeated close into the existing row. Sync does not: when another
+ * device closed the same page, its row arrives with its own id, so the table -
+ * and the list built from it - can hold the page twice. Deleting one row then
+ * looked like a delete that did nothing, because the page was still on screen.
+ * "Forget it" forgets the page.
+ */
+test('forget a page removes every copy of it', async () => {
+  const twin = (id: string, closedAt: number) => ({
+    ...aTab('https://www.github.com'),
+    id,
+    closedAt,
+    timesClosed: 1,
+    tabSpaceId: TABSPACE_ID,
+    createdAt: closedAt,
+    updatedAt: closedAt,
+  });
+  // two devices closed the same page: two rows in the table, two ids, one url
+  await db
+    .table(CLOSED_TAB_DB_TABLE_NAME)
+    .bulkPut([
+      twin('from-this-device', 1000),
+      twin('from-the-other-one', 2000),
+    ]);
+  await loadClosedTabsByTabSpaceId(TABSPACE_ID);
+  expect($allClosedTab.getState().closedTabs.size).toEqual(2);
+
+  const clicked = $allClosedTab
+    .getState()
+    .closedTabs.find((t) => t.id === 'from-this-device')!;
+  deleteClosedTab(clicked);
+  await saveAllClosedTabs();
+
+  expect(
+    $allClosedTab.getState().closedTabs.some((t) => t.url === clicked.url),
+  ).toBe(false);
+  expect((await rowsInDb()).some((row) => row.url === clicked.url)).toBe(false);
+});
+
+test('the history of the window is one row per page, merged for the list', async () => {
+  const twin = (id: string, closedAt: number, timesClosed: number) => ({
+    ...aTab('https://www.github.com'),
+    id,
+    closedAt,
+    timesClosed,
+    tabSpaceId: TABSPACE_ID,
+    createdAt: closedAt,
+    updatedAt: closedAt,
+  });
+  await db.table(CLOSED_TAB_DB_TABLE_NAME).bulkPut([
+    twin('copy-one', 1000, 1),
+    twin('copy-two', 3000, 2),
+    {
+      ...aTab('https://www.example.com'),
+      id: 'another-page',
+      closedAt: 2000,
+      timesClosed: 1,
+      tabSpaceId: TABSPACE_ID,
+      createdAt: 2000,
+      updatedAt: 2000,
+    },
+  ]);
+  await loadClosedTabsByTabSpaceId(TABSPACE_ID);
+
+  // the table keeps both copies (they are two devices' rows) ...
+  expect((await rowsInDb()).length).toEqual(3);
+  // ... the list shows the page once, at the newest time, with the larger count
+  const merged = mergeHistoryByUrl(
+    $allClosedTab.getState().closedTabs.toArray(),
+  );
+  expect(merged.map((t) => t.url)).toEqual([
+    'https://www.github.com',
+    'https://www.example.com',
+  ]);
+  const github = merged.find((t) => t.url === 'https://www.github.com')!;
+  expect(github.closedAt).toEqual(3000);
+  expect(github.timesClosed).toEqual(2);
 });

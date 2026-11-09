@@ -28,6 +28,41 @@ export interface StorageAreaLike {
 
 const DEFAULT_OUTBOX_KEY = 'tabverse_outbox_v1';
 
+/**
+ * Cross-context mutual exclusion for the queue's read-modify-write cycles.
+ *
+ * `serial()` only orders the calls made by *one* `Outbox` instance. The queue
+ * itself is one `chrome.storage.local` key written by at least two: a manager
+ * page (every local edit) and the service worker (flush acks, `applyResults`).
+ * A page enqueue and a worker ack that overlap both read the old array and both
+ * write their own version of it, so one of the two is lost - and the one that
+ * got lost is often a tombstone, i.e. a delete the person made that the server
+ * never hears about (the row then comes back on the next pull).
+ *
+ * The Web Locks API is per origin, and an extension's pages and its service
+ * worker share the extension's origin, so one named lock is enough. It is
+ * injected (and optional) because the unit tests run in node, where there is
+ * no `navigator.locks`; without it every operation still works, it is only the
+ * cross-context guarantee that is absent.
+ */
+export interface LockManagerLike {
+  request<T>(name: string, callback: () => Promise<T>): Promise<T>;
+}
+
+function defaultLockManager(): LockManagerLike | null {
+  const locks = (globalThis as { navigator?: { locks?: unknown } }).navigator
+    ?.locks as
+    | { request?: (name: string, callback: () => Promise<unknown>) => unknown }
+    | undefined;
+  if (!locks || typeof locks.request !== 'function') {
+    return null;
+  }
+  return {
+    request: <T>(name: string, callback: () => Promise<T>) =>
+      locks.request!(name, callback) as Promise<T>,
+  };
+}
+
 /** chrome.storage.local (MV3 promise form) behind the injected interface. */
 export class ChromeStorageArea implements StorageAreaLike {
   get(keys: string[]): Promise<Record<string, any>> {
@@ -100,12 +135,21 @@ export type EnqueueOutcome = 'queued' | 'replaced' | 'ignored_stale';
 export class Outbox {
   private readonly storage: StorageAreaLike;
   private readonly key: string;
-  /** Serializes read-modify-write cycles so concurrent enqueues cannot lose data. */
+  /** Orders this instance's own read-modify-write cycles. */
   private chain: Promise<unknown> = Promise.resolve();
+  /** Orders them against the other contexts of the same profile, when present. */
+  private readonly locks: LockManagerLike | null;
+  private readonly lockName: string;
 
-  constructor(storage: StorageAreaLike, key: string = DEFAULT_OUTBOX_KEY) {
+  constructor(
+    storage: StorageAreaLike,
+    key: string = DEFAULT_OUTBOX_KEY,
+    locks: LockManagerLike | null = defaultLockManager(),
+  ) {
     this.storage = storage;
     this.key = key;
+    this.locks = locks;
+    this.lockName = `tabverse_outbox:${key}`;
   }
 
   private async read(): Promise<OutboxEntry[]> {
@@ -124,7 +168,13 @@ export class Outbox {
   }
 
   private serial<T>(fn: () => Promise<T>): Promise<T> {
-    const next = this.chain.then(fn, fn);
+    const run = (): Promise<T> => {
+      if (!this.locks) {
+        return fn();
+      }
+      return this.locks.request(this.lockName, fn);
+    };
+    const next = this.chain.then(run, run);
     // keep the chain alive even when fn rejects
     this.chain = next.catch(() => undefined);
     return next;

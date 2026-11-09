@@ -136,6 +136,28 @@ export function removeClosedTab(
   });
 }
 
+/**
+ * Removes every row for one url.
+ *
+ * The list is one row per url (see `ClosedTab`), but the same page can have a
+ * row per device that closed it - sync inserts them by id, and nothing on the
+ * wire merges them. "Forget this page" therefore has to forget *the page*, not
+ * one of its rows, or the copy left behind looks like a delete that did not
+ * happen.
+ */
+export function removeClosedTabsByUrl(
+  url: string,
+  target: AllClosedTab,
+): AllClosedTab {
+  if (url === '') {
+    return target;
+  }
+  return produce(target, (draft) => {
+    draft.closedTabs = draft.closedTabs.filter((t) => t.url !== url).toList();
+    draft.mayPrune = true;
+  });
+}
+
 export function clearClosedTabs(target: AllClosedTab): AllClosedTab {
   return produce(target, (draft) => {
     draft.closedTabs = List();
