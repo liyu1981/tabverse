@@ -66,7 +66,7 @@ second one writes an account.**
    invitation-code field only then (and never for the admin address, which is
    exempt so the first operator can always register). The field is required.
    Somebody with no code can **request an invitation** instead: `register` with
-   `request: true` creates a *pending* account (the `users.pending_at` flow), the
+   `request: true` creates a _pending_ account (the `users.pending_at` flow), the
    operator sees it in the console's request queue, and the requester's next
    sign-in shows the waiting notice. Approving that request mints the invitation
    and **discards the placeholder**, so the person still registers with the code

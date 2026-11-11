@@ -8,6 +8,7 @@
 
 Tabverse turns a window full of related tabs into a named workspace you can put
 down and pick up again. When a piece of work is done - or you just need a break
+
 - close the window without losing the thread.
 
 ## What it does

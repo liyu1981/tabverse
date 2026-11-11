@@ -1,6 +1,6 @@
 # ADR 0018: the console is a Vite app, built and embedded
 
-Status: accepted (2026-10). Decision 6's *fragment* and the page-at-`/` URL
+Status: accepted (2026-10). Decision 6's _fragment_ and the page-at-`/` URL
 space are superseded by [ADR 0023](0023-the-console-has-its-own-prefix.md): the
 same links, in the query, under `/console`.
 
@@ -69,7 +69,7 @@ component base.**
    Blueprint application: `Card`, `HTMLTable`, `Dialog`, `Toaster`, `Tag`,
    `Tabs`, `InputGroup`. Blueprint sets `body { font-family; color;
    line-height }` globally, which used to be the reason it could not be linked
-   into a page with its own chrome; after the rewrite the whole page *is* the
+   into a page with its own chrome; after the rewrite the whole page _is_ the
    Blueprint app, so that global is the intent rather than a collision. What
    survives from the hand written stylesheet is the product's own layer: the
    palette tokens (`server/ui/tokens.scss`, transcribed from
@@ -117,9 +117,9 @@ component base.**
    - Go tests over the embedded bundle: the shell exists, every file it
      references is embedded, hashed assets are served immutable, and the SPA
      fallback still serves the shell.
-   `console.test.mjs`'s hand built stub DOM and the selector cross-checks in
-   `webui_test.go` go away with the script they were reading: a bundler and
-   `tsc` are what catch a missing function, and they catch it earlier.
+     `console.test.mjs`'s hand built stub DOM and the selector cross-checks in
+     `webui_test.go` go away with the script they were reading: a bundler and
+     `tsc` are what catch a missing function, and they catch it earlier.
 
 9. **The console stays read-only over user data.** No view in the rewrite
    writes a record; the single write over user content is still the tabverse
@@ -142,7 +142,7 @@ component base.**
   spacing and control shapes take over from the hand written rules. That is
   the point of the rewrite, and it is the one thing in this ADR that cannot be
   verified by a test: the user looks at it.
-- The tabverse drawer is the one view whose *content* is prescribed by another
+- The tabverse drawer is the one view whose _content_ is prescribed by another
   screen (it shows what the extension's saved-tabverse view shows, minus the
   actions that would act on this browser). Its markup and styling are this
   project's own, and the parity with the extension is a visual review, not a

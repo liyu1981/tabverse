@@ -50,8 +50,8 @@ draft-js is archived and React-17-era; it was the last thing standing between
 the project and React 19.
 
 - Storage format for `note.data` becomes **HTML** (TipTap's document).
-  *Superseded by [ADR 0030](0030-note-content-is-markdown.md): the body is
-  Markdown now.*
+  _Superseded by [ADR 0030](0030-note-content-is-markdown.md): the body is
+  Markdown now._
 - `src/ui/notebook/draftLegacy.ts` converts legacy draft-js raw JSON on read;
   the next save persists HTML. Covered by unit tests (styles, headings,
   quotes, lists, code, links, HTML escaping).

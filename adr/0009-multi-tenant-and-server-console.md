@@ -9,8 +9,8 @@ Extends [ADR 0001](0001-server-authoritative-sync.md) (the sync protocol) and
 
 ## Context
 
-Two questions came up about the shipped server: *is it multi tenant?* and *is
-there any way to see what a user actually stored?*
+Two questions came up about the shipped server: _is it multi tenant?_ and _is
+there any way to see what a user actually stored?_
 
 The answers were "sort of" and "no".
 
@@ -32,9 +32,9 @@ delete the `tabversed` process's data by hand.
 
 **There was also an operational hole.** `TABVERSED_ADDR` defaults to
 `0.0.0.0` and ADR 0002's answer to "what if the network can reach the pairing
-endpoint" was *whoever pairs first owns the server*. That is a defensible
+endpoint" was _whoever pairs first owns the server_. That is a defensible
 default for a personal server on a trusted LAN, and a bad one for anything
-else - and there was no way to provision the *second* user of a shared server
+else - and there was no way to provision the _second_ user of a shared server
 without the database surgery above.
 
 ## Decision
@@ -63,7 +63,7 @@ without the database surgery above.
    no write path for records, and this is not an oversight to fill in later:
    a record written from here would carry no `device_id` and no trustworthy
    client clock, so the next honest sync from the real device would win the
-   LWW comparison. The admin surface changes *operator* state instead -
+   LWW comparison. The admin surface changes _operator_ state instead -
    accounts, devices, tokens, pairing codes.
 
 5. **Ordering stays the client's.** The console renders a tabverse the way the
@@ -86,7 +86,7 @@ without the database surgery above.
   pairing code, watch what syncs, cut a device that went missing.
 - A personal server is unchanged unless the operator opts in, and the startup
   log says so out loud when it listens on a non-loopback address.
-- The admin API is a second, *bearer-token* surface over every account's data.
+- The admin API is a second, _bearer-token_ surface over every account's data.
   It is guarded by one secret, compared in constant time, and the console
   keeps that secret in `localStorage` - the same trust model as ADR 0002's
   pairing codes, one level up. A deployment that must not have this surface

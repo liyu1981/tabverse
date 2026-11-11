@@ -29,7 +29,7 @@ schema the toolbar draws. So the codec exists; what was missing was choosing it.
    (`RichTextEditorHandle`). That is the interface for anything that drives the
    editor, the model included; `Note.tsx` reads the body back with
    `getContent()` rather than keeping a parallel copy in state. (ADR 0031 later
-   made `setContent` a *proposal* that a diff review decides.)
+   made `setContent` a _proposal_ that a diff review decides.)
 3. The styling vocabulary is the schema's markdown: `#`-`######` headings,
    `-`/`1.` lists, `>` blockquotes, fenced code, `---`, `**bold**`, `*italic*`,
    `~~strike~~`, `` `code` ``, `[text](url)`, and `++underline++` (TipTap's own
@@ -46,7 +46,7 @@ schema the toolbar draws. So the codec exists; what was missing was choosing it.
 
 - A model can now emit the note body directly. The summarize prompt still asks
   for plain text and the code turns that into markdown, so letting the model
-  *style* its answer is a prompt change, not a parser change.
+  _style_ its answer is a prompt change, not a parser change.
 - Markdown is lossy for underline (`++` is Tiptap's, not CommonMark) and may
   normalize link/code-block attributes. Round-trips are checked against the
   actual schema, not assumed.

@@ -13,7 +13,7 @@ nothing was allowed to put it in an iframe and clickjack a signed-in person.
 
 The Tabverse extension wants to show that console in a side panel next to
 someone's tabverses. An extension page is a `chrome-extension://` document, a
-different site from the server's, so the console is the *framed* side and
+different site from the server's, so the console is the _framed_ side and
 `frame-ancestors` is the directive that decides it. With `'none'` the browser
 blocked the embed outright - the extension's own `frame-src` (which already
 allows `http:` and `https:`) is only half of the permission; the framed page
@@ -28,7 +28,7 @@ Two facts limit what agreeing costs:
   being relaxed is necessary, not sufficient; the "open in a tab" affordance
   is the path that always carries the session.
 - **The embedder is not a web page.** `frame-ancestors` defends against
-  untrusted *web* content framing an authenticated page. An installed browser
+  untrusted _web_ content framing an authenticated page. An installed browser
   extension is not that: with host permissions it can already read the same
   cookies and rewrite requests, so allowing it to frame adds no capability it
   did not have.

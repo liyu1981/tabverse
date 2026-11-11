@@ -58,9 +58,9 @@ the view it is trying to help.
    follows when the report is stale. The worker also pushes a new report when a
    scan changes it.
 
-7. **Ignore is two things.** *Ignore* dismisses the current set by fingerprint
-   (remembered locally for 7 days, invalidated when the set changes); *Always
-   ignore this URL* is a permanent key in the device settings. A URL on the
+7. **Ignore is two things.** _Ignore_ dismisses the current set by fingerprint
+   (remembered locally for 7 days, invalidated when the set changes); _Always
+   ignore this URL_ is a permanent key in the device settings. A URL on the
    ignore list is filtered out at scan time, so "Always ignore" cannot be
    undone by the next pass.
 

@@ -68,7 +68,7 @@ The flag is read in exactly two places: `tools/embedsite.sh`, which builds the
 Docusaurus site into `server/internal/webui/docs/` (and clears that directory
 first, so a default build after an official one cannot ship it by accident), and
 doc/tabverse-website's `docusaurus.config.js`, which switches `baseUrl` and `url`
-and puts **Login** in the navbar after *User Manual*. The script also installs
+and puts **Login** in the navbar after _User Manual_. The script also installs
 the website's own dependencies first - it is a separate workspace with its own
 lockfile, so nothing the repository's install does reaches it - which is why a
 machine that has never built the docs can run the command as-is. The absolute addresses the
@@ -165,7 +165,7 @@ pnpm run server:fmt:check   # lists unformatted files (CI asserts the list is em
 The console's own tests are in the root suite (`pnpm test`): vitest over its
 data layer with a stubbed `fetch`, and `react-dom/server` over the views'
 markup. There are no DOM tests - this repository does not install jsdom - so
-what a view does when it is *clicked* is the user's to check, not the suite's.
+what a view does when it is _clicked_ is the user's to check, not the suite's.
 
 ## Configuration (environment, or a `.env` file)
 
@@ -183,31 +183,31 @@ table and a start-to-finish production checklist. Copy it to `.env` - which is
 git-ignored, because it holds the auth secret and the provider secret - and
 `chmod 600` it.
 
-| Variable                     | Default             | Meaning                                                     |
-| ---------------------------- | ------------------- | ----------------------------------------------------------- |
-| `TABVERSED_ADDR`             | `0.0.0.0:8223`      | listen address (use `127.0.0.1:8223` to stay local)         |
-| `TABVERSED_DB`               | `data/tabversed.db` | central SQLite file path (accounts, devices, tokens)         |
-| `TABVERSED_USERS_DIR`        | `users/` beside `TABVERSED_DB` | where per-account content databases live (ADR 0027) |
-| `TABVERSED_MAX_OPEN_USER_DBS` | `64`              | cap on simultaneously open content files; the file-descriptor budget (three descriptors per open WAL file). At startup the server raises the soft `RLIMIT_NOFILE` toward what this needs and clamps it to fit. |
-| `TABVERSED_RETENTION_DAYS`   | `14`                | prune `session` records older than this (0 = keep forever)  |
-| `TABVERSED_MAX_RECORD_BYTES` | `1048576`           | max payload size per record                                 |
-| `TABVERSED_SYNC_BATCH_LIMIT` | `500`               | max records per sync request                                |
-| `TABVERSED_SEARCH_LIMIT`     | `50`                | max search hits                                             |
-| `TABVERSED_WS_ORIGINS`       | _(any)_             | comma separated Origin allow list for the WebSocket upgrade |
-| `TABVERSED_ADMIN_EMAIL`      | _(unset)_           | whose first registration becomes the operator (ADR 0013) |
-| `TABVERSED_REGISTRATION_REQUIRES_INVITE` | `false` | new accounts are created only for an address an operator invited. Login and registration are two steps (ADR 0029): a login with no invitation lands on the register page, which requires an invitation code - or lets the person request one, creating a pending request the operator can approve. The admin address is always exempt, so the operator can register first |
-| `TABVERSED_EMAIL_REGISTRATION` | `true` (official build: `false`) | the passwordless email sign-in and registration path; off means social logins only |
-| `TABVERSED_MEMBERSHIP_ENABLED` | `false` (official build: `true`) | seed of the membership master switch (ADR 0032). Off means every account is unlimited; an operator can flip the runtime value in the console, which is what is actually read |
-| `TABVERSED_MEMBERSHIP_PERIOD_DAYS` | `30` | length of one membership lease |
-| `TABVERSED_MEMBERSHIP_PERIOD_CREDITS` | `30` | credits one period costs (one credit is one day) |
-| `TABVERSED_MEMBERSHIP_TRIAL_CREDITS` | `30` | the single onboarding grant, once per account |
-| `TABVERSED_MEMBERSHIP_RETENTION_DAYS` | `90` | how long an expired account and its data are kept, read only, before closing |
-| `TABVERSED_MEMBERSHIP_AUTO_PURGE` | `true` | close expired accounts automatically once the retention window ends; off leaves them for an operator |
-| `TABVERSED_SESSION_TTL`      | `24h`                | how long one console sign-in lasts; `0` = no bound (ADR 0021) |
-| `TABVERSED_SESSION_COOKIE_TTL` | _(same as the session)_ | how long the browser keeps the cookie; defaults to `TABVERSED_SESSION_TTL` so the credential never outlives the session |
-| `TABVERSED_REQUIRE_HTTPS`    | `false`              | refuse to start when the console is served over plain http on a non-loopback `TABVERSED_PUBLIC_URL` (ADR 0021); off by default so a LAN deployment is not broken |
-| `TABVERSED_FRAME_ANCESTORS`  | `chrome-extension:`  | CSP `frame-ancestors` source list for the console, i.e. who may embed it (ADR 0025). The default admits browser extensions - the Tabverse extension shows the console in a side panel - and no web page. `'none'` restores the refusal; `chrome-extension://<id>` narrows it to one extension |
-| `TABVERSED_ENV_FILE`       | _(unset)_           | read this file instead of `./.env`; unreadable is a startup error |
+| Variable                                 | Default                          | Meaning                                                                                                                                                                                                                                                                                                                                                                   |
+| ---------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TABVERSED_ADDR`                         | `0.0.0.0:8223`                   | listen address (use `127.0.0.1:8223` to stay local)                                                                                                                                                                                                                                                                                                                       |
+| `TABVERSED_DB`                           | `data/tabversed.db`              | central SQLite file path (accounts, devices, tokens)                                                                                                                                                                                                                                                                                                                      |
+| `TABVERSED_USERS_DIR`                    | `users/` beside `TABVERSED_DB`   | where per-account content databases live (ADR 0027)                                                                                                                                                                                                                                                                                                                       |
+| `TABVERSED_MAX_OPEN_USER_DBS`            | `64`                             | cap on simultaneously open content files; the file-descriptor budget (three descriptors per open WAL file). At startup the server raises the soft `RLIMIT_NOFILE` toward what this needs and clamps it to fit.                                                                                                                                                            |
+| `TABVERSED_RETENTION_DAYS`               | `14`                             | prune `session` records older than this (0 = keep forever)                                                                                                                                                                                                                                                                                                                |
+| `TABVERSED_MAX_RECORD_BYTES`             | `1048576`                        | max payload size per record                                                                                                                                                                                                                                                                                                                                               |
+| `TABVERSED_SYNC_BATCH_LIMIT`             | `500`                            | max records per sync request                                                                                                                                                                                                                                                                                                                                              |
+| `TABVERSED_SEARCH_LIMIT`                 | `50`                             | max search hits                                                                                                                                                                                                                                                                                                                                                           |
+| `TABVERSED_WS_ORIGINS`                   | _(any)_                          | comma separated Origin allow list for the WebSocket upgrade                                                                                                                                                                                                                                                                                                               |
+| `TABVERSED_ADMIN_EMAIL`                  | _(unset)_                        | whose first registration becomes the operator (ADR 0013)                                                                                                                                                                                                                                                                                                                  |
+| `TABVERSED_REGISTRATION_REQUIRES_INVITE` | `false`                          | new accounts are created only for an address an operator invited. Login and registration are two steps (ADR 0029): a login with no invitation lands on the register page, which requires an invitation code - or lets the person request one, creating a pending request the operator can approve. The admin address is always exempt, so the operator can register first |
+| `TABVERSED_EMAIL_REGISTRATION`           | `true` (official build: `false`) | the passwordless email sign-in and registration path; off means social logins only                                                                                                                                                                                                                                                                                        |
+| `TABVERSED_MEMBERSHIP_ENABLED`           | `false` (official build: `true`) | seed of the membership master switch (ADR 0032). Off means every account is unlimited; an operator can flip the runtime value in the console, which is what is actually read                                                                                                                                                                                              |
+| `TABVERSED_MEMBERSHIP_PERIOD_DAYS`       | `30`                             | length of one membership lease                                                                                                                                                                                                                                                                                                                                            |
+| `TABVERSED_MEMBERSHIP_PERIOD_CREDITS`    | `30`                             | credits one period costs (one credit is one day)                                                                                                                                                                                                                                                                                                                          |
+| `TABVERSED_MEMBERSHIP_TRIAL_CREDITS`     | `30`                             | the single onboarding grant, once per account                                                                                                                                                                                                                                                                                                                             |
+| `TABVERSED_MEMBERSHIP_RETENTION_DAYS`    | `90`                             | how long an expired account and its data are kept, read only, before closing                                                                                                                                                                                                                                                                                              |
+| `TABVERSED_MEMBERSHIP_AUTO_PURGE`        | `true`                           | close expired accounts automatically once the retention window ends; off leaves them for an operator                                                                                                                                                                                                                                                                      |
+| `TABVERSED_SESSION_TTL`                  | `24h`                            | how long one console sign-in lasts; `0` = no bound (ADR 0021)                                                                                                                                                                                                                                                                                                             |
+| `TABVERSED_SESSION_COOKIE_TTL`           | _(same as the session)_          | how long the browser keeps the cookie; defaults to `TABVERSED_SESSION_TTL` so the credential never outlives the session                                                                                                                                                                                                                                                   |
+| `TABVERSED_REQUIRE_HTTPS`                | `false`                          | refuse to start when the console is served over plain http on a non-loopback `TABVERSED_PUBLIC_URL` (ADR 0021); off by default so a LAN deployment is not broken                                                                                                                                                                                                          |
+| `TABVERSED_FRAME_ANCESTORS`              | `chrome-extension:`              | CSP `frame-ancestors` source list for the console, i.e. who may embed it (ADR 0025). The default admits browser extensions - the Tabverse extension shows the console in a side panel - and no web page. `'none'` restores the refusal; `chrome-extension://<id>` narrows it to one extension                                                                             |
+| `TABVERSED_ENV_FILE`                     | _(unset)_                        | read this file instead of `./.env`; unreadable is a startup error                                                                                                                                                                                                                                                                                                         |
 
 ## API
 
@@ -304,12 +304,12 @@ operator cannot be demoted or disabled.
 Everybody lands on **their own account** with the four tabs - Pair Code,
 Devices & Tokens, Stored data, Search. An operator also gets a **separate page
 at `/console/admin`** (ADR 0014), reached from a button in the header: the
-accounts, with *Impersonate*, *Make/Remove operator* and *Delete* per row, and
+accounts, with _Impersonate_, _Make/Remove operator_ and _Delete_ per row, and
 the registration invites.
 
-*Impersonate* switches the account tabs to that account, read-only, titled
+_Impersonate_ switches the account tabs to that account, read-only, titled
 `alice (impersonated by admin)`; the admin page is one click away in the header,
-so another account is one click and coming back is *Stop looking*.
+so another account is one click and coming back is _Stop looking_.
 
 There is no "create account" in the admin page: registration is the only way an
 account comes into existence, so there is a single path that can prove an
@@ -349,7 +349,7 @@ minutes. Following it proves the address; creating the account is the separate
 invite-only server, the invitation code) and the user agreement are entered.
 With no `TABVERSED_SMTP_HOST` the link is printed to the server log,
 which is what a LAN-only deployment wants. GitHub and Google are offered when
-configured; a self hosted OpenID Connect provider is *not* wired (the auth
+configured; a self hosted OpenID Connect provider is _not_ wired (the auth
 library's custom provider speaks plain OAuth2, not OIDC discovery with id_token
 validation, and a button that half-works is worse than none).
 
@@ -394,19 +394,19 @@ stays attached instead of being orphaned on an account the console cannot show.
 With several such users nothing is adopted - a wrong guess would hand one
 person another person's browsing history - and the server says so in the log.
 
-| Variable | Default | Meaning |
-| -------- | ------- | ------- |
-| `TABVERSED_ADMIN_EMAIL` | _(unset)_ | whose first registration becomes the operator |
-| `TABVERSED_AUTH_SECRET` | generated once | signs session cookies; stored in the database if unset |
-| `TABVERSED_PUBLIC_URL` | _(unset)_ | absolute base for sign-in links and social callbacks |
-| `TABVERSED_SECURE_COOKIES` | `true` | turn off only for plain http on a trusted LAN |
-| `TABVERSED_LINK_BY_EMAIL` | `true` | link a social login to an account with the same address; `0` refuses instead |
-| `TABVERSED_REQUIRE_EMAIL_VERIFICATION` | `true` | refuse a session for an unproven address. A Google sign-in proves itself (ADR 0017) and the emailed link does; a GitHub sign-in does not, and needs this off |
-| `TABVERSED_SMTP_HOST` / `_PORT` / `_USER` / `_PASS` / `_FROM` | _(none)_ | where sign-in links go |
-| `TABVERSED_RESEND_API_KEY` / `_FROM` / `_BASE_URL` | _(none)_ | send through Resend (resend.com), an HTTP email API; preferred over SMTP when set. `_FROM` falls back to `SMTP_FROM` and must be on a verified domain |
-| `TABVERSED_GITHUB_CLIENT_ID` / `_SECRET` | _(none)_ | enable the GitHub button |
-| `TABVERSED_GOOGLE_CLIENT_ID` / `_SECRET` | _(none)_ | enable the Google button |
-| `TABVERSED_DEV_MODE` | `false` | the auth library's fake OAuth provider, for local development |
+| Variable                                                      | Default        | Meaning                                                                                                                                                      |
+| ------------------------------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `TABVERSED_ADMIN_EMAIL`                                       | _(unset)_      | whose first registration becomes the operator                                                                                                                |
+| `TABVERSED_AUTH_SECRET`                                       | generated once | signs session cookies; stored in the database if unset                                                                                                       |
+| `TABVERSED_PUBLIC_URL`                                        | _(unset)_      | absolute base for sign-in links and social callbacks                                                                                                         |
+| `TABVERSED_SECURE_COOKIES`                                    | `true`         | turn off only for plain http on a trusted LAN                                                                                                                |
+| `TABVERSED_LINK_BY_EMAIL`                                     | `true`         | link a social login to an account with the same address; `0` refuses instead                                                                                 |
+| `TABVERSED_REQUIRE_EMAIL_VERIFICATION`                        | `true`         | refuse a session for an unproven address. A Google sign-in proves itself (ADR 0017) and the emailed link does; a GitHub sign-in does not, and needs this off |
+| `TABVERSED_SMTP_HOST` / `_PORT` / `_USER` / `_PASS` / `_FROM` | _(none)_       | where sign-in links go                                                                                                                                       |
+| `TABVERSED_RESEND_API_KEY` / `_FROM` / `_BASE_URL`            | _(none)_       | send through Resend (resend.com), an HTTP email API; preferred over SMTP when set. `_FROM` falls back to `SMTP_FROM` and must be on a verified domain        |
+| `TABVERSED_GITHUB_CLIENT_ID` / `_SECRET`                      | _(none)_       | enable the GitHub button                                                                                                                                     |
+| `TABVERSED_GOOGLE_CLIENT_ID` / `_SECRET`                      | _(none)_       | enable the Google button                                                                                                                                     |
+| `TABVERSED_DEV_MODE`                                          | `false`        | the auth library's fake OAuth provider, for local development                                                                                                |
 
 **Upgrading from `TABVERSED_ADMIN_TOKEN`:** it is gone, and so is the token
 screen in the console. Set `TABVERSED_ADMIN_EMAIL` to the address you use, start
@@ -451,6 +451,7 @@ rail, so a person can see what is behind one without opening it, and the first
 visit on an account with no devices lands on Pair Code.
 `?user=…&tab=credentials&tabspace=…` opens a specific account, tab and
 tabverse directly (ADR 0014, ADR 0018).
+
 - **accounts and tokens** — rename, delete (records, devices, tokens, invites
   and search index rows), mint a pairing code for a given account, revoke one
   token by fingerprint or every token of one device
@@ -479,7 +480,7 @@ the server, each token in it names the file it was taken from.
 
 The pairing code and the server URL next to it each get a copy button. Copying
 falls back through three steps on purpose, because a self-hosted console is
-usually opened over plain `http://` on a LAN, which is *not* a secure context:
+usually opened over plain `http://` on a LAN, which is _not_ a secure context:
 `navigator.clipboard` does not exist there, so the button uses it only when it
 is available, then `execCommand('copy')`, and as a last resort selects the text
 and says "press Ctrl+C" instead of silently doing nothing.
@@ -524,12 +525,12 @@ while the record stays stored and keeps syncing to the user's own devices, and
 the extension's search is not filtered either. Reversible, and the user's data
 is never at risk - to remove data, delete the account.
 
-| Step | Endpoint | Precondition |
-| ---- | -------- | ------------ |
-| Archive a token | `PUT .../tokens/{hash}/archive` | the token must be revoked |
-| Archive a device | `PUT .../devices/{id}/archive` | none: it revokes and archives the device's tokens, then archives the device, in one step |
-| Archive what it wrote | `PUT .../devices/{id}/records/archive` | no usable token left (archiving the device satisfies this) |
-| Undo any of the above | `DELETE` the same paths | - |
+| Step                  | Endpoint                               | Precondition                                                                             |
+| --------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Archive a token       | `PUT .../tokens/{hash}/archive`        | the token must be revoked                                                                |
+| Archive a device      | `PUT .../devices/{id}/archive`         | none: it revokes and archives the device's tokens, then archives the device, in one step |
+| Archive what it wrote | `PUT .../devices/{id}/records/archive` | no usable token left (archiving the device satisfies this)                               |
+| Undo any of the above | `DELETE` the same paths                | -                                                                                        |
 
 Unarchiving never re-enables access: a revoked token stays revoked. A record
 that is edited again un-archives itself, because it is live again; tombstones
@@ -542,11 +543,11 @@ server refuses the token even though the browser is still offering it, and clear
 the cookie. Set `0` for the old behaviour, where a session in use renewed itself
 for as long as it kept being used.
 
-| Step | Endpoint | Who |
-| ---- | -------- | ---- |
-| Sign out of this browser | `POST /console/api/v1/console/signout` | anyone signed in |
-| Sign out of every browser | `POST /console/api/v1/console/revoke-sessions` | the account itself (audited) |
-| The same, for somebody else | `PUT .../admin/users/{user_id}/revoke-sessions` | an operator |
+| Step                        | Endpoint                                        | Who                          |
+| --------------------------- | ----------------------------------------------- | ---------------------------- |
+| Sign out of this browser    | `POST /console/api/v1/console/signout`          | anyone signed in             |
+| Sign out of every browser   | `POST /console/api/v1/console/revoke-sessions`  | the account itself (audited) |
+| The same, for somebody else | `PUT .../admin/users/{user_id}/revoke-sessions` | an operator                  |
 
 "Sign out everywhere" moves the account's revocation cut-off
 (`users.tokens_valid_after`), so it ends console sessions and nothing else. The

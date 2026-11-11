@@ -10,7 +10,7 @@ read only for user data), [ADR 0011](0011-archiving-is-bookkeeping.md)
 ## Context
 
 The console grew a way to look at one tabverse: a row in the stored-data list,
-and the bundle behind it. What it could not do was *remove* one.
+and the bundle behind it. What it could not do was _remove_ one.
 
 Two reasons, and only the first one is the good one.
 
@@ -78,7 +78,7 @@ hangs off it.**
 
 7. **LWW still decides.** A device that was offline when the delete happened
    and pushes its copy back with the clock it had loses to the tombstone. A
-   device that genuinely edits the tabverse *later* wins, because its clock is
+   device that genuinely edits the tabverse _later_ wins, because its clock is
    newer - that is what last-write-wins means, and the answer is to delete
    again. This is stated rather than worked around: a delete in a replicated
    store cannot promise the future.
@@ -86,7 +86,7 @@ hangs off it.**
 ## Consequences
 
 - The console's tabverse view is a drawer over the account rather than a page
-  that replaces it, because the delete is a decision made *about* something in
+  that replaces it, because the delete is a decision made _about_ something in
   the list you were reading. Losing the list to look, and losing it again to
   come back, is how the wrong row gets deleted.
 - The extension's action buttons ("Load to New Window", "Switch to Tabverse")

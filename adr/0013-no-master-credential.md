@@ -13,7 +13,7 @@ account, minted pairing codes for anyone and read everyone's tabverses, and it
 lived in an environment variable, a shell history and a password manager. For a
 self-hosted server whose whole promise is "the data is yours and only yours"
 (ADR 0002 §5), the operator credential was the single place where that stopped
-being true of the *console*: one holder, total access, no attribution. The audit
+being true of the _console_: one holder, total access, no attribution. The audit
 log ADR 0012 introduced could name an account, and then the main way into the
 console could not - the token authenticated nobody, so every action taken through
 it was unattributed.
@@ -26,7 +26,7 @@ themselves.
 
 **It had a failure mode with no floor.** A deployment that lost the token had no
 way back in: no second factor, no recovery, no other credential. Meanwhile
-`handleBootstrap` had grown a special case where the token was *also* required,
+`handleBootstrap` had grown a special case where the token was _also_ required,
 so the deployment had two secrets and one recovery path, and neither was a
 person.
 
@@ -71,7 +71,7 @@ role was an endpoint that itself required an operator.
    procedure for a self-hosted server. It is written down in the README.
 
 6. **The bootstrap endpoint closes earlier than it used to.** It is refused once
-   this deployment has a user *or* an account, so an exposed port has a shorter
+   this deployment has a user _or_ an account, so an exposed port has a shorter
    window than the "no users yet" rule, and registration in the console is the
    ordinary way in from then on.
 

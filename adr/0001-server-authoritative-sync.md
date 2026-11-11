@@ -46,10 +46,9 @@ Introduce `tabversed`, a Go server, as the single source of truth:
    > feature was deleted later (`adr/0006`), so the server still accepts the
    > `session` entity and still prunes it for pre-0.6 clients. Drop both when
    > no supported build pushes sessions any more.
-
-The client side coordination machinery (leader election, change broadcasts)
-is deleted rather than ported: with a server there is no election to hold.
-
+   >
+   > The client side coordination machinery (leader election, change broadcasts)
+   > is deleted rather than ported: with a server there is no election to hold.
 ## Consequences
 
 - The extension requires an opt-in pairing step; local-only usage keeps

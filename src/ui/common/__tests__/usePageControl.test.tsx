@@ -105,14 +105,16 @@ test('exactly divisible lists get no empty trailing page', () => {
 // clamped page. The handlers are one call into `clampPage` each, so this file
 // plus that line is the whole of it.
 
+/** A hook cannot be called outside a component, so this is the smallest one. */
+function Probe({ count }: { count: number }) {
+  const [, renderControl] = usePageControl(
+    Array.from({ length: count }, (_, i) => i),
+    PAGE_LIMIT,
+  );
+  return <>{renderControl()}</>;
+}
+
 function control(items: number) {
-  function Probe({ count }: { count: number }) {
-    const [, renderControl] = usePageControl(
-      Array.from({ length: count }, (_, i) => i),
-      PAGE_LIMIT,
-    );
-    return <>{renderControl()}</>;
-  }
   return renderToStaticMarkup(<Probe count={items} />);
 }
 

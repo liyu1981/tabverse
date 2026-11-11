@@ -43,7 +43,7 @@ depended on who did it.
 
 3. **One version, checked three ways.** The workflow refuses to build unless the
    tag, `package.json` and `src/global.ts` agree, and `tools/cwsUpload.mjs`
-   refuses to upload unless the manifest *inside the zip* carries that version
+   refuses to upload unless the manifest _inside the zip_ carries that version
    too. A mislabelled release is a red build, not a store item whose About panel
    is a version behind.
 
@@ -73,7 +73,7 @@ depended on who did it.
    still leaves a tag with a downloadable package on it.
 
 7. **A version number is spent by its first upload.** The store will not accept
-   the same version twice, so the tool checks the published *and* the
+   the same version twice, so the tool checks the published _and_ the
    already-submitted version from `fetchStatus` before uploading and fails with
    an explanation if either is equal or newer. A submission that fails after the
    upload is fixed by bumping the patch version and tagging again - not by
@@ -95,7 +95,7 @@ depended on who did it.
 
 ## Consequences
 
-- Cutting a release needs a maintainer with tag rights *and* the secrets. A
+- Cutting a release needs a maintainer with tag rights _and_ the secrets. A
   contribution from a fork cannot publish to the store; that is the intent.
 - A dispatched run is the workflow from the dispatching commit but the tree of
   the ref it checks out, so a retry of a tag predating this machinery runs the

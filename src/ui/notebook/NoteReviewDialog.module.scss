@@ -85,7 +85,8 @@
 }
 
 .row + .row {
-  border-top: 1px solid color-mix(in srgb, var(--border-strong) 50%, transparent);
+  border-top: 1px solid
+    color-mix(in srgb, var(--border-strong) 50%, transparent);
 }
 
 .rowAdded .after {

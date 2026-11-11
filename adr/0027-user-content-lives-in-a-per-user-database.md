@@ -19,10 +19,10 @@ encryption, backup, move and delete.
 
 The boundary is the one the research doc settled on:
 
-| Region | Contents |
-| --- | --- |
+| Region                                 | Contents                                                                                                                                                                    |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Central file** (`TABVERSED_DB_PATH`) | `users`, `devices`, `tokens`, `invites`, `identities`, `email_tokens`, `verif_tokens`, `retired_subjects`, `server_secrets`, `audit_log`, and the counter cache of ADR 0026 |
-| **Per-user file** | `records`, `records_fts`, `user_meta` (the per-user `rev_seq`) |
+| **Per-user file**                      | `records`, `records_fts`, `user_meta` (the per-user `rev_seq`)                                                                                                              |
 
 Account and auth data stays central and exact: `LookupToken`, revocation and
 the account tables are on the authentication path, so a pairing or a revoke is
@@ -30,7 +30,7 @@ one indexed query and an immediate effect. `devices`/`tokens`/`invites` keep
 their `REFERENCES users(id) ON DELETE CASCADE`; only `records` loses a
 cross-file foreign key.
 
-`rev_seq` moves *into* the user file even though it lives in `users` today. It
+`rev_seq` moves _into_ the user file even though it lives in `users` today. It
 is the ordering key of the record stream and is written in the same transaction
 as the record; split across stores, two pushes could commit out of order and a
 client could advance past a revision that commits later. A copy may remain in
@@ -68,7 +68,7 @@ Proposed, pending the mode answer:
 
 3. **Access is a bounded LRU pool.** `UserDBs` opens a content file on demand,
    one connection each (`SetMaxOpenConns(1)`), and caps the number of open
-   files. The cap *is* the file-descriptor budget: a WAL database holds three
+   files. The cap _is_ the file-descriptor budget: a WAL database holds three
    descriptors (file, `-wal`, `-shm`), so `maxOpen` is chosen well below
    `RLIMIT_NOFILE` minus a socket reserve. Opening a new account evicts the
    least-recently-used **idle** handle and closes it, releasing its FDs; a
@@ -105,7 +105,7 @@ Proposed, pending the mode answer:
 - The bulk data gets a real boundary: a corrupted, runaway or giant account
   stays in its file, and backup/move/delete/encrypt are per-file operations.
 - Search (`records_fts`) and `rev_seq` stay with the records, so the sync
-  protocol is unchanged in behavior; only *where* its two structures live
+  protocol is unchanged in behavior; only _where_ its two structures live
   changes.
 - The FD budget is now an explicit number (`maxOpen`), and a burst is shed with
   a `503` the client already retries (single-flight `syncOnce`, outbox retained

@@ -1,6 +1,6 @@
 # ADR 0011: archiving is bookkeeping, never deletion
 
-Status: accepted (2026-09); revised: archiving a *device* is now the teardown
+Status: accepted (2026-09); revised: archiving a _device_ is now the teardown
 itself and is immediate, instead of a wait for silence. See "The revision"
 below.
 
@@ -51,16 +51,16 @@ so the semantics have to be chosen before the code, not after.
    still authenticates is refused with `409 not_revoked`: revoking is how access
    is cut, and archiving a live credential would hide from the console the very
    access that is still open. Unarchiving never re-enables anything - a
-   revoked token stays revoked, and re-enabling is pairing again. *(For a
-   device, the revision below makes archiving do the revoking itself.)*
+   revoked token stays revoked, and re-enabling is pairing again. _(For a
+   device, the revision below makes archiving do the revoking itself.)_
 
 4. **Devices additionally have to look abandoned.**
    `TABVERSED_DEVICE_INACTIVE_DAYS` (default 30) is the silence required, measured
    by the newest successful authentication of any of its tokens. A device that
-   has *never* authenticated is exempt: it has no activity to wait out, and a
+   has _never_ authenticated is exempt: it has no activity to wait out, and a
    mis-issued pairing code that was revoked straight away should not leave a
-   phantom device in the list for a month. `0` disables the check. *(Removed by
-   the revision below.)*
+   phantom device in the list for a month. `0` disables the check. _(Removed by
+   the revision below.)_
 
 5. **Records a device wrote come back on their own.** Every accepted write clears
    `archived_at`, because a record somebody just changed is live again. Without
@@ -96,7 +96,7 @@ search index rows with it (ADR 0009).
 
 ### The revision: archiving a device is the teardown, not a wait
 
-The first version made archiving a *device* wait. It was refused while the
+The first version made archiving a _device_ wait. It was refused while the
 device still had a usable token (point 3), and again until the device had been
 silent for `TABVERSED_DEVICE_INACTIVE_DAYS` (point 4). In practice that read as
 the server refusing the operator's own decision - "still active: last synced
@@ -116,7 +116,7 @@ first" for a device: `TABVERSED_DEVICE_INACTIVE_DAYS` is gone, and
 still only brings the device back - its tokens stay revoked and archived,
 because unarchiving never re-enables access (point 3).
 
-Archiving an individual *token* is unchanged: a live token is still refused
+Archiving an individual _token_ is unchanged: a live token is still refused
 with `409 not_revoked`, since nothing revokes it for you. Archiving a device's
-*records* still requires no usable token left on it, which archiving the device
+_records_ still requires no usable token left on it, which archiving the device
 satisfies.

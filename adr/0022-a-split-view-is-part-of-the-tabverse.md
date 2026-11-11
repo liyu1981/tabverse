@@ -18,7 +18,7 @@ for a tabverse **open in this browser**, because the pairing lived in
 `Tab.splitViewId` and that field is deliberately not part of `TabCore`:
 
 > Chrome's Split View id ... Session scoped like `chromeTabId`, so it is
-> deliberately *not* part of TabCore and never synced.
+> deliberately _not_ part of TabCore and never synced.
 
 So the pairing was not saved. `fromSavedTab` returns `TabCore`, which has no
 `splitViewId`, which meant:
@@ -55,7 +55,6 @@ The split commit that introduced the field noticed the leak and deferred it as
    `Tab.splitViewId` carries `SPLIT_VIEW_ID_NONE` through verbatim, and
    `withSplitPartners` - in `convertAndGetTabSpaceSavePayload`, where the whole
    tab list is in hand - reads it as:
-
    - a split view id → the pairing is that partner's tab id;
    - `SPLIT_VIEW_ID_NONE` → chrome says the tab is in no split, so **the pairing
      is dropped**: a closed split retires itself;
@@ -78,7 +77,7 @@ The split commit that introduced the field noticed the leak and deferred it as
    nothing else would ever ask again.
 
    So `refreshSplitViews` (started from `tabSpaceBootstrap`, `splitView.ts`) asks
-   chrome what is *true now* for the tabs in this window, once a minute. It is
+   chrome what is _true now_ for the tabs in this window, once a minute. It is
    deliberately the narrowest scan in the extension: one field, live tabs only,
    nothing else touched - a general rescan would fight the event path over the
    titles and favicons of tabs that are still loading, which is the mistake

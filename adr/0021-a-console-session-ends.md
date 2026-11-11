@@ -44,7 +44,7 @@ is written down.**
 1. **The server enforces the token's own expiry.** `Service.validate` - the
    `Validator` hook that already carries the revocation check - also refuses a
    claim whose `ExpiresAt` has passed. The authenticator calls `Validator`
-   *before* it refreshes, so the refresh never happens and the session ends.
+   _before_ it refreshes, so the refresh never happens and the session ends.
    `TABVERSED_SESSION_TTL` (default `24h`) sets how long a sign-in lasts; `0`
    is the documented "no bound", which is the pre-hardening behaviour.
 
@@ -92,7 +92,7 @@ is written down.**
   `ClaimsUpd` and the XSRF cookie are untouched.
 - **A stolen cookie dies on its own** - at most `TABVERSED_SESSION_TTL` after it
   was issued - and an operator or the person themselves can end every session
-  now. What it cannot do is name *which* browser had it: sessions are still
+  now. What it cannot do is name _which_ browser had it: sessions are still
   stateless signed tokens and there is no session table, so "sign out everywhere"
   means everywhere, and "this device only" does not exist. That is the cost of
   choosing the hard cap over a sliding one with a session list.
@@ -107,4 +107,4 @@ is written down.**
   link repeatedly has to wait. Five an hour is above any human.
 - **`AuditLogin` for a social first sign-in has no account id yet**: the library's
   claim is keyed by the provider subject and the account row is created on the
-  *next* request. The row is still written, with the claim id in the detail.
+  _next_ request. The row is still written, with the claim id in the detail.

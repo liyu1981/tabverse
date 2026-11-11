@@ -24,15 +24,15 @@ whether to build it or adopt something.
 
 ### The library survey
 
-| Candidate | State when checked | Why not |
-| --------- | ------------------ | ------- |
-| Better Auth | v1.7.6, published days ago, 30k stars, SQLite via Drizzle | TypeScript: a Node server beside the Go binary |
-| Auth.js / `@auth/core` | 0.41.x stable, v5 experimental | same, plus an adapter for the storage |
-| Ory Kratos | active | PostgreSQL / MySQL / CockroachDB, separate service |
-| Zitadel | active | PostgreSQL 14+, separate service |
-| Keycloak / Authentik | active | their own runtime and database |
-| **Lucia** | **deprecated** (npm), last publish 2024 | the closest fit, now a migration guide |
-| **go-pkgz/auth** | v2.3.0, MIT, actively developed, remark42's auth | adopted, with the caveats below |
+| Candidate              | State when checked                                        | Why not                                            |
+| ---------------------- | --------------------------------------------------------- | -------------------------------------------------- |
+| Better Auth            | v1.7.6, published days ago, 30k stars, SQLite via Drizzle | TypeScript: a Node server beside the Go binary     |
+| Auth.js / `@auth/core` | 0.41.x stable, v5 experimental                            | same, plus an adapter for the storage              |
+| Ory Kratos             | active                                                    | PostgreSQL / MySQL / CockroachDB, separate service |
+| Zitadel                | active                                                    | PostgreSQL 14+, separate service                   |
+| Keycloak / Authentik   | active                                                    | their own runtime and database                     |
+| **Lucia**              | **deprecated** (npm), last publish 2024                   | the closest fit, now a migration guide             |
+| **go-pkgz/auth**       | v2.3.0, MIT, actively developed, remark42's auth          | adopted, with the caveats below                    |
 
 Nothing else fits a single Go binary on SQLite. `go-pkgz/auth` does: pure Go,
 `net/http` middleware (the server has no router dependency on purpose), v2 is
@@ -71,7 +71,7 @@ protocol.**
 
 6. **One address is one account.** A login whose verified address already has an
    account links to it. With `TABVERSED_LINK_BY_EMAIL=0` (for a deployment that
-   cannot vouch for its providers) the login is *refused* with `ErrEmailTaken`
+   cannot vouch for its providers) the login is _refused_ with `ErrEmailTaken`
    rather than linked - and never given a second account, because a duplicate
    would be a way to end up with two accounts holding one person's data, one of
    which nobody is watching.
@@ -82,7 +82,7 @@ Four questions, answered by reading the source and by tests that stay in the
 tree as `internal/accounts/accounts_test.go`:
 
 1. **Sessions are revocable.** `auth.Opts.Validator` is the hook; it is wired
-   into the authenticator at `auth.go:107`, and it sees claims *before*
+   into the authenticator at `auth.go:107`, and it sees claims _before_
    `UpdateUser` rewrites them, so it resolves the account itself.
 
 2. **XSRF covers our own routes.** The check is inside the extractor's `Get()`,
@@ -92,7 +92,7 @@ tree as `internal/accounts/accounts_test.go`:
 3. **Claims carry what we need.** `Opts.ClaimsUpd` sets the role, and is the
    place an assumed (impersonated) identity will go.
 
-4. **The dependency costs ~10 MiB**, and not for the reason expected. The *dev*
+4. **The dependency costs ~10 MiB**, and not for the reason expected. The _dev_
    provider only adds ~283 KiB; the 10 MiB is `avatar`, which the top-level
    `auth` package imports unconditionally, and which imports `mongo-driver`,
    `bbolt` and `identicon`. We do not use avatars. A build that used only
@@ -112,7 +112,7 @@ in the code and its comments:
   a 200.
 - **`IssuedAt` is stamped with `time.Unix(now, 0)`** by the library, so session
   tokens have no sub-second precision. Revocation is therefore compared at
-  *second* granularity: it takes effect within a second, and a login in the same
+  _second_ granularity: it takes effect within a second, and a login in the same
   second as a revocation is refused once and succeeds on retry
   (`accounts.SessionRevocationWindow`). Setting the JWT library's global
   precision does not help, because the value has no nanoseconds to preserve.

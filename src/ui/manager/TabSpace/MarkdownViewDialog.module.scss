@@ -6,13 +6,12 @@
  */
 .dialog {
   border-radius: 18px;
+  /* match the app's dialog surface, so the near-white pane reads as a pane */
   background-color: #fff;
   width: min(92vw, 900px);
   max-height: min(85vh, 720px);
   display: flex;
   flex-direction: column;
-  /* match the app's dialog surface, so the near-white pane reads as a pane */
-  background-color: #fff;
 }
 
 .dialog :global(.bp6-dialog-header) {

@@ -91,7 +91,7 @@ paths:
       tags: [auth]
       summary: Liveness probe (unauthenticated)
       responses:
-        '200':
+        "200":
           description: ok
           content:
             application/json:
@@ -118,12 +118,12 @@ paths:
               properties:
                 name: { type: string, default: default }
       responses:
-        '201':
+        "201":
           description: account created
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/DeviceCredentials' }
-        '409': { $ref: '#/components/responses/Conflict' }
+              schema: { $ref: "#/components/schemas/DeviceCredentials" }
+        "409": { $ref: "#/components/responses/Conflict" }
 
   /console/api/v1/auth/pair:
     post:
@@ -137,15 +137,15 @@ paths:
               type: object
               required: [invite_code]
               properties:
-                invite_code: { type: string, examples: ['BSKT-VT6V-7SX3-XVCQ'] }
+                invite_code: { type: string, examples: ["BSKT-VT6V-7SX3-XVCQ"] }
                 device_name: { type: string }
       responses:
-        '201':
+        "201":
           description: device registered
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/DeviceCredentials' }
-        '401': { $ref: '#/components/responses/Unauthorized' }
+              schema: { $ref: "#/components/schemas/DeviceCredentials" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
 
   /console/api/v1/auth/invites:
     post:
@@ -161,7 +161,7 @@ paths:
                 ttl_seconds:
                   { type: integer, minimum: 60, maximum: 86400, default: 900 }
       responses:
-        '201':
+        "201":
           description: code created (single use)
           content:
             application/json:
@@ -169,9 +169,9 @@ paths:
                 type: object
                 required: [code, expires_at]
                 properties:
-                  code: { type: string, examples: ['BSKT-VT6V-7SX3-XVCQ'] }
+                  code: { type: string, examples: ["BSKT-VT6V-7SX3-XVCQ"] }
                   expires_at: { type: integer, description: unix ms }
-        '401': { $ref: '#/components/responses/Unauthorized' }
+        "401": { $ref: "#/components/responses/Unauthorized" }
 
   /console/api/v1/console/pair:
     post:
@@ -199,25 +199,24 @@ paths:
               type: object
               required: [device_name]
               properties:
-                device_name:
-                  { type: string, examples: ['Chrome on Windows'] }
+                device_name: { type: string, examples: ["Chrome on Windows"] }
                 extension_id:
                   type: string
                   description: >-
                     the extension that asked, recorded on the device row so the
                     account's device list says which browser paired it
       responses:
-        '201':
+        "201":
           description: device + token, returned once
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/DeviceCredentials' }
-        '401':
+              schema: { $ref: "#/components/schemas/DeviceCredentials" }
+        "401":
           description: no session, or the session does not resolve to an account
           content:
             application/json:
               schema: { type: object }
-        '403':
+        "403":
           description: read only - the caller is impersonating an account
           content:
             application/json:
@@ -239,13 +238,13 @@ paths:
         instead. A cut-off is compared at second granularity, so a session
         minted in the same second survives it.
       responses:
-        '204': { description: every session of this account is now refused }
-        '401':
+        "204": { description: every session of this account is now refused }
+        "401":
           description: no session, or the session does not resolve to an account
           content:
             application/json:
               schema: { type: object }
-        '403':
+        "403":
           description: read only - the caller is impersonating an account
           content:
             application/json:
@@ -262,11 +261,23 @@ paths:
         `/console/api/v1/admin/users/{user_id}/search`.
       parameters:
         - { name: q, in: query, schema: { type: string } }
-        - { name: entity, in: query, schema: { $ref: '#/components/schemas/Entity' } }
-        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 200 } }
-        - { name: archived, in: query, schema: { type: string, enum: ['0', '1'] } }
+        - {
+            name: entity,
+            in: query,
+            schema: { $ref: "#/components/schemas/Entity" },
+          }
+        - {
+            name: limit,
+            in: query,
+            schema: { type: integer, minimum: 1, maximum: 200 },
+          }
+        - {
+            name: archived,
+            in: query,
+            schema: { type: string, enum: ["0", "1"] },
+          }
       responses:
-        '200':
+        "200":
           description: ranked hits
           content:
             application/json:
@@ -276,8 +287,8 @@ paths:
                   query: { type: string }
                   hits:
                     type: array
-                    items: { $ref: '#/components/schemas/AdminSearchHit' }
-        '401':
+                    items: { $ref: "#/components/schemas/AdminSearchHit" }
+        "401":
           description: no session, or the session does not resolve to an account
           content:
             application/json:
@@ -295,7 +306,7 @@ paths:
           }
         - { name: limit, in: query, schema: { type: integer, minimum: 1 } }
       responses:
-        '200':
+        "200":
           description: records ordered by revision
           content:
             application/json:
@@ -305,12 +316,12 @@ paths:
                 properties:
                   records:
                     type: array
-                    items: { $ref: '#/components/schemas/Record' }
+                    items: { $ref: "#/components/schemas/Record" }
                   next_rev:
                     { type: integer, description: pass as `since` next time }
                   has_more: { type: boolean }
                   server_rev: { type: integer }
-        '401': { $ref: '#/components/responses/Unauthorized' }
+        "401": { $ref: "#/components/responses/Unauthorized" }
     post:
       tags: [sync]
       summary: Batch upload of records (LWW per record)
@@ -325,9 +336,9 @@ paths:
                 records:
                   type: array
                   maxItems: 500
-                  items: { $ref: '#/components/schemas/RecordInput' }
+                  items: { $ref: "#/components/schemas/RecordInput" }
       responses:
-        '200':
+        "200":
           description: per record outcome
           content:
             application/json:
@@ -337,33 +348,33 @@ paths:
                 properties:
                   results:
                     type: array
-                    items: { $ref: '#/components/schemas/RecordResult' }
+                    items: { $ref: "#/components/schemas/RecordResult" }
                   server_rev: { type: integer }
-        '400': { $ref: '#/components/responses/BadRequest' }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '413': { $ref: '#/components/responses/TooLarge' }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "413": { $ref: "#/components/responses/TooLarge" }
 
   /console/api/v1/entities/{entity}/{id}:
     parameters:
-      - { $ref: '#/components/parameters/entity' }
+      - { $ref: "#/components/parameters/entity" }
       - { name: id, in: path, required: true, schema: { type: string } }
     get:
       tags: [sync]
       summary: Fetch one record (tombstones included)
       responses:
-        '200':
+        "200":
           description: the record
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Record' }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '404': { $ref: '#/components/responses/NotFound' }
+              schema: { $ref: "#/components/schemas/Record" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
     delete:
       tags: [sync]
       summary: Soft delete (creates a tombstone propagated by delta sync)
       responses:
-        '200': { $ref: '#/components/responses/SyncResult' }
-        '401': { $ref: '#/components/responses/Unauthorized' }
+        "200": { $ref: "#/components/responses/SyncResult" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
 
   /console/api/v1/search:
     get:
@@ -391,12 +402,12 @@ paths:
             in: query,
             required: true,
             schema: { type: string },
-            description: 'free text; last term is matched as a prefix',
+            description: "free text; last term is matched as a prefix",
           }
         - {
             name: entity,
             in: query,
-            schema: { $ref: '#/components/schemas/Entity' },
+            schema: { $ref: "#/components/schemas/Entity" },
           }
         - {
             name: limit,
@@ -404,7 +415,7 @@ paths:
             schema: { type: integer, minimum: 1, maximum: 200 },
           }
       responses:
-        '200':
+        "200":
           description: ranked hits
           content:
             application/json:
@@ -415,8 +426,8 @@ paths:
                   query: { type: string }
                   hits:
                     type: array
-                    items: { $ref: '#/components/schemas/AdminSearchHit' }
-        '401': { $ref: '#/components/responses/Unauthorized' }
+                    items: { $ref: "#/components/schemas/AdminSearchHit" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
 
   /console/api/v1/sync/stream:
     get:
@@ -428,8 +439,8 @@ paths:
       parameters:
         - { name: access_token, in: query, schema: { type: string } }
       responses:
-        '101': { description: switching protocols }
-        '401': { $ref: '#/components/responses/Unauthorized' }
+        "101": { description: switching protocols }
+        "401": { $ref: "#/components/responses/Unauthorized" }
 
   /console/api/v1/admin/config:
     get:
@@ -441,7 +452,7 @@ paths:
         operator staring at a login form knows whether the admin API is simply
         not configured.
       responses:
-        '200':
+        "200":
           description: deployment capabilities
           content:
             application/json:
@@ -457,13 +468,13 @@ paths:
       tags: [admin]
       summary: Deployment wide counters (the console header)
       responses:
-        '200':
+        "200":
           description: totals
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Totals' }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '404': { $ref: '#/components/responses/AdminDisabled' }
+              schema: { $ref: "#/components/schemas/Totals" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/AdminDisabled" }
 
   /console/api/v1/admin/users:
     get:
@@ -479,10 +490,10 @@ paths:
             name: q,
             in: query,
             schema: { type: string },
-            description: substring of the name or the email address
+            description: substring of the name or the email address,
           }
       responses:
-        '200':
+        "200":
           description: accounts
           content:
             application/json:
@@ -492,23 +503,23 @@ paths:
                 properties:
                   users:
                     type: array
-                    items: { $ref: '#/components/schemas/UserSummary' }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '404': { $ref: '#/components/responses/AdminDisabled' }
+                    items: { $ref: "#/components/schemas/UserSummary" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/AdminDisabled" }
   # There is no POST /console/api/v1/admin/users: registration is the only way an
   # account is created (ADR 0014), so there is exactly one path that can prove
   # an address.
 
   /console/api/v1/admin/users/{user_id}:
-    parameters: [{ $ref: '#/components/parameters/userId' }]
+    parameters: [{ $ref: "#/components/parameters/userId" }]
     get:
       tags: [admin]
       summary: One account with its stats, devices and tokens
       responses:
-        '200':
+        "200":
           description: account detail (user, stats, devices, tokens)
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '404': { $ref: '#/components/responses/NotFound' }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
     put:
       tags: [admin]
       summary: Rename an account (its data is untouched)
@@ -522,9 +533,9 @@ paths:
               properties:
                 name: { type: string }
       responses:
-        '204': { description: renamed }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '404': { $ref: '#/components/responses/NotFound' }
+        "204": { description: renamed }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
     delete:
       tags: [admin]
       summary: Delete an account and everything it stored
@@ -532,12 +543,12 @@ paths:
         Records, devices, tokens, invites and the account's search index rows
         all go. There is no trash; the console asks for a typed confirmation.
       responses:
-        '204': { description: deleted }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '404': { $ref: '#/components/responses/NotFound' }
+        "204": { description: deleted }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
 
   /console/api/v1/admin/users/{user_id}/invites:
-    parameters: [{ $ref: '#/components/parameters/userId' }]
+    parameters: [{ $ref: "#/components/parameters/userId" }]
     post:
       tags: [admin]
       summary: Mint a pairing code for this account
@@ -553,7 +564,7 @@ paths:
               properties:
                 ttl_seconds: { type: integer, minimum: 60, maximum: 86400 }
       responses:
-        '201':
+        "201":
           description: the code, shown once
           content:
             application/json:
@@ -563,24 +574,24 @@ paths:
                   user_id: { type: string }
                   code: { type: string }
                   expires_at: { type: integer }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '404': { $ref: '#/components/responses/NotFound' }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
 
   /console/api/v1/admin/users/{user_id}/devices/{device_id}:
     parameters:
-      - { $ref: '#/components/parameters/userId' }
+      - { $ref: "#/components/parameters/userId" }
       - { name: device_id, in: path, required: true, schema: { type: string } }
     delete:
       tags: [admin]
       summary: Revoke every live token of one device
       responses:
-        '204': { description: revoked }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '404': { $ref: '#/components/responses/NotFound' }
+        "204": { description: revoked }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
 
   /console/api/v1/admin/users/{user_id}/tokens/{hash}:
     parameters:
-      - { $ref: '#/components/parameters/userId' }
+      - { $ref: "#/components/parameters/userId" }
       - name: hash
         in: path
         required: true
@@ -593,13 +604,13 @@ paths:
         Tokens are stored only as a SHA-256 hash, so the console can show a
         token by fingerprint and revoke it by hash, but never display it again.
       responses:
-        '204': { description: revoked }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '404': { $ref: '#/components/responses/NotFound' }
+        "204": { description: revoked }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
 
   /console/api/v1/admin/users/{user_id}/revoke-sessions:
     parameters:
-      - { $ref: '#/components/parameters/userId' }
+      - { $ref: "#/components/parameters/userId" }
     put:
       tags: [admin]
       summary: End every console session on this account (operator's move)
@@ -610,13 +621,13 @@ paths:
         and the account. Device tokens are untouched - see
         `POST /console/api/v1/console/revoke-sessions`.
       responses:
-        '204': { description: every session of this account is now refused }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '404': { $ref: '#/components/responses/NotFound' }
+        "204": { description: every session of this account is now refused }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
 
   /console/api/v1/admin/users/{user_id}/tokens/{hash}/archive:
     parameters:
-      - { $ref: '#/components/parameters/userId' }
+      - { $ref: "#/components/parameters/userId" }
       - { name: hash, in: path, required: true, schema: { type: string } }
     put:
       tags: [admin]
@@ -627,25 +638,25 @@ paths:
         The token stays revoked, and it stays in use or not exactly as it was
         (ADR 0011).
       responses:
-        '200': { description: archived, or a no-op if it already was }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '404': { $ref: '#/components/responses/NotFound' }
-        '409':
+        "200": { description: archived, or a no-op if it already was }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
           description: the token is not revoked yet
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
+              schema: { $ref: "#/components/schemas/Error" }
     delete:
       tags: [admin]
       summary: Unarchive a token (it stays revoked)
       responses:
-        '200': { description: unarchived }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '404': { $ref: '#/components/responses/NotFound' }
+        "200": { description: unarchived }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
 
   /console/api/v1/admin/users/{user_id}/devices/{device_id}/archive:
     parameters:
-      - { $ref: '#/components/parameters/userId' }
+      - { $ref: "#/components/parameters/userId" }
       - { name: device_id, in: path, required: true, schema: { type: string } }
     put:
       tags: [admin]
@@ -657,20 +668,20 @@ paths:
         no need to revoke first. Hides the rows from the console's default
         lists; they stay stored and their records keep syncing (ADR 0011).
       responses:
-        '200': { description: archived, or a no-op if it already was }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '404': { $ref: '#/components/responses/NotFound' }
+        "200": { description: archived, or a no-op if it already was }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
     delete:
       tags: [admin]
       summary: Unarchive a device (its tokens stay revoked)
       responses:
-        '200': { description: unarchived }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '404': { $ref: '#/components/responses/NotFound' }
+        "200": { description: unarchived }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
 
   /console/api/v1/admin/users/{user_id}/devices/{device_id}/records/archive:
     parameters:
-      - { $ref: '#/components/parameters/userId' }
+      - { $ref: "#/components/parameters/userId" }
       - { name: device_id, in: path, required: true, schema: { type: string } }
     put:
       tags: [admin]
@@ -682,32 +693,32 @@ paths:
         this console's views are. A record edited again un-archives itself.
         Tombstones are left alone.
       responses:
-        '200':
+        "200":
           description: how many records were archived
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ArchiveOutcome' }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '404': { $ref: '#/components/responses/NotFound' }
-        '409':
+              schema: { $ref: "#/components/schemas/ArchiveOutcome" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
           description: still usable (revoke it first, or archive the device)
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
+              schema: { $ref: "#/components/schemas/Error" }
     delete:
       tags: [admin]
       summary: Unarchive the records this device wrote
       responses:
-        '200':
+        "200":
           description: how many records were restored
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/ArchiveOutcome' }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '404': { $ref: '#/components/responses/NotFound' }
+              schema: { $ref: "#/components/schemas/ArchiveOutcome" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
 
   /console/api/v1/admin/users/{user_id}/tabspaces:
-    parameters: [{ $ref: '#/components/parameters/userId' }]
+    parameters: [{ $ref: "#/components/parameters/userId" }]
     get:
       tags: [admin]
       summary: The account's tabverses, newest first
@@ -716,12 +727,26 @@ paths:
         console's card shows, resolved server side. Archived tabverses are
         hidden unless `archived=1` (ADR 0011).
       parameters:
-        - { name: q, in: query, schema: { type: string }, description: literal substring of the payload }
-        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 200 } }
+        - {
+            name: q,
+            in: query,
+            schema: { type: string },
+            description: literal substring of the payload,
+          }
+        - {
+            name: limit,
+            in: query,
+            schema: { type: integer, minimum: 1, maximum: 200 },
+          }
         - { name: offset, in: query, schema: { type: integer, minimum: 0 } }
-        - { name: archived, in: query, schema: { type: string, enum: ['0', '1'] }, description: include archived rows }
+        - {
+            name: archived,
+            in: query,
+            schema: { type: string, enum: ["0", "1"] },
+            description: include archived rows,
+          }
       responses:
-        '200':
+        "200":
           description: tabverse list
           content:
             application/json:
@@ -730,17 +755,22 @@ paths:
                 properties:
                   tabspaces:
                     type: array
-                    items: { $ref: '#/components/schemas/TabspaceSummary' }
+                    items: { $ref: "#/components/schemas/TabspaceSummary" }
                   total: { type: integer }
                   limit: { type: integer }
                   offset: { type: integer }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '404': { $ref: '#/components/responses/NotFound' }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
 
   /console/api/v1/admin/users/{user_id}/tabspaces/{tabspace_id}:
     parameters:
-      - { $ref: '#/components/parameters/userId' }
-      - { name: tabspace_id, in: path, required: true, schema: { type: string } }
+      - { $ref: "#/components/parameters/userId" }
+      - {
+          name: tabspace_id,
+          in: path,
+          required: true,
+          schema: { type: string },
+        }
     get:
       tags: [admin]
       summary: One tabverse with its tabs, notes, todos, bookmarks and history
@@ -751,13 +781,13 @@ paths:
         follow their own `closedAt`, newest first. Rows no list mentions are
         still returned, after the listed ones.
       responses:
-        '200':
+        "200":
           description: the tabverse bundle
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/TabspaceBundle' }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '404': { $ref: '#/components/responses/NotFound' }
+              schema: { $ref: "#/components/schemas/TabspaceBundle" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
     delete:
       tags: [admin]
       summary: Delete one tabverse and everything in it
@@ -785,18 +815,18 @@ paths:
           schema: { type: string }
           description: must equal `tabspace_id`
       responses:
-        '204': { description: deleted }
-        '400': { $ref: '#/components/responses/BadRequest' }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '403':
+        "204": { description: deleted }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403":
           description: read only while looking through another account
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Error' }
-        '404': { $ref: '#/components/responses/NotFound' }
+              schema: { $ref: "#/components/schemas/Error" }
+        "404": { $ref: "#/components/responses/NotFound" }
 
   /console/api/v1/admin/users/{user_id}/records:
-    parameters: [{ $ref: '#/components/parameters/userId' }]
+    parameters: [{ $ref: "#/components/parameters/userId" }]
     get:
       tags: [admin]
       summary: Raw record browser
@@ -806,15 +836,31 @@ paths:
         over the payload (`%` is not a wildcard) and tombstones hidden by
         default.
       parameters:
-        - { name: entity, in: query, schema: { $ref: '#/components/schemas/Entity' } }
+        - {
+            name: entity,
+            in: query,
+            schema: { $ref: "#/components/schemas/Entity" },
+          }
         - { name: tabspace_id, in: query, schema: { type: string } }
         - { name: q, in: query, schema: { type: string } }
-        - { name: deleted, in: query, schema: { type: string, enum: ['0', '1'] } }
-        - { name: archived, in: query, schema: { type: string, enum: ['0', '1'] } }
-        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 200 } }
+        - {
+            name: deleted,
+            in: query,
+            schema: { type: string, enum: ["0", "1"] },
+          }
+        - {
+            name: archived,
+            in: query,
+            schema: { type: string, enum: ["0", "1"] },
+          }
+        - {
+            name: limit,
+            in: query,
+            schema: { type: integer, minimum: 1, maximum: 200 },
+          }
         - { name: offset, in: query, schema: { type: integer, minimum: 0 } }
       responses:
-        '200':
+        "200":
           description: a page of records
           content:
             application/json:
@@ -823,16 +869,16 @@ paths:
                 properties:
                   records:
                     type: array
-                    items: { $ref: '#/components/schemas/Record' }
+                    items: { $ref: "#/components/schemas/Record" }
                   total: { type: integer }
                   limit: { type: integer }
                   offset: { type: integer }
-        '400': { $ref: '#/components/responses/BadRequest' }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '404': { $ref: '#/components/responses/NotFound' }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
 
   /console/api/v1/admin/users/{user_id}/search:
-    parameters: [{ $ref: '#/components/parameters/userId' }]
+    parameters: [{ $ref: "#/components/parameters/userId" }]
     get:
       tags: [admin]
       summary: Full text search over one account, with display titles
@@ -844,11 +890,23 @@ paths:
         extension's own search never filters them (ADR 0011).
       parameters:
         - { name: q, in: query, required: true, schema: { type: string } }
-        - { name: entity, in: query, schema: { $ref: '#/components/schemas/Entity' } }
-        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 200 } }
-        - { name: archived, in: query, schema: { type: string, enum: ['0', '1'] } }
+        - {
+            name: entity,
+            in: query,
+            schema: { $ref: "#/components/schemas/Entity" },
+          }
+        - {
+            name: limit,
+            in: query,
+            schema: { type: integer, minimum: 1, maximum: 200 },
+          }
+        - {
+            name: archived,
+            in: query,
+            schema: { type: string, enum: ["0", "1"] },
+          }
       responses:
-        '200':
+        "200":
           description: ranked hits
           content:
             application/json:
@@ -858,9 +916,9 @@ paths:
                   query: { type: string }
                   hits:
                     type: array
-                    items: { $ref: '#/components/schemas/AdminSearchHit' }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '404': { $ref: '#/components/responses/NotFound' }
+                    items: { $ref: "#/components/schemas/AdminSearchHit" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
 
   /console/api/v1/admin/registration-invites:
     get:
@@ -872,7 +930,7 @@ paths:
         for an address invited here. The admin address is always exempt, so the
         operator can register before anybody exists to invite it.
       responses:
-        '200':
+        "200":
           description: every invite, newest first
           content:
             application/json:
@@ -881,9 +939,9 @@ paths:
                 properties:
                   invites:
                     type: array
-                    items: { $ref: '#/components/schemas/RegistrationInvite' }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '403': { description: operator only }
+                    items: { $ref: "#/components/schemas/RegistrationInvite" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { description: operator only }
     post:
       tags: [admin]
       summary: Invite one address to register
@@ -899,14 +957,14 @@ paths:
                 ttl_seconds: { type: integer, minimum: 60, maximum: 7776000 }
                 send_email: { type: boolean }
       responses:
-        '200':
+        "200":
           description: the invite, the code (shown once), and the rendered email
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/RegistrationInviteResult' }
-        '400': { $ref: '#/components/responses/BadRequest' }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '403': { description: operator only }
+              schema: { $ref: "#/components/schemas/RegistrationInviteResult" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { description: operator only }
 
   /console/api/v1/admin/registration-invites/{email}/send:
     parameters:
@@ -919,15 +977,15 @@ paths:
         stored - so this mints a fresh one and the previous code stops working.
         The expiry is left alone.
       responses:
-        '200':
+        "200":
           description: the invite, the new code (if any), and the rendered email
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/RegistrationInviteResult' }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '403': { description: operator only }
-        '404': { $ref: '#/components/responses/NotFound' }
-        '409': { $ref: '#/components/responses/Conflict' }
+              schema: { $ref: "#/components/schemas/RegistrationInviteResult" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { description: operator only }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
 
   /console/api/v1/admin/registration-invites/{email}:
     parameters:
@@ -936,10 +994,10 @@ paths:
       tags: [admin]
       summary: Revoke an invitation
       responses:
-        '204': { description: revoked }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '403': { description: operator only }
-        '404': { $ref: '#/components/responses/NotFound' }
+        "204": { description: revoked }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { description: operator only }
+        "404": { $ref: "#/components/responses/NotFound" }
 
   /console/api/v1/console/membership:
     get:
@@ -952,18 +1010,19 @@ paths:
         retention window before it is closed. When the master switch is off
         every account is `unlimited`.
       responses:
-        '200':
+        "200":
           description: the account's membership and recent ledger
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  membership: { $ref: '#/components/schemas/MembershipView' }
+                  membership: { $ref: "#/components/schemas/MembershipView" }
                   ledger:
                     type: array
-                    items: { $ref: '#/components/schemas/MembershipLedgerEntry' }
-        '401': { $ref: '#/components/responses/Unauthorized' }
+                    items:
+                      { $ref: "#/components/schemas/MembershipLedgerEntry" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
 
   /console/api/v1/console/membership/renew:
     post:
@@ -974,21 +1033,21 @@ paths:
         it is the way back. Refused with `insufficient_credits` when the
         balance cannot pay.
       responses:
-        '200':
+        "200":
           description: the new lease
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  membership: { $ref: '#/components/schemas/MembershipView' }
+                  membership: { $ref: "#/components/schemas/MembershipView" }
                   expires_at: { type: integer, description: unix ms }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '402':
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "402":
           description: not enough credits
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/MembershipExpiredError' }
+              schema: { $ref: "#/components/schemas/MembershipExpiredError" }
 
   /console/api/v1/console/export:
     get:
@@ -999,12 +1058,12 @@ paths:
         record. Available at any status, so an expired account can always take
         a copy before the retention window closes. Audited as `data_exported`.
       responses:
-        '200':
+        "200":
           description: the account's records
           content:
             application/x-ndjson:
               schema: { type: string }
-        '401': { $ref: '#/components/responses/Unauthorized' }
+        "401": { $ref: "#/components/responses/Unauthorized" }
 
   /console/api/v1/admin/memberships:
     get:
@@ -1013,7 +1072,7 @@ paths:
       parameters:
         - { name: q, in: query, schema: { type: string } }
       responses:
-        '200':
+        "200":
           description: the directory
           content:
             application/json:
@@ -1023,33 +1082,34 @@ paths:
                   enabled: { type: boolean, description: the master switch }
                   memberships:
                     type: array
-                    items: { $ref: '#/components/schemas/MembershipSummary' }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '403': { description: operator only }
+                    items: { $ref: "#/components/schemas/MembershipSummary" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { description: operator only }
 
   /console/api/v1/admin/users/{user_id}/membership:
-    parameters: [{ $ref: '#/components/parameters/userId' }]
+    parameters: [{ $ref: "#/components/parameters/userId" }]
     get:
       tags: [admin]
       summary: One account's membership and ledger
       responses:
-        '200':
+        "200":
           description: the account's membership
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  membership: { $ref: '#/components/schemas/MembershipView' }
+                  membership: { $ref: "#/components/schemas/MembershipView" }
                   ledger:
                     type: array
-                    items: { $ref: '#/components/schemas/MembershipLedgerEntry' }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '403': { description: operator only }
-        '404': { $ref: '#/components/responses/NotFound' }
+                    items:
+                      { $ref: "#/components/schemas/MembershipLedgerEntry" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { description: operator only }
+        "404": { $ref: "#/components/responses/NotFound" }
 
   /console/api/v1/admin/users/{user_id}/membership/credits:
-    parameters: [{ $ref: '#/components/parameters/userId' }]
+    parameters: [{ $ref: "#/components/parameters/userId" }]
     post:
       tags: [admin]
       summary: Grant or deduct credits
@@ -1061,17 +1121,23 @@ paths:
               type: object
               required: [delta]
               properties:
-                delta: { type: integer, description: positive grants, negative deducts }
-                reason: { type: string, enum: [grant, adjustment, refund, purchase] }
+                delta:
+                  {
+                    type: integer,
+                    description: positive grants,
+                    negative deducts,
+                  }
+                reason:
+                  { type: string, enum: [grant, adjustment, refund, purchase] }
                 detail: { type: string }
       responses:
-        '200': { description: the updated membership }
-        '400': { description: the balance cannot go below zero }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '403': { description: operator only }
+        "200": { description: the updated membership }
+        "400": { description: the balance cannot go below zero }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { description: operator only }
 
   /console/api/v1/admin/users/{user_id}/membership/extend:
-    parameters: [{ $ref: '#/components/parameters/userId' }]
+    parameters: [{ $ref: "#/components/parameters/userId" }]
     post:
       tags: [admin]
       summary: Extend or set the lease
@@ -1083,51 +1149,52 @@ paths:
               type: object
               properties:
                 periods: { type: integer, minimum: 1 }
-                until: { type: integer, description: unix ms absolute lease end }
+                until:
+                  { type: integer, description: unix ms absolute lease end }
                 use_credits: { type: boolean, default: false }
       responses:
-        '200': { description: the updated membership }
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '402': { description: not enough credits when use_credits is set }
-        '403': { description: operator only }
+        "200": { description: the updated membership }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "402": { description: not enough credits when use_credits is set }
+        "403": { description: operator only }
 
   /console/api/v1/admin/users/{user_id}/membership/unlimited:
-    parameters: [{ $ref: '#/components/parameters/userId' }]
+    parameters: [{ $ref: "#/components/parameters/userId" }]
     post:
       tags: [admin]
       summary: Mark an account unlimited (or remove it)
       responses:
-        '200': { description: the updated membership }
-        '403': { description: operator only, or the configured root }
+        "200": { description: the updated membership }
+        "403": { description: operator only, or the configured root }
 
   /console/api/v1/admin/users/{user_id}/membership/reset:
-    parameters: [{ $ref: '#/components/parameters/userId' }]
+    parameters: [{ $ref: "#/components/parameters/userId" }]
     post:
       tags: [admin]
       summary: Clear the lifecycle stamps and reopen a period
       description: Never re-grants the one trial.
       responses:
-        '200': { description: the updated membership }
-        '403': { description: operator only }
+        "200": { description: the updated membership }
+        "403": { description: operator only }
 
   /console/api/v1/admin/users/{user_id}/membership/close:
-    parameters: [{ $ref: '#/components/parameters/userId' }]
+    parameters: [{ $ref: "#/components/parameters/userId" }]
     post:
       tags: [admin]
       summary: Close an account now, without waiting for retention
       parameters:
-        - { name: dry_run, in: query, schema: { type: string, enum: ['1'] } }
+        - { name: dry_run, in: query, schema: { type: string, enum: ["1"] } }
       responses:
-        '204': { description: the account and its content are gone }
-        '403': { description: operator only, or the configured root }
+        "204": { description: the account and its content are gone }
+        "403": { description: operator only, or the configured root }
 
   /console/api/v1/admin/users/{user_id}/membership/ledger:
-    parameters: [{ $ref: '#/components/parameters/userId' }]
+    parameters: [{ $ref: "#/components/parameters/userId" }]
     get:
       tags: [admin]
       summary: The append-only credit ledger
       responses:
-        '200':
+        "200":
           description: newest first
           content:
             application/json:
@@ -1136,18 +1203,19 @@ paths:
                 properties:
                   ledger:
                     type: array
-                    items: { $ref: '#/components/schemas/MembershipLedgerEntry' }
+                    items:
+                      { $ref: "#/components/schemas/MembershipLedgerEntry" }
 
   /console/api/v1/admin/settings/membership:
     get:
       tags: [admin]
       summary: The membership master switch and effective prices
       responses:
-        '200':
+        "200":
           description: the settings
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/MembershipSettings' }
+              schema: { $ref: "#/components/schemas/MembershipSettings" }
     put:
       tags: [admin]
       summary: Flip the master switch
@@ -1161,8 +1229,8 @@ paths:
               properties:
                 enabled: { type: boolean }
       responses:
-        '200': { description: the settings after the change }
-        '403': { description: operator only }
+        "200": { description: the settings after the change }
+        "403": { description: operator only }
 
 components:
   securitySchemes:
@@ -1178,7 +1246,7 @@ components:
       name: entity
       in: path
       required: true
-      schema: { $ref: '#/components/schemas/Entity' }
+      schema: { $ref: "#/components/schemas/Entity" }
     userId:
       name: user_id
       in: path
@@ -1199,15 +1267,21 @@ components:
       type: object
       properties:
         enabled: { type: boolean }
-        status: { $ref: '#/components/schemas/MembershipStatus' }
-        read_only: { type: boolean, description: the account may look and download, not write }
+        status: { $ref: "#/components/schemas/MembershipStatus" }
+        read_only:
+          {
+            type: boolean,
+            description: the account may look and download,
+            not write,
+          }
         unlimited: { type: boolean }
         expires_at: { type: integer, description: unix ms; 0 when never opened }
         credits: { type: integer }
         period_days: { type: integer }
         period_credits: { type: integer }
         retention_days: { type: integer }
-        retention_until: { type: integer, description: unix ms; 0 when it does not apply }
+        retention_until:
+          { type: integer, description: unix ms; 0 when it does not apply }
         days_left: { type: integer }
         days_until_close: { type: integer }
         can_export: { type: boolean }
@@ -1236,7 +1310,7 @@ components:
         unlimited: { type: boolean }
         trial_granted_at: { type: integer, description: unix ms }
         expired_at: { type: integer, description: unix ms }
-        status: { $ref: '#/components/schemas/MembershipStatus' }
+        status: { $ref: "#/components/schemas/MembershipStatus" }
         read_only: { type: boolean }
 
     MembershipSettings:
@@ -1256,9 +1330,10 @@ components:
         account) is refused with `402 Payment Required` and this body, so the
         extension can tell "pay" from "re-pair" without parsing prose.
       properties:
-        error: { type: string, enum: [membership_expired, insufficient_credits] }
+        error:
+          { type: string, enum: [membership_expired, insufficient_credits] }
         message: { type: string }
-        status: { $ref: '#/components/schemas/MembershipStatus' }
+        status: { $ref: "#/components/schemas/MembershipStatus" }
         expires_at: { type: integer }
         retention_until: { type: integer }
 
@@ -1278,7 +1353,7 @@ components:
     RegistrationInviteResult:
       type: object
       properties:
-        invite: { $ref: '#/components/schemas/RegistrationInvite' }
+        invite: { $ref: "#/components/schemas/RegistrationInvite" }
         code:
           type: string
           description: present only when this call issued a code
@@ -1313,7 +1388,7 @@ components:
       type: object
       required: [entity, id, updated_at]
       properties:
-        entity: { $ref: '#/components/schemas/Entity' }
+        entity: { $ref: "#/components/schemas/Entity" }
         id: { type: string, maxLength: 128 }
         updated_at:
           type: integer
@@ -1326,7 +1401,7 @@ components:
 
     Record:
       allOf:
-        - $ref: '#/components/schemas/RecordInput'
+        - $ref: "#/components/schemas/RecordInput"
         - type: object
           required: [rev, server_at]
           properties:
@@ -1342,13 +1417,13 @@ components:
       type: object
       required: [entity, id, status, rev, updated_at]
       properties:
-        entity: { $ref: '#/components/schemas/Entity' }
+        entity: { $ref: "#/components/schemas/Entity" }
         id: { type: string }
         status: { type: string, enum: [ok, stale] }
         rev: { type: integer }
         updated_at: { type: integer }
         current:
-          allOf: [{ $ref: '#/components/schemas/Record' }]
+          allOf: [{ $ref: "#/components/schemas/Record" }]
           description: present when status=stale, the winning server copy
 
     DeviceCredentials:
@@ -1365,7 +1440,7 @@ components:
       type: object
       required: [entity, id, score]
       properties:
-        entity: { $ref: '#/components/schemas/Entity' }
+        entity: { $ref: "#/components/schemas/Entity" }
         id: { type: string, description: the id of the record that matched }
         score: { type: number, description: higher is better }
         snippet:
@@ -1386,7 +1461,8 @@ components:
       description: what an archive or unarchive changed
       required: [archived, unarchived, skipped]
       properties:
-        archived: { type: integer, description: rows hidden from the default views }
+        archived:
+          { type: integer, description: rows hidden from the default views }
         unarchived: { type: integer }
         skipped:
           type: integer
@@ -1394,7 +1470,18 @@ components:
 
     UserSummary:
       type: object
-      required: [id, name, email, role, created_at, rev_seq, device_count, token_count, record_count]
+      required:
+        [
+          id,
+          name,
+          email,
+          role,
+          created_at,
+          rev_seq,
+          device_count,
+          token_count,
+          record_count,
+        ]
       properties:
         id: { type: string }
         name: { type: string }
@@ -1407,13 +1494,15 @@ components:
         role:
           type: string
           enum: [user, admin]
-          description: '`admin` may see and act on every account; `user` only on their own.' 
+          description: "`admin` may see and act on every account; `user` only on their own."
         created_at: { type: string, format: date-time }
-        rev_seq: { type: integer, description: the account's current revision tip }
+        rev_seq:
+          { type: integer, description: the account's current revision tip }
         device_count: { type: integer }
         token_count: { type: integer, description: tokens that are not revoked }
         revoked_token_count: { type: integer }
-        record_count: { type: integer, description: live records, tombstones excluded }
+        record_count:
+          { type: integer, description: live records, tombstones excluded }
         last_activity:
           type: integer
           description: newest updated_at among live records, 0 if never synced
@@ -1422,14 +1511,25 @@ components:
       type: object
       required: [hash, fingerprint, device_id, created_at, revoked]
       properties:
-        hash: { type: string, description: the stored hash; pass it to revoke this token }
-        fingerprint: { type: string, description: first 8 characters, for display }
+        hash:
+          {
+            type: string,
+            description: the stored hash; pass it to revoke this token,
+          }
+        fingerprint:
+          { type: string, description: first 8 characters, for display }
         device_id: { type: string }
         device_name: { type: string }
         created_at: { type: string, format: date-time }
         revoked: { type: boolean }
-        last_used: { type: integer, description: unix ms of the last authenticated request, 0 if never }
-        archived_at: { type: integer, description: 0 when not archived (ADR 0011) }
+        last_used:
+          {
+            type: integer,
+            description: unix ms of the last authenticated request,
+            0 if never,
+          }
+        archived_at:
+          { type: integer, description: 0 when not archived (ADR 0011) }
         archived: { type: boolean }
 
     DeviceInfo:
@@ -1441,9 +1541,14 @@ components:
         created_at: { type: string, format: date-time }
         active_tokens: { type: integer }
         last_used: { type: integer }
-        archived_at: { type: integer, description: 0 when not archived (ADR 0011) }
+        archived_at:
+          { type: integer, description: 0 when not archived (ADR 0011) }
         archived: { type: boolean }
-        archived_records: { type: integer, description: live records this device wrote that are archived }
+        archived_records:
+          {
+            type: integer,
+            description: live records this device wrote that are archived,
+          }
 
     TabspaceSummary:
       type: object
@@ -1456,8 +1561,10 @@ components:
         created_at: { type: integer }
         updated_at: { type: integer }
         rev: { type: integer }
-        tab_count: { type: integer, description: "len(tabIds) of the stored payload" }
-        groups: { type: integer, description: tab groups the tabverse remembers }
+        tab_count:
+          { type: integer, description: "len(tabIds) of the stored payload" }
+        groups:
+          { type: integer, description: tab groups the tabverse remembers }
         notes: { type: integer }
         todos: { type: integer }
         bookmarks: { type: integer }
@@ -1471,32 +1578,34 @@ components:
         rev: { type: integer }
         updated_at: { type: integer }
         server_at: { type: integer }
-        position: { type: integer, description: index in the client's own ordering }
+        position:
+          { type: integer, description: index in the client's own ordering }
         data: { type: object, description: the record payload, decoded }
 
     TabspaceBundle:
       type: object
-      required: [tabspace, tabs, notes, todos, bookmarks, closed_tabs, aggregates]
+      required:
+        [tabspace, tabs, notes, todos, bookmarks, closed_tabs, aggregates]
       properties:
-        tabspace: { $ref: '#/components/schemas/TabspaceSummary' }
+        tabspace: { $ref: "#/components/schemas/TabspaceSummary" }
         tabspace_data:
           type: object
           description: the tabverse's own payload, decoded (tab groups live here)
         tabs:
           type: array
-          items: { $ref: '#/components/schemas/BundleRow' }
+          items: { $ref: "#/components/schemas/BundleRow" }
         notes:
           type: array
-          items: { $ref: '#/components/schemas/BundleRow' }
+          items: { $ref: "#/components/schemas/BundleRow" }
         todos:
           type: array
-          items: { $ref: '#/components/schemas/BundleRow' }
+          items: { $ref: "#/components/schemas/BundleRow" }
         bookmarks:
           type: array
-          items: { $ref: '#/components/schemas/BundleRow' }
+          items: { $ref: "#/components/schemas/BundleRow" }
         closed_tabs:
           type: array
-          items: { $ref: '#/components/schemas/BundleRow' }
+          items: { $ref: "#/components/schemas/BundleRow" }
         aggregates:
           type: object
           description: the raw allnote / alltodo / allbookmark payloads
@@ -1504,10 +1613,15 @@ components:
 
     AdminSearchHit:
       allOf:
-        - $ref: '#/components/schemas/SearchHit'
+        - $ref: "#/components/schemas/SearchHit"
         - type: object
           properties:
-            title: { type: string, description: the record's display title, for listing }
+            title:
+              {
+                type: string,
+                description: the record's display title,
+                for listing,
+              }
             url: { type: string }
             tabspace_title:
               type: string
@@ -1555,32 +1669,32 @@ components:
       description: malformed request
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Error' }
+          schema: { $ref: "#/components/schemas/Error" }
     Unauthorized:
       description: missing or invalid token / invite code
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Error' }
+          schema: { $ref: "#/components/schemas/Error" }
     Conflict:
       description: account already bootstrapped
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Error' }
+          schema: { $ref: "#/components/schemas/Error" }
     NotFound:
       description: unknown entity, record or account
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Error' }
+          schema: { $ref: "#/components/schemas/Error" }
     AdminDisabled:
       description: TABVERSED_ADMIN_TOKEN is not set, so the admin API does not exist
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Error' }
+          schema: { $ref: "#/components/schemas/Error" }
     TooLarge:
       description: batch or payload too large
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/Error' }
+          schema: { $ref: "#/components/schemas/Error" }
     SyncResult:
       description: sync outcome
       content:
@@ -1590,7 +1704,7 @@ components:
             properties:
               results:
                 type: array
-                items: { $ref: '#/components/schemas/RecordResult' }
+                items: { $ref: "#/components/schemas/RecordResult" }
               server_rev: { type: integer }
 
 security:

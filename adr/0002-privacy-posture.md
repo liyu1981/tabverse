@@ -25,20 +25,20 @@ For v1:
    this replaces ("a separate button, pairing alone does not move existing
    data") made the first setup a surprising dead end: the user pairs, sees an
    empty server, and has to discover a second button. The default is kept
-   *legible* instead of quiet: the dialog counts what would be sent ("this
+   _legible_ instead of quiet: the dialog counts what would be sent ("this
    device holds N records, M tabverses, T tabs"), the primary button says
    "Pair & upload local data" while the box is ticked, the upload reports
    progress, and unticking it is one click and says what it means ("your
    existing data stays on this device"). The separate "Upload local data"
    button stays, for data created while disconnected and for retrying a failed
    upload. An upload that fails after a successful pairing is reported as a
-   failed *upload* - the device is paired and the local copy is intact.
+   failed _upload_ - the device is paired and the local copy is intact.
 4. **Server side retention** defaults to pruning `session` snapshots after
    14 days (`TABVERSED_RETENTION_DAYS`, 0 = keep forever). The extension no
    longer records snapshots at all (`adr/0006`); retention remains for older
    clients and can go with the `session` entity.
 5. **No third parties.** The extension talks to exactly one server, the one
-   the user typed. Which servers it is *allowed* to reach is scheme-scoped by
+   the user typed. Which servers it is _allowed_ to reach is scheme-scoped by
    default (`connect-src 'self' https: wss: http: ws:`), narrowed on request by
    `TABVERSE_ALLOWED_SERVERS` - see [ADR 0010](0010-extension-may-talk-to-any-server.md).
 

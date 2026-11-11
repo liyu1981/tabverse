@@ -6,15 +6,15 @@ their own account away from them. See "The revision" below.
 
 Extends [ADR 0012](0012-accounts-are-for-the-console.md) and
 [ADR 0013](0013-no-master-credential.md), which made the console per-account
-but did not say what an operator should *see* when they are not looking at one.
+but did not say what an operator should _see_ when they are not looking at one.
 
 ## Context
 
 ADR 0012 and 0013 gave the console a session, an operator role and a
 read-only assumed identity. What they left in place was the shape the token-era
 console had: an accounts sidebar on the left (a list, plus a create form) and the
-account's three tabs on the right, with the operator landing directly in *their
-own* account's data.
+account's three tabs on the right, with the operator landing directly in _their
+own_ account's data.
 
 That is wrong for the person the roles were built for. Three problems, in
 increasing order of how long they took to notice:
@@ -47,13 +47,13 @@ it was there before registration did.
    special case here - their own tabverses, devices and pairing codes are one
    click away, exactly like anybody else's, because they own an account too.
 2. **An operator's powers are a fourth tab, "Admin"**: the accounts, and per
-   row *Impersonate*, *Make/Remove operator* and *Delete*. It is a tab rather
+   row _Impersonate_, _Make/Remove operator_ and _Delete_. It is a tab rather
    than a separate page precisely so the three account tabs never go away.
 3. **Impersonating switches the three account tabs to that account**, read-only,
    titled `alice (impersonated by admin)` in the account header and not only in
    the banner, because a screenshot or a "what did you see" question has to
    carry the answer with it. The Admin tab stays available, so looking at
-   somebody else is one click and coming back is *Stop looking*.
+   somebody else is one click and coming back is _Stop looking_.
 4. **There is no "create account" anywhere, and no accounts sidebar.** An account
    is an address and a proof that the person controls it; an operator could only
    ever create one nobody can prove, and would have to mail the link out by
@@ -74,7 +74,7 @@ path to their own tabverses, their own pairing codes, or adding a device to
 their own account - a self-hoster who was also the operator had lost the console
 they had been using minutes earlier.
 
-The directory was not the problem; making it *replace* the account view was. An
+The directory was not the problem; making it _replace_ the account view was. An
 operator is an account that can also do more, not a different kind of account,
 and the fix is to give them one more tab rather than one fewer page.
 
@@ -91,7 +91,7 @@ and the fix is to give them one more tab rather than one fewer page.
   rather than aspirational.
 - An operator cannot delete their own account: it would leave the deployment
   with no way back in, the same rule that already stopped them demoting the last
-  operator. A person *can* delete their own, which is the ordinary expectation
+  operator. A person _can_ delete their own, which is the ordinary expectation
   of an account system - and after it, the console has nothing left to show, so
   it returns to the sign-in form rather than to an empty page.
 - The impersonation rules are unchanged: read-only, time-boxed, audited in both

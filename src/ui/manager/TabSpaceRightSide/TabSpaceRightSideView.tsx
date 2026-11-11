@@ -8,7 +8,7 @@ import { HistoryView } from '../../history/HistoryView';
 import { NotebookView } from '../../notebook/NotebookView';
 import { TodoView } from '../../todo/TodoView';
 import classes from './TabSpaceRightSideView.module.scss';
-import { getLoadingComponent2 } from '../../common/LoadingComponent';
+import { LoadingGate } from '../../common/LoadingComponent';
 import { loadAllTodoByTabSpaceId } from '../../../data/todo/util';
 import { loadAllNoteByTabSpaceId } from '../../../data/note/util';
 import { loadAllBookmarkByTabSpaceId } from '../../../data/bookmark/util';
@@ -83,7 +83,6 @@ export function TabSpaceRightSideView() {
     const todoLoader = async () => {
       await loadAllTodoByTabSpaceId(tabSpace.id);
     };
-    const TodoWithLoading = getLoadingComponent2(TodoView, todoLoader);
     const todoTitle = (
       <span>
         <Icon icon="confirm" /> Todo
@@ -93,10 +92,6 @@ export function TabSpaceRightSideView() {
     const bookmarkLoader = async () => {
       await loadAllBookmarkByTabSpaceId(tabSpace.id);
     };
-    const BookmarkWithLoading = getLoadingComponent2(
-      BookmarkView,
-      bookmarkLoader,
-    );
     const bookmarkTitle = (
       <span>
         <Icon icon="book" /> Bookmark
@@ -106,10 +101,6 @@ export function TabSpaceRightSideView() {
     const notebookLoader = async () => {
       await loadAllNoteByTabSpaceId(tabSpace.id);
     };
-    const NotebookWithLoading = getLoadingComponent2(
-      NotebookView,
-      notebookLoader,
-    );
     const notebookTitle = (
       <span>
         <Icon icon="clipboard" /> Note
@@ -119,7 +110,6 @@ export function TabSpaceRightSideView() {
     const historyLoader = async () => {
       await loadClosedTabsByTabSpaceId(tabSpace.id);
     };
-    const HistoryWithLoading = getLoadingComponent2(HistoryView, historyLoader);
     const historyTitle = (
       <span>
         <Icon icon="history" /> History
@@ -129,7 +119,6 @@ export function TabSpaceRightSideView() {
     // The AI chat is here rather than in the right side panel: it is about this
     // tabverse's work, like the other tools, not about the tooling around it.
     // `loadChat` reads the stored conversation once; it is a no-op after that.
-    const ChatWithLoading = getLoadingComponent2(ChatPanel, loadChat);
     const chatTitle = (
       <span>
         <Icon icon="comment" /> AI Chat
@@ -138,23 +127,28 @@ export function TabSpaceRightSideView() {
 
     return {
       [RightSideModule.TODO]: {
-        component: TodoWithLoading,
+        component: TodoView,
+        loader: todoLoader,
         title: todoTitle,
       },
       [RightSideModule.NOTE]: {
-        component: NotebookWithLoading,
+        component: NotebookView,
+        loader: notebookLoader,
         title: notebookTitle,
       },
       [RightSideModule.BOOKMARK]: {
-        component: BookmarkWithLoading,
+        component: BookmarkView,
+        loader: bookmarkLoader,
         title: bookmarkTitle,
       },
       [RightSideModule.HISTORY]: {
-        component: HistoryWithLoading,
+        component: HistoryView,
+        loader: historyLoader,
         title: historyTitle,
       },
       [RightSideModule.CHAT]: {
-        component: ChatWithLoading,
+        component: ChatPanel,
+        loader: loadChat,
         title: chatTitle,
       },
     };
@@ -243,10 +237,14 @@ export function TabSpaceRightSideView() {
               <BPTab
                 id={pinned}
                 title={rightSideModules[pinned].title}
-                panel={React.createElement(
-                  rightSideModules[pinned].component,
-                  {},
-                )}
+                panel={
+                  <LoadingGate loader={rightSideModules[pinned].loader}>
+                    {React.createElement(
+                      rightSideModules[pinned].component,
+                      {},
+                    )}
+                  </LoadingGate>
+                }
               />
             </BPTabs>
           </div>
@@ -273,17 +271,18 @@ export function TabSpaceRightSideView() {
             selectedTabId={currentUnpinned}
             className={classes.bpTabs}
           >
-            {unpinned.map((key) => {
-              const componentClass = rightSideModules[key].component;
-              return (
-                <BPTab
-                  key={key}
-                  id={key}
-                  title={rightSideModules[key].title}
-                  panel={React.createElement(componentClass, {})}
-                />
-              );
-            })}
+            {unpinned.map((key) => (
+              <BPTab
+                key={key}
+                id={key}
+                title={rightSideModules[key].title}
+                panel={
+                  <LoadingGate loader={rightSideModules[key].loader}>
+                    {React.createElement(rightSideModules[key].component, {})}
+                  </LoadingGate>
+                }
+              />
+            ))}
           </BPTabs>
         </div>
       </div>

@@ -13,12 +13,12 @@ never be false. Decision 5 itself stands; only the symbol it names is gone.
 
 The right side of a tabverse carries three tools: Todo, Note and Bookmark.
 None of them answers the question that comes up most often after a burst of
-tab closing: *that page, what was it?*
+tab closing: _that page, what was it?_
 
 Chrome has an answer (`chrome://history`, and Ctrl+Shift+T), but it is
 browser-global, it is not stored in the extension, and it cannot be reached
 from the tabverse. So we added a fourth tool, **History**: the tabs that were
-closed *in this tabverse*, newest first, with a restore action and a
+closed _in this tabverse_, newest first, with a restore action and a
 save-as-bookmark action per entry.
 
 Two things had to be decided beyond the obvious.
@@ -33,7 +33,7 @@ Two things had to be decided beyond the obvious.
 
 2. **Does the history sync?** Closed tabs are browsing data like any other tab
    row, and Tabverse's whole point since the server pivot is that a tabverse
-   is the same object on every device. Deciding *not* to sync would have made
+   is the same object on every device. Deciding _not_ to sync would have made
    the tool behave differently depending on whether a device was paired, which
    is the kind of surprise this codebase has been trying to remove (ADR 0006
    removed a whole feature because it behaved differently per context). So it
@@ -57,7 +57,7 @@ Two things had to be decided beyond the obvious.
 4. **Indexed for search.** (Originally deferred: the argument then was that a
    hit on a page that fell off the cap would be a dead link. That stopped being
    true once [ADR 0008](0008-server-search-with-local-fallback.md) made a search
-   hit resolve to a *tabverse* that is filtered against local rows, and once
+   hit resolve to a _tabverse_ that is filtered against local rows, and once
    pruning tombstones the record, which removes the index row with it.)
 5. **No localStorage fallback.** Todo/Note/Bookmark still have one for
    tabverses that were not saved yet, but a tabverse is born saved

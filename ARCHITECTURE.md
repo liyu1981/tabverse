@@ -15,16 +15,16 @@
 
 ## Repository layout
 
-| Path                 | What                                                                                                     |
-| -------------------- | -------------------------------------------------------------------------------------------------------- |
-| `src/`               | the extension (unchanged entry points: `background.ts`, `ui/popup.tsx`, `ui/manager.tsx`)                |
-| `src/data/repo/`     | **new** sync layer: types, HTTP client, outbox, delta engine, realtime client, Dexie bridge, change feed |
+| Path                 | What                                                                                                                                                                                                                                    |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/`               | the extension (unchanged entry points: `background.ts`, `ui/popup.tsx`, `ui/manager.tsx`)                                                                                                                                               |
+| `src/data/repo/`     | **new** sync layer: types, HTTP client, outbox, delta engine, realtime client, Dexie bridge, change feed                                                                                                                                |
 | `src/ai/`            | Chrome's built-in AI (Gemma Nano): availability state, the per-device on/off setting, the cached model session, the name suggester, and a local log of what was asked - optional, feature-tested, fails soft like `src/capabilities.ts` |
-| `server/`            | the `tabversed` sync server (pure Go, no cgo)                                                            |
-| `server/ui/`         | the console: a Vite/React app, built into `server/internal/webui/dist` and embedded in the binary (`adr/0018`)  |
-| `api/openapi.yaml`   | wire contract for the server                                                                             |
-| `adr/`               | architecture decision records                                                                            |
-| `dist/manifest.json` | manifest (single source of truth today; generated later)                                                 |
+| `server/`            | the `tabversed` sync server (pure Go, no cgo)                                                                                                                                                                                           |
+| `server/ui/`         | the console: a Vite/React app, built into `server/internal/webui/dist` and embedded in the binary (`adr/0018`)                                                                                                                          |
+| `api/openapi.yaml`   | wire contract for the server                                                                                                                                                                                                            |
+| `adr/`               | architecture decision records                                                                                                                                                                                                           |
+| `dist/manifest.json` | manifest (single source of truth today; generated later)                                                                                                                                                                                |
 
 ## The sync layer (`src/data/repo/`)
 
@@ -157,7 +157,7 @@ drawn is worth syncing to another device.
 ## The tabverses open in this browser (`src/data/tabSpace/openWindowStore.ts`)
 
 The sidebar's "Other Tabverses" list, and the rule that keeps a tabverse open in
-one window only. Both answer a question about *this* browser, and both answer it
+one window only. Both answer a question about _this_ browser, and both answer it
 the same cheap way: `chrome.tabs.query({})`, once.
 
 A Tabverse tab carries its tabverse id in its url as `tvid` (`tabverseUrl`), so
@@ -171,11 +171,11 @@ empties itself because a neighbour's row is a moment late is worse than one row
 with no name. Hovering one of those rows for a second shows what that tabverse has open -
 the first four of its tabs in tab strip order, from `chrome.tabs.query` on that
 window rather than from its saved rows, because a preview is a claim about the
-window *now* and only the live query carries the strip order and the tab ids
+window _now_ and only the live query carries the strip order and the tab ids
 (`data/tabSpace/tabversePreview.ts`). The panel is read-only: a row in a window
 that is not on screen is not a place to press buttons on.
 
-Each other window is a sidebar *entry*, which is what makes the
+Each other window is a sidebar _entry_, which is what makes the
 collapsed rail work for free: expanded it is a row with the tabverse's name
 (truncated, full name in the title), collapsed it is a `th-derived` icon whose
 tooltip is that name. Scope is one Chrome profile - another profile is another
@@ -187,7 +187,7 @@ and the popup both reach the tabverse through it. This is not tidiness. Two page
 holding one id both autosave the row keyed by that id, so they overwrite each
 other's `tabIds` and the tabverse's tab list flip-flops between the two windows.
 The `CountExit` guard does not help - it only catches two manager pages in the
-*same* window.
+_same_ window.
 
 ## Pairing: two ways in (`adr/0020`)
 
@@ -204,15 +204,15 @@ an account mints a code, the extension redeems it. It needs no sign-in anywhere
 the extension can reach.
 
 **The wizard** exists because an extension cannot sign in to a site - the session
-is a cookie in the browser's jar for that origin - so the *console page* does the
+is a cookie in the browser's jar for that origin - so the _console page_ does the
 signing in and carries the token back:
 
 1. The extension opens
    `https://tabversed.liyu1981.xyz/console/pair?ext=<its own id>&nonce=<uuid>`
    - the console's pairing page, a plain HTTP URL since `adr/0023` (it used to
-   be a fragment at `/`, which is what kept the nonce out of a log; see those
-   ADRs for why the trade flipped) - and remembers the nonce in
-   `chrome.storage.session`.
+     be a fragment at `/`, which is what kept the nonce out of a log; see those
+     ADRs for why the trade flipped) - and remembers the nonce in
+     `chrome.storage.session`.
 2. The person signs in and approves a device name; the page calls
    `POST /console/api/v1/console/pair`, which mints a device and a token for **the
    session's account** (`writeDevice`, the same function `auth/pair` uses) and
@@ -227,8 +227,8 @@ signing in and carries the token back:
 
 `kind` is display only: both kinds sync identically, and **absent means custom**,
 so every config written before the wizard existed is read correctly without a
-migration. The sync dialog is two tabs because of it - *Status* (what sync is:
-host, device, account, last sync, sync now / upload / disconnect) and *Setup* (a
+migration. The sync dialog is two tabs because of it - _Status_ (what sync is:
+host, device, account, last sync, sync now / upload / disconnect) and _Setup_ (a
 switch between the two ways in).
 
 The invite code is not a step the wizard drops; it is the reason a self-hosted
@@ -240,7 +240,7 @@ Loading a saved tabverse into the window its manager page is in is a **merge**.
 It used to be "close every tab in the window, then open every tab of the
 tabverse", and then "reuse what is already open, close the window's other
 tabs": both replaced the window, and the window is the user's, not the
- tabverse's. Loading a tabverse is not a reason to close the pages they were
+tabverse's. Loading a tabverse is not a reason to close the pages they were
 working on, so nothing is closed at all.
 
 So the plan (`planRestore`) decides two things and only two: a saved tab whose
@@ -263,7 +263,7 @@ Two things it has to get right:
   order asked for is the tabverse tab, then the saved pinned tabs, then the
   rest; the window's other tabs follow them, in the order they were in.
 
-A third one is about what a merge does *not* decide: a reused tab raises no
+A third one is about what a merge does _not_ decide: a reused tab raises no
 `tabs.onCreated`, so nothing would fill in the `chromeTabId` the list's close and
 switch buttons act on. The restore sets the live fields from what the browser
 has.
@@ -294,7 +294,7 @@ curl -X POST localhost:8223/console/api/v1/auth/invites \
      -H 'Authorization: Bearer <token>' -d '{"ttl_seconds":300}'
 ```
 
-The pasted URL is the machine's address as the *browser* can reach it -
+The pasted URL is the machine's address as the _browser_ can reach it -
 `http://192.168.0.221:8223` from another laptop, not `127.0.0.1`, which would
 be the laptop itself. The extension may talk to any http/https/ws/wss server
 (`adr/0010`); narrow that at build time with
@@ -316,13 +316,13 @@ See `server/README.md` for configuration, deployment and protocol semantics.
 The URL space has three owners, and `/console` owns two of them
 (`adr/0023`, `adr/0024`):
 
-| path | what it is |
-|---|---|
-| `/console`, `/console/assets/<name>-<hash>`, `/console/<client route>` | the console page (its pairing page is `/console/pair?ext=…&nonce=…`) |
-| `/console/api/v1/*` | sync, entities, search, admin, console - the whole API |
-| `/auth/*` | the account library's sign-in routes |
-| `/healthz` | the probe |
-| `/` and anything else | the site: the documentation in an official build (`officialserver=1`), a page that redirects to `/console` otherwise |
+| path                                                                   | what it is                                                                                                           |
+| ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `/console`, `/console/assets/<name>-<hash>`, `/console/<client route>` | the console page (its pairing page is `/console/pair?ext=…&nonce=…`)                                                 |
+| `/console/api/v1/*`                                                    | sync, entities, search, admin, console - the whole API                                                               |
+| `/auth/*`                                                              | the account library's sign-in routes                                                                                 |
+| `/healthz`                                                             | the probe                                                                                                            |
+| `/` and anything else                                                  | the site: the documentation in an official build (`officialserver=1`), a page that redirects to `/console` otherwise |
 
 An endpoint under `/console/api/` that no route claims is a JSON `404`, never
 the page; anything else outside the API is the site. Both clients and the
@@ -337,7 +337,7 @@ client-side link would land on the site's own 404), and the console offers
 The server's data model was tenant scoped from the start (`user_id` on
 `records`, `tokens`, `devices`, `invites`, `records_fts`; a per account
 `rev_seq`; a per account WebSocket topic; retention over `AllUserIDs()`), but
-the only way to create the *first* account was an open `bootstrap` endpoint, so
+the only way to create the _first_ account was an open `bootstrap` endpoint, so
 a deployment could hold exactly one.
 
 That content is now physically per-account (`adr/0027`): accounts, devices and
@@ -375,16 +375,16 @@ other write, and it is the one audit-log entry that removed somebody's content.
 
 **Operator powers are a fourth tab (`adr/0014`).** Everybody lands on their own
 account - Pair Code, Devices & Tokens, Stored data - and an operator also gets
-*Admin*: the accounts, with *impersonate*, *make/remove operator* and *delete*
+_Admin_: the accounts, with _impersonate_, _make/remove operator_ and _delete_
 per row. Impersonating switches the three account tabs to that account, read-only
 and titled `alice (impersonated by admin)`, and the Admin tab stays put. There is
 no create-account path anywhere: registration is the only way an account exists,
 so there is one path that can prove an address.
 
-**The account *is* an address (`adr/0017`).** `TABVERSED_ADMIN_EMAIL` is matched
+**The account _is_ an address (`adr/0017`).** `TABVERSED_ADMIN_EMAIL` is matched
 against it to make the first registration the operator, `TABVERSED_LINK_BY_EMAIL`
 merges a social login with an existing account by it, and an address nobody has
-proved is refused. So Google is registered as a *custom* provider asking for
+proved is refused. So Google is registered as a _custom_ provider asking for
 `profile email` rather than through the auth library's preset, which asks for
 profile alone and hands back no address at all - and Google's `email_verified`
 proves the address the way following an emailed sign-in link does. GitHub is the
@@ -425,11 +425,12 @@ Docusaurus config, never by Go.
 
 State is effector stores and effects (`server/ui/data/`), the client is a typed
 `fetch` wrapper mirroring `api/openapi.yaml`, and the components are Blueprint's
+
 - the same dependency the extension uses, from the same lockfile. The tests are
-what a compiler cannot do: vitest over the data layer with a stub `fetch`, and
-`react-dom/server` over the views' markup (no DOM, which `AGENTS.md` forbids
-installing). `internal/webui/webui_test.go` checks the shell against the files
-actually embedded with it, since the names are content hashed.
+  what a compiler cannot do: vitest over the data layer with a stub `fetch`, and
+  `react-dom/server` over the views' markup (no DOM, which `AGENTS.md` forbids
+  installing). `internal/webui/webui_test.go` checks the shell against the files
+  actually embedded with it, since the names are content hashed.
 
 A tabverse opens in a drawer over the account rather than a page that replaces
 it, and it is the extension's own tabverse view in the extension's own two
@@ -453,14 +454,14 @@ signed JWT, and the library by itself will not let one expire: it ignores a
 cookie-borne token's expiry, then mints a fresh one and re-sets the cookie, so a
 session slides for as long as it is used. So the bound is enforced here instead,
 in `Service.validate` - the `Validator` hook that already carries the account's
-revocation cut-off - which the authenticator calls *before* it refreshes.
+revocation cut-off - which the authenticator calls _before_ it refreshes.
 `TABVERSED_SESSION_TTL` (default `24h`, `0` for no bound) is the length of one
 sign-in, and `TABVERSED_SESSION_COOKIE_TTL` defaults to the same number so the
 credential leaves the machine when the session does.
 
 Ending every session on demand is `POST /console/api/v1/console/revoke-sessions`, which
 moves `users.tokens_valid_after` - the cut-off `SessionAllowed` already reads on
-every request. It is the same credential the extension's device tokens are *not*:
+every request. It is the same credential the extension's device tokens are _not_:
 the console's dialog says so, because "sign out everywhere" must not read as
 "unpair my devices". A sign-in is audited (`AuditLogin`, written from the
 `Set-Cookie` the library emits) because there is no login callback to hook, the
@@ -473,7 +474,7 @@ a restart and holds across replicas.
 (tabverse list, record browser, console search, all with `?archived=1` to
 include). The record stays stored and keeps syncing to the user's own devices,
 and the extension's own search is not filtered - archiving is an operator's
-filing decision, not a retention policy. Archiving a *device* is the operator's
+filing decision, not a retention policy. Archiving a _device_ is the operator's
 decisive teardown: it revokes and archives the device's tokens and then
 archives the device, in one transaction and immediately - no inactivity window.
 A token archived on its own still has to be revoked first, and a device's
@@ -484,48 +485,48 @@ again.
 ## Status
 
 - [x] Go server (`tabversed`): auth, delta sync, LWW, tombstones, WebSocket
-      fan-out, FTS5 search, retention, tests (`-race`), cross-compile, Docker
+  fan-out, FTS5 search, retention, tests (`-race`), cross-compile, Docker
 - [x] Multi tenant admin API + embedded console, read only over user data
-      (`adr/0009`) with one exception: deleting a tabverse, as tombstones the
-      devices sync down (`adr/0015`). The console is a Vite/React app built
-      into the binary (`adr/0018`)
+  (`adr/0009`) with one exception: deleting a tabverse, as tombstones the
+  devices sync down (`adr/0015`). The console is a Vite/React app built
+  into the binary (`adr/0018`)
 - [x] Wire contract (`api/openapi.yaml`)
 - [x] Client sync layer: outbox, delta engine, realtime, Dexie bridge,
-      change feed, pairing dialog (8 test suites)
+  change feed, pairing dialog (8 test suites)
 - [x] MV3 hardening: `storage` permission, tightened CSP,
-      `minimum_chrome_version`, `action.default_icon`, module service worker
+  `minimum_chrome_version`, `action.default_icon`, module service worker
 - [x] Toolchain revamp — Vite 8, React 19, Blueprint 6, Vitest 5, ESLint 10
-      flat config (`adr/0003`, `adr/0004`); Prettier 3 later replaced by Biome 2
-      for formatting, ESLint kept for linting; TypeScript 7.0.2 for typechecking
-      alongside a TypeScript 6 API for typescript-eslint (`adr/0003`)
+  flat config (`adr/0003`, `adr/0004`); Prettier 3 later replaced by Biome 2
+  for formatting, ESLint kept for linting; TypeScript 7.0.2 for typechecking
+  alongside a TypeScript 6 API for typescript-eslint (`adr/0003`)
 - [x] draft-js -> TipTap with a tested legacy content converter
 - [x] TypeScript strict **subset** enabled (see the comments in
-      `tsconfig.json`); dead stores cleaned, ESLint's `no-useless-assignment`
-      stays on
+  `tsconfig.json`); dead stores cleaned, ESLint's `no-useless-assignment`
+  stays on
 - [x] CI: typecheck, format, lint, tests, prod build, store zip + Go
-      vet/race/cross-compile
+  vet/race/cross-compile
 - [x] Releases are tags (`adr/0034`): a `v*` tag re-runs those gates, creates
-      the GitHub release with the store package attached, and submits that
-      package to the Chrome Web Store for review (`tools/cwsUpload.mjs`, API v2)
+  the GitHub release with the store package attached, and submits that
+  package to the Chrome Web Store for review (`tools/cwsUpload.mjs`, API v2)
 - [x] Store disclosure notes (`doc/chrome-webstore/listing.md`) and the
-      privacy policy's "Optional server sync" section
+  privacy policy's "Optional server sync" section
 - [x] Existing users' local data uploads when sync is set up, **ticked by
       default and informed**: the dialog counts what would go, unticking keeps
-      everything local, and the separate button remains for later (ADR 0002 §3)
+  everything local, and the separate button remains for later (ADR 0002 §3)
 - [ ] `strictNullChecks` (428 errors) + `noImplicitAny` (227) — staged pass,
-      count first with `npx tsc --noEmit --strict`
+  count first with `npx tsc --noEmit --strict`
 - [x] Console revamped from three hand written files into a Vite/React app
-      under `server/ui`, built into the Go binary: typed client, effector
-      stores, Blueprint components, vitest + `renderToStaticMarkup` instead of
-      a hand built stub DOM (`adr/0018`)
+  under `server/ui`, built into the Go binary: typed client, effector
+  stores, Blueprint components, vitest + `renderToStaticMarkup` instead of
+  a hand built stub DOM (`adr/0018`)
 - [x] Cross-window machinery deleted: each manager page owns one window, so
-      the tabSpaceRegistry (leader election + broadcast-channel) is gone and
-      the change feed uses Dexie's own write hooks instead of dexie-observable
-      (`adr/0006`)
+  the tabSpaceRegistry (leader election + broadcast-channel) is gone and
+  the change feed uses Dexie's own write hooks instead of dexie-observable
+  (`adr/0006`)
 - [x] Tab previews are a **cache**, and the service worker owns every delete of
-      them: rows carry the browser run that wrote them (`chrome.storage.session`,
-      because chrome tab ids are recycled between runs), the worker sweeps every
-      five minutes and on tab removal, and the manager page no longer prunes at
-      all (`adr/0016`)
+  them: rows carry the browser run that wrote them (`chrome.storage.session`,
+  because chrome tab ids are recycled between runs), the worker sweeps every
+  five minutes and on tab removal, and the manager page no longer prunes at
+  all (`adr/0016`)
 - [ ] A real run in Chrome: load `dist/` unpacked, pair a server, exercise
-      capture -> sync -> search and the note editor
+  capture -> sync -> search and the note editor

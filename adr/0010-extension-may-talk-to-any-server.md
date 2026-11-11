@@ -32,7 +32,7 @@ CORS preflight answers `204` and the pair endpoint answered
 The reason for the pin was to look tight, and it was tight in the wrong place.
 `host_permissions` already declares `<all_urls>`, so the extension can already
 fetch any host; the CSP was the only thing standing between a user's own server
-and the extension, and it stood in front of the *legitimate* case rather than
+and the extension, and it stood in front of the _legitimate_ case rather than
 the illegitimate one. It cannot be moved: Chrome's MV3 minimum policy fixes
 `script-src` and `object-src` but says nothing about `connect-src`, and the
 server's address is not knowable at build time in any case.

@@ -8,7 +8,6 @@
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
-  min-height: 0;
   height: 100%;
   /* the tool panel bounds a tool with --tool-content-max-height (45vh pinned,
      90vh focused, 35vh unpinned); a short note list still takes that height, so
@@ -151,7 +150,6 @@
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
-  min-height: 0;
   height: 100%;
   padding-top: 8px;
 }
@@ -163,7 +161,6 @@
 
 .noteList {
   flex: 1 1 auto;
-  min-height: 0;
   height: 100%;
   overflow-y: auto;
 }

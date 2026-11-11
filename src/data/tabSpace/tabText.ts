@@ -49,7 +49,8 @@ function readPageText(): string {
   if (!body) {
     return '';
   }
-  return body.innerText || body.textContent || '';
+  // biome-ignore lint/performance/useDomNodeTextContent: the text a person can see is the point - textContent would also return script, style and hidden text, which is not what a summary is of
+  return body.innerText || '';
 }
 
 async function defaultExtractor(chromeTabId: number): Promise<string | null> {

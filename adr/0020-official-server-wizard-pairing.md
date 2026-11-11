@@ -14,18 +14,18 @@ code (`POST /api/v1/auth/invites`), the extension redeems it (`POST /api/v1/auth
 and nobody needs the network to be trusted beyond the server the person chose.
 That is the right shape for self-hosting and stays as it is.
 
-It is one step too many for the server *we* run, where the person at the
+It is one step too many for the server _we_ run, where the person at the
 keyboard owns the account: they should sign in on a page they recognise, name
 their device, and be done. Three things made that awkward:
 
 1. **The extension cannot sign in.** The session is a cookie in the browser's
    jar for that origin; an extension page has its own cookie jar and cannot
    complete a sign-in for `tabversed.liyu1981.xyz`.
-2. **A credential has to cross back** from a page that *is* signed in, to the
+2. **A credential has to cross back** from a page that _is_ signed in, to the
    extension.
 3. The console already has everything else: the session, `writeDevice` (create a
    device and its token, returned once), and a middleware whose rule is exactly
-   *"a signed-in person may act on their own account"* (`internal/api/admin.go`).
+   _"a signed-in person may act on their own account"_ (`internal/api/admin.go`).
 
 ## Decision
 
@@ -66,8 +66,8 @@ paired.**
    overruling a caller-supplied target), so the pair request is stashed in
    `sessionStorage` and read back on the way in. It is `sessionStorage` because
    this is one window's business, and it expires with the browser run.
-6. **The dialog becomes two tabs**: *Status* (what sync is — host, device,
-   account, last sync, sync now / upload / disconnect) and *Setup* (a switch
+6. **The dialog becomes two tabs**: _Status_ (what sync is — host, device,
+   account, last sync, sync now / upload / disconnect) and _Setup_ (a switch
    between the wizard and the code form). `SyncConfig` gains
    `kind?: 'official' | 'custom'`, where **absent means custom**, so every
    config that already exists keeps working without a migration.

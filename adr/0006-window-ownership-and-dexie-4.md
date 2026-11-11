@@ -7,7 +7,7 @@ Supersedes the "the tabSpaceRegistry leader election stays" section of
 
 Partly revisited by the toolbar popup (`doc/tabverse-popup-plan.md`): the
 manager page still only ever knows its own window, but the popup lists the
-tabverses open in *all* windows and can switch to one. It can afford that
+tabverses open in _all_ windows and can switch to one. It can afford that
 because it answers the question with one `chrome.tabs.query({})` and the
 `tvid` every manager page carries in its url, with no state to keep
 consistent - the leader election the old registry needed is what this

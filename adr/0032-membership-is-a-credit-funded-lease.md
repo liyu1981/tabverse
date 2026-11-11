@@ -37,7 +37,7 @@ request.**
 1. **A lease, not a status.** `memberships.expires_at` is the lease end; a
    period is `TABVERSED_MEMBERSHIP_PERIOD_DAYS` (30) and costs
    `TABVERSED_MEMBERSHIP_PERIOD_CREDITS` (30, so one credit is one day). The
-   *status* - `unlimited`, `active`, `expired`, `closable` - is computed from
+   _status_ - `unlimited`, `active`, `expired`, `closable` - is computed from
    the timestamps by `membership.StatusOf`, never stored, so it cannot drift
    from them.
 

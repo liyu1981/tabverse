@@ -21,12 +21,12 @@ ways at once:
    it had drawn anything.
 2. **It used one window's tabs as the ownership test.** `$tabSpace.tabs` is the
    window the page owns (ADR 0006), so bootstrapping a second tabverse deleted
-   the *first* tabverse's thumbnails: rows whose ids were perfectly well alive
+   the _first_ tabverse's thumbnails: rows whose ids were perfectly well alive
    in another window.
 3. **It restored before it pruned, and chrome tab ids are recycled.** A row from
    the previous browser run whose numeric id had been handed to a different page
    was loaded into the cache (so the wrong screenshot was shown), and then
-   *kept*, because from that window's point of view the id was live.
+   _kept_, because from that window's point of view the id was live.
 4. **It only ran when a manager page opened.** The five `dbAuditor`s that sweep
    on `chrome.idle` do not include previews, and the service worker never pruned,
    so a table of dead thumbnails sat there until a page happened to start.
@@ -44,7 +44,7 @@ owns every delete of it.**
 1. **Volatile means volatile.** Losing `SavedTabPreview` - to a reap, a schema
    change, a cleared profile - breaks nothing, and `dbUpgrade`
    (`src/storage/upgrade.ts`) stays empty for it. The row is worth nothing once
-   its tab is gone, and worthless *and wrong* if it is not reaped. A missing
+   its tab is gone, and worthless _and wrong_ if it is not reaped. A missing
    thumbnail renders as no thumbnail: the placeholder is local (in fact, absent),
    and the hover panel shows the tab's favicon, title and url.
 
@@ -52,7 +52,7 @@ owns every delete of it.**
    the browser run that captured it, kept in `chrome.storage.session` (cleared
    when the browser exits, readable from the worker and from the pages). A row
    whose `sessionId` is not the current one is unowned - which is what turns
-   "this tab id is live" into "this *tab* is live", the only reading that is
+   "this tab id is live" into "this _tab_ is live", the only reading that is
    safe when chrome recycles ids between runs. `loadPreviews` filters on the same
    id, so a page cannot resurrect an old row before the worker's first sweep.
 

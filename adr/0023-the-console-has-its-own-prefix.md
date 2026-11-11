@@ -7,7 +7,7 @@ path of its own. The mount itself stands.
 
 Supersedes the "page at `/`, files at `/assets/`" half of the URL space
 established by [ADR 0009](0009-multi-tenant-and-server-console.md) and kept by
-[ADR 0018](0018-console-is-a-vite-app.md), decision 6's *fragment* half, and
+[ADR 0018](0018-console-is-a-vite-app.md), decision 6's _fragment_ half, and
 [ADR 0020](0020-official-server-wizard-pairing.md), decision 2. The workflows
 those decisions protect - a bookmarked account, a pasted link, a pairing window
 the extension opens - all stay; only where the state travels changes.
@@ -49,11 +49,11 @@ which is one more than a reader has to hold.
    The dev server serves from `/console/` too, so a page developed at
    `http://localhost:5174/console/` is the page production serves.
 
-2. **`/` redirects to `/console`, and nothing else lives at the root.** *(Superseded
+2. **`/` redirects to `/console`, and nothing else lives at the root.** _(Superseded
    by [ADR 0024](0024-the-root-is-a-site-and-the-api-moved.md), which put a site
    at the root instead - the documentation in an official build, this redirect
    page otherwise - and left a JSON 404 under `/console/api/` to say what a path
-   is not.)* The
+   is not.)_ The
    redirect keeps the query (so `/?pair=1…` lands as `/console?pair=1…`) and a
    browser keeps the fragment the server never sees, which is what lets a
    window opened by an already installed extension pair after the move. Any
@@ -71,10 +71,10 @@ which is one more than a reader has to hold.
    eating the other.
 
 4. **A fragment is still read for the pair request, and only for that.**
-   *(Superseded by
+   _(Superseded by
    [ADR 0024](0024-the-root-is-a-site-and-the-api-moved.md), which dropped the
    fragment read altogether: the pairing page is a path now, and old extension
-   builds are not carried across.)* The
+   builds are not carried across.)_ The
    server's `/` redirect hands an old `#pair=…` over unchanged, and a pairing
    that silently refused would be the most confusing day in the wizard. Nothing
    else reads or writes the fragment.

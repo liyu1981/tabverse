@@ -60,7 +60,7 @@ extension's own entry builder. The view around them stays the console's.**
    palette.
 
 2. **Do not reuse `SavedTabSpaceDetail`, and do not extract it.** It is the
-   *page* - a sticky action column with Load to New / Load to Current / Switch /
+   _page_ - a sticky action column with Load to New / Load to Current / Switch /
    Delete, all of which act on this browser - and making it host-agnostic means
    prop-drilling actions into it and dragging the Dexie import out of it. The
    drawer needs the tabs, not the page. If the tab list's container is ever
@@ -101,12 +101,12 @@ extension's own entry builder. The view around them stays the console's.**
    `TodoView`, `NotebookView`, `BookmarkView` and `HistoryView` is an editor
    bound to the local database: an add box, a delete button, a rich-text editor,
    a store loader. What is worth sharing is how a todo row, a bookmark row and a
-   closed tab are *drawn* - so the console imports the four
+   closed tab are _drawn_ - so the console imports the four
    `*.module.scss` files and draws read-only rows with the same class names,
    keeps the tab strip on `TabSpaceRightSideView.module.scss` (the same pill
    tabs, the same icons), and drops every affordance: no "New Note", no
    toggle-all, no delete cross, no `EditableText`, no "Clear completed", no
-   lock. The two things that only change what is *shown* - the todo filters and
+   lock. The two things that only change what is _shown_ - the todo filters and
    the count - stay.
 
 8. **A note body is text, and the tools' own wording is reused where it is

@@ -10,7 +10,7 @@ sign-in's `?from=`.
 
 ## Context
 
-The console's account *is* an address. `TABVERSED_ADMIN_EMAIL` is matched against
+The console's account _is_ an address. `TABVERSED_ADMIN_EMAIL` is matched against
 it to make the first registration the operator, `TABVERSED_LINK_BY_EMAIL` merges
 a social login with an existing account by it, and
 `TABVERSED_REQUIRE_EMAIL_VERIFICATION` (default **true**) refuses a session for an
@@ -74,7 +74,7 @@ provider that reports the address as verified has proved it.**
 - The consent screen now asks for the address, and somebody who already granted
   `userinfo.profile` is asked once more. Both scopes are basic profile scopes -
   no app verification needed for them, unlike the restricted ones.
-- `TABVERSED_REQUIRE_EMAIL_VERIFICATION=true` is now the *right* default for a
+- `TABVERSED_REQUIRE_EMAIL_VERIFICATION=true` is now the _right_ default for a
   Google deployment rather than a wall.
 - A Google-only deployment can have an operator: the address reaches the account,
   so `TABVERSED_ADMIN_EMAIL` matches.

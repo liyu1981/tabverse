@@ -36,14 +36,14 @@ question.
 
 1. **The URL space has three owners, and `/console` owns two of them.**
 
-   | path | what it is |
-   |---|---|
-   | `/console`, `/console/assets/*`, `/console/<client route>` | the console page |
-   | `/console/api/v1/*` | the sync, entity, search, admin and console API |
-   | `/console/pair?ext=…&nonce=…` | the pairing page (a client side route) |
-   | `/auth/*` | the account library's login routes, unchanged |
-   | `/healthz` | the probe |
-   | `/` and everything else | the site (decision 3) |
+   | path                                                       | what it is                                      |
+   | ---------------------------------------------------------- | ----------------------------------------------- |
+   | `/console`, `/console/assets/*`, `/console/<client route>` | the console page                                |
+   | `/console/api/v1/*`                                        | the sync, entity, search, admin and console API |
+   | `/console/pair?ext=…&nonce=…`                              | the pairing page (a client side route)          |
+   | `/auth/*`                                                  | the account library's login routes, unchanged   |
+   | `/healthz`                                                 | the probe                                       |
+   | `/` and everything else                                    | the site (decision 3)                           |
 
    Every endpoint that used to be `/api/v1/…` is now `/console/api/v1/…` - in
    the router, in both clients (`server/ui/data/api.ts`,
@@ -64,9 +64,9 @@ question.
    an official one cannot ship it by accident), and `docusaurus.config.js`,
    which switches `baseUrl` (`/` vs `/tabverse/`), `url` (the deployment's
    `TABVERSED_PUBLIC_URL` vs GitHub Pages) and adds the **Login** navbar item
-   after *User Manual* - as a plain `<a href="/console/" target="_self">`,
+   after _User Manual_ - as a plain `<a href="/console/" target="_self">`,
    because the console is not one of the site's routes: a link Docusaurus
-   recognises as internal is followed *inside* the site, and that renders the
+   recognises as internal is followed _inside_ the site, and that renders the
    site's own 404. `pathname://` is what tells it not to take the link over,
    and the trailing slash is what the console is asked for. The Go side does not
    know the flag exists: it embeds

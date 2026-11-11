@@ -32,7 +32,7 @@ access decision reads them. **The console is a directory**
 ([ADR 0014](0014-console-is-a-directory-then-an-account.md)), and a directory
 being a little behind is not a correctness problem.
 
-The values that *must* be exact stay next to their data and are untouched here:
+The values that _must_ be exact stay next to their data and are untouched here:
 
 - **Token → user** (`LookupToken`) and **revocation/disabled** are central and
   on the authentication path; a fresh pairing and a revoke take effect
