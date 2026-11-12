@@ -45,32 +45,56 @@ const config = {
     },
   },
 
-  presets: [
+  // The classic preset's parts, listed explicitly instead of
+  // `presets: ['classic']`. Two reasons:
+  //
+  //  - the site imports no SVG as a React component (the logo is an <img>), and
+  //    the preset's svgr plugin is what pulls `@svgr/webpack` - whose
+  //    `@svgr/plugin-svgo` depends on `deepmerge` 4.3.1, a version with an
+  //    unfixed prototype-poisoning advisory and no released patch. Leaving the
+  //    plugin out keeps that package out of the tree entirely.
+  //  - the preset is sugar: it expands to exactly these plugins and themes
+  //    (see `@docusaurus/preset-classic`'s `preset()`), so nothing else changes.
+  //
+  // If an SVG ever needs to be imported as a component, add
+  // `@docusaurus/plugin-svgr` back - knowingly.
+  plugins: [
     [
-      '@docusaurus/preset-classic',
-      /** @type {import('@docusaurus/preset-classic').Options} */
+      '@docusaurus/plugin-content-docs',
+      /** @type {import('@docusaurus/plugin-content-docs').Options} */
       ({
-        docs: {
-          sidebarPath: require.resolve('./sidebars.js'),
-          // Please change this to your repo.
-          editUrl:
-            'https://github.com/liyu1981/tabverse/edit/main/doc/tabverse-website/',
-        },
-        blog: {
-          showReadingTime: true,
-          // Please change this to your repo.
-          editUrl:
-            'https://github.com/liyu1981/tabverse/edit/main/doc/tabverse-website/',
-        },
-        theme: {
-          customCss: require.resolve('./src/css/custom.css'),
-        },
+        sidebarPath: require.resolve('./sidebars.js'),
+        // Please change this to your repo.
+        editUrl:
+          'https://github.com/liyu1981/tabverse/edit/main/doc/tabverse-website/',
+      }),
+    ],
+    [
+      '@docusaurus/plugin-content-blog',
+      /** @type {import('@docusaurus/plugin-content-blog').Options} */
+      ({
+        showReadingTime: true,
+        // Please change this to your repo.
+        editUrl:
+          'https://github.com/liyu1981/tabverse/edit/main/doc/tabverse-website/',
+      }),
+    ],
+    '@docusaurus/plugin-content-pages',
+    '@docusaurus/plugin-sitemap',
+  ],
+
+  themes: [
+    [
+      '@docusaurus/theme-classic',
+      /** @type {import('@docusaurus/theme-classic').Options} */
+      ({
+        customCss: require.resolve('./src/css/custom.css'),
       }),
     ],
   ],
 
   themeConfig:
-    /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
+    /** @type {import('@docusaurus/theme-common').ThemeConfig} */
     ({
       navbar: {
         title: 'Tabverse',

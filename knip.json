@@ -6,6 +6,6 @@
     "tools/i18ncheck.mjs",
     "tools/cwsUpload.mjs"
   ],
-  "ignoreDependencies": ["@blueprintjs/colors", "replace-in-file"],
+  "ignoreDependencies": ["@blueprintjs/colors"],
   "ignoreBinaries": ["air", "go", "gofmt"]
 }

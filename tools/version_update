@@ -1,36 +1,59 @@
 #!/usr/bin/env node
 
-const args = process.argv.slice(2);
-if (args.length <= 0) {
+// Bumps the two places the version is written down (adr/0034): package.json is
+// what the manifest is generated from, and src/global.ts is what the About
+// panel shows. The tag names it as well, and the release workflow refuses to
+// build unless all three agree - so this is the only thing to run, and the one
+// commit it makes is what gets tagged.
+//
+// This used to go through replace-in-file. Two anchored replacements over two
+// known files do not need a glob engine (nor the vulnerable minimatch that
+// replace-in-file's glob chain resolved to), so they are done here with `fs`.
+
+const { readFileSync, writeFileSync } = require('node:fs');
+const path = require('node:path');
+
+const version = process.argv[2];
+if (!version || !/^[0-9]+\.[0-9]+\.[0-9]+$/.test(version)) {
   console.error(
     'usage: version_update <version>, version should be [0-9].[0-9].[0-9]',
   );
   process.exit(1);
 }
 
-// replace-in-file 9 dropped the callable default export with a `.sync`
-// method; the API is now named exports (`replaceInFileSync`).
-const { replaceInFileSync } = require('replace-in-file');
+const root = path.resolve(__dirname, '..');
 
-const options = [
+const edits = [
   {
-    files: 'src/global.ts',
-    from: /export const TABSPACE_VERSION = 'v[0-9].[0-9].[0-9]';/g,
-    to: `export const TABSPACE_VERSION = 'v${args[0]}';`,
+    file: 'src/global.ts',
+    // the About panel's version; the quotes and the leading "v" are part of it
+    from: /export const TABSPACE_VERSION = 'v[0-9]+\.[0-9]+\.[0-9]+';/,
+    to: `export const TABSPACE_VERSION = 'v${version}';`,
   },
   {
-    files: './package.json',
-    from: /"version": "[0-9].[0-9].[0-9]",/g,
-    to: `"version": "${args[0]}",`,
+    file: 'package.json',
+    // the version the manifest is generated from
+    from: /"version": "[0-9]+\.[0-9]+\.[0-9]+",/,
+    to: `"version": "${version}",`,
   },
 ];
 
-options.forEach(function (option) {
-  try {
-    const results = replaceInFileSync(option);
-    console.log('Replacement results:', results);
-  } catch (error) {
-    console.error('Error occurred:', error);
-    process.exit(1);
+let changed = 0;
+for (const edit of edits) {
+  const file = path.join(root, edit.file);
+  const before = readFileSync(file, 'utf8');
+  const after = before.replace(edit.from, edit.to);
+  if (after === before) {
+    // not an error: running it twice with the same version is a no-op, and the
+    // release workflow's version check is what notices a real disagreement
+    console.log(`${edit.file}: already ${version}`);
+    continue;
   }
-});
+  writeFileSync(file, after);
+  console.log(`${edit.file}: version is now ${version}`);
+  changed += 1;
+}
+
+if (changed === 0) {
+  console.log(`nothing to do: ${version} was already written down`);
+}

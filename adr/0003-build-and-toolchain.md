@@ -150,6 +150,10 @@ Also in this upgrade:
 - **replace-in-file 9** dropped `replace.sync`, which silently broke
   `tools/version_update` (the release checklist's version-bump step). Now uses
   the named `replaceInFileSync`, verified by running the tool on a scratch copy.
+  _Later:_ the dependency is gone. Its `glob` chain resolved a `minimatch` with
+  an unfixed denial-of-service advisory, and two anchored replacements need no
+  glob engine, so `tools/version_update` reads and writes the two files with
+  `fs` directly.
 - **@fortawesome/fontawesome-free** was removed entirely: the only icon class
   in the codebase was the Dropbox button, which ADR 0006's cleanup deleted.
   That takes three icon fonts and ~80 kB of CSS out of the package.
