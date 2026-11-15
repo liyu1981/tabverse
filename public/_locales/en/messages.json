@@ -1438,5 +1438,117 @@
   "noteFilterAria": {
     "message": "Filter these notes",
     "description": "Note tool: the filter box's accessible name."
+  },
+  "autoGroupButton": {
+    "message": "Group tabs automatically",
+    "description": "Tooltip of the header button that opens the auto-grouping dialog."
+  },
+  "autoGroupButtonAria": {
+    "message": "Suggest a grouping plan for these tabs",
+    "description": "Accessible name of the header button that opens the auto-grouping dialog."
+  },
+  "autoGroupDialogTitle": {
+    "message": "Auto group tabs",
+    "description": "Title of the auto-grouping dialog."
+  },
+  "autoGroupIntro": {
+    "message": "Review the plan. Untick a group to leave it out, edit its name or colour, or untick a tab to keep it where it is. Nothing is grouped until you apply.",
+    "description": "One-line explanation at the top of the auto-grouping dialog."
+  },
+  "autoGroupNothing": {
+    "message": "Nothing to group here: every tab is either already in a group, pinned, or alone on its site.",
+    "description": "Shown when a scan finds no groupable tabs."
+  },
+  "autoGroupModeSite": {
+    "message": "By site",
+    "description": "Auto-grouping mode: group tabs that share a website."
+  },
+  "autoGroupModeAi": {
+    "message": "With AI",
+    "description": "Auto-grouping mode: let the on-device model propose groups by topic."
+  },
+  "autoGroupAiBusy": {
+    "message": "Asking the on-device model…",
+    "description": "Shown while the on-device model is producing a grouping plan."
+  },
+  "autoGroupAiDownloading": {
+    "message": "Installing the model… $1%",
+    "description": "Progress line while the on-device model downloads; $1 is the percentage."
+  },
+  "autoGroupAiError": {
+    "message": "The on-device model could not group these tabs. The by-site plan is still here.",
+    "description": "Shown when the on-device model fails to produce a grouping plan."
+  },
+  "autoGroupAiEmpty": {
+    "message": "The model did not suggest any groups. The by-site plan is still here.",
+    "description": "Shown when the on-device model answers with no usable groups."
+  },
+  "autoGroupRetry": {
+    "message": "Try again",
+    "description": "Button that asks the on-device model for a grouping plan again."
+  },
+  "autoGroupColor": {
+    "message": "Group colour",
+    "description": "Accessible name of the colour swatch that changes a group's colour in the auto-grouping dialog."
+  },
+  "autoGroupNeedTwo": {
+    "message": "A group needs at least two tabs",
+    "description": "Warning on a suggested group that edits have left with fewer than two tabs."
+  },
+  "autoGroupExtend": {
+    "message": "Adds to the existing group",
+    "description": "Tag on a suggestion that adds tabs to a group that already exists."
+  },
+  "autoGroupCountLabel": {
+    "message": "$1 of $2 tabs",
+    "description": "How many of a suggested group's tabs are still in it; $1 kept, $2 total."
+  },
+  "autoGroupSkipped": {
+    "message": "Left out: $1.",
+    "description": "Prefix of the list of tabs a plan deliberately did not touch."
+  },
+  "autoGroupSkippedPinned": {
+    "message": "$1 pinned",
+    "description": "Count of tabs left out because they are pinned."
+  },
+  "autoGroupSkippedGrouped": {
+    "message": "$1 already in a group",
+    "description": "Count of tabs left out because they are already grouped."
+  },
+  "autoGroupSkippedSingle": {
+    "message": "$1 alone on its site",
+    "description": "Count of tabs left out because they are the only tab of their site."
+  },
+  "autoGroupSkippedNotWeb": {
+    "message": "$1 not a web page",
+    "description": "Count of tabs left out because they are not an http(s) page."
+  },
+  "autoGroupApply": {
+    "message": "Apply",
+    "description": "Button that applies the grouping plan (shown when nothing is selected)."
+  },
+  "autoGroupApplyOne": {
+    "message": "Group $1 tabs into one group",
+    "description": "Apply button when the plan creates or extends one group; $1 is the tab count."
+  },
+  "autoGroupApplyMany": {
+    "message": "Group $1 tabs into $2 groups",
+    "description": "Apply button when the plan makes several groups; $1 tabs, $2 groups."
+  },
+  "autoGroupAppliedOne": {
+    "message": "Grouped $1 tabs into one group",
+    "description": "Toast after applying a plan with one group; $1 is the tab count."
+  },
+  "autoGroupAppliedMany": {
+    "message": "Grouped $1 tabs into $2 groups",
+    "description": "Toast after applying a plan with several groups; $1 tabs, $2 groups."
+  },
+  "autoGroupAppliedSkipped": {
+    "message": "$1 left out.",
+    "description": "Toast suffix: tabs the plan skipped at apply time because they were gone or had navigated."
+  },
+  "autoGroupAppliedFailed": {
+    "message": "$1 group(s) could not be made.",
+    "description": "Toast suffix: groups Chrome refused at apply time."
   }
 }

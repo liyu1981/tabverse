@@ -63,6 +63,23 @@ function clearGroupIdMapping() {
   chromeGroupToOurId.clear();
 }
 
+/**
+ * Chrome's group id for one of ours, if the page still knows it.
+ *
+ * The mapping is rebuilt on every capture and only lives in this module, so a
+ * caller that is about to *write* a group ("add these tabs to that one") has to
+ * ask rather than keep the id. Undefined means the group is gone (or was never
+ * captured): the caller creates a new group instead of failing.
+ */
+export function chromeGroupIdOf(ourGroupId: string): number | undefined {
+  for (const [chromeGroupId, ourId] of chromeGroupToOurId) {
+    if (ourId === ourGroupId) {
+      return chromeGroupId;
+    }
+  }
+  return undefined;
+}
+
 /** our stable id for a chrome group id, minting one the first time we see it */
 function ourIdForChromeGroup(chromeGroupId: number): string {
   const existing = chromeGroupToOurId.get(chromeGroupId);

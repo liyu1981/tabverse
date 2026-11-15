@@ -12,12 +12,16 @@ import {
 } from '@blueprintjs/core';
 import React, {
   useCallback,
+  useContext,
   useEffect,
   useMemo,
   useRef,
   useState,
   useSyncExternalStore,
 } from 'react';
+import type { AutoGroupApplyReportWithCounts } from '../../../data/tabSpace/autoGroupChrome';
+import { autoGroupCandidates } from '../../../data/tabSpace/autoGroup';
+import { hasCapability } from '../../../capabilities';
 import { findTabById } from '../../../data/tabSpace/TabSpace';
 import { groupOfTab } from '../../../data/tabSpace/tabGroup';
 import {
@@ -27,6 +31,7 @@ import {
   setUrl,
 } from '../../../data/bookmark/Bookmark';
 
+import { AutoGroupDialog } from './AutoGroupDialog';
 import { CapabilityWarning } from './CapabilityWarning';
 import { DedupAdvisorNotice } from './DedupAdvisorNotice';
 import { SuggestNameButton } from './SuggestNameButton';
@@ -66,6 +71,7 @@ import {
 } from '../../../data/tabSpace/suspendWhitelist';
 import { updateTabSpaceName } from '../../../data/tabSpace/chromeTab';
 import { type NameTab } from '../../../ai/naming';
+import { ManagerViewContext } from '../ManagerViewContext';
 import { useStore } from 'effector-react';
 import clsx from 'clsx';
 
@@ -145,6 +151,10 @@ export function TabSpaceListView() {
   const [selectedTabs, setSelectedTabs] = useState<List<Tab>>(List());
   const [isMoveToExistTabSpaceDialogOpen, setIsMoveToExistTabSpaceDialogOpen] =
     useState(false);
+  // The auto-grouping plan dialog. Opened on demand only: the scan is free (the
+  // window is already in memory), but a plan under the cursor must not reshuffle
+  // while it is read, so it is taken when the button is pressed.
+  const [isAutoGroupOpen, setIsAutoGroupOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   // the filter box over the live tabs; empty means the whole list, unchanged
   const [filterText, setFilterText] = useState<string>('');
@@ -169,6 +179,49 @@ export function TabSpaceListView() {
   const searchInputRef = useRef<HTMLInputElement | null>(null);
 
   const isFiltering = filterText.trim().length > 0;
+
+  // How many tabs a grouping plan could touch. Cheap enough to keep current
+  // with the store (one url parse per tab, on store changes only), and it is
+  // what disables the button when there is nothing to offer.
+  const autoGroupableCount = useMemo(
+    () =>
+      autoGroupCandidates(tabSpace.tabs.toArray(), tabSpace.tabGroups)
+        .candidates.length,
+    [tabSpace],
+  );
+
+  const { toaster } = useContext(ManagerViewContext);
+
+  const onAutoGroupApplied = useCallback(
+    (report: AutoGroupApplyReportWithCounts) => {
+      setIsAutoGroupOpen(false);
+      const lines: string[] = [];
+      if (report.groups === 1) {
+        lines.push(t('autoGroupAppliedOne', [String(report.tabs)]));
+      } else if (report.groups > 1) {
+        lines.push(
+          t('autoGroupAppliedMany', [
+            String(report.tabs),
+            String(report.groups),
+          ]),
+        );
+      }
+      if (report.droppedTabs > 0) {
+        lines.push(t('autoGroupAppliedSkipped', [String(report.droppedTabs)]));
+      }
+      if (report.failed + report.droppedGroups > 0) {
+        lines.push(
+          t('autoGroupAppliedFailed', [
+            String(report.failed + report.droppedGroups),
+          ]),
+        );
+      }
+      toaster.show({
+        message: lines.length > 0 ? lines.join(' ') : t('autoGroupNothing'),
+      });
+    },
+    [toaster],
+  );
 
   // the window's own order, flattened: the box ranks matches, so it cannot
   // hand them back nested in the group and split blocks they came from
@@ -477,6 +530,18 @@ export function TabSpaceListView() {
         </h1>
       </div>
       <div className={classes.titleButtons}>
+        {hasCapability('tabGroups') ? (
+          <Tooltip content={t('autoGroupButton')} placement="bottom">
+            <Button
+              className="tv-icon-button"
+              aria-label={t('autoGroupButtonAria')}
+              icon="group-objects"
+              minimal={true}
+              disabled={autoGroupableCount < 2}
+              onClick={() => setIsAutoGroupOpen(true)}
+            />
+          </Tooltip>
+        ) : null}
         <SuggestNameButton
           tabs={nameTabs}
           tabSpaceId={tabSpace.id}
@@ -574,6 +639,14 @@ export function TabSpaceListView() {
         isOpen={isMoveToExistTabSpaceDialogOpen}
         onClose={() => setIsMoveToExistTabSpaceDialogOpen(false)}
       />
+      {isAutoGroupOpen && hasCapability('tabGroups') ? (
+        <AutoGroupDialog
+          tabs={tabSpace.tabs.toArray()}
+          groups={tabSpace.tabGroups}
+          onClose={() => setIsAutoGroupOpen(false)}
+          onApplied={onAutoGroupApplied}
+        />
+      ) : null}
     </div>
   );
 }

@@ -571,6 +571,22 @@ export function startMonitorTabChanges() {
   });
 }
 
+/**
+ * Re-reads the window after this page itself changed the tab strip.
+ *
+ * Grouping tabs is the one action here that Chrome reorders for us (a group's
+ * tabs move next to each other), and `tabs.group`/`tabGroups.update` are the
+ * events the page's monitors already listen to - but "already listens" means
+ * *soon*, and a toast that says "grouped 12 tabs" must not be followed by a list
+ * that has not caught up. So the order and the hints are read once, on purpose,
+ * and the tabverse is saved with them.
+ */
+export async function resyncWindowAfterGrouping(): Promise<void> {
+  await maintainTabOrder();
+  await captureGroupsOfWindow(currentTabIdMapping());
+  saveCurrentTabSpace();
+}
+
 /** chrome tab id -> our tab id for every tab of the current window */
 function currentTabIdMapping(): Map<number, string> {
   const map = new Map<number, string>();

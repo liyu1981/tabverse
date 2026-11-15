@@ -1,0 +1,247 @@
+/* The auto-grouping dialog: a plan to read, edit and apply.
+ *
+ * Each suggestion is a card, not a collapsed row: the tabs it would group are
+ * the point of the suggestion, so they are always on screen - a person reading
+ * "Github, 4 tabs" has to be able to check that those are the four they mean
+ * before anything is grouped. The card borrows the tab list's own group
+ * vocabulary (a coloured rule down the left, the group's colour in the header)
+ * so a suggestion already looks like the group it would become.
+ */
+
+.dialog {
+  width: min(92vw, 760px);
+  max-height: min(88vh, 800px);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+}
+
+.intro {
+  margin: 0;
+  color: #5f6b7c;
+  font-size: 13px;
+}
+
+.modeRow {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid #e8e9ec;
+  padding-bottom: 8px;
+}
+
+.aiLine {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 20px;
+  font-size: 12px;
+  color: #5f6b7c;
+}
+
+.aiError {
+  color: #c92a2a;
+}
+
+.hint {
+  color: #5f6b7c;
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/*
+ * A suggestion card. `--group-color` is set per row from TAB_GROUP_COLORS_JS;
+ * the header tint is derived from it rather than shipped as a second palette.
+ */
+.card {
+  border: 1px solid #e1e3e8;
+  border-left: 4px solid var(--group-color, #8c8c8c);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(16 22 26 / 4%);
+  overflow: hidden;
+}
+
+.cardOff {
+  opacity: 0.55;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  background: color-mix(in srgb, var(--group-color, #8c8c8c) 9%, #fff);
+  border-bottom: 1px solid #eceef1;
+}
+
+.rowCheck {
+  margin: 0;
+  flex: 0 0 auto;
+}
+
+.swatch {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  margin-top: 1px;
+  border: 2px solid rgb(255 255 255 / 70%);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgb(16 22 26 / 12%);
+  cursor: pointer;
+  padding: 0;
+}
+
+.swatch:disabled {
+  cursor: default;
+}
+
+.colors {
+  display: grid;
+  grid-template-columns: repeat(3, 24px);
+  gap: 6px;
+  padding: 8px;
+}
+
+.colorButton {
+  width: 20px;
+  height: 20px;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  padding: 0;
+}
+
+.colorButton[aria-pressed='true'] {
+  border-color: #1c2127;
+}
+
+.titleBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.titleInput {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.metaLine {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 16px;
+}
+
+.rowCount {
+  font-size: 12px;
+  color: #5f6b7c;
+}
+
+.extendTag {
+  flex: 0 0 auto;
+}
+
+.tabList {
+  list-style: none;
+  margin: 0;
+  /* a long group scrolls inside its card instead of pushing the next card away */
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 6px 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tabRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  border-radius: 6px;
+}
+
+.tabRow:hover {
+  background: #f6f7f9;
+}
+
+.tabCheck {
+  margin: 0;
+  flex: 0 0 auto;
+}
+
+.tabFavIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  color: #797a7a;
+}
+
+.tabFavIcon img {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: 2px;
+}
+
+.tabTitle {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12.5px;
+}
+
+.tabUrl {
+  flex: 0 1 auto;
+  max-width: 45%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: #797a7a;
+}
+
+/* a tab left out of the group: still readable, visibly not in it */
+.tabRowOff .tabTitle {
+  color: #9a9a9a;
+  text-decoration: line-through;
+}
+
+.warning {
+  margin: 8px 12px 0;
+  font-size: 12px;
+  color: #a2761a;
+}
+
+.nothing {
+  margin: 8px 0;
+  color: #5f6b7c;
+}
+
+.skipped {
+  margin: 0;
+  font-size: 12px;
+  color: #797a7a;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
