@@ -12,7 +12,7 @@ import {
 
 import { CollapsibleLabel } from '../../common/CollapsibleLabel';
 import { FavIcon } from '../../common/FavIcon';
-import React from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { Tab } from '../../../data/tabSpace/Tab';
 import { highlightTerms } from '../../manager/OmniSearch/omniSearchText';
 import { focusLiveTabUtil } from '../../../data/tabSpace/chromeUtil';
@@ -48,7 +48,18 @@ const PREVIEW_URL_MAX_LENGTH = 64;
 export const TabDetailPreviewPanel = (props: {
   tab?: Tab;
   tabPreview?: string;
+  /**
+   * Asks for the thumbnail while the panel is on screen. The pointer path
+   * already asks on the way in (see `TabCard`'s `requestPreview`); this covers
+   * a popover opened by keyboard focus. `hydratePreview` is a no-op when the
+   * picture is already in memory, so asking twice costs nothing.
+   */
+  onNeedPreview?: () => void;
 }) => {
+  useEffect(() => {
+    props.onNeedPreview?.();
+  }, [props.onNeedPreview]);
+
   return props.tab ? (
     <Card interactive={false} className={classes.previewCard}>
       <div className={classes.previewHeaderContainer}>
@@ -235,8 +246,25 @@ export function TabCard(props: ITabCardProps) {
     chrome.tabs.remove(t.chromeTabId);
   };
 
+  // Hydration on the way into the hover preview, so the picture is usually
+  // there by the time the 800ms delay has passed. It deliberately does *not*
+  // live in the Popover's `targetProps`: Blueprint spreads those over its own
+  // target handlers, so a `targetProps.onMouseEnter` silently replaces the one
+  // that opens the popover at all - which is what made the hover preview stop
+  // appearing. The card sits inside the target, so its handlers fire on the
+  // same pointer without taking Blueprint's away.
+  const requestPreview = useCallback(() => {
+    props.onNeedPreview?.(props.tab.chromeTabId);
+  }, [props.onNeedPreview, props.tab.chromeTabId]);
+
   const card = (
-    <Card key={props.tab.id} interactive={true} className={classes.card}>
+    <Card
+      key={props.tab.id}
+      interactive={true}
+      className={classes.card}
+      onMouseEnter={needPreview ? requestPreview : undefined}
+      onTouchStart={needPreview ? requestPreview : undefined}
+    >
       <div className={classes.leftSide}>
         {needSelector ? (
           <Checkbox
@@ -401,6 +429,7 @@ export function TabCard(props: ITabCardProps) {
     <TabDetailPreviewPanel
       tab={props.tab}
       tabPreview={props.tabPreview ?? ''}
+      onNeedPreview={requestPreview}
     />
   ) : null;
 
@@ -415,14 +444,6 @@ export function TabCard(props: ITabCardProps) {
       enforceFocus={false}
       fill={true}
       portalClassName={classes.tabCardPopover}
-      // the thumbnail is fetched on the way in, so opening the preview costs
-      // one row read at most and the picture is usually there by the time the
-      // 800ms hover delay has passed
-      targetProps={{
-        onMouseEnter: () => props.onNeedPreview?.(props.tab.chromeTabId),
-        onFocus: () => props.onNeedPreview?.(props.tab.chromeTabId),
-        onTouchStart: () => props.onNeedPreview?.(props.tab.chromeTabId),
-      }}
     >
       {card}
     </Popover>
