@@ -23,6 +23,7 @@ import {
   EMPTY_SYNC_STATE,
   PushResult,
   RecordInput,
+  RecordResult,
   SyncRecord,
   SyncState,
 } from './types';
@@ -33,6 +34,20 @@ export interface SyncStateStore {
 }
 
 const SYNC_STATE_KEY = 'tabverse_sync_state_v1';
+
+/**
+ * How many records one push request may carry.
+ *
+ * The server refuses a push over `SyncBatchLimit` (500 by default) *whole*, and
+ * the outbox is not bounded: restoring a large tabverse, importing a file or a
+ * first flush after pairing can queue hundreds of rows at once. Sending them
+ * as one request therefore failed every sync cycle with "batch exceeds 500" -
+ * and because the push threw, the pull never ran either. 100 is well under the
+ * server's default, and the same number the pairing dialog's "upload my local
+ * data" path has always used; a server configured lower than 100 would need a
+ * bigger mismatch than this guards against.
+ */
+export const SYNC_PUSH_CHUNK = 100;
 
 /** chrome.storage backed cursor (works in the SW and in pages). */
 export class ChromeSyncStateStore implements SyncStateStore {
@@ -123,13 +138,24 @@ export class SyncEngine {
   ) {}
 
   /**
-   * Pushes an arbitrary batch and applies the ack (used by the "upload my
-   * local database" migration path, which does not go through the outbox).
+   * Pushes an arbitrary batch and applies the ack, in chunks the server will
+   * accept. Used by the outbox flush below and by the "upload my local
+   * database" migration path; neither can know how many rows a save produced,
+   * so the chunking belongs here rather than at each caller.
    */
   async pushRecords(records: RecordInput[]): Promise<PushResult> {
-    const result = await this.api.push(records);
-    await this.outbox.applyResults(result.results);
-    return result;
+    const results: RecordResult[] = [];
+    let serverRev = -1;
+    for (let i = 0; i < records.length; i += SYNC_PUSH_CHUNK) {
+      const chunk = records.slice(i, i + SYNC_PUSH_CHUNK);
+      const result = await this.api.push(chunk);
+      serverRev = Math.max(serverRev, result.server_rev);
+      results.push(...result.results);
+      // Apply each chunk's ack before sending the next one: a later chunk that
+      // fails must not cost the earlier chunks their confirmed writes.
+      await this.outbox.applyResults(result.results);
+    }
+    return { results, server_rev: serverRev };
   }
 
   /**
@@ -181,9 +207,8 @@ export class SyncEngine {
         for (const e of entries) {
           byKey.set(`${e.entity}/${e.id}`, e);
         }
-        const result = await this.api.push(entries.map(toRecordInput));
-        serverRev = result.server_rev;
-        await this.outbox.applyResults(result.results);
+        const result = await this.pushRecords(entries.map(toRecordInput));
+        serverRev = Math.max(serverRev, result.server_rev);
         for (const r of result.results) {
           if (r.status === 'ok') {
             pushed += 1;

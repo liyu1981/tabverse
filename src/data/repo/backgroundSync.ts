@@ -18,6 +18,7 @@ import { RealtimeClient, Scheduler, WebSocketFactory } from './realtime';
 import { FetchLike, ServerApiClient } from './serverApi';
 import {
   ChromeSyncStateStore,
+  SYNC_PUSH_CHUNK,
   SyncEngine,
   SyncHooks,
   SyncOutcome,
@@ -301,13 +302,14 @@ async function pushAllLocalRecords(
   if (records.length === 0) {
     return result;
   }
-  const CHUNK = 100;
   let done = 0;
-  for (let i = 0; i < records.length; i += CHUNK) {
-    const pushed = await engine.pushRecords(records.slice(i, i + CHUNK));
+  for (let i = 0; i < records.length; i += SYNC_PUSH_CHUNK) {
+    const pushed = await engine.pushRecords(
+      records.slice(i, i + SYNC_PUSH_CHUNK),
+    );
     result.uploaded += pushed.results.filter((r) => r.status === 'ok').length;
     result.stale += pushed.results.filter((r) => r.status === 'stale').length;
-    done += Math.min(CHUNK, records.length - i);
+    done += Math.min(SYNC_PUSH_CHUNK, records.length - i);
     if (options.onProgress) {
       options.onProgress(done, records.length);
     }

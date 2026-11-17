@@ -97,6 +97,64 @@ test('syncOnce flushes the outbox then pulls the delta', async () => {
   expect((await stateStore.get()).last_rev).toBe(2);
 });
 
+test('a large outbox is pushed in chunks the server accepts', async () => {
+  // The server rejects a push over its batch limit as a whole (500 by
+  // default), and the outbox can hold a restore's worth of rows. Before the
+  // chunking, every cycle failed with "batch exceeds 500" and pulled nothing.
+  const { api, outbox, engine } = setup();
+  await outbox.enqueueMany(
+    Array.from({ length: 650 }, (_, i) => ({
+      entity: 'note' as const,
+      id: `n${i}`,
+      updated_at: 1000 + i,
+      deleted: false,
+      payload: '{"text":"local"}',
+    })),
+  );
+
+  const outcome = await engine.syncOnce();
+
+  expect(outcome.status).toBe('ok');
+  expect(outcome.pushed).toBe(650);
+  // every request is under the server's limit, and the last is the remainder
+  expect(api.pushed.map((chunk) => chunk.length)).toEqual([
+    100, 100, 100, 100, 100, 100, 50,
+  ]);
+  expect(api.pushed.every((chunk) => chunk.length <= 500)).toBe(true);
+  expect(await outbox.size()).toBe(0);
+  // the pull still ran after the push
+  expect(api.pullCalls).toEqual([0]);
+});
+
+test("a chunked push applies each chunk's ack before the next one", async () => {
+  const { api, outbox, engine } = setup();
+  await outbox.enqueueMany(
+    Array.from({ length: 250 }, (_, i) => ({
+      entity: 'note' as const,
+      id: `n${i}`,
+      updated_at: 1000 + i,
+      deleted: false,
+      payload: '{"text":"local"}',
+    })),
+  );
+  let sizeAtSecondCall = -1;
+  const realPush = api.push.bind(api);
+  let calls = 0;
+  api.push = async (records: RecordInput[]) => {
+    calls += 1;
+    if (calls === 2) {
+      sizeAtSecondCall = await outbox.size();
+    }
+    return realPush(records);
+  };
+
+  await engine.syncOnce();
+
+  // the first chunk's 100 acks were applied before the second request went out
+  expect(sizeAtSecondCall).toBe(150);
+  expect(await outbox.size()).toBe(0);
+});
+
 test('pull is paginated until has_more is false', async () => {
   const { api, engine } = setup();
   api.pages = [
