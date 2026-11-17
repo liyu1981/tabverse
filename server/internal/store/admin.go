@@ -1202,7 +1202,7 @@ func displayTitle(entity, id, payload string) (title, url string) {
 		title = str("name")
 	case "todo":
 		title = str("content")
-	case "bookmark":
+	case "bookmark", "shortcut":
 		title, url = str("name"), str("url")
 	}
 	if title == "" {

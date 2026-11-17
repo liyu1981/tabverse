@@ -13,6 +13,7 @@ import Dexie from 'dexie';
 import { TABSPACE_DB_VERSION, logger } from '../../global';
 import { TabSpaceDatabase } from '../TabSpaceDatabase';
 import { schemas } from '../schema';
+import { SHORTCUT_DB_TABLE_NAME } from '../../data/shortcut/Shortcut';
 
 // Dexie is pointed at the in-memory implementation, the same way
 // src/dev/dbImplTest.ts does for the rest of the suite
@@ -106,6 +107,46 @@ function createV10Database(): Promise<void> {
   });
 }
 
+/**
+ * What v11 declared: everything the current schema has except the Launchpad
+ * table (the account-level shortcuts added by v12).
+ */
+const V11_SCHEMAS: { [name: string]: string } = (() => {
+  const copy: { [name: string]: string } = { ...schemas };
+  delete copy[SHORTCUT_DB_TABLE_NAME];
+  return copy;
+})();
+
+/** Creates the database a v11 build would have created (Dexie v11 = IDB 110). */
+function createV11Database(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const request = fakeIndexedDB.open(DB_NAME + '-v11', 110);
+    request.onupgradeneeded = () => {
+      const idb = request.result;
+      for (const name of Object.keys(V11_SCHEMAS)) {
+        if (!idb.objectStoreNames.contains(name)) {
+          idb.createObjectStore(name, { keyPath: 'id' });
+        }
+      }
+    };
+    request.onsuccess = () => {
+      const idb = request.result;
+      const tx = idb.transaction(
+        ['SavedTabSpace', 'SavedClosedTab'],
+        'readwrite',
+      );
+      tx.objectStore('SavedTabSpace').put({ id: 'ts-old', updatedAt: 1 });
+      tx.objectStore('SavedClosedTab').put({ id: 'ct-old', updatedAt: 1 });
+      tx.oncomplete = () => {
+        idb.close();
+        resolve();
+      };
+      tx.onerror = () => reject(tx.error);
+    };
+    request.onerror = () => reject(request.error);
+  });
+}
+
 describe(`schema v${TABSPACE_DB_VERSION}`, () => {
   test('no longer declares a session store', () => {
     expect(Object.keys(schemas)).not.toContain('ChromeSession');
@@ -162,6 +203,26 @@ describe(`schema v${TABSPACE_DB_VERSION}`, () => {
     await expect(
       database.table('SavedTabSpace').get('ts1'),
     ).resolves.toBeTruthy();
+
+    await database.delete();
+  });
+
+  test('opening a v11 database adds the shortcut table and keeps the rows', async () => {
+    await createV11Database();
+    const database = new TabSpaceDatabase(TAG + '-v11');
+    await database.open();
+
+    expect(Array.from(database.backendDB().objectStoreNames)).toContain(
+      'SavedShortcut',
+    );
+    await expect(
+      database.table('SavedTabSpace').get('ts-old'),
+    ).resolves.toBeTruthy();
+    await expect(
+      database.table('SavedClosedTab').get('ct-old'),
+    ).resolves.toBeTruthy();
+    // the new table is empty, not a failed upgrade
+    await expect(database.table('SavedShortcut').count()).resolves.toBe(0);
 
     await database.delete();
   });

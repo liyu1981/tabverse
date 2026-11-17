@@ -12,6 +12,7 @@
 import { db } from '../../storage/db';
 import { ALLBOOKMARK_DB_TABLE_NAME } from '../bookmark/AllBookmark';
 import { CLOSED_TAB_DB_TABLE_NAME } from '../closedTab/ClosedTab';
+import { SHORTCUT_DB_TABLE_NAME } from '../shortcut/Shortcut';
 import { BOOKMARK_DB_TABLE_NAME } from '../bookmark/Bookmark';
 import { ALLNOTE_DB_TABLE_NAME } from '../note/AllNote';
 import { NOTE_DB_TABLE_NAME } from '../note/Note';
@@ -37,6 +38,9 @@ const SYNC_TABLE_BINDINGS: SyncTableBinding[] = [
   { entity: 'bookmark', table: BOOKMARK_DB_TABLE_NAME },
   { entity: 'allbookmark', table: ALLBOOKMARK_DB_TABLE_NAME },
   { entity: 'closedtab', table: CLOSED_TAB_DB_TABLE_NAME },
+  // Account level, not a tabverse child: no payload carries a tabSpaceId, so
+  // the console's bundle and the cascade delete leave it alone by construction.
+  { entity: 'shortcut', table: SHORTCUT_DB_TABLE_NAME },
 ];
 
 const TABLE_TO_ENTITY: { [table: string]: EntityName } = (() => {

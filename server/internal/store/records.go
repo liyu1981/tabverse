@@ -303,6 +303,10 @@ func boolToInt(b bool) int {
 var nonContentKeys = map[string]bool{
 	"id": true, "tabSpaceId": true, "version": true,
 	"tabIds": true, "todoIds": true, "noteIds": true, "bookmarkIds": true,
+	// A Launchpad shortcut keeps its logo as a data: url. It is an image, not
+	// text worth searching, and a few tens of kilobytes of base64 in a snippet
+	// (or in the index) would be noise at best.
+	"iconDataUrl": true, "iconUrl": true,
 }
 
 // ftsBody derives the indexed text for a record: all JSON strings are

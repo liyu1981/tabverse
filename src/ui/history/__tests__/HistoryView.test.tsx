@@ -80,8 +80,10 @@ function entries(props: { entries: ClosedTab[]; grouped: boolean }): string {
       entries={props.entries}
       grouped={props.grouped}
       isBookmarked={noop}
+      isShortcut={noop}
       restore={noop}
       saveAsBookmark={noop}
+      saveAsShortcut={noop}
       remove={noop}
     />,
   );

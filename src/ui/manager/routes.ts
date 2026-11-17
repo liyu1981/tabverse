@@ -9,6 +9,7 @@ export enum ManagerViewRoute {
   Opened = 'live',
   Saved = 'saved',
   Search = 'search',
+  Launchpad = 'launchpad',
   Webtool = 'webtool',
 }
 

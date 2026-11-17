@@ -10,6 +10,9 @@ import {
   registerDbAuditor,
 } from './storage/dbAuditorManager';
 import { startBackgroundSync } from './data/repo/backgroundSync';
+import { startChangeFeed } from './data/repo/changeFeed';
+import { addShortcutFromTab } from './data/shortcut/addShortcut';
+import { createAddShortcutMessageHandler } from './data/shortcut/message';
 import { acceptPairCredentials } from './data/repo/officialServer';
 import { adoptCredentials } from './data/repo/syncConfig';
 import { BackgroundMsg, sendChromeMessage } from './message/message';
@@ -233,4 +236,15 @@ startDedupScanner();
 // falls through to whatever else is listening.
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) =>
   handleDedupMessage(message, sendResponse),
+);
+
+// The toolbar popup asks the worker to add the active tab to the Launchpad
+// (data/shortcut/message.ts). The change feed is awaited first because a
+// message can arrive before the worker's async boot has installed the hooks;
+// the call is idempotent.
+chrome.runtime.onMessage.addListener(
+  createAddShortcutMessageHandler(async (chromeTabId) => {
+    await startChangeFeed();
+    return addShortcutFromTab(chromeTabId);
+  }),
 );

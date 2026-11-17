@@ -1,6 +1,13 @@
 import { t } from '../../../i18n';
 import { $allBookmark, bookmarkStoreApi } from '../../../data/bookmark/store';
+import { $shortcuts } from '../../../data/shortcut/store';
 import { $tabSpace, $tabSpacePreviewCache } from '../../../data/tabSpace/store';
+import { addShortcutFromTab } from '../../../data/shortcut/addShortcut';
+import {
+  isShortcutableUrl,
+  shortcutWithUrl,
+} from '../../../data/shortcut/Shortcut';
+import { showAddShortcutResult } from '../../launchpad/toast';
 import {
   Button,
   ButtonGroup,
@@ -128,6 +135,7 @@ export function TabSpaceListView() {
   const tabSpace = useStore($tabSpace);
   const tabPreviewCache = useStore($tabSpacePreviewCache);
   const allBookmark = useStore($allBookmark);
+  const shortcuts = useStore($shortcuts);
 
   // The tabverse's never-suspend list, device-local (data/tabSpace/
   // suspendWhitelist). The store returns a stable set until the whitelist
@@ -146,6 +154,11 @@ export function TabSpaceListView() {
       allBookmark.bookmarks.findIndex((bookmark) => bookmark.url === url) >= 0
     );
   };
+
+  // A shortcut is account level, so the tick on a row is a lookup in the list
+  // loaded at bootstrap rather than a database read per card.
+  const isShortcut = (url: string): boolean =>
+    shortcutWithUrl(shortcuts, url) !== undefined;
 
   const [title, setTitle] = useState(tabSpace.name);
   const [selectedTabs, setSelectedTabs] = useState<List<Tab>>(List());
@@ -191,6 +204,12 @@ export function TabSpaceListView() {
   );
 
   const { toaster } = useContext(ManagerViewContext);
+
+  const addShortcut = (tab: Tab) => {
+    void addShortcutFromTab(tab.chromeTabId).then((result) => {
+      showAddShortcutResult(toaster, result);
+    });
+  };
 
   const onAutoGroupApplied = useCallback(
     (report: AutoGroupApplyReportWithCounts) => {
@@ -444,6 +463,10 @@ export function TabSpaceListView() {
           needSelector={true}
           tabPreview={getPreview(tab.chromeTabId, tabPreviewCache)}
           isBookmarked={isBookmarked(tab.url)}
+          isShortcut={isShortcut(tab.url)}
+          // a chrome:// page or the manager tab itself is not a shortcut: the
+          // row keeps no button rather than offering one that cannot work
+          onShortcut={isShortcutableUrl(tab.url) ? addShortcut : undefined}
           isWhitelisted={whitelistedUrls.has(tab.url)}
           onToggleWhitelist={(tab: Tab) => {
             void toggleWhitelisted(tabSpace.id, tab.url);

@@ -14,6 +14,8 @@ export type EntityName =
   | 'bookmark'
   /** a tab that was closed in this tabverse (the History tool) */
   | 'closedtab'
+  /** a Launchpad tile: an account-level page, owned by no tabverse */
+  | 'shortcut'
   // per tabspace ordered aggregates kept by the extension (id lists);
   // synced as records so ordering survives round trips
   | 'allnote'
@@ -27,6 +29,7 @@ const ENTITY_NAMES: EntityName[] = [
   'todo',
   'bookmark',
   'closedtab',
+  'shortcut',
   'allnote',
   'alltodo',
   'allbookmark',

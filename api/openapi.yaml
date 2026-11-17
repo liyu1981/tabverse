@@ -395,7 +395,9 @@ paths:
         can group and label results without a second round trip.
 
         `allnote` / `alltodo` / `allbookmark` are never indexed (they are id
-        lists) and `session` only exists for pre-ADR-0006 clients.
+        lists), `shortcut` is not indexed either (its payload carries the
+        Launchpad icon as base64, not text), and `session` only exists for
+        pre-ADR-0006 clients.
       parameters:
         - {
             name: q,
@@ -1379,6 +1381,7 @@ components:
           todo,
           bookmark,
           closedtab,
+          shortcut,
           allnote,
           alltodo,
           allbookmark,

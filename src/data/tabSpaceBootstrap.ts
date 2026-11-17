@@ -1,3 +1,4 @@
+import { loadShortcuts, startMonitorShortcutChanges } from './shortcut/util';
 import { scanCurrentTabs, startMonitorTabChanges } from './tabSpace/chromeTab';
 import { startSplitViewRescan } from './tabSpace/splitView';
 import { startMonitorSuspendWhitelist } from './tabSpace/suspendWhitelistMonitor';
@@ -46,6 +47,11 @@ export async function tabSpaceBootstrap(
   startMonitorOpenTabSpaces();
   startMonitorChromeMessage();
   monitorDbChanges();
+  // The Launchpad is account level, so this page reads it once: the view needs
+  // the rows and the tab/bookmark/history buttons need their saved state. A
+  // later write in another context re-reads it (see shortcut/util).
+  await loadShortcuts();
+  startMonitorShortcutChanges();
 }
 
 /**

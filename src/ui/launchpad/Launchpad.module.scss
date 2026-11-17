@@ -1,0 +1,171 @@
+@use '../../global.scss';
+
+/*
+ * The Launchpad fills the manager view and scrolls on its own: it is a page of
+ * tiles, not a card in the tabverse's right side. The inner column caps the
+ * width so a wide window does not stretch eight tiles across two metres.
+ */
+.container {
+  height: 100vh;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 18px 24px 48px;
+  color: #111;
+}
+
+.inner {
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  flex: none;
+}
+
+/*
+ * The filter takes what is left of the row, and the order switch stays its own
+ * size beside it. `min-width: 0` is what lets the input shrink instead of
+ * pushing the switch off the header.
+ */
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 360px;
+  min-width: 0;
+  justify-content: flex-end;
+}
+
+.filter {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 340px;
+}
+
+.orderGroup {
+  flex: none;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 24px 20px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  align-content: start;
+}
+
+.tile {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+/*
+ * The link is the tile: the icon and the name are one target, and the padding
+ * is inside the target so the whole tile is clickable, not just the picture.
+ */
+.tileLink {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 6px;
+  border-radius: global.$radius-card;
+  color: inherit;
+  text-decoration: none;
+}
+
+.tileLink:hover,
+.tileLink:focus-visible {
+  background-color: rgb(16 22 26 / 6%);
+  outline: none;
+}
+
+.icon,
+.monogram {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  flex: none;
+}
+
+/*
+ * A white backing and a soft shadow so a transparent PNG reads on both themes,
+ * and `contain` so a wide logo is not cropped into a square it does not have.
+ */
+.icon {
+  object-fit: contain;
+  background-color: #fff;
+  border: 1px solid #ededed;
+  box-shadow: 0 4px 12px rgb(16 22 26 / 12%);
+}
+
+.monogram {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1;
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.tileName {
+  max-width: 104px;
+  font-size: 12px;
+  line-height: 1.3;
+  text-align: center;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/*
+ * Quiet until the tile is hovered or something in it has focus, so the grid is
+ * a grid of pictures and not of bins. `focus-within` is what keeps it reachable
+ * by keyboard; a touch device has no hover, so it is simply always there.
+ */
+.tileDelete {
+  position: absolute;
+  top: -2px;
+  right: 0;
+  opacity: 0;
+}
+
+.tile:hover .tileDelete,
+.tile:focus-within .tileDelete {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .tileDelete {
+    opacity: 1;
+  }
+}
+
+.notice {
+  color: #999;
+  font-style: italic;
+  font-weight: 500;
+  padding: 40px 8px;
+  text-align: center;
+}

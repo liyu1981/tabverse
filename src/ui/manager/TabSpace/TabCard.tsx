@@ -102,6 +102,36 @@ export const TabDetailPreviewPanel = (props: {
   ) : null;
 };
 
+interface TabShortcutBtnProps {
+  tab: Tab;
+  isShortcut: boolean;
+  onShortcut: (tab: Tab) => void;
+}
+
+/**
+ * The Launchpad button. It stays enabled when the page is already saved (the
+ * tick is the saved state), because a repeat click is how the person learns
+ * why nothing changed - the caller answers with an "Already in Launchpad"
+ * toast.
+ */
+function TabShortcutBtn({ tab, isShortcut, onShortcut }: TabShortcutBtnProps) {
+  const label = isShortcut ? t('launchpadAlreadyIn') : t('launchpadAddTab');
+  return (
+    <Tooltip content={label} placement="bottom">
+      <Button
+        className="tv-icon-button"
+        icon={isShortcut ? 'tick' : 'add-tile'}
+        minimal={true}
+        intent={isShortcut ? Intent.PRIMARY : Intent.NONE}
+        aria-label={label}
+        onClick={() => {
+          onShortcut(tab);
+        }}
+      />
+    </Tooltip>
+  );
+}
+
 interface TabBookmarkBtnProps {
   tab: Tab;
   isBookmarked: boolean;
@@ -139,6 +169,10 @@ interface ITabCardProps {
   onBookmark?: (tab: Tab) => void;
   /** Whether this tab is on the tabverse's never-suspend list. */
   isWhitelisted?: boolean;
+  /** Whether this tab's page is already in the Launchpad. */
+  isShortcut?: boolean;
+  /** Present only for live tabs; adds the page to the Launchpad. */
+  onShortcut?: (tab: Tab) => void;
   /** Present only for live tabs; toggles the never-suspend list. */
   onToggleWhitelist?: (tab: Tab) => void;
   /**
@@ -404,6 +438,15 @@ export function TabCard(props: ITabCardProps) {
                 tab={props.tab}
                 isBookmarked={props.isBookmarked}
                 onBookmark={props.onBookmark}
+              />
+            )}
+            {props.onShortcut === undefined ? (
+              ''
+            ) : (
+              <TabShortcutBtn
+                tab={props.tab}
+                isShortcut={props.isShortcut === true}
+                onShortcut={props.onShortcut}
               />
             )}
             <Tooltip content={t('tabCardClose')} placement="bottom">

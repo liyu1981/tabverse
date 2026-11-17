@@ -1,10 +1,18 @@
 import { t } from '../../i18n';
 import { $allBookmark, bookmarkStoreApi } from '../../data/bookmark/store';
 import { Button, ButtonGroup, EditableText } from '@blueprintjs/core';
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { saveCurrentBookmarks } from '../../data/bookmark/util';
+import { $shortcuts } from '../../data/shortcut/store';
+import { addShortcutFromPage } from '../../data/shortcut/addShortcut';
+import { showAddShortcutResult } from '../launchpad/toast';
+import {
+  isShortcutableUrl,
+  shortcutWithUrl,
+} from '../../data/shortcut/Shortcut';
 
 import { Bookmark } from '../../data/bookmark/Bookmark';
+import { ManagerViewContext } from '../manager/ManagerViewContext';
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { ListFilter } from '../common/ListFilter';
 import classes from './BookmarkView.module.scss';
@@ -14,6 +22,8 @@ import { useStore } from 'effector-react';
 
 interface IBookmarkItem {
   bookmark: Bookmark;
+  isShortcut: boolean;
+  onShortcut: (bookmark: Bookmark) => void;
 }
 
 const BookmarkItem = (props: IBookmarkItem) => {
@@ -66,6 +76,21 @@ const BookmarkItem = (props: IBookmarkItem) => {
                 });
               }}
             />
+            {isShortcutableUrl(props.bookmark.url) ? (
+              <Button
+                icon={props.isShortcut ? 'tick' : 'add-tile'}
+                title={
+                  props.isShortcut
+                    ? t('launchpadAlreadyIn')
+                    : t('launchpadAddBookmark')
+                }
+                minimal={true}
+                intent={props.isShortcut ? 'primary' : 'none'}
+                onClick={() => {
+                  props.onShortcut(props.bookmark);
+                }}
+              />
+            ) : null}
             <Button
               icon="trash"
               title={t('bookmarkDeleteIt')}
@@ -86,7 +111,19 @@ const BOOKMARK_PAGE_LIMIT = 10;
 
 export function BookmarkView() {
   const allBookmark = useStore($allBookmark);
+  const shortcuts = useStore($shortcuts);
+  const { toaster } = useContext(ManagerViewContext);
   const [filterText, setFilterText] = useState('');
+
+  const addShortcut = (bookmark: Bookmark) => {
+    void addShortcutFromPage({
+      name: bookmark.name,
+      url: bookmark.url,
+      favIconUrl: bookmark.favIconUrl,
+    }).then((result) => {
+      showAddShortcutResult(toaster, result);
+    });
+  };
 
   const allBookmarks = allBookmark.bookmarks.reverse().toArray();
   // in memory, before paging: the page control then pages the matches
@@ -105,7 +142,12 @@ export function BookmarkView() {
     return (
       <ul className={classes.listContainer}>
         {getCurrentPageItems().map((bookmark) => (
-          <BookmarkItem key={bookmark.id} bookmark={bookmark} />
+          <BookmarkItem
+            key={bookmark.id}
+            bookmark={bookmark}
+            isShortcut={shortcutWithUrl(shortcuts, bookmark.url) !== undefined}
+            onShortcut={addShortcut}
+          />
         ))}
       </ul>
     );

@@ -219,6 +219,21 @@ export const Sidebar = (props: ISidebarProps) => {
             }
           />
         ) : null}
+        {/* Account level and local first: unlike Search it needs no server,
+            and unlike the tabverse tools it is not about this window. */}
+        <SidebarComponent
+          active={props.route === ManagerViewRoute.Launchpad}
+          route={ManagerViewRoute.Launchpad}
+          onSwitch={props.switchRoute}
+          railIcon="layout-grid"
+          railLabel={t('sidebarLaunchpad')}
+          header={
+            <div className={classes.sidebarHeaderContainer}>
+              <Icon icon="layout-grid" size={ICON_SIZE} />{' '}
+              {t('sidebarLaunchpad')}
+            </div>
+          }
+        />
         {isDebug() ? (
           <SidebarComponent
             active={props.route === ManagerViewRoute.Webtool}

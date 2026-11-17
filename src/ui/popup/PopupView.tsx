@@ -16,6 +16,11 @@ import {
 } from '../../data/tabSpace/util';
 import { importTabverseFile } from '../../data/tabSpace/importTabSpace';
 import {
+  BackgroundMsg,
+  IAddShortcutResponse,
+  sendChromeMessage,
+} from '../../message/message';
+import {
   OpenTabSpace,
   openTabSpaceOfWindow,
   openTabverseUrlInWindow,
@@ -33,6 +38,28 @@ import { t } from '../../i18n';
 import classes from './PopupView.module.scss';
 
 const SEARCH_DEBOUNCE_MS = 200;
+
+/**
+ * What the popup says after the worker tried to add the active tab. Exported
+ * for its test, and it never invents a success: an unknown answer is a
+ * failure, because a tile the person believes exists and that does not is worse
+ * than an error they can retry.
+ */
+export function shortcutStatusText(
+  response: IAddShortcutResponse | undefined,
+): string {
+  if (!response?.ok) {
+    return t('popupShortcutFailed');
+  }
+  const name = response.name ?? '';
+  if (response.status === 'created') {
+    return t('popupShortcutSaved', [name]);
+  }
+  if (response.status === 'existing') {
+    return t('popupShortcutAlready', [name]);
+  }
+  return t('popupShortcutFailed');
+}
 
 /**
  * The plain search box maps to one AND-group with the "anywhere" scope, so
@@ -74,6 +101,9 @@ export function PopupView() {
     null,
   );
   const [importStatus, setImportStatus] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<chrome.tabs.Tab | null>(null);
+  const [shortcutBusy, setShortcutBusy] = useState(false);
+  const [shortcutStatus, setShortcutStatus] = useState<string | null>(null);
   const importInputRef = useRef<HTMLInputElement | null>(null);
   // bumped by the Enter key, which wants the search to happen now
   const [searchNonce, setSearchNonce] = useState<number>(0);
@@ -103,12 +133,51 @@ export function PopupView() {
         // refinements; a popup that cannot read them is still useful
         logger.error('popup could not read the browser state', err);
       }
+      // Its own try: a failure here must not take the saved list down with
+      // it - the shortcut button is simply disabled.
+      try {
+        const [active] = await chrome.tabs.query({
+          active: true,
+          currentWindow: true,
+        });
+        if (!cancelled) {
+          setActiveTab(active ?? null);
+        }
+      } catch (err) {
+        logger.error('popup could not read the active tab', err);
+      }
     };
     void bootstrap();
     return () => {
       cancelled = true;
     };
   }, []);
+
+  // Only an http(s) page can be a shortcut, and the button has nothing to say
+  // on a chrome:// page or a file:// tab.
+  const canShortcut =
+    typeof activeTab?.url === 'string' && /^https?:/i.test(activeTab.url);
+
+  const addCurrentTabAsShortcut = async () => {
+    const tab = activeTab;
+    if (!tab?.id || !canShortcut) {
+      return;
+    }
+    setShortcutBusy(true);
+    setShortcutStatus(null);
+    try {
+      const response = await sendChromeMessage({
+        type: BackgroundMsg.AddShortcutFromTab,
+        payload: { chromeTabId: tab.id },
+      });
+      setShortcutStatus(shortcutStatusText(response));
+    } catch (err) {
+      logger.error('popup could not add the shortcut', err);
+      setShortcutStatus(t('popupShortcutFailed'));
+    } finally {
+      setShortcutBusy(false);
+    }
+  };
 
   const currentTabSpaceId = useMemo(
     () => openTabSpaceOfWindow(openTabSpaces, currentWindowId)?.tabSpaceId,
@@ -291,7 +360,20 @@ export function PopupView() {
     <div className={classes.container}>
       <div className={classes.header}>
         <span className={classes.headerTitle}>{t('extName')}</span>
-        <span>{t('popupSavedCount', [String(savedCount)])}</span>
+        <span className={classes.headerActions}>
+          <Button
+            className="tv-icon-button"
+            icon="add-tile"
+            minimal={true}
+            small={true}
+            loading={shortcutBusy}
+            disabled={!canShortcut}
+            title={t('popupAddShortcut')}
+            aria-label={t('popupAddShortcut')}
+            onClick={() => void addCurrentTabAsShortcut()}
+          />
+          <span>{t('popupSavedCount', [String(savedCount)])}</span>
+        </span>
       </div>
       <div className={classes.createContainer}>
         <Button
@@ -328,6 +410,9 @@ export function PopupView() {
       </div>
       {importStatus ? (
         <div className={classes.notice}>{importStatus}</div>
+      ) : null}
+      {shortcutStatus ? (
+        <div className={classes.notice}>{shortcutStatus}</div>
       ) : null}
       <div className={classes.searchContainer}>
         <InputGroup

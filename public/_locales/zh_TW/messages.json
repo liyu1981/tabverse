@@ -1190,5 +1190,85 @@
   "autoGroupAppliedFailed": {
     "message": "$1 group(s) could not be made.",
     "description": "Toast suffix: groups Chrome refused at apply time."
+  },
+  "sidebarLaunchpad": {
+    "message": "Launchpad",
+    "description": "Sidebar: the entry that opens the Launchpad."
+  },
+  "launchpadTitle": {
+    "message": "Launchpad",
+    "description": "Launchpad view: the page heading."
+  },
+  "launchpadFilterPlaceholder": {
+    "message": "Filter the Launchpad",
+    "description": "Launchpad: the filter box placeholder."
+  },
+  "launchpadFilterAria": {
+    "message": "Filter the Launchpad by name or url",
+    "description": "Launchpad: the filter box's accessible name."
+  },
+  "launchpadOrderName": {
+    "message": "Sort by name",
+    "description": "Launchpad: the alphabetical order button."
+  },
+  "launchpadOrderNewest": {
+    "message": "Newest first",
+    "description": "Launchpad: the newest-first order button."
+  },
+  "launchpadDeleteNamed": {
+    "message": "Remove $1 from the Launchpad",
+    "description": "Launchpad: a tile's delete button, with the shortcut's name."
+  },
+  "launchpadEmpty": {
+    "message": "Your Launchpad is empty. Add a page from a tab, a bookmark, a closed tab or the toolbar popup.",
+    "description": "Launchpad: the empty state."
+  },
+  "launchpadNoMatch": {
+    "message": "No shortcut matches the filter.",
+    "description": "Launchpad: shown when the filter has no matches."
+  },
+  "launchpadAddTab": {
+    "message": "Add this tab to Launchpad",
+    "description": "Tab row: the Launchpad button's tooltip and accessible name."
+  },
+  "launchpadAlreadyIn": {
+    "message": "Already in Launchpad",
+    "description": "A saved shortcut's button, tooltip and toast."
+  },
+  "launchpadAddBookmark": {
+    "message": "Add this bookmark to Launchpad",
+    "description": "Bookmark row: the Launchpad button's tooltip."
+  },
+  "launchpadAddHistory": {
+    "message": "Add this closed tab to Launchpad",
+    "description": "History row: the Launchpad button's tooltip."
+  },
+  "launchpadAddedToast": {
+    "message": "Added $1 to Launchpad",
+    "description": "Toast after a page became a shortcut, with its name."
+  },
+  "launchpadAlreadyToast": {
+    "message": "$1 is already in Launchpad",
+    "description": "Toast when the page was already a shortcut, with its name."
+  },
+  "launchpadUnreadableToast": {
+    "message": "Could not read this tab",
+    "description": "Toast when the tab could not be read to make a shortcut."
+  },
+  "popupAddShortcut": {
+    "message": "Add this tab to Launchpad",
+    "description": "Toolbar popup: the button that saves the current tab."
+  },
+  "popupShortcutSaved": {
+    "message": "Added $1 to Launchpad",
+    "description": "Toolbar popup: the saved status, with the shortcut's name."
+  },
+  "popupShortcutAlready": {
+    "message": "$1 is already in Launchpad",
+    "description": "Toolbar popup: the already-saved status, with the name."
+  },
+  "popupShortcutFailed": {
+    "message": "Could not add this tab to Launchpad",
+    "description": "Toolbar popup: the failure status."
   }
 }

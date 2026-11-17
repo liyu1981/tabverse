@@ -19,7 +19,11 @@ export const TABSPACE_VERSION = 'v0.7.8';
 // v10 adds `SavedClosedTab`, the per tabverse list of tabs that were closed
 // (the History right side tool). Same rollback story: a pre-v10 build does not
 // know the table and ignores it.
-export const TABSPACE_DB_VERSION = 11;
+//
+// v12 adds `SavedShortcut`, the account-level Launchpad. It belongs to no
+// tabverse and has no aggregate, so there is no data to migrate: a pre-v12
+// build does not know the table and ignores it.
+export const TABSPACE_DB_VERSION = 12;
 
 export const TABSPACE_MANAGER_TAB_TITLE_PREFIX = 'Tabverse:Manager';
 // `global` is a Node-only global: webpack polyfilled it, Vite/Rolldown does

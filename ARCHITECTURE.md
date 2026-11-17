@@ -56,9 +56,11 @@ remote edit ──WebSocket records_changed──► debounced syncOnce()
 ### Entities
 
 `tabspace`, `tab`, `note`, `todo`, `bookmark`, `closedtab` (the History
-tool: one row per closed tab, capped at 999 per tabverse, `adr/0007`) plus the
-three per-tabspace ordered aggregates `allnote`, `alltodo`, `allbookmark`
-(they carry the display ordering, which cannot be rebuilt from entity rows).
+tool: one row per closed tab, capped at 999 per tabverse, `adr/0007`),
+`shortcut` (a Launchpad tile: an account-level page with no `tabSpaceId`, its
+icon stored as a `data:` url, `adr/0035`) plus the three per-tabspace ordered
+aggregates `allnote`, `alltodo`, `allbookmark` (they carry the display ordering,
+which cannot be rebuilt from entity rows).
 
 A tab record carries two layout facts. `tabGroups` is a hint on the tabverse
 payload, and `TabCore.splitWith` names the other half of a split view by its tab
@@ -88,6 +90,28 @@ server's `entity=` filter) and resolves the `tabspace_id` the server returns;
 return the same thing - ranked tabverse ids - so browsing and searching page
 alike, and a server that is unreachable falls back to the local scan instead of
 failing the search box.
+
+## The Launchpad (`src/data/shortcut/`)
+
+A shortcut is a page saved once for the whole account and launched from a grid
+of tiles, not from a tabverse tool. It is deliberately outside every
+per-tabverse rule: no `tabSpaceId`, no aggregate row, and not in a tabverse's
+bundle, export or cascade delete. The page reads `SavedShortcut` at bootstrap
+(one list, for the view and the add buttons' saved state), and the ordinary
+record stream syncs it: `listLocalRecords`/`applyServerRecords` know the entity
+through the one `dbBridge` binding, and the outbox queues each create and
+tombstone like any other row.
+
+The icon is the interesting part. `icon.ts` asks the page for its
+`apple-touch-icon` / sized `<link rel=icon>` (an injected read, like
+`tabText.ts`), `iconBytes.ts` fetches the best one once and re-encodes it to a
+128px PNG data url (`createImageBitmap` + `OffscreenCanvas`, so the page and
+the service worker share one implementation), and the row keeps those bytes so
+a tile is self-contained on another device and offline. The source url and the
+tab's favicon are the fallbacks; a monogram drawn locally is the last one, and
+no third-party placeholder host is ever contacted. The popup's add goes through
+the worker (`BackgroundMsg.AddShortcutFromTab`) because the popup dies on focus
+loss and the worker owns the change feed.
 
 ## The live tab filter (`src/data/tabSpace/activeTabFilter.ts`)
 

@@ -39,6 +39,14 @@ the authority for its subject; this file is the index an agent should start from
   note and naming a tabverse, where Chrome ships its built-in model; plus "view
   page content as Markdown", which needs no model.
 
+## Across tabverses
+
+- [Launchpad](docs/basic-usage/launchpad/): a grid of the web tools you use
+  everywhere. A shortcut belongs to the account, not to a tabverse; add one
+  from a tab, a bookmark, a closed tab or the toolbar popup, with the site's
+  large icon stored so the tile works on every paired browser and offline.
+  Filter, sort by name or newest first, and delete.
+
 One tool can be pinned to the top of the tools column, the pinned tool and the
 selected tool are remembered across reloads, and a tool's own header stays put
 while its rows scroll. The details are in [Tabverses](docs/basic-usage/tabverses/).

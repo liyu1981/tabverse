@@ -8,6 +8,13 @@ import {
 } from '@blueprintjs/core';
 import { $allBookmark, bookmarkStoreApi } from '../../data/bookmark/store';
 import { $allClosedTab } from '../../data/closedTab/store';
+import { $shortcuts } from '../../data/shortcut/store';
+import { addShortcutFromPage } from '../../data/shortcut/addShortcut';
+import {
+  isShortcutableUrl,
+  shortcutWithUrl,
+} from '../../data/shortcut/Shortcut';
+import { showAddShortcutResult } from '../launchpad/toast';
 import {
   clearAllClosedTabs,
   deleteClosedTab,
@@ -61,8 +68,10 @@ const HISTORY_GROUPED_KEY = 'tabverse_history_grouped';
 interface IHistoryItemProps {
   closedTab: ClosedTab;
   isBookmarked: boolean;
+  isShortcut: boolean;
   restore: (closedTab: ClosedTab) => void;
   saveAsBookmark: (closedTab: ClosedTab) => void;
+  saveAsShortcut: (closedTab: ClosedTab) => void;
   remove: (closedTab: ClosedTab) => void;
 }
 
@@ -108,6 +117,19 @@ const HistoryItem = (props: IHistoryItemProps) => {
             disabled={props.isBookmarked}
             onClick={() => props.saveAsBookmark(closedTab)}
           />
+          {isShortcutableUrl(closedTab.url) ? (
+            <Button
+              icon={props.isShortcut ? 'tick' : 'add-tile'}
+              title={
+                props.isShortcut
+                  ? t('launchpadAlreadyIn')
+                  : t('launchpadAddHistory')
+              }
+              minimal={true}
+              intent={props.isShortcut ? Intent.PRIMARY : Intent.NONE}
+              onClick={() => props.saveAsShortcut(closedTab)}
+            />
+          ) : null}
           <Button
             icon="trash"
             title={t('historyForgetIt')}
@@ -125,8 +147,10 @@ export interface HistoryEntriesProps {
   /** One header per site, instead of one flat paged list. */
   grouped: boolean;
   isBookmarked: (url: string) => boolean;
+  isShortcut: (url: string) => boolean;
   restore: (closedTab: ClosedTab) => void;
   saveAsBookmark: (closedTab: ClosedTab) => void;
+  saveAsShortcut: (closedTab: ClosedTab) => void;
   remove: (closedTab: ClosedTab) => void;
 }
 
@@ -151,8 +175,10 @@ export function HistoryEntries(props: HistoryEntriesProps) {
       key={closedTab.id}
       closedTab={closedTab}
       isBookmarked={props.isBookmarked(closedTab.url)}
+      isShortcut={props.isShortcut(closedTab.url)}
       restore={props.restore}
       saveAsBookmark={props.saveAsBookmark}
+      saveAsShortcut={props.saveAsShortcut}
       remove={props.remove}
     />
   );
@@ -179,6 +205,7 @@ export function HistoryEntries(props: HistoryEntriesProps) {
 export function HistoryView() {
   const allClosedTab = useStore($allClosedTab);
   const allBookmark = useStore($allBookmark);
+  const shortcuts = useStore($shortcuts);
   const { toaster } = useContext(ManagerViewContext);
   // the box over the history; empty means the whole list, unchanged
   const [searchText, setSearchText] = useState<string>('');
@@ -199,6 +226,22 @@ export function HistoryView() {
 
   const isBookmarked = (url: string): boolean =>
     allBookmark.bookmarks.findIndex((bookmark) => bookmark.url === url) >= 0;
+
+  const isShortcut = (url: string): boolean =>
+    shortcutWithUrl(shortcuts, url) !== undefined;
+
+  // Adding a shortcut never removes the row: unlike "save as bookmark", a
+  // shortcut is not a copy of the history entry, and forgetting the page here
+  // would be a surprise. A repeat add says "already" through the shared toast.
+  const saveAsShortcut = (closedTab: ClosedTab) => {
+    void addShortcutFromPage({
+      name: closedTab.title,
+      url: closedTab.url,
+      favIconUrl: closedTab.favIconUrl,
+    }).then((result) => {
+      showAddShortcutResult(toaster, result);
+    });
+  };
 
   const restore = async (closedTab: ClosedTab) => {
     const restored = await restoreClosedTab(closedTab);
@@ -331,8 +374,10 @@ export function HistoryView() {
                   entries={groupedByDay ? matched : getFlatPageItems()}
                   grouped={groupedByDay}
                   isBookmarked={isBookmarked}
+                  isShortcut={isShortcut}
                   restore={restore}
                   saveAsBookmark={saveAsBookmark}
+                  saveAsShortcut={saveAsShortcut}
                   remove={remove}
                 />
               )}

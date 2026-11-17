@@ -23,6 +23,10 @@ import {
   CLOSED_TAB_DB_SCHEMA,
   CLOSED_TAB_DB_TABLE_NAME,
 } from '../data/closedTab/ClosedTab';
+import {
+  SHORTCUT_DB_SCHEMA,
+  SHORTCUT_DB_TABLE_NAME,
+} from '../data/shortcut/Shortcut';
 
 export const schemas = {};
 
@@ -36,3 +40,4 @@ schemas[BOOKMARK_DB_TABLE_NAME] = BOOKMARK_DB_SCHEMA;
 schemas[ALLBOOKMARK_DB_TABLE_NAME] = ALLBOOKMARK_DB_SCHEMA;
 schemas[TAB_PREVIEW_DB_TABLE_NAME] = TAB_PREVIEW_DB_SCHEMA;
 schemas[CLOSED_TAB_DB_TABLE_NAME] = CLOSED_TAB_DB_SCHEMA;
+schemas[SHORTCUT_DB_TABLE_NAME] = SHORTCUT_DB_SCHEMA;

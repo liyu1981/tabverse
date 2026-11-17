@@ -35,6 +35,12 @@ export enum BackgroundMsg {
    * without being reopened.
    */
   SyncConfigChanged = 'background_syncconfigchanged',
+  /**
+   * Sent by the toolbar popup to the worker: add the active tab to the
+   * Launchpad. The worker owns it because the popup dies on focus loss, and
+   * because the add fetches and resizes the icon (data/shortcut/message.ts).
+   */
+  AddShortcutFromTab = 'background_addshortcutfromtab',
 }
 
 /** In-process "a sync is running" notice; payload is a boolean. */
@@ -76,6 +82,24 @@ export enum DedupMsg {
 export type TabSpaceId = string;
 export type TabId = string;
 export type ChromeTabId = number;
+
+/** Payload of `BackgroundMsg.AddShortcutFromTab`. */
+export interface IAddShortcutFromTabPayload {
+  chromeTabId: ChromeTabId;
+}
+
+/**
+ * The worker's answer to that message. Deliberately *not* the whole record:
+ * a shortcut can carry ~48k of base64 icon, and the popup only needs to say
+ * what happened.
+ */
+export interface IAddShortcutResponse {
+  ok: boolean;
+  status?: 'created' | 'existing' | 'invalid' | 'unreadable';
+  /** The shortcut's display name, for the popup's status line. */
+  name?: string;
+  error?: string;
+}
 export type AuditLogs = string[];
 export type NotNeed = undefined | null;
 
@@ -105,6 +129,11 @@ export async function sendChromeMessage(msgPayload: {
 }): Promise<any>;
 
 export async function sendChromeMessage(msgPayload: {
+  type: BackgroundMsg.AddShortcutFromTab;
+  payload: IAddShortcutFromTabPayload;
+}): Promise<IAddShortcutResponse>;
+
+export async function sendChromeMessage(msgPayload: {
   type: DedupMsg;
   payload: DedupReport | string | NotNeed;
 }): Promise<any>;
@@ -118,6 +147,7 @@ export async function sendChromeMessage(msgPayload: {
     | AuditLogs
     | ILocalTablesChangedPayload
     | DedupReport
+    | IAddShortcutFromTabPayload
     | boolean
     | string
     | NotNeed;

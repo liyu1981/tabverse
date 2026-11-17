@@ -30,9 +30,16 @@ import { logger } from '../../global';
  * Tables written by the sync engine worth telling pages about: the manager
  * page re-reads the tabverse and the closed tab list when they change. Closed
  * tabs are included because another device (or another window) can close tabs
- * in a tabverse this page is showing.
+ * in a tabverse this page is showing; shortcuts are account level, so every
+ * open manager page has a reason to re-read them (the Launchpad and the add
+ * buttons' saved state).
  */
-const NOTIFY_TABLES = new Set(['SavedTabSpace', 'SavedTab', 'SavedClosedTab']);
+const NOTIFY_TABLES = new Set([
+  'SavedTabSpace',
+  'SavedTab',
+  'SavedClosedTab',
+  'SavedShortcut',
+]);
 
 export function notifyLocalTablesChanged(tables: string[]): void {
   const unique = Array.from(new Set(tables.filter((t) => !!t)));

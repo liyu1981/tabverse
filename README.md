@@ -22,6 +22,9 @@ down and pick up again. When a piece of work is done - or you just need a break
   attach, summarize a page into a note, suggest a name - all on this device. A
   page can also be viewed as Markdown and copied without any model at all.
 - **Omni search.** Find a tab, note or bookmark across every tabverse you have.
+- **Launchpad.** The web tools you use everywhere, as a grid of large icons
+  that belongs to the whole account rather than to one tabverse. Save a page
+  from a tab, a bookmark, a closed tab or the toolbar popup.
 - **Local first.** Everything lives in your browser profile, in IndexedDB. No
   account, no network, no telemetry.
 - **Optional sync.** Pair with a server to keep several browsers in step.
@@ -48,7 +51,7 @@ Chrome 140 or newer, Manifest V3.
 ## Documentation
 
 - [**User manual**](https://liyu1981.github.io/tabverse/docs/intro) - install,
-  tabverses, notes, todos, bookmarks, history, omni search, sync.
+  tabverses, notes, todos, bookmarks, history, omni search, the Launchpad, sync.
 - [**Self-host a server**](https://liyu1981.github.io/tabverse/docs/self-host-server)
   - run `tabversed` for your own sync.
 - [**Server console**](https://liyu1981.github.io/tabverse/docs/server-console)
@@ -73,8 +76,9 @@ the dialog shows how much data will be sent before anything is.
 
 ## Where your data lives
 
-Tabverses and their tabs, notes, todos, bookmarks, closed-tab history and the
-**tab previews** all live in IndexedDB in your browser profile.
+Tabverses and their tabs, notes, todos, bookmarks, closed-tab history, the
+Launchpad's shortcuts (including the site icon each one saved) and the **tab
+previews** all live in IndexedDB in your browser profile.
 
 The previews are the only cache: a picture of a live tab, keyed by its Chrome
 tab id, swept when the tab closes and never sent to a server

@@ -21,6 +21,10 @@ var Entities = map[string]bool{
 	// searchable; a hit for a row the client has since pruned resolves to a
 	// tabverse it still has, or is dropped.
 	"closedtab": true,
+	// A Launchpad tile: a page saved once for the whole account, with no
+	// tabSpaceId. Account-level on purpose - not a tabverse child, so the
+	// bundle and DeleteTabspace leave it alone (tabspaceEntities in admin.go).
+	"shortcut": true,
 	// The extension keeps per tabspace aggregates (id lists, ordered). They
 	// are synced as their own records so ordering survives without the
 	// server knowing anything about the client's data model.
